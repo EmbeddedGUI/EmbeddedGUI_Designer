@@ -2218,6 +2218,50 @@ def save_empty_project_with_designer_scaffold(
     return project
 
 
+def save_empty_sdk_example_project_with_designer_scaffold(
+    sdk_root,
+    app_name,
+    *,
+    default_width=240,
+    default_height=320,
+    pages=None,
+    project_customizer=None,
+    overwrite_scaffold=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Build and save an empty Designer project for an SDK example app."""
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    project_path = sdk_example_project_file_path(sdk_root, app_name)
+    if not app_dir or not project_path:
+        raise ValueError("sdk_root and app_name are required")
+
+    screen_width, screen_height = read_app_config_dimensions(
+        sdk_example_app_config_path(sdk_root, app_name),
+        default_width,
+        default_height,
+    )
+    project = save_empty_project_with_designer_scaffold(
+        app_name,
+        app_dir,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        pages=pages,
+        project_customizer=project_customizer,
+        overwrite_scaffold=overwrite_scaffold,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+    )
+    return project, project_path
+
+
 def scaffold_designer_project(
     project_dir,
     app_name,

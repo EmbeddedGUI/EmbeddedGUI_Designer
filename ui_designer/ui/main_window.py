@@ -158,11 +158,10 @@ from ..utils.scaffold import (
     project_orphaned_user_page_relpath,
     project_resource_src_dir,
     project_user_resource_config_path,
-    read_app_config_dimensions,
     save_empty_project_with_designer_scaffold,
+    save_empty_sdk_example_project_with_designer_scaffold,
     save_project_and_materialize_codegen,
     save_project_model,
-    sdk_example_app_config_path,
     sdk_example_config_dir,
     sdk_example_project_file_path,
     sync_project_resources_and_generate_designer_resource_config,
@@ -4121,13 +4120,9 @@ class MainWindow(QMainWindow):
         if reply != QMessageBox.Yes:
             return
 
-        screen_w, screen_h = read_app_config_dimensions(sdk_example_app_config_path(sdk_root, app_name))
-        save_empty_project_with_designer_scaffold(
-            app_name,
-            app_dir,
-            screen_w,
-            screen_h,
+        _project, project_path = save_empty_sdk_example_project_with_designer_scaffold(
             sdk_root=sdk_root,
+            app_name=app_name,
             remove_legacy_designer_files=True,
         )
         self._open_project_path(project_path, preferred_sdk_root=sdk_root)

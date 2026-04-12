@@ -110,6 +110,7 @@ from ui_designer.utils.scaffold import (
     save_project_model,
     save_project_and_materialize_codegen,
     save_empty_project_with_designer_scaffold,
+    save_empty_sdk_example_project_with_designer_scaffold,
     scaffold_sdk_example_conversion_project,
     scaffold_conversion_project_with_sdk_root,
     scaffold_designer_project,
@@ -1641,6 +1642,51 @@ class TestApplyDesignerProjectScaffold:
         assert project.string_catalog.get("greeting", "default") == "Hello"
         reloaded = project.__class__.load(str(project_dir))
         assert reloaded.string_catalog.get("greeting", "default") == "Hello"
+
+    def test_save_empty_sdk_example_project_with_designer_scaffold_uses_app_config_dimensions(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        app_dir = sdk_root / "example" / "LegacyApp"
+        app_dir.mkdir(parents=True)
+        (app_dir / "app_egui_config.h").write_text(
+            "#define EGUI_CONFIG_SCEEN_WIDTH  480\n#define EGUI_CONFIG_SCEEN_HEIGHT 272\n",
+            encoding="utf-8",
+        )
+
+        project, project_path = save_empty_sdk_example_project_with_designer_scaffold(
+            str(sdk_root),
+            "LegacyApp",
+            remove_legacy_designer_files=True,
+        )
+
+        assert project.project_dir == os.path.normpath(str(app_dir))
+        assert project.sdk_root == os.path.normpath(str(sdk_root))
+        assert project.screen_width == 480
+        assert project.screen_height == 272
+        assert project_path == os.path.normpath(str(app_dir / "LegacyApp.egui"))
+        assert (app_dir / "LegacyApp.egui").is_file()
+        assert (app_dir / ".designer" / "build_designer.mk").is_file()
+
+    def test_save_empty_sdk_example_project_with_designer_scaffold_uses_defaults_for_legacy_root_include(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        app_dir = sdk_root / "example" / "LegacyWrappedApp"
+        app_dir.mkdir(parents=True)
+        (app_dir / "app_egui_config.h").write_text(
+            '#include "app_egui_config_designer.h"\n',
+            encoding="utf-8",
+        )
+        (app_dir / "app_egui_config_designer.h").write_text(
+            "#define EGUI_CONFIG_SCEEN_WIDTH  320\n#define EGUI_CONFIG_SCEEN_HEIGHT 320\n",
+            encoding="utf-8",
+        )
+
+        project, project_path = save_empty_sdk_example_project_with_designer_scaffold(
+            str(sdk_root),
+            "LegacyWrappedApp",
+        )
+
+        assert project.screen_width == 240
+        assert project.screen_height == 320
+        assert project_path == os.path.normpath(str(app_dir / "LegacyWrappedApp.egui"))
 
     def test_scaffold_designer_project_combines_sidecars_and_core_templates(self, tmp_path):
         project_dir = tmp_path / "FullApp"
