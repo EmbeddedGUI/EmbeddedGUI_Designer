@@ -23,6 +23,10 @@ from ui_designer.utils.scaffold import (
     build_empty_project_model_with_root,
     build_empty_project_model_with_page_roots,
     build_saved_project_model,
+    build_saved_project_model_and_page_with_widgets,
+    build_saved_project_model_and_root_with_widgets,
+    build_saved_project_model_only_with_page_widgets,
+    build_saved_project_model_only_with_widgets,
     build_saved_project_model_with_page_widgets,
     build_saved_project_model_with_widgets,
 )
@@ -521,6 +525,99 @@ def build_saved_test_project_with_widgets(
     )
 
 
+def build_saved_test_project_and_page_with_widgets(
+    project_dir,
+    app_name,
+    sdk_root="",
+    *,
+    page_name="main_page",
+    screen_width=240,
+    screen_height=320,
+    widgets=None,
+    page_customizer=None,
+    project_customizer=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+):
+    """Build, populate, optionally customize, save, and return the project with its page."""
+    return build_saved_project_model_and_page_with_widgets(
+        app_name,
+        page_name=page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        sdk_root=sdk_root,
+        project_dir=str(project_dir),
+        widgets=widgets,
+        page_customizer=page_customizer,
+        project_customizer=project_customizer,
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
+        remove_legacy_designer_files=True,
+    )
+
+
+def build_saved_test_project_and_root_with_widgets(
+    project_dir,
+    app_name,
+    sdk_root="",
+    *,
+    page_name="main_page",
+    screen_width=240,
+    screen_height=320,
+    widgets=None,
+    page_customizer=None,
+    project_customizer=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+):
+    """Build, populate, optionally customize, save, and return the project with its root widget."""
+    return build_saved_project_model_and_root_with_widgets(
+        app_name,
+        page_name=page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        sdk_root=sdk_root,
+        project_dir=str(project_dir),
+        widgets=widgets,
+        page_customizer=page_customizer,
+        project_customizer=project_customizer,
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
+        remove_legacy_designer_files=True,
+    )
+
+
+def build_saved_test_project_only_with_widgets(
+    project_dir,
+    app_name,
+    sdk_root="",
+    *,
+    page_name="main_page",
+    screen_width=240,
+    screen_height=320,
+    widgets=None,
+    page_customizer=None,
+    project_customizer=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+):
+    """Build, populate, optionally customize, save, and return only the project."""
+    return build_saved_project_model_only_with_widgets(
+        app_name,
+        page_name=page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        sdk_root=sdk_root,
+        project_dir=str(project_dir),
+        widgets=widgets,
+        page_customizer=page_customizer,
+        project_customizer=project_customizer,
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
+        remove_legacy_designer_files=True,
+    )
+
+
 def build_saved_test_project_with_page_widgets(
     project_dir,
     app_name,
@@ -537,6 +634,37 @@ def build_saved_test_project_with_page_widgets(
 ):
     """Build, populate, optionally customize, and save a multi-page test project to disk."""
     return build_saved_project_model_with_page_widgets(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=str(project_dir),
+        page_widgets=page_widgets,
+        page_customizers=page_customizers,
+        pages=pages,
+        project_customizer=project_customizer,
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
+        remove_legacy_designer_files=True,
+    )
+
+
+def build_saved_test_project_only_with_page_widgets(
+    project_dir,
+    app_name,
+    sdk_root="",
+    *,
+    screen_width=240,
+    screen_height=320,
+    page_widgets=None,
+    page_customizers=None,
+    pages=None,
+    project_customizer=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+):
+    """Build, populate, optionally customize, save, and return only the project."""
+    return build_saved_project_model_only_with_page_widgets(
         app_name,
         screen_width,
         screen_height,

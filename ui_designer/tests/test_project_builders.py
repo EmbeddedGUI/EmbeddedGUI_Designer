@@ -5,6 +5,10 @@ import ui_designer.tests.project_builders as project_builders_module
 from ui_designer.tests.page_builders import build_test_pages
 from ui_designer.tests.project_builders import (
     build_saved_test_project,
+    build_saved_test_project_and_page_with_widgets,
+    build_saved_test_project_and_root_with_widgets,
+    build_saved_test_project_only_with_page_widgets,
+    build_saved_test_project_only_with_widgets,
     build_saved_test_project_with_widgets,
     build_saved_test_project_with_page_widgets,
     build_test_project,
@@ -360,6 +364,26 @@ class TestProjectBuilders:
         assert roots["detail_page"].children == [detail_button]
         assert project.resource_catalog.has_image("hero.png") is True
 
+    def test_build_saved_test_project_only_with_page_widgets_returns_project(self, tmp_path):
+        project_dir = tmp_path / "SavedProjectOnlyPageWidgetsDemo"
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+
+        project = build_saved_test_project_only_with_page_widgets(
+            project_dir,
+            "SavedProjectOnlyPageWidgetsDemo",
+            page_widgets={
+                "main_page": [home_label],
+                "detail_page": [detail_button],
+            },
+        )
+        _home_page, home_root = require_project_page_root(project, "main_page")
+        _detail_page, detail_root = require_project_page_root(project, "detail_page")
+
+        assert project.project_dir == str(project_dir)
+        assert home_root.children == [home_label]
+        assert detail_root.children == [detail_button]
+
     def test_build_saved_test_project_with_widgets_writes_populated_startup_page(self, tmp_path):
         project_dir = tmp_path / "SavedSinglePageWidgetBuilderDemo"
         label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
@@ -375,6 +399,52 @@ class TestProjectBuilders:
         assert project.project_dir == str(project_dir)
         assert page.name == "home"
         assert (project_dir / "SavedSinglePageWidgetBuilderDemo.egui").is_file()
+        assert root.children == [label, button]
+
+    def test_build_saved_test_project_and_page_with_widgets_returns_project_and_page(self, tmp_path):
+        project_dir = tmp_path / "SavedProjectAndPageWidgetBuilderDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, page = build_saved_test_project_and_page_with_widgets(
+            project_dir,
+            "SavedProjectAndPageWidgetBuilderDemo",
+            page_name="home",
+            widgets=[label],
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert page.name == "home"
+        assert page.root_widget.children == [label]
+
+    def test_build_saved_test_project_and_root_with_widgets_returns_project_and_root(self, tmp_path):
+        project_dir = tmp_path / "SavedProjectAndRootWidgetBuilderDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, root = build_saved_test_project_and_root_with_widgets(
+            project_dir,
+            "SavedProjectAndRootWidgetBuilderDemo",
+            page_name="home",
+            widgets=[label],
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert [child.name for child in root.children] == ["title"]
+
+    def test_build_saved_test_project_only_with_widgets_returns_project(self, tmp_path):
+        project_dir = tmp_path / "SavedProjectOnlyWidgetBuilderDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+        button = WidgetModel("button", name="confirm", x=10, y=48, width=80, height=32)
+
+        project = build_saved_test_project_only_with_widgets(
+            project_dir,
+            "SavedProjectOnlyWidgetBuilderDemo",
+            page_name="home",
+            widgets=[label, button],
+        )
+        page, root = require_project_page_root(project, "home")
+
+        assert project.project_dir == str(project_dir)
+        assert page.name == "home"
         assert root.children == [label, button]
 
     def test_build_saved_test_project_with_widgets_reuses_shared_saved_widgets_helper(self, tmp_path, monkeypatch):
