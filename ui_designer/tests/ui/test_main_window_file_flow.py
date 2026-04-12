@@ -24,6 +24,8 @@ from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_ro
 from ui_designer.utils.scaffold import (
     add_widget_children as _add_widget_children,
     project_file_path,
+    project_config_mockup_path,
+    project_config_mockup_relpath,
     RESOURCE_DIR_RELPATH,
     require_project_page_root,
     save_project_model,
@@ -6712,6 +6714,43 @@ class TestMainWindowFileFlow:
         window._load_background_image()
 
         assert captured["directory"] == os.path.normpath(os.path.abspath(project_dir))
+        _close_window(window)
+
+    def test_load_background_image_copies_file_into_shared_mockup_path(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from PyQt5.QtCore import Qt
+        from PyQt5.QtGui import QPixmap
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MockupCopyDemo"
+        project, page, _root = _create_project_with_widgets(
+            project_dir,
+            "MockupCopyDemo",
+            sdk_root,
+            screen_width=8,
+            screen_height=8,
+        )
+
+        source_path = tmp_path / "design.png"
+        pixmap = QPixmap(8, 8)
+        pixmap.fill(Qt.white)
+        assert pixmap.save(str(source_path))
+
+        window = MainWindow(str(sdk_root))
+        window.project = project
+        window._project_dir = str(project_dir)
+        window._current_page = page
+
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.QFileDialog.getOpenFileName",
+            lambda *args, **kwargs: (str(source_path), "Images (*.png)"),
+        )
+
+        window._load_background_image()
+
+        assert window._current_page.mockup_image_path == project_config_mockup_relpath("design.png")
+        assert Path(project_config_mockup_path(str(project_dir), "design.png")).is_file()
         _close_window(window)
 
     def test_xml_edit_updates_page_mockup_metadata(self, qapp, isolated_config, tmp_path, monkeypatch):

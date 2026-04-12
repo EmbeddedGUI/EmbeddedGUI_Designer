@@ -67,6 +67,8 @@ from ui_designer.utils.scaffold import (
     project_config_layout_dir,
     project_config_layout_xml_relpath,
     project_config_mockup_dir,
+    project_config_mockup_path,
+    project_config_mockup_relpath,
     project_config_orphaned_user_code_dir,
     project_config_orphaned_user_page_dir,
     project_config_path,
@@ -417,6 +419,10 @@ class TestCoreProjectScaffold:
         )
         assert os.path.normpath(project_config_mockup_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/mockup"
+        )
+        assert project_config_mockup_relpath("design.png") == "mockup/design.png"
+        assert os.path.normpath(project_config_mockup_path("D:/workspace/DemoApp", "design.png")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/mockup/design.png"
         )
         assert os.path.normpath(project_config_backup_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/backup"

@@ -256,6 +256,14 @@ def project_config_mockup_dir(project_dir: str) -> str:
     return project_config_path(project_dir, "mockup")
 
 
+def project_config_mockup_relpath(filename: str) -> str:
+    return f"mockup/{filename}"
+
+
+def project_config_mockup_path(project_dir: str, filename: str) -> str:
+    return project_config_path(project_dir, project_config_mockup_relpath(filename))
+
+
 def project_config_backup_dir(project_dir: str) -> str:
     return project_config_path(project_dir, "backup")
 

@@ -145,6 +145,8 @@ from ..utils.scaffold import (
     project_config_layout_dir,
     project_config_layout_xml_relpath,
     project_config_mockup_dir,
+    project_config_mockup_path,
+    project_config_mockup_relpath,
     project_config_path,
     project_config_resource_dir,
     project_app_config_path,
@@ -4784,19 +4786,19 @@ class MainWindow(QMainWindow):
         mockup_dir = project_config_mockup_dir(self._project_dir)
         os.makedirs(mockup_dir, exist_ok=True)
         filename = os.path.basename(path)
-        dest = os.path.join(mockup_dir, filename)
+        dest = project_config_mockup_path(self._project_dir, filename)
         # Handle name collision
         if os.path.abspath(path) != os.path.abspath(dest):
             base, ext = os.path.splitext(filename)
             counter = 1
             while os.path.isfile(dest):
-                dest = os.path.join(mockup_dir, f"{base}_{counter}{ext}")
                 filename = f"{base}_{counter}{ext}"
+                dest = project_config_mockup_path(self._project_dir, filename)
                 counter += 1
             shutil.copy2(path, dest)
 
         # Store relative path (relative to .eguiproject/)
-        rel_path = f"mockup/{filename}"
+        rel_path = project_config_mockup_relpath(filename)
         self._current_page.mockup_image_path = rel_path
         self._current_page.mockup_image_visible = True
         self._set_background_toggle_state(True)
