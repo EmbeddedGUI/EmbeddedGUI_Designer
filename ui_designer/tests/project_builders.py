@@ -35,6 +35,7 @@ from ui_designer.utils.scaffold import (
     build_saved_project_model_with_page_widgets_and_materialize_codegen,
     build_saved_project_model_with_widgets_and_materialize_codegen,
     build_saved_project_model_with_widgets,
+    load_saved_project_model,
 )
 
 
@@ -498,6 +499,11 @@ def build_saved_test_project(
         overwrite_scaffold=overwrite_scaffold,
         remove_legacy_designer_files=True,
     )
+
+
+def load_saved_test_project(project_dir):
+    """Load a saved test project through the shared saved-project loader."""
+    return load_saved_project_model(str(project_dir))
 
 
 def build_saved_test_project_with_widgets(

@@ -27,8 +27,8 @@ def test_main_window_close_smoke_with_active_timers():
 
         from PyQt5.QtWidgets import QApplication
 
-        from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow
+        from ui_designer.utils.scaffold import load_saved_project_model
         from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
 
@@ -62,7 +62,7 @@ def test_main_window_close_smoke_with_active_timers():
         os.environ["EMBEDDEDGUI_DESIGNER_CONFIG_DIR"] = str(config_root)
         try:
             for _ in range(12):
-                project = Project.load(str(sample_project_dir))
+                project = load_saved_project_model(str(sample_project_dir))
                 window = MainWindow(str(sample_sdk_root))
                 window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
                 window._trigger_compile = lambda: None

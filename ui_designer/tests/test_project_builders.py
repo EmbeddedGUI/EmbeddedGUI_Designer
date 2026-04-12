@@ -34,6 +34,7 @@ from ui_designer.tests.project_builders import (
     build_test_project_with_page_roots,
     build_test_project_with_root,
     build_test_project_from_pages,
+    load_saved_test_project,
 )
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.utils.scaffold import add_widget_children, require_project_page_root
@@ -67,6 +68,36 @@ class TestProjectBuilders:
         assert (project_dir / "SavedBuilderDemo.egui").is_file()
         assert (project_dir / ".eguiproject" / "layout" / "main_page.xml").is_file()
         assert (project_dir / ".eguiproject" / "layout" / "settings.xml").is_file()
+
+    def test_load_saved_test_project_loads_saved_project_from_directory(self, tmp_path):
+        project_dir = tmp_path / "SavedBuilderLoadDemo"
+        build_saved_test_project(project_dir, "SavedBuilderLoadDemo", pages=["main_page", "settings"])
+
+        project = load_saved_test_project(project_dir)
+
+        assert project.project_dir == str(project_dir)
+        assert [page.name for page in project.pages] == ["main_page", "settings"]
+
+    def test_load_saved_test_project_reuses_shared_saved_project_loader(self, tmp_path, monkeypatch):
+        project_dir = tmp_path / "SharedSavedBuilderLoadDemo"
+        captured = {}
+
+        monkeypatch.setattr(
+            project_builders_module,
+            "load_saved_project_model",
+            lambda project_dir_arg: (
+                captured.update({"project_dir": project_dir_arg})
+                or build_test_project(
+                    "SharedSavedBuilderLoadDemo",
+                    project_dir=project_dir_arg,
+                )
+            ),
+        )
+
+        project = load_saved_test_project(project_dir)
+
+        assert project.app_name == "SharedSavedBuilderLoadDemo"
+        assert captured == {"project_dir": str(project_dir)}
 
     def test_build_saved_test_project_can_include_designer_scaffold(self, tmp_path):
         project_dir = tmp_path / "ScaffoldedSavedBuilderDemo"

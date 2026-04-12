@@ -17,6 +17,7 @@ from ui_designer.tests.project_builders import (
     build_saved_test_project_only_with_widgets as _create_project_only_with_widgets,
     build_saved_test_project_with_widgets as _create_project_with_widgets,
     build_saved_test_project_with_page_widgets as _create_project_with_page_widgets,
+    load_saved_test_project as _load_project,
 )
 from ui_designer.tests.codegen_fixtures import (
     build_fake_prepare_project_codegen_outputs as _fake_prepare_project_codegen_outputs,
@@ -327,7 +328,7 @@ class TestMainWindowFileFlow:
 
         monkeypatch.setattr(
             "ui_designer.ui.main_window.load_saved_project_model",
-            lambda path: loaded_paths.append(os.path.normpath(os.path.abspath(path))) or Project.load(path),
+            lambda path: loaded_paths.append(os.path.normpath(os.path.abspath(path))) or _load_project(path),
         )
 
         def fake_open_loaded_project(project, project_root, preferred_sdk_root="", silent=False):
@@ -488,10 +489,10 @@ class TestMainWindowFileFlow:
         compile_calls = []
         monkeypatch.setattr(window, "_trigger_compile", lambda: compile_calls.append("compile"))
 
-        loaded = Project.load(str(project_dir))
+        loaded = _load_project(project_dir)
         window._open_loaded_project(loaded, str(project_dir), preferred_sdk_root=str(sdk_root), silent=False)
 
-        reloaded = Project.load(str(project_dir))
+        reloaded = _load_project(project_dir)
         assert prompts
         assert prompts[0]["title"] == "SDK Version Mismatch"
         assert "sdk-old-123" in prompts[0]["text"]
@@ -776,7 +777,7 @@ class TestMainWindowFileFlow:
         assert (project_dir / "dashboard_page_ext.h").is_file()
         assert (project_dir / "dashboard_page.c").read_text(encoding="utf-8") == "/* rename me */\n"
         assert (project_dir / "dashboard_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_MAIN_PAGE_EXT 1\n"
-        reloaded = Project.load(str(project_dir))
+        reloaded = _load_project(project_dir)
         assert reloaded.startup_page == "dashboard_page"
         assert reloaded.get_page_by_name("dashboard_page") is not None
         assert reloaded.get_page_by_name("main_page") is None
@@ -3521,7 +3522,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
 
-        window._open_loaded_project(Project.load(str(project_dir)), str(project_dir), preferred_sdk_root="", silent=True)
+        window._open_loaded_project(_load_project(project_dir), str(project_dir), preferred_sdk_root="", silent=True)
 
         assert window.project_root == os.path.normpath(os.path.abspath(sdk_root))
         assert window.project.sdk_root == os.path.normpath(os.path.abspath(sdk_root))
@@ -4172,7 +4173,7 @@ class TestMainWindowFileFlow:
         )
 
         project_path = app_dir / "LegacyApp.egui"
-        saved = Project.load(str(project_path))
+        saved = _load_project(project_path)
         assert project_path.is_file()
         assert saved.screen_width == 480
         assert saved.screen_height == 272
@@ -4223,7 +4224,7 @@ class TestMainWindowFileFlow:
         )
 
         project_path = app_dir / "LegacyWrappedApp.egui"
-        saved = Project.load(str(project_path))
+        saved = _load_project(project_path)
         assert saved.screen_width == 240
         assert saved.screen_height == 320
         assert opened["path"] == os.path.normpath(os.path.abspath(project_path))
@@ -8330,7 +8331,7 @@ class TestMainWindowFileFlow:
         assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
         assert window.statusBar().currentMessage() == "Project reload failed: boom"
 
-        monkeypatch.setattr("ui_designer.ui.main_window.load_saved_project_model", lambda path: Project.load(path))
+        monkeypatch.setattr("ui_designer.ui.main_window.load_saved_project_model", lambda path: _load_project(path))
 
         assert window._poll_project_files() is None
         assert window._external_reload_pending is False
@@ -8568,7 +8569,7 @@ class TestMainWindowFileFlow:
         assert window._has_unsaved_changes() is False
         assert window.windowTitle().endswith("*") is False
 
-        reloaded = Project.load(str(project_dir))
+        reloaded = _load_project(project_dir)
         assert reloaded.startup_page == "detail_page"
         _close_window(window)
 
@@ -8757,7 +8758,7 @@ class TestMainWindowFileFlow:
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window._switch_page("detail_page")
 
-        reloaded = Project.load(str(project_dir))
+        reloaded = _load_project(project_dir)
         reloaded.startup_page = "main_page"
         reloaded.create_new_page("summary_page")
         reloaded.save(str(project_dir))
