@@ -1822,6 +1822,36 @@ def build_project_model_and_root_with_widgets(
     return project, root
 
 
+def _save_built_project_model(
+    project,
+    project_dir,
+    *,
+    sdk_root="",
+    before_save=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Save a prebuilt project model through the shared project save entry point."""
+    return save_project_model(
+        project,
+        project_dir or project.project_dir,
+        sdk_root=sdk_root,
+        before_save=before_save,
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+    )
+
+
 def build_project_model_with_page_widgets_and_save(
     app_name,
     screen_width=240,
@@ -1854,9 +1884,9 @@ def build_project_model_with_page_widgets_and_save(
         pages=pages,
         project_customizer=project_customizer,
     )
-    actions = save_project_model(
+    actions = _save_built_project_model(
         project,
-        project_dir or project.project_dir,
+        project_dir,
         sdk_root=sdk_root,
         before_save=before_save,
         with_designer_scaffold=with_designer_scaffold,
@@ -1902,9 +1932,9 @@ def build_project_model_with_widgets_and_save(
         page_customizer=page_customizer,
         project_customizer=project_customizer,
     )
-    actions = save_project_model(
+    actions = _save_built_project_model(
         project,
-        project_dir or project.project_dir,
+        project_dir,
         sdk_root=sdk_root,
         before_save=before_save,
         with_designer_scaffold=with_designer_scaffold,
@@ -2420,7 +2450,7 @@ def build_empty_project_model_and_save(
     )
     if callable(project_customizer):
         project_customizer(project)
-    actions = save_project_model(
+    actions = _save_built_project_model(
         project,
         project_dir,
         sdk_root=sdk_root,
