@@ -33,7 +33,8 @@ from ui_designer.utils.runtime_temp import (
 )
 from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widgets,
-    save_project_and_materialize_codegen,
+    build_project_model_with_widgets_and_materialize_codegen,
+    page_user_source_relpath,
 )
 
 
@@ -103,16 +104,8 @@ def frame_pixel(frame: bytes, width: int, x: int, y: int) -> tuple[int, int, int
     return (frame[offset], frame[offset + 1], frame[offset + 2])
 
 
-def build_smoke_project(
-    app_name: str,
-    sdk_root: str,
-    project_dir: str,
-) -> tuple[
-    Project,
-    Page,
-    dict[str, tuple[int, int, int, int] | tuple[int, int]],
-]:
-    """Build the minimal project model used by the smoke test."""
+def _build_smoke_project_inputs() -> tuple[list[WidgetModel], object, dict[str, tuple[int, int, int, int] | tuple[int, int]]]:
+    """Build the shared widgets, page customization hook, and assertions for the smoke project."""
     WidgetRegistry.instance()
     WidgetModel.reset_counter()
 
@@ -157,17 +150,6 @@ def build_smoke_project(
     def _customize_page(_page: Page, root: WidgetModel) -> None:
         root.background = root_bg
 
-    project, page = build_project_model_and_page_with_widgets(
-        app_name,
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT,
-        sdk_root=str(sdk_root),
-        project_dir=str(project_dir),
-        page_name=PAGE_NAME,
-        widgets=[title, status, button, animated_chip],
-        page_customizer=_customize_page,
-    )
-
     meta = {
         "status_region": STATUS_REGION,
         "anim_region": ANIM_REGION,
@@ -175,6 +157,31 @@ def build_smoke_project(
         "bg_sample": BG_SAMPLE,
         "chip_sample": CHIP_SAMPLE,
     }
+    return [title, status, button, animated_chip], _customize_page, meta
+
+
+def build_smoke_project(
+    app_name: str,
+    sdk_root: str,
+    project_dir: str,
+) -> tuple[
+    Project,
+    Page,
+    dict[str, tuple[int, int, int, int] | tuple[int, int]],
+]:
+    """Build the minimal project model used by the smoke test."""
+    widgets, page_customizer, meta = _build_smoke_project_inputs()
+
+    project, page = build_project_model_and_page_with_widgets(
+        app_name,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT,
+        sdk_root=str(sdk_root),
+        project_dir=str(project_dir),
+        page_name=PAGE_NAME,
+        widgets=widgets,
+        page_customizer=page_customizer,
+    )
     return project, page, meta
 
 
@@ -269,6 +276,36 @@ def default_work_dir_root() -> Path:
     return DEFAULT_WORK_ROOT
 
 
+def _build_and_materialize_smoke_project(
+    sdk_root: str,
+    project_dir: str,
+) -> tuple[
+    Project,
+    Page,
+    dict[str, tuple[int, int, int, int] | tuple[int, int]],
+    object,
+]:
+    """Build the smoke project and materialize its generated outputs via the shared scaffold helper."""
+    widgets, page_customizer, meta = _build_smoke_project_inputs()
+    project, page, _root, materialized = build_project_model_with_widgets_and_materialize_codegen(
+        APP_NAME,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT,
+        sdk_root=str(sdk_root),
+        project_dir=str(project_dir),
+        page_name=PAGE_NAME,
+        widgets=widgets,
+        page_customizer=page_customizer,
+        overwrite=True,
+        backup=False,
+        newline="\n",
+        extra_files_builder=lambda _project, built_page, _root: {
+            page_user_source_relpath(built_page.name): build_main_page_user_source(built_page),
+        },
+    )
+    return project, page, meta, materialized
+
+
 def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -> int:
     resolved_sdk_root = require_designer_sdk_root_for_path(
         __file__,
@@ -285,14 +322,9 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
 
     try:
         print_status(True, f"using EmbeddedGUI SDK: {resolved_sdk_root}")
-        project, page, meta = build_smoke_project(APP_NAME, resolved_sdk_root, str(app_dir))
-        materialized = save_project_and_materialize_codegen(
-            project,
+        project, page, meta, materialized = _build_and_materialize_smoke_project(
+            resolved_sdk_root,
             str(app_dir),
-            overwrite=True,
-            backup=False,
-            extra_files={f"{PAGE_NAME}.c": build_main_page_user_source(page)},
-            newline="\n",
         )
         loaded = Project.load(str(app_dir))
         if loaded.sdk_root != resolved_sdk_root:

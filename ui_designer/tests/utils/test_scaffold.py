@@ -37,6 +37,7 @@ from ui_designer.utils.scaffold import (
     build_page_model_with_root_widget,
     build_project_model_and_page_with_widget,
     build_project_model_and_page_with_widgets,
+    build_project_model_with_widgets_and_materialize_codegen,
     build_project_model_and_root_with_widgets,
     build_project_model_only_with_page_widgets,
     build_project_model_only_with_widget,
@@ -1124,6 +1125,47 @@ class TestCoreProjectScaffold:
 
         assert project.app_name == "DemoApp"
         assert [child.name for child in root.children] == ["title"]
+
+    def test_build_project_model_with_widgets_and_materialize_codegen_writes_generated_outputs(self, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "BuiltMaterializedHelperApp"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+        builder_calls = []
+        materialize_calls = []
+
+        def _extra_files_builder(project, page, root):
+            builder_calls.append((project.app_name, page.name, [child.name for child in root.children]))
+            return {page_user_source_relpath(page.name): "// custom home source\n"}
+
+        project, page, root, materialized = build_project_model_with_widgets_and_materialize_codegen(
+            "BuiltMaterializedHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            page_name="home",
+            widgets=[label],
+            overwrite=True,
+            backup=False,
+            extra_files={"README.txt": "generated fixture\n"},
+            extra_files_builder=_extra_files_builder,
+            before_materialize=lambda output_dir: materialize_calls.append(output_dir),
+            newline="\n",
+        )
+
+        assert builder_calls == [("BuiltMaterializedHelperApp", "home", ["title"])]
+        assert materialize_calls == [str(project_dir)]
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert page.name == "home"
+        assert root.children == [label]
+        assert (project_dir / "BuiltMaterializedHelperApp.egui").is_file()
+        assert (project_dir / ".designer" / "home.h").is_file()
+        assert (project_dir / ".designer" / "home_layout.c").is_file()
+        assert (project_dir / "home.c").read_text(encoding="utf-8") == "// custom home source\n"
+        assert (project_dir / "README.txt").read_text(encoding="utf-8") == "generated fixture\n"
+        assert "home_ext.h" in materialized.files
 
     def test_build_project_model_only_with_widgets_returns_populated_project(self):
         from ui_designer.model.widget_model import WidgetModel

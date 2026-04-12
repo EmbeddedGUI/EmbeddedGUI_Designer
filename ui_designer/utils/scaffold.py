@@ -1822,6 +1822,68 @@ def build_project_model_and_root_with_widgets(
     return project, root
 
 
+def build_project_model_with_widgets_and_materialize_codegen(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_name="main_page",
+    widgets=None,
+    page_customizer=None,
+    project_customizer=None,
+    before_save=None,
+    overwrite=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+    backup=True,
+    extra_files=None,
+    extra_files_builder=None,
+    newline=None,
+    backup_existing=False,
+    before_materialize=None,
+):
+    """Build a single-page project model, save it, and materialize generated outputs."""
+    project, page, root = build_project_model_with_widgets(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_name=page_name,
+        widgets=widgets,
+        page_customizer=page_customizer,
+        project_customizer=project_customizer,
+    )
+    resolved_extra_files = {}
+    if callable(extra_files_builder):
+        resolved_extra_files.update(extra_files_builder(project, page, root) or {})
+    if extra_files:
+        resolved_extra_files.update(extra_files)
+    materialized = save_project_and_materialize_codegen(
+        project,
+        project_dir or project.project_dir,
+        sdk_root=sdk_root,
+        before_save=before_save,
+        overwrite=overwrite,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+        backup=backup,
+        extra_files=resolved_extra_files or None,
+        newline=newline,
+        backup_existing=backup_existing,
+        before_materialize=before_materialize,
+    )
+    return project, page, root, materialized
+
+
 def build_project_model_only_with_widgets(
     app_name,
     screen_width=240,
