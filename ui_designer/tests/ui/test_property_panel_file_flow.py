@@ -2,6 +2,7 @@
 
 import json
 import os
+from pathlib import Path
 
 import pytest
 
@@ -971,6 +972,25 @@ class TestPropertyPanelFileFlow:
         assert "missing from the project catalog or source directory" in editor.toolTip()
         assert editor.statusTip() == editor.toolTip()
         assert editor.accessibleName() == "Font File selector: mixed values"
+        panel.deleteLater()
+
+    def test_merged_fonts_include_generated_fonts_from_shared_generated_font_dir(self, qapp, tmp_path):
+        from ui_designer.ui.property_panel import PropertyPanel
+        from ui_designer.utils.scaffold import generated_resource_font_dir
+
+        resource_dir = tmp_path / "project" / "resource"
+        font_dir = generated_resource_font_dir(str(resource_dir))
+        os.makedirs(font_dir, exist_ok=True)
+        (Path(font_dir) / "egui_res_font_demo_16_4.c").write_text("// font\n", encoding="utf-8")
+        (Path(font_dir) / "egui_res_font_demo_bin.c").write_text("// skip bin\n", encoding="utf-8")
+
+        panel = PropertyPanel()
+        panel.set_resource_dir(str(resource_dir))
+
+        merged = panel._merged_fonts()
+
+        assert "&egui_res_font_demo_16_4" in merged
+        assert "&egui_res_font_demo_bin" not in merged
         panel.deleteLater()
 
     def test_multi_selection_form_toggles_designer_flags_for_all_widgets(self, qapp):

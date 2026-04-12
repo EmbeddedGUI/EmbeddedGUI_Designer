@@ -81,6 +81,8 @@ from ui_designer.utils.scaffold import (
     project_designer_resource_config_path,
     project_designer_resource_dir,
     project_file_path,
+    project_generated_font_dir,
+    project_generated_img_dir,
     project_generated_resource_dir,
     project_layout_xml_path,
     project_orphaned_user_page_relpath,
@@ -89,6 +91,8 @@ from ui_designer.utils.scaffold import (
     project_supported_text_path,
     project_user_resource_config_path,
     resource_catalog_path,
+    generated_resource_font_dir,
+    generated_resource_img_dir,
     resource_images_dir,
     resource_source_path,
     project_file_relpath,
@@ -111,6 +115,8 @@ from ui_designer.utils.scaffold import (
     sdk_example_layout_dir,
     sdk_example_layout_xml_path,
     sdk_example_config_resource_dir,
+    sdk_example_generated_font_dir,
+    sdk_example_generated_img_dir,
     sdk_example_resource_images_dir,
     sdk_example_generated_resource_dir,
     sdk_example_resource_src_dir,
@@ -460,6 +466,18 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(project_generated_resource_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/resource"
         )
+        assert os.path.normpath(generated_resource_img_dir("D:/workspace/DemoApp/resource")) == os.path.normpath(
+            "D:/workspace/DemoApp/resource/img"
+        )
+        assert os.path.normpath(generated_resource_font_dir("D:/workspace/DemoApp/resource")) == os.path.normpath(
+            "D:/workspace/DemoApp/resource/font"
+        )
+        assert os.path.normpath(project_generated_img_dir("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/resource/img"
+        )
+        assert os.path.normpath(project_generated_font_dir("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/resource/font"
+        )
         assert os.path.normpath(project_resource_src_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/resource/src"
         )
@@ -527,6 +545,12 @@ class TestCoreProjectScaffold:
         )
         assert os.path.normpath(sdk_example_generated_resource_dir(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/resource"
+        )
+        assert os.path.normpath(sdk_example_generated_img_dir(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/resource/img"
+        )
+        assert os.path.normpath(sdk_example_generated_font_dir(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/resource/font"
         )
         assert os.path.normpath(sdk_example_resource_src_dir(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/resource/src"

@@ -200,6 +200,22 @@ def project_generated_resource_dir(project_dir: str) -> str:
     return os.path.join(project_dir, "resource")
 
 
+def generated_resource_img_dir(resource_dir: str) -> str:
+    return os.path.join(resource_dir, "img") if resource_dir else ""
+
+
+def generated_resource_font_dir(resource_dir: str) -> str:
+    return os.path.join(resource_dir, "font") if resource_dir else ""
+
+
+def project_generated_img_dir(project_dir: str) -> str:
+    return generated_resource_img_dir(project_generated_resource_dir(project_dir))
+
+
+def project_generated_font_dir(project_dir: str) -> str:
+    return generated_resource_font_dir(project_generated_resource_dir(project_dir))
+
+
 def project_resource_src_dir(project_dir: str) -> str:
     return os.path.join(project_generated_resource_dir(project_dir), "src")
 
@@ -317,6 +333,14 @@ def sdk_example_resource_images_dir(sdk_root: str | None, app_name: str | None) 
 
 def sdk_example_generated_resource_dir(sdk_root: str | None, app_name: str | None) -> str:
     return _sdk_example_path(sdk_root, app_name, project_generated_resource_dir)
+
+
+def sdk_example_generated_img_dir(sdk_root: str | None, app_name: str | None) -> str:
+    return _sdk_example_path(sdk_root, app_name, project_generated_img_dir)
+
+
+def sdk_example_generated_font_dir(sdk_root: str | None, app_name: str | None) -> str:
+    return _sdk_example_path(sdk_root, app_name, project_generated_font_dir)
 
 
 def sdk_example_resource_src_dir(sdk_root: str | None, app_name: str | None) -> str:
