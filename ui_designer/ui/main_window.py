@@ -67,6 +67,7 @@ from ..model.build_metadata import collect_sdk_fingerprint, format_sdk_binding_l
 from ..model.config import get_config
 from ..model.sdk_bootstrap import default_sdk_install_dir, describe_sdk_source
 from ..model.workspace import (
+    SDK_RESOURCE_GENERATOR_RELPATH,
     designer_runtime_root,
     infer_sdk_root_from_project_dir,
     is_valid_sdk_root,
@@ -129,6 +130,7 @@ from ..utils.scaffold import (
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     DESIGNER_PROJECT_DIRNAME,
     RESOURCE_DIR_RELPATH,
+    RESOURCE_SRC_DIR_RELPATH,
     bind_project_storage,
     copy_project_sidecar_files,
     designer_page_header_relpath,
@@ -165,8 +167,9 @@ _SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
 _SPACE_LG = int(_DEFAULT_UI_TOKENS.get("space_lg", 16))
+_RESOURCE_GENERATOR_SCRIPT_NAME = os.path.basename(SDK_RESOURCE_GENERATOR_RELPATH)
 _GENERATE_RESOURCES_HINT_PREFIX = (
-    "Run resource generation (app_resource_generate.py) to produce\n"
+    f"Run resource generation ({_RESOURCE_GENERATOR_SCRIPT_NAME}) to produce\n"
     f"C source files from {RESOURCE_DIR_RELPATH}/ assets and widget config. "
 )
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
@@ -5307,12 +5310,12 @@ class MainWindow(QMainWindow):
         return True
 
     def _generate_resources(self, silent=False):
-        """Run the resource generation pipeline.
+        f"""Run the resource generation pipeline.
 
         Steps:
-        1. Sync .eguiproject/resources/ -> resource/src/
-        2. Generate resource/src/.designer/app_resource_config_designer.json from layout XML
-        3. Run app_resource_generate.py to produce C source files
+        1. Sync ``{RESOURCE_DIR_RELPATH}/`` -> ``{RESOURCE_SRC_DIR_RELPATH}/``
+        2. Generate ``{DESIGNER_RESOURCE_CONFIG_RELPATH}`` from layout XML
+        3. Run ``{_RESOURCE_GENERATOR_SCRIPT_NAME}`` to produce C source files
 
         Args:
             silent: If True, suppress warning dialogs (used for auto-trigger).
@@ -5324,8 +5327,8 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Resource generation FAILED.")
 
     def _ensure_resources_generated(self):
-        """Generate split resource config from widget properties and run
-        app_resource_generate.py if .eguiproject/resources/ exists.
+        f"""Generate split resource config from widget properties and run
+        ``{_RESOURCE_GENERATOR_SCRIPT_NAME}`` if ``{RESOURCE_DIR_RELPATH}/`` exists.
 
         Called before each compile to ensure resource C files are up-to-date.
         Skips entirely when resources haven't changed since last generation.
