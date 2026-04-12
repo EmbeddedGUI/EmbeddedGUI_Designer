@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from types import SimpleNamespace
 
+from ui_designer.tests.namespace_fixtures import build_namespace_stub
 from ui_designer.utils.scaffold import save_project_model
 
 
@@ -18,8 +18,8 @@ def _normalize_fake_files(files_or_filename, content=None):
 
 
 def build_materialized_codegen_result(files=None, *, all_generated_files=None):
-    """Return a SimpleNamespace shaped like materialized codegen outputs."""
-    return SimpleNamespace(
+    """Return a namespace stub shaped like materialized codegen outputs."""
+    return build_namespace_stub(
         files=dict(files or {}),
         all_generated_files=dict(all_generated_files or {}),
     )
