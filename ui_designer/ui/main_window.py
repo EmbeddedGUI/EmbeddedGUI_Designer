@@ -409,6 +409,9 @@ class MainWindow(QMainWindow):
             return
         enabled = bool(self._rebuild_action.isEnabled())
         reason = self._compile_action_blocked_reason() if not enabled else ""
+        if reason and not self._should_offer_debug_rebuild_action(reason):
+            self.debug_panel.set_rebuild_action_state(visible=False, enabled=False)
+            return
         tooltip = self._rebuild_action.toolTip() or (
             "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5)."
         )

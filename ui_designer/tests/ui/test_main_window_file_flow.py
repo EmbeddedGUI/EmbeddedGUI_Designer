@@ -4229,6 +4229,34 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_debug_rebuild_button_hides_after_environmental_preview_block(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DebugRebuildButtonHideDemo"
+        project = _create_project(project_dir, "DebugRebuildButtonHideDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window._update_debug_rebuild_action(show=True)
+        assert window.debug_panel._rebuild_btn.isHidden() is False
+
+        window._block_auto_compile_retry("make: *** No rule to make target 'main.exe'.  Stop.")
+        window._update_compile_availability()
+
+        assert window._compile_action.isEnabled() is False
+        assert window._rebuild_action.isEnabled() is False
+        assert window.debug_panel._rebuild_btn.isHidden() is True
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_compile_failure_feedback_handles_generic_preview_target_unavailable(self):
         from ui_designer.ui.main_window import MainWindow
 
