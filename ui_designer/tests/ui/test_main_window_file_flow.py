@@ -5627,25 +5627,25 @@ class TestMainWindowFileFlow:
 
         assert actions["Build EXE && Run"].toolTip() == (
             "Compile the current project and run the preview (F5). "
-            "Project: open. SDK: valid. Preview: stopped. Unavailable: preview disabled for test."
+            "Project: open. SDK: valid. Preview: editing only. Unavailable: preview disabled for test."
         )
         assert actions["Rebuild EGUI Project"].toolTip() == (
             "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5). "
-            "Project: open. SDK: valid. Preview: stopped. Unavailable: preview disabled for test."
+            "Project: open. SDK: valid. Preview: editing only. Unavailable: preview disabled for test."
         )
         assert actions["Clean All && Reconstruct"].toolTip() == (
             "Destructive recovery: delete project-side generated/code files outside the preserved "
             "Designer source set, reconstruct the project, and rerun the preview (Ctrl+Shift+F5). "
-            "Project: open. Saved project: unsaved. SDK: valid. Preview: stopped. Unavailable: save the project first."
+            "Project: open. Saved project: unsaved. SDK: valid. Preview: editing only. Unavailable: save the project first."
         )
         assert actions["Auto Compile"].toolTip() == (
             "Automatically compile and rerun the preview after changes. "
-            "Project: open. SDK: valid. Preview: stopped. Unavailable: preview disabled for test."
+            "Project: open. SDK: valid. Preview: editing only. Unavailable: preview disabled for test."
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
             "Project: open. SDK: valid. Compile: unavailable. Recovery: unavailable. Auto compile: on. "
-            f"Preview: stopped. Source resources: available. Resource directory: {project_resources_dir}."
+            f"Preview: editing only. Source resources: available. Resource directory: {project_resources_dir}."
         )
 
         class _BuildReadyCompiler:
@@ -12625,7 +12625,7 @@ class TestMainWindowFileFlow:
         assert window._save_action.isEnabled() is True
         assert window._compile_action.toolTip() == (
             "Compile the current project and run the preview (F5). "
-            "Project: open. SDK: valid. Preview: stopped. Unavailable: preview disabled for test."
+            "Project: open. SDK: valid. Preview: editing only. Unavailable: preview disabled for test."
         )
         assert window._compile_action.statusTip() == window._compile_action.toolTip()
         assert window._stop_action.toolTip() == (

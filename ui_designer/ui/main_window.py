@@ -1147,8 +1147,7 @@ class MainWindow(QMainWindow):
         compile_state = "available" if getattr(getattr(self, "_compile_action", None), "isEnabled", lambda: False)() else "unavailable"
         clean_state = "available" if getattr(getattr(self, "_clean_all_action", None), "isEnabled", lambda: False)() else "unavailable"
         auto_compile_state = "on" if getattr(getattr(self, "auto_compile_action", None), "isChecked", lambda: False)() else "off"
-        preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
-        preview_state = "running" if preview_running else "stopped"
+        preview_state = self._build_preview_state_text()
         project_state = "open" if getattr(self, "project", None) is not None else "none"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         resources_dir = self._get_eguiproject_resource_dir()
@@ -1666,19 +1665,23 @@ class MainWindow(QMainWindow):
             return "save the project first"
         return "clean-all recovery is unavailable"
 
+    def _build_preview_state_text(self):
+        if self.project is not None and self._effective_preview_unavailable_reason():
+            return "editing only"
+        preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
+        return "running" if preview_running else "stopped"
+
     def _compile_action_context_summary(self):
         project_state = "open" if self.project is not None else "none"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
-        preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
-        preview_state = "running" if preview_running else "stopped"
+        preview_state = self._build_preview_state_text()
         return f"Project: {project_state}. SDK: {sdk_state}. Preview: {preview_state}."
 
     def _clean_all_action_context_summary(self):
         project_state = "open" if self.project is not None else "none"
         saved_state = "saved" if self._project_dir else "unsaved"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
-        preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
-        preview_state = "running" if preview_running else "stopped"
+        preview_state = self._build_preview_state_text()
         return f"Project: {project_state}. Saved project: {saved_state}. SDK: {sdk_state}. Preview: {preview_state}."
 
     def _auto_compile_action_context_summary(self):
