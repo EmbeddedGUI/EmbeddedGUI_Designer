@@ -17,7 +17,6 @@ def test_main_window_close_smoke_with_active_timers():
         import os
         import shutil
         import sys
-        import tempfile
         import time
         from pathlib import Path
 
@@ -30,6 +29,7 @@ def test_main_window_close_smoke_with_active_timers():
 
         from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow
+        from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
 
         class DisabledCompiler:
@@ -58,8 +58,7 @@ def test_main_window_close_smoke_with_active_timers():
         app = QApplication.instance() or QApplication([])
         sample_project_dir = repo_root / "samples" / "release_smoke" / "ReleaseSmokeApp"
         sample_sdk_root = repo_root / "sdk" / "EmbeddedGUI"
-        (repo_root / "temp").mkdir(exist_ok=True)
-        config_root = Path(tempfile.mkdtemp(prefix="ui_designer_close_smoke_", dir=str(repo_root / "temp")))
+        config_root = create_repo_temp_workspace(repo_root, "ui_designer_close_smoke_")
         os.environ["EMBEDDEDGUI_DESIGNER_CONFIG_DIR"] = str(config_root)
         try:
             for _ in range(12):

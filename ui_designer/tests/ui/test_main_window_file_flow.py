@@ -1274,7 +1274,6 @@ class TestMainWindowFileFlow:
             import os
             import shutil
             import sys
-            import tempfile
             from pathlib import Path
 
             os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -1287,6 +1286,7 @@ class TestMainWindowFileFlow:
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project_with_widgets
             from ui_designer.ui.main_window import MainWindow
+            from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
 
             def create_sdk_root(root: Path):
@@ -1318,7 +1318,7 @@ class TestMainWindowFileFlow:
                     return False
 
 
-            temp_root = Path(tempfile.mkdtemp(prefix="ui_designer_filter_status_", dir=str(repo_root)))
+            temp_root = create_repo_temp_workspace(repo_root, "ui_designer_filter_status_")
             app = QApplication.instance() or QApplication([])
             try:
                 sdk_root = temp_root / "sdk"
@@ -7608,7 +7608,6 @@ class TestMainWindowFileFlow:
             import os
             import shutil
             import sys
-            import tempfile
             from pathlib import Path
 
             os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -7622,6 +7621,7 @@ class TestMainWindowFileFlow:
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project_with_page_widgets
             from ui_designer.ui.main_window import MainWindow
+            from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
 
             def create_sdk_root(root: Path):
@@ -7651,7 +7651,7 @@ class TestMainWindowFileFlow:
                     return False
 
 
-            temp_root = Path(tempfile.mkdtemp(prefix="ui_designer_string_delete_inspect_", dir=str(repo_root)))
+            temp_root = create_repo_temp_workspace(repo_root, "ui_designer_string_delete_inspect_")
             app = QApplication.instance() or QApplication([])
             try:
                 sdk_root = temp_root / "sdk"
@@ -7722,7 +7722,6 @@ class TestMainWindowFileFlow:
             import os
             import shutil
             import sys
-            import tempfile
             from pathlib import Path
 
             os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -7736,6 +7735,7 @@ class TestMainWindowFileFlow:
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project_with_page_widgets
             from ui_designer.ui.main_window import MainWindow
+            from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
 
             def create_sdk_root(root: Path):
@@ -7765,7 +7765,7 @@ class TestMainWindowFileFlow:
                     return False
 
 
-            temp_root = Path(tempfile.mkdtemp(prefix="ui_designer_string_usage_", dir=str(repo_root)))
+            temp_root = create_repo_temp_workspace(repo_root, "ui_designer_string_usage_")
             app = QApplication.instance() or QApplication([])
             try:
                 sdk_root = temp_root / "sdk"
@@ -10466,7 +10466,6 @@ class TestMainWindowFileFlow:
             import os
             import shutil
             import sys
-            import tempfile
             from pathlib import Path
 
             os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -10479,6 +10478,7 @@ class TestMainWindowFileFlow:
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project_with_widgets
             from ui_designer.ui.main_window import MainWindow
+            from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
 
             def create_sdk_root(root: Path):
@@ -10508,7 +10508,7 @@ class TestMainWindowFileFlow:
                     return False
 
 
-            temp_root = Path(tempfile.mkdtemp(prefix="ui_designer_diag_resource_", dir=str(repo_root)))
+            temp_root = create_repo_temp_workspace(repo_root, "ui_designer_diag_resource_")
             app = QApplication.instance() or QApplication([])
             try:
                 sdk_root = temp_root / "sdk"
@@ -10570,7 +10570,6 @@ class TestMainWindowFileFlow:
             import os
             import shutil
             import sys
-            import tempfile
             from pathlib import Path
 
             os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -10583,6 +10582,7 @@ class TestMainWindowFileFlow:
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project_with_widgets
             from ui_designer.ui.main_window import MainWindow
+            from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
 
             def create_sdk_root(root: Path):
@@ -10612,7 +10612,7 @@ class TestMainWindowFileFlow:
                     return False
 
 
-            temp_root = Path(tempfile.mkdtemp(prefix="ui_designer_diag_string_", dir=str(repo_root)))
+            temp_root = create_repo_temp_workspace(repo_root, "ui_designer_diag_string_")
             app = QApplication.instance() or QApplication([])
             try:
                 sdk_root = temp_root / "sdk"

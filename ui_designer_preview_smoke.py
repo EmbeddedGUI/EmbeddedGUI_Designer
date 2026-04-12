@@ -26,7 +26,11 @@ from ui_designer.model.project import Project
 from ui_designer.model.widget_model import AnimationModel, BackgroundModel, WidgetModel
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root_for_path
-from ui_designer.utils.runtime_temp import create_temp_workspace, repo_temp_dir
+from ui_designer.utils.runtime_temp import (
+    create_repo_temp_workspace,
+    create_temp_workspace,
+    repo_temp_dir,
+)
 from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widgets,
     save_project_and_materialize_codegen,
@@ -271,8 +275,10 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
         cli_sdk_root=sdk_root,
         cli_flag="--sdk-root",
     )
-    project_parent = Path(work_dir).resolve() if work_dir else default_work_dir_root()
-    temp_root = create_temp_workspace(project_parent, "ui_designer_preview_smoke_")
+    if work_dir:
+        temp_root = create_temp_workspace(Path(work_dir).resolve(), "ui_designer_preview_smoke_")
+    else:
+        temp_root = create_repo_temp_workspace(REPO_ROOT, "ui_designer_preview_smoke_", "preview_smoke")
     app_dir = temp_root / APP_NAME
     compiler: CompilerEngine | None = None
     preserve_workspace = keep_temp

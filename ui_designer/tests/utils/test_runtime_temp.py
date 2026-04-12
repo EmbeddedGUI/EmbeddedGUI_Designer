@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from ui_designer.utils.runtime_temp import create_temp_workspace, repo_temp_dir
+from ui_designer.utils.runtime_temp import (
+    create_repo_temp_workspace,
+    create_temp_workspace,
+    repo_temp_dir,
+)
 
 
 class TestRuntimeTempHelpers:
@@ -18,4 +22,14 @@ class TestRuntimeTempHelpers:
 
         assert workspace.is_dir()
         assert workspace.parent == parent.resolve()
+        assert workspace.name.startswith("demo_")
+
+    def test_create_repo_temp_workspace_uses_repo_temp_subdir(self, tmp_path):
+        repo_root = tmp_path / "repo"
+        repo_root.mkdir()
+
+        workspace = create_repo_temp_workspace(repo_root, "demo_", "preview_smoke")
+
+        assert workspace.is_dir()
+        assert workspace.parent == repo_root.resolve() / "temp" / "preview_smoke"
         assert workspace.name.startswith("demo_")
