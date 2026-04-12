@@ -7392,6 +7392,7 @@ class MainWindow(QMainWindow):
             return
 
         self._recreate_compiler()
+        preview_unavailable_reason = self._sync_preview_after_compiler_recreation(preload_preview_error=True)
         self._undo_manager.mark_all_saved()
         self._refresh_project_watch_snapshot()
         self._update_window_title()
@@ -7401,9 +7402,12 @@ class MainWindow(QMainWindow):
             f"Cleaned {report.removed_files} file(s) and {report.removed_dirs} director"
             f"{'y' if report.removed_dirs == 1 else 'ies'}; reconstructed {len(files)} code file(s)."
         )
+        status_message = summary
+        if preview_unavailable_reason and not (self.compiler is not None and self.compiler.can_build()):
+            status_message = f"{summary} | Editing-only mode: {preview_unavailable_reason}"
         self.debug_panel.log_action("Running destructive project cleanup and reconstruction...")
         self.debug_panel.log_info(summary)
-        self.statusBar().showMessage(summary, 5000)
+        self.statusBar().showMessage(status_message, 5000)
 
         if self.compiler is not None and self.compiler.can_build():
             self._clear_auto_compile_retry_block()
