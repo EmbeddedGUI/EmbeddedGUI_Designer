@@ -2453,19 +2453,14 @@ def save_empty_project_with_designer_scaffold(
     remove_legacy_designer_files=False,
 ):
     """Build and save an empty project model with the shared Designer scaffold policy."""
-    project = build_empty_project_model(
+    project, _actions = build_empty_project_model_and_save(
         app_name,
+        project_dir,
         screen_width,
         screen_height,
         sdk_root=sdk_root,
-        project_dir=project_dir,
         pages=pages,
-    )
-    if callable(project_customizer):
-        project_customizer(project)
-    save_project_model(
-        project,
-        project_dir,
+        project_customizer=project_customizer,
         with_designer_scaffold=True,
         overwrite_scaffold=overwrite_scaffold,
         color_depth=color_depth,
