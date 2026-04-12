@@ -2444,6 +2444,27 @@ def scaffold_sdk_example_conversion_project(
     )
 
 
+def scaffold_sdk_example_conversion_project_context(
+    sdk_root,
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    pages=None,
+    color_depth=16,
+):
+    """Apply conversion/import scaffold defaults and return the SDK example path bundle."""
+    _app_dir, actions = scaffold_sdk_example_conversion_project(
+        sdk_root,
+        app_name,
+        screen_width,
+        screen_height,
+        pages=pages,
+        color_depth=color_depth,
+    )
+    return sdk_example_paths(sdk_root, app_name), actions
+
+
 def ensure_designer_project_scaffold_with_sdk_root(
     project_dir,
     app_name,
@@ -2517,3 +2538,24 @@ def ensure_sdk_example_conversion_project_scaffold(
         color_depth=color_depth,
     )
     return app_dir, created, actions
+
+
+def ensure_sdk_example_conversion_project_context(
+    sdk_root,
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    pages=None,
+    color_depth=16,
+):
+    """Ensure conversion/import scaffold and return the SDK example path bundle."""
+    _app_dir, created, actions = ensure_sdk_example_conversion_project_scaffold(
+        sdk_root,
+        app_name,
+        screen_width,
+        screen_height,
+        pages=pages,
+        color_depth=color_depth,
+    )
+    return sdk_example_paths(sdk_root, app_name), created, actions

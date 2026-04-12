@@ -37,9 +37,8 @@ from html2egui_helper import (
 )
 from figmamake_anim_extractor import AnimExtractor
 from ui_designer.utils.scaffold import (
-    scaffold_sdk_example_conversion_project,
+    scaffold_sdk_example_conversion_project_context,
     sdk_example_layout_xml_path,
-    sdk_example_paths,
 )
 from ui_designer.utils.xml_utils import write_xml_file
 
@@ -523,18 +522,18 @@ class FigmaMakeCodegen:
             print(f"  WARNING: {ext_count} animations need framework extensions")
 
         print(f"[3/5] Applying shared conversion scaffold...")
-        app_dir, _scaffold_actions = scaffold_sdk_example_conversion_project(
+        example_paths, _scaffold_actions = scaffold_sdk_example_conversion_project_context(
             sdk_root,
             self.app_name,
             self.width,
             self.height,
             pages=page_names,
         )
+        app_dir = example_paths["app_dir"]
         print(f"  Prepared: {app_dir}")
 
         # 4. Generate XML layout files
         print(f"[4/5] Generating XML layouts...")
-        example_paths = sdk_example_paths(sdk_root, self.app_name)
         layout_dir = example_paths["layout_dir"]
         images_dir = example_paths["resource_images_dir"]
         resource_src_dir = example_paths["resource_src_dir"]
