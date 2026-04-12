@@ -36,13 +36,12 @@ from html2egui_helper import (
     _find_sdk_root,
 )
 from figmamake_anim_extractor import AnimExtractor
-from ui_designer.model.workspace import sdk_example_app_dir
 from ui_designer.utils.scaffold import (
     sdk_example_layout_xml_path,
     sdk_example_layout_dir,
     sdk_example_resource_images_dir,
     sdk_example_resource_src_dir,
-    scaffold_conversion_project_with_sdk_root,
+    scaffold_sdk_example_conversion_project,
 )
 from ui_designer.utils.xml_utils import write_xml_file
 
@@ -488,7 +487,6 @@ class FigmaMakeCodegen:
         Returns dict with generated file paths.
         """
         sdk_root = _find_sdk_root()
-        app_dir = sdk_example_app_dir(sdk_root, self.app_name)
 
         # 1. Discover project structure
         print(f"[1/5] Discovering Figma Make project: {project_dir}")
@@ -527,10 +525,9 @@ class FigmaMakeCodegen:
             print(f"  WARNING: {ext_count} animations need framework extensions")
 
         print(f"[3/5] Applying shared conversion scaffold...")
-        scaffold_conversion_project_with_sdk_root(
-            app_dir,
-            self.app_name,
+        app_dir, _scaffold_actions = scaffold_sdk_example_conversion_project(
             sdk_root,
+            self.app_name,
             self.width,
             self.height,
             pages=page_names,

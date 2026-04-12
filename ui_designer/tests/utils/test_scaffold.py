@@ -58,6 +58,7 @@ from ui_designer.utils.scaffold import (
     designer_scaffold_kwargs,
     generate_designer_resource_config,
     ensure_conversion_project_scaffold_with_sdk_root,
+    ensure_sdk_example_conversion_project_scaffold,
     require_page_root,
     require_project_page_root,
     normalize_scaffold_pages,
@@ -109,6 +110,7 @@ from ui_designer.utils.scaffold import (
     save_project_model,
     save_project_and_materialize_codegen,
     save_empty_project_with_designer_scaffold,
+    scaffold_sdk_example_conversion_project,
     scaffold_conversion_project_with_sdk_root,
     scaffold_designer_project,
     ensure_designer_project_scaffold_with_sdk_root,
@@ -1704,6 +1706,28 @@ class TestApplyDesignerProjectScaffold:
         assert "#define EGUI_CONFIG_COLOR_DEPTH 32" in designer_config
         assert "#define EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW 1" in designer_config
 
+    def test_scaffold_sdk_example_conversion_project_returns_sdk_example_dir_and_actions(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+
+        app_dir, actions = scaffold_sdk_example_conversion_project(
+            str(sdk_root),
+            "SdkExampleApp",
+            320,
+            240,
+            pages=["home", "detail"],
+            color_depth=32,
+        )
+
+        project_dir = sdk_root / "example" / "SdkExampleApp"
+        designer_config = (project_dir / ".designer" / "app_egui_config_designer.h").read_text(encoding="utf-8")
+        assert app_dir == str(project_dir)
+        assert actions[BUILD_MK_RELPATH] == "created"
+        assert actions["SdkExampleApp.egui"] == "created"
+        assert actions[".eguiproject/layout/home.xml"] == "created"
+        assert actions[".eguiproject/layout/detail.xml"] == "created"
+        assert "#define EGUI_CONFIG_COLOR_DEPTH 32" in designer_config
+        assert "#define EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW 1" in designer_config
+
     def test_ensure_designer_project_scaffold_with_sdk_root_only_creates_missing_dirs(self, tmp_path):
         sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
         existing_dir = sdk_root / "example" / "ExistingApp"
@@ -1761,6 +1785,7 @@ class TestApplyDesignerProjectScaffold:
             str(sdk_root),
             320,
             240,
+            pages=["home", "detail"],
             color_depth=32,
         )
 
@@ -1769,6 +1794,38 @@ class TestApplyDesignerProjectScaffold:
         assert new_created is True
         assert new_actions[BUILD_MK_RELPATH] == "created"
         assert new_actions["NewConversionApp.egui"] == "created"
+        assert new_actions[".eguiproject/layout/home.xml"] == "created"
+        assert new_actions[".eguiproject/layout/detail.xml"] == "created"
         designer_config = (new_dir / ".designer" / "app_egui_config_designer.h").read_text(encoding="utf-8")
         assert "#define EGUI_CONFIG_COLOR_DEPTH 32" in designer_config
         assert "#define EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW 1" in designer_config
+
+    def test_ensure_sdk_example_conversion_project_scaffold_returns_sdk_example_dir_and_create_state(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        existing_dir = sdk_root / "example" / "ExistingConversionApp"
+        existing_dir.mkdir(parents=True)
+
+        existing_app_dir, existing_created, existing_actions = ensure_sdk_example_conversion_project_scaffold(
+            str(sdk_root),
+            "ExistingConversionApp",
+            320,
+            240,
+        )
+        new_app_dir, new_created, new_actions = ensure_sdk_example_conversion_project_scaffold(
+            str(sdk_root),
+            "NewConversionApp",
+            320,
+            240,
+            pages=["home", "detail"],
+            color_depth=32,
+        )
+
+        assert existing_app_dir == str(existing_dir)
+        assert existing_created is False
+        assert existing_actions == {}
+        assert new_app_dir == str(sdk_root / "example" / "NewConversionApp")
+        assert new_created is True
+        assert new_actions[BUILD_MK_RELPATH] == "created"
+        assert new_actions["NewConversionApp.egui"] == "created"
+        assert new_actions[".eguiproject/layout/home.xml"] == "created"
+        assert new_actions[".eguiproject/layout/detail.xml"] == "created"

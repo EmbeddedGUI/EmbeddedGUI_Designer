@@ -2319,6 +2319,30 @@ def scaffold_conversion_project_with_sdk_root(
     )
 
 
+def scaffold_sdk_example_conversion_project(
+    sdk_root,
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    pages=None,
+    color_depth=16,
+):
+    """Apply conversion/import scaffold defaults to an SDK example app."""
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return "", {}
+    return app_dir, scaffold_conversion_project_with_sdk_root(
+        app_dir,
+        app_name,
+        sdk_root,
+        screen_width,
+        screen_height,
+        pages=pages,
+        color_depth=color_depth,
+    )
+
+
 def ensure_designer_project_scaffold_with_sdk_root(
     project_dir,
     app_name,
@@ -2350,6 +2374,7 @@ def ensure_conversion_project_scaffold_with_sdk_root(
     screen_width=240,
     screen_height=320,
     *,
+    pages=None,
     color_depth=16,
 ):
     """Create a conversion/import scaffold only when the target directory is missing."""
@@ -2359,9 +2384,35 @@ def ensure_conversion_project_scaffold_with_sdk_root(
         sdk_root,
         screen_width,
         screen_height,
+        pages=pages,
         **designer_conversion_scaffold_kwargs(
             screen_width,
             screen_height,
             color_depth=color_depth,
         ),
     )
+
+
+def ensure_sdk_example_conversion_project_scaffold(
+    sdk_root,
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    pages=None,
+    color_depth=16,
+):
+    """Create a conversion/import scaffold for an SDK example app when missing."""
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return "", False, {}
+    created, actions = ensure_conversion_project_scaffold_with_sdk_root(
+        app_dir,
+        app_name,
+        sdk_root,
+        screen_width,
+        screen_height,
+        pages=pages,
+        color_depth=color_depth,
+    )
+    return app_dir, created, actions

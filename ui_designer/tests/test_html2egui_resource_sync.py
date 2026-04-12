@@ -227,9 +227,13 @@ class TestHelperResourceSync:
 
         def fake_ensure(*args, **kwargs):
             calls.append((args, kwargs))
-            return args[1] == "NewApp", {}
+            return (
+                str(sdk_root / "example" / args[1]),
+                args[1] == "NewApp",
+                {},
+            )
 
-        monkeypatch.setattr(h, "ensure_conversion_project_scaffold_with_sdk_root", fake_ensure)
+        monkeypatch.setattr(h, "ensure_sdk_example_conversion_project_scaffold", fake_ensure)
 
         existing = h._ensure_app_scaffold_exists(str(sdk_root), "ExistingApp", 320, 240)
         created = h._ensure_app_scaffold_exists(str(sdk_root), "NewApp", 320, 240)
@@ -240,9 +244,8 @@ class TestHelperResourceSync:
 
         existing_args, existing_kwargs = calls[0]
         assert existing_args == (
-            str(existing_app_dir),
-            "ExistingApp",
             str(sdk_root),
+            "ExistingApp",
             320,
             240,
         )
@@ -250,9 +253,8 @@ class TestHelperResourceSync:
 
         created_args, created_kwargs = calls[1]
         assert created_args == (
-            str(sdk_root / "example" / "NewApp"),
-            "NewApp",
             str(sdk_root),
+            "NewApp",
             320,
             240,
         )
