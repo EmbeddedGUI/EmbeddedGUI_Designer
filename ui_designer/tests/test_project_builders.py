@@ -6,9 +6,13 @@ from ui_designer.tests.page_builders import build_test_pages
 from ui_designer.tests.project_builders import (
     build_saved_test_project,
     build_saved_test_project_and_page_with_widgets,
+    build_saved_test_project_and_page_with_widgets_and_materialize_codegen,
     build_saved_test_project_and_root_with_widgets,
+    build_saved_test_project_and_root_with_widgets_and_materialize_codegen,
     build_saved_test_project_only_with_page_widgets,
     build_saved_test_project_only_with_widgets,
+    build_saved_test_project_only_with_widgets_and_materialize_codegen,
+    build_saved_test_project_with_widgets_and_materialize_codegen,
     build_saved_test_project_with_widgets,
     build_saved_test_project_with_page_widgets,
     build_test_project,
@@ -550,6 +554,151 @@ class TestProjectBuilders:
         assert page.name == "main_page"
         assert root.children == []
         assert project.string_catalog.get("greeting", "default") == "Hello"
+
+    def test_build_saved_test_project_with_widgets_and_materialize_codegen_writes_outputs(self, tmp_path):
+        project_dir = tmp_path / "SavedSinglePageMaterializedBuilderDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, page, root, materialized = build_saved_test_project_with_widgets_and_materialize_codegen(
+            project_dir,
+            "SavedSinglePageMaterializedBuilderDemo",
+            page_name="home",
+            widgets=[label],
+            extra_files={"README.txt": "fixture\n"},
+            backup=False,
+            newline="\n",
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert page.name == "home"
+        assert root.children == [label]
+        assert (project_dir / "README.txt").read_text(encoding="utf-8") == "fixture\n"
+        assert "home_ext.h" in materialized.files
+
+    def test_build_saved_test_project_and_page_with_widgets_and_materialize_codegen_returns_project_and_page(self, tmp_path):
+        project_dir = tmp_path / "SavedProjectAndPageMaterializedBuilderDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, page, materialized = build_saved_test_project_and_page_with_widgets_and_materialize_codegen(
+            project_dir,
+            "SavedProjectAndPageMaterializedBuilderDemo",
+            page_name="home",
+            widgets=[label],
+            backup=False,
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert page.name == "home"
+        assert page.root_widget.children == [label]
+        assert "home_ext.h" in materialized.files
+
+    def test_build_saved_test_project_and_root_with_widgets_and_materialize_codegen_returns_project_and_root(self, tmp_path):
+        project_dir = tmp_path / "SavedProjectAndRootMaterializedBuilderDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, root, materialized = build_saved_test_project_and_root_with_widgets_and_materialize_codegen(
+            project_dir,
+            "SavedProjectAndRootMaterializedBuilderDemo",
+            page_name="home",
+            widgets=[label],
+            backup=False,
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert [child.name for child in root.children] == ["title"]
+        assert "home_ext.h" in materialized.files
+
+    def test_build_saved_test_project_only_with_widgets_and_materialize_codegen_returns_project(self, tmp_path):
+        project_dir = tmp_path / "SavedProjectOnlyMaterializedBuilderDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+        button = WidgetModel("button", name="confirm", x=10, y=48, width=80, height=32)
+
+        project, materialized = build_saved_test_project_only_with_widgets_and_materialize_codegen(
+            project_dir,
+            "SavedProjectOnlyMaterializedBuilderDemo",
+            page_name="home",
+            widgets=[label, button],
+            backup=False,
+        )
+        page, root = require_project_page_root(project, "home")
+
+        assert project.project_dir == str(project_dir)
+        assert page.name == "home"
+        assert root.children == [label, button]
+        assert "home_ext.h" in materialized.files
+
+    def test_build_saved_test_project_with_widgets_and_materialize_codegen_reuses_shared_saved_helper(self, tmp_path, monkeypatch):
+        project_dir = tmp_path / "SharedSavedSinglePageMaterializedBuilderDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+        captured = {}
+
+        def fake_build_saved_project_model_with_widgets_and_materialize_codegen(
+            app_name,
+            screen_width=240,
+            screen_height=320,
+            **kwargs,
+        ):
+            captured["app_name"] = app_name
+            captured["screen_width"] = screen_width
+            captured["screen_height"] = screen_height
+            captured["kwargs"] = kwargs
+            project, page, root = build_test_project_with_widgets(
+                app_name,
+                page_name=kwargs.get("page_name", "main_page"),
+                screen_width=screen_width,
+                screen_height=screen_height,
+                sdk_root=kwargs.get("sdk_root", ""),
+                project_dir=kwargs.get("project_dir", ""),
+                widgets=kwargs.get("widgets"),
+                page_customizer=kwargs.get("page_customizer"),
+                project_customizer=kwargs.get("project_customizer"),
+            )
+            return project, page, root, type("Materialized", (), {"files": {"home_ext.h": ""}})()
+
+        monkeypatch.setattr(
+            project_builders_module,
+            "build_saved_project_model_with_widgets_and_materialize_codegen",
+            fake_build_saved_project_model_with_widgets_and_materialize_codegen,
+        )
+
+        project, page, root, materialized = build_saved_test_project_with_widgets_and_materialize_codegen(
+            project_dir,
+            "SharedSavedSinglePageMaterializedBuilderDemo",
+            page_name="home",
+            widgets=[label],
+            overwrite=True,
+            backup=False,
+            extra_files={"README.txt": "fixture\n"},
+            newline="\n",
+            backup_existing=True,
+        )
+
+        assert project.app_name == "SharedSavedSinglePageMaterializedBuilderDemo"
+        assert page.name == "home"
+        assert root.children == [label]
+        assert "home_ext.h" in materialized.files
+        assert captured == {
+            "app_name": "SharedSavedSinglePageMaterializedBuilderDemo",
+            "screen_width": 240,
+            "screen_height": 320,
+            "kwargs": {
+                "sdk_root": "",
+                "project_dir": str(project_dir),
+                "page_name": "home",
+                "widgets": [label],
+                "page_customizer": None,
+                "project_customizer": None,
+                "before_save": None,
+                "overwrite": True,
+                "backup": False,
+                "extra_files": {"README.txt": "fixture\n"},
+                "extra_files_builder": None,
+                "newline": "\n",
+                "backup_existing": True,
+                "before_materialize": None,
+                "remove_legacy_designer_files": True,
+            },
+        }
 
     def test_build_test_project_from_pages_preserves_page_mode_and_startup(self):
         home_page, detail_page = build_test_pages("home", "detail")
