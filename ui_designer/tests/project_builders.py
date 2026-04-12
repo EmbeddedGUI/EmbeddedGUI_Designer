@@ -8,8 +8,6 @@ from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widget,
     build_project_model_and_page_with_widgets,
     build_project_model_and_root_with_widgets,
-    build_project_model_with_page_widgets_and_save,
-    build_project_model_with_widgets_and_save,
     build_project_model_with_widget,
     build_project_model_with_page_widgets,
     build_project_model_only_with_page_widgets,
@@ -21,7 +19,9 @@ from ui_designer.utils.scaffold import (
     build_project_model_only_from_root_with_widgets,
     build_project_model_from_root_with_widgets,
     build_empty_project_model,
-    build_empty_project_model_and_save,
+    build_saved_project_model,
+    build_saved_project_model_with_page_widgets,
+    build_saved_project_model_with_widgets,
     build_empty_project_model_with_root,
     require_project_page_root,
 )
@@ -45,6 +45,8 @@ def build_test_project(
         project_dir=str(project_dir or ""),
         pages=pages,
     )
+
+
 def build_test_project_with_root(
     app_name="TestApp",
     *,
@@ -479,7 +481,7 @@ def build_saved_test_project(
 ):
     """Build, optionally customize, and save a minimal test project to disk."""
     project_root = Path(project_dir)
-    project, _actions = build_empty_project_model_and_save(
+    return build_saved_project_model(
         app_name,
         str(project_root),
         screen_width,
@@ -491,7 +493,6 @@ def build_saved_test_project(
         overwrite_scaffold=overwrite_scaffold,
         remove_legacy_designer_files=True,
     )
-    return project
 
 
 def build_saved_test_project_with_widgets(
@@ -509,7 +510,7 @@ def build_saved_test_project_with_widgets(
     overwrite_scaffold=False,
 ):
     """Build, populate, optionally customize, and save a single-page test project to disk."""
-    project, page, root, _actions = build_project_model_with_widgets_and_save(
+    return build_saved_project_model_with_widgets(
         app_name,
         page_name=page_name,
         screen_width=screen_width,
@@ -523,7 +524,6 @@ def build_saved_test_project_with_widgets(
         overwrite_scaffold=overwrite_scaffold,
         remove_legacy_designer_files=True,
     )
-    return project, page, root
 
 
 def build_saved_test_project_with_page_widgets(
@@ -541,7 +541,7 @@ def build_saved_test_project_with_page_widgets(
     overwrite_scaffold=False,
 ):
     """Build, populate, optionally customize, and save a multi-page test project to disk."""
-    project, roots, _actions = build_project_model_with_page_widgets_and_save(
+    return build_saved_project_model_with_page_widgets(
         app_name,
         screen_width,
         screen_height,
@@ -555,4 +555,3 @@ def build_saved_test_project_with_page_widgets(
         overwrite_scaffold=overwrite_scaffold,
         remove_legacy_designer_files=True,
     )
-    return project, roots

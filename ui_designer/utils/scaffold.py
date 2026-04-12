@@ -1886,6 +1886,16 @@ def _save_built_project_result(
     return built, actions
 
 
+def _drop_result_tail(result):
+    """Return a helper result with its trailing metadata item removed."""
+    if not isinstance(result, tuple):
+        return result
+    trimmed = result[:-1]
+    if len(trimmed) == 1:
+        return trimmed[0]
+    return trimmed
+
+
 def _save_built_project_and_materialize_codegen(
     project,
     project_dir,
@@ -2081,6 +2091,59 @@ def build_project_model_with_widgets_and_materialize_codegen(
         before_materialize=before_materialize,
     )
     return project, page, root, materialized
+
+
+def build_project_model_and_page_with_widgets_and_materialize_codegen(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_name="main_page",
+    widgets=None,
+    page_customizer=None,
+    project_customizer=None,
+    before_save=None,
+    overwrite=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+    backup=True,
+    extra_files=None,
+    extra_files_builder=None,
+    newline=None,
+    backup_existing=False,
+    before_materialize=None,
+):
+    """Build a single-page project, materialize outputs, and return only the project and page."""
+    project, page, _root, materialized = build_project_model_with_widgets_and_materialize_codegen(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_name=page_name,
+        widgets=widgets,
+        page_customizer=page_customizer,
+        project_customizer=project_customizer,
+        before_save=before_save,
+        overwrite=overwrite,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+        backup=backup,
+        extra_files=extra_files,
+        extra_files_builder=extra_files_builder,
+        newline=newline,
+        backup_existing=backup_existing,
+        before_materialize=before_materialize,
+    )
+    return project, page, materialized
 
 
 def build_project_model_only_with_widgets(
@@ -2531,6 +2594,134 @@ def build_empty_project_model_and_save(
         extra_config_macros=extra_config_macros,
         refresh_designer_resource_config=refresh_designer_resource_config,
         remove_legacy_designer_files=remove_legacy_designer_files,
+    )
+
+
+def build_saved_project_model(
+    app_name,
+    project_dir,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    pages=None,
+    project_customizer=None,
+    before_save=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Build and save a project model, returning only the project."""
+    return _drop_result_tail(
+        build_empty_project_model_and_save(
+            app_name,
+            project_dir,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            pages=pages,
+            project_customizer=project_customizer,
+            before_save=before_save,
+            with_designer_scaffold=with_designer_scaffold,
+            overwrite_scaffold=overwrite_scaffold,
+            color_depth=color_depth,
+            circle_radius=circle_radius,
+            extra_config_macros=extra_config_macros,
+            refresh_designer_resource_config=refresh_designer_resource_config,
+            remove_legacy_designer_files=remove_legacy_designer_files,
+        )
+    )
+
+
+def build_saved_project_model_with_widgets(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_name="main_page",
+    widgets=None,
+    page_customizer=None,
+    project_customizer=None,
+    before_save=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Build and save a single-page project model, returning the populated page root."""
+    return _drop_result_tail(
+        build_project_model_with_widgets_and_save(
+            app_name,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_name=page_name,
+            widgets=widgets,
+            page_customizer=page_customizer,
+            project_customizer=project_customizer,
+            before_save=before_save,
+            with_designer_scaffold=with_designer_scaffold,
+            overwrite_scaffold=overwrite_scaffold,
+            color_depth=color_depth,
+            circle_radius=circle_radius,
+            extra_config_macros=extra_config_macros,
+            refresh_designer_resource_config=refresh_designer_resource_config,
+            remove_legacy_designer_files=remove_legacy_designer_files,
+        )
+    )
+
+
+def build_saved_project_model_with_page_widgets(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_widgets=None,
+    page_customizers=None,
+    pages=None,
+    project_customizer=None,
+    before_save=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Build and save a multi-page project model, returning only the project and page roots."""
+    return _drop_result_tail(
+        build_project_model_with_page_widgets_and_save(
+            app_name,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_widgets=page_widgets,
+            page_customizers=page_customizers,
+            pages=pages,
+            project_customizer=project_customizer,
+            before_save=before_save,
+            with_designer_scaffold=with_designer_scaffold,
+            overwrite_scaffold=overwrite_scaffold,
+            color_depth=color_depth,
+            circle_radius=circle_radius,
+            extra_config_macros=extra_config_macros,
+            refresh_designer_resource_config=refresh_designer_resource_config,
+            remove_legacy_designer_files=remove_legacy_designer_files,
+        )
     )
 
 

@@ -78,11 +78,11 @@ class TestProjectBuilders:
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
         assert (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").is_file()
 
-    def test_build_saved_test_project_reuses_shared_empty_build_save_helper_for_scaffolded_save(self, tmp_path, monkeypatch):
+    def test_build_saved_test_project_reuses_shared_saved_project_helper_for_scaffolded_save(self, tmp_path, monkeypatch):
         project_dir = tmp_path / "SharedScaffoldedSavedBuilderDemo"
         captured = {}
 
-        def fake_build_empty_project_model_and_save(
+        def fake_build_saved_project_model(
             app_name,
             project_dir_arg,
             screen_width=240,
@@ -101,12 +101,12 @@ class TestProjectBuilders:
                 sdk_root=kwargs.get("sdk_root", ""),
                 project_dir=project_dir_arg,
                 pages=kwargs.get("pages"),
-            ), {}
+            )
 
         monkeypatch.setattr(
             project_builders_module,
-            "build_empty_project_model_and_save",
-            fake_build_empty_project_model_and_save,
+            "build_saved_project_model",
+            fake_build_saved_project_model,
         )
 
         project = build_saved_test_project(
@@ -134,7 +134,7 @@ class TestProjectBuilders:
             },
         }
 
-    def test_build_saved_test_project_forwards_project_customizer_to_shared_empty_build_save_helper(self, tmp_path, monkeypatch):
+    def test_build_saved_test_project_forwards_project_customizer_to_shared_saved_project_helper(self, tmp_path, monkeypatch):
         project_dir = tmp_path / "CustomizedSharedScaffoldedSavedBuilderDemo"
         captured = {}
 
@@ -142,7 +142,7 @@ class TestProjectBuilders:
             project.screen_width = 480
             project.screen_height = 272
 
-        def fake_build_empty_project_model_and_save(
+        def fake_build_saved_project_model(
             app_name,
             project_dir_arg,
             screen_width=240,
@@ -159,12 +159,12 @@ class TestProjectBuilders:
             )
             kwargs["project_customizer"](project)
             captured["project_customizer"] = kwargs["project_customizer"]
-            return project, {}
+            return project
 
         monkeypatch.setattr(
             project_builders_module,
-            "build_empty_project_model_and_save",
-            fake_build_empty_project_model_and_save,
+            "build_saved_project_model",
+            fake_build_saved_project_model,
         )
 
         project = build_saved_test_project(
@@ -196,11 +196,11 @@ class TestProjectBuilders:
         assert project.screen_height == 272
         assert (project_dir / "SavedProjectCustomizerDemo.egui").is_file()
 
-    def test_build_saved_test_project_reuses_shared_empty_build_save_helper(self, tmp_path, monkeypatch):
+    def test_build_saved_test_project_reuses_shared_saved_project_helper(self, tmp_path, monkeypatch):
         project_dir = tmp_path / "SharedSavedBuilderDemo"
         captured = {}
 
-        def fake_build_empty_project_model_and_save(
+        def fake_build_saved_project_model(
             app_name,
             project_dir_arg,
             screen_width=240,
@@ -212,22 +212,19 @@ class TestProjectBuilders:
             captured["screen_width"] = screen_width
             captured["screen_height"] = screen_height
             captured["kwargs"] = kwargs
-            return (
-                build_test_project(
-                    app_name,
-                    screen_width,
-                    screen_height,
-                    sdk_root=kwargs.get("sdk_root", ""),
-                    project_dir=project_dir_arg,
-                    pages=kwargs.get("pages"),
-                ),
-                {},
+            return build_test_project(
+                app_name,
+                screen_width,
+                screen_height,
+                sdk_root=kwargs.get("sdk_root", ""),
+                project_dir=project_dir_arg,
+                pages=kwargs.get("pages"),
             )
 
         monkeypatch.setattr(
             project_builders_module,
-            "build_empty_project_model_and_save",
-            fake_build_empty_project_model_and_save,
+            "build_saved_project_model",
+            fake_build_saved_project_model,
         )
 
         project = build_saved_test_project(
@@ -272,13 +269,13 @@ class TestProjectBuilders:
         assert roots["main_page"].children == [home_label]
         assert roots["detail_page"].children == [detail_button]
 
-    def test_build_saved_test_project_with_page_widgets_reuses_shared_build_save_helper(self, tmp_path, monkeypatch):
+    def test_build_saved_test_project_with_page_widgets_reuses_shared_saved_page_widgets_helper(self, tmp_path, monkeypatch):
         project_dir = tmp_path / "SharedSavedWidgetBuilderDemo"
         home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
         detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
         captured = {}
 
-        def fake_build_project_model_with_page_widgets_and_save(
+        def fake_build_saved_project_model_with_page_widgets(
             app_name,
             screen_width=240,
             screen_height=320,
@@ -299,12 +296,12 @@ class TestProjectBuilders:
                 pages=kwargs.get("pages"),
                 project_customizer=kwargs.get("project_customizer"),
             )
-            return project, roots, {}
+            return project, roots
 
         monkeypatch.setattr(
             project_builders_module,
-            "build_project_model_with_page_widgets_and_save",
-            fake_build_project_model_with_page_widgets_and_save,
+            "build_saved_project_model_with_page_widgets",
+            fake_build_saved_project_model_with_page_widgets,
         )
 
         project, roots = build_saved_test_project_with_page_widgets(
@@ -380,13 +377,13 @@ class TestProjectBuilders:
         assert (project_dir / "SavedSinglePageWidgetBuilderDemo.egui").is_file()
         assert root.children == [label, button]
 
-    def test_build_saved_test_project_with_widgets_reuses_shared_build_save_helper(self, tmp_path, monkeypatch):
+    def test_build_saved_test_project_with_widgets_reuses_shared_saved_widgets_helper(self, tmp_path, monkeypatch):
         project_dir = tmp_path / "SharedSavedSinglePageWidgetBuilderDemo"
         label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
         button = WidgetModel("button", name="confirm", x=10, y=48, width=80, height=32)
         captured = {}
 
-        def fake_build_project_model_with_widgets_and_save(
+        def fake_build_saved_project_model_with_widgets(
             app_name,
             screen_width=240,
             screen_height=320,
@@ -407,12 +404,12 @@ class TestProjectBuilders:
                 page_customizer=kwargs.get("page_customizer"),
                 project_customizer=kwargs.get("project_customizer"),
             )
-            return project, page, root, {}
+            return project, page, root
 
         monkeypatch.setattr(
             project_builders_module,
-            "build_project_model_with_widgets_and_save",
-            fake_build_project_model_with_widgets_and_save,
+            "build_saved_project_model_with_widgets",
+            fake_build_saved_project_model_with_widgets,
         )
 
         project, page, root = build_saved_test_project_with_widgets(

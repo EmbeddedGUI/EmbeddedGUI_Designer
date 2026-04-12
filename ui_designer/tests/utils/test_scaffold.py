@@ -37,6 +37,7 @@ from ui_designer.utils.scaffold import (
     build_page_model_with_root_widget,
     build_project_model_and_page_with_widget,
     build_project_model_and_page_with_widgets,
+    build_project_model_and_page_with_widgets_and_materialize_codegen,
     build_project_model_with_widgets_and_materialize_codegen,
     build_project_model_with_page_widgets_and_save,
     build_project_model_with_widgets_and_save,
@@ -55,6 +56,9 @@ from ui_designer.utils.scaffold import (
     build_page_model_with_widgets,
     build_empty_project_model,
     build_empty_project_model_and_save,
+    build_saved_project_model,
+    build_saved_project_model_with_page_widgets,
+    build_saved_project_model_with_widgets,
     build_empty_project_model_with_root,
     build_empty_project_xml,
     default_scaffold_circle_radius,
@@ -1211,6 +1215,77 @@ class TestCoreProjectScaffold:
         assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
         assert (project_dir / ".eguiproject" / "layout" / "detail.xml").is_file()
 
+    def test_build_saved_project_model_returns_project_without_actions(self, tmp_path):
+        project_dir = tmp_path / "BuiltSavedProjectOnlyHelperApp"
+
+        project = build_saved_project_model(
+            "BuiltSavedProjectOnlyHelperApp",
+            str(project_dir),
+            320,
+            240,
+            sdk_root="D:/sdk",
+            pages=["home", "detail"],
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+            remove_legacy_designer_files=True,
+        )
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert (project_dir / "BuiltSavedProjectOnlyHelperApp.egui").is_file()
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
+
+    def test_build_saved_project_model_with_page_widgets_returns_project_and_roots_without_actions(self, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "BuiltSavedPageWidgetsOnlyHelperApp"
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+
+        project, roots = build_saved_project_model_with_page_widgets(
+            "BuiltSavedPageWidgetsOnlyHelperApp",
+            320,
+            240,
+            project_dir=str(project_dir),
+            page_widgets={
+                "home": [home_label],
+                "detail": [detail_button],
+            },
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+            remove_legacy_designer_files=True,
+        )
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert roots["home"].children == [home_label]
+        assert roots["detail"].children == [detail_button]
+        assert (project_dir / "BuiltSavedPageWidgetsOnlyHelperApp.egui").is_file()
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
+
+    def test_build_saved_project_model_with_widgets_returns_project_page_and_root_without_actions(self, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "BuiltSavedWidgetsOnlyHelperApp"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, page, root = build_saved_project_model_with_widgets(
+            "BuiltSavedWidgetsOnlyHelperApp",
+            320,
+            240,
+            project_dir=str(project_dir),
+            page_name="home",
+            widgets=[label],
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+            remove_legacy_designer_files=True,
+        )
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert page.name == "home"
+        assert root.children == [label]
+        assert (project_dir / "BuiltSavedWidgetsOnlyHelperApp.egui").is_file()
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
+
     def test_build_project_model_with_widgets_and_materialize_codegen_writes_generated_outputs(self, tmp_path):
         from ui_designer.model.widget_model import WidgetModel
 
@@ -1250,6 +1325,30 @@ class TestCoreProjectScaffold:
         assert (project_dir / ".designer" / "home_layout.c").is_file()
         assert (project_dir / "home.c").read_text(encoding="utf-8") == "// custom home source\n"
         assert (project_dir / "README.txt").read_text(encoding="utf-8") == "generated fixture\n"
+        assert "home_ext.h" in materialized.files
+
+    def test_build_project_model_and_page_with_widgets_and_materialize_codegen_returns_project_page_without_root(self, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "BuiltMaterializedPageHelperApp"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, page, materialized = build_project_model_and_page_with_widgets_and_materialize_codegen(
+            "BuiltMaterializedPageHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            page_name="home",
+            widgets=[label],
+            backup=False,
+        )
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert page.name == "home"
+        assert [child.name for child in page.root_widget.children] == ["title"]
+        assert (project_dir / "BuiltMaterializedPageHelperApp.egui").is_file()
         assert "home_ext.h" in materialized.files
 
     def test_build_project_model_with_widgets_and_materialize_codegen_runs_before_save_hook_once_after_binding(self, tmp_path):
