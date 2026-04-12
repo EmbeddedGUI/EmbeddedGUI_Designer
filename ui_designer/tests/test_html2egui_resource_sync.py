@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 
 import html2egui_helper as h
 from ui_designer.utils.resource_config_overlay import make_empty_resource_config_content
-from ui_designer.utils.scaffold import RESOURCE_IMAGES_DIR_RELPATH
+from ui_designer.utils.scaffold import RESOURCE_IMAGES_DIR_RELPATH, SUPPORTED_TEXT_RELPATH
 
 
 class _FakePage:
@@ -113,9 +113,17 @@ class TestHelperResourceSync:
         )
 
         assert out_path == str(
-            sdk_root / "example" / "DemoApp" / "resource" / "src" / "supported_text.txt"
+            sdk_root / "example" / "DemoApp" / SUPPORTED_TEXT_RELPATH
         )
         assert (sdk_root / "example" / "DemoApp" / "resource" / "src").is_dir()
+
+    def test_extract_text_help_uses_shared_supported_text_relpath(self, monkeypatch, capsys):
+        monkeypatch.setattr(sys, "argv", ["html2egui_helper.py", "extract-text", "--help"])
+
+        with pytest.raises(SystemExit, match="0"):
+            h.main()
+
+        assert SUPPORTED_TEXT_RELPATH in capsys.readouterr().out
 
     def test_resolve_extract_text_output_path_allows_stdout_fallback(self, tmp_path):
         assert h._resolve_extract_text_output_path(str(tmp_path / "sdk")) == ""

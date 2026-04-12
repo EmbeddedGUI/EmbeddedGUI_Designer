@@ -18,6 +18,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_CONFIG_RELPATH,
     RESOURCE_DIR_RELPATH,
     RESOURCE_SRC_DIR_RELPATH,
+    SUPPORTED_TEXT_RELPATH,
     add_page_widget,
     add_widget_children,
     apply_designer_project_scaffold,
@@ -67,6 +68,7 @@ from ui_designer.utils.scaffold import (
     project_file_path,
     project_generated_resource_dir,
     project_resource_src_dir,
+    project_supported_text_path,
     project_user_resource_config_path,
     project_file_relpath,
     project_layout_xml_relpath,
@@ -399,6 +401,9 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(project_designer_resource_config_path("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/resource/src/.designer/app_resource_config_designer.json"
         )
+        assert os.path.normpath(project_supported_text_path("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/resource/src/supported_text.txt"
+        )
         assert os.path.normpath(project_build_mk_path("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/build.mk"
         )
@@ -410,6 +415,7 @@ class TestCoreProjectScaffold:
         assert MOCKUP_DIR_RELPATH == ".eguiproject/mockup"
         assert RELEASE_CONFIG_RELPATH == ".eguiproject/release.json"
         assert RESOURCE_SRC_DIR_RELPATH == "resource/src"
+        assert SUPPORTED_TEXT_RELPATH == "resource/src/supported_text.txt"
         assert project_file_relpath("DemoApp") == "DemoApp.egui"
         assert os.path.normpath(project_file_path("D:/workspace/DemoApp", "DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/DemoApp.egui"

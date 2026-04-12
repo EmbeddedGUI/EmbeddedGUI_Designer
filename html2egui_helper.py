@@ -46,6 +46,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     RESOURCE_IMAGES_DIR_RELPATH,
+    SUPPORTED_TEXT_RELPATH,
     ensure_conversion_project_scaffold_with_sdk_root,
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
@@ -57,6 +58,7 @@ from ui_designer.utils.scaffold import (
     project_generated_resource_dir,
     project_file_path,
     project_resource_src_dir,
+    project_supported_text_path,
     project_user_resource_config_path,
     project_file_relpath,
     project_layout_xml_relpath,
@@ -139,9 +141,10 @@ def _resolve_extract_text_output_path(sdk_root, *, output_path="", app_name=None
     if output_path:
         return output_path
     if app_name:
-        src_dir = _get_app_resource_src_dir(_get_app_dir(sdk_root, app_name))
+        app_dir = _get_app_dir(sdk_root, app_name)
+        src_dir = _get_app_resource_src_dir(app_dir)
         os.makedirs(src_dir, exist_ok=True)
-        return os.path.join(src_dir, "supported_text.txt")
+        return project_supported_text_path(app_dir)
     return ""
 
 
@@ -3739,7 +3742,7 @@ See README.md for the standalone conversion workflow.
     p_text = sub.add_parser("extract-text", help="Extract unique characters from HTML for font generation")
     p_text.add_argument("--input", "-i", required=True, help="Input HTML file path")
     p_text.add_argument("--output", "-o", default=None, help="Output .txt file path (default: auto from --app or stdout)")
-    p_text.add_argument("--app", "-n", default=None, help="App name (auto-saves to resource/src/supported_text.txt)")
+    p_text.add_argument("--app", "-n", default=None, help=f"App name (auto-saves to {SUPPORTED_TEXT_RELPATH})")
 
     # gen-resource
     p_resource = sub.add_parser("gen-resource", help="Generate C resource files")

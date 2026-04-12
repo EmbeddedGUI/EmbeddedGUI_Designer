@@ -33,6 +33,8 @@ RELEASE_CONFIG_RELPATH = f"{EGUIPROJECT_DIRNAME}/release.json"
 RESOURCE_IMAGES_DIR_RELPATH = f"{RESOURCE_DIR_RELPATH}/images"
 RESOURCE_CATALOG_RELPATH = f"{RESOURCE_DIR_RELPATH}/resources.xml"
 RESOURCE_SRC_DIR_RELPATH = "resource/src"
+SUPPORTED_TEXT_FILENAME = "supported_text.txt"
+SUPPORTED_TEXT_RELPATH = f"{RESOURCE_SRC_DIR_RELPATH}/{SUPPORTED_TEXT_FILENAME}"
 RESOURCE_IMG_DIR_RELPATH = "resource/img"
 RESOURCE_FONT_DIR_RELPATH = "resource/font"
 BUILD_DESIGNER_FILENAME = "build_designer.mk"
@@ -205,6 +207,10 @@ def project_designer_resource_dir(project_dir: str) -> str:
 
 def project_designer_resource_config_path(project_dir: str) -> str:
     return designer_resource_config_path(project_resource_src_dir(project_dir))
+
+
+def project_supported_text_path(project_dir: str) -> str:
+    return os.path.join(project_resource_src_dir(project_dir), SUPPORTED_TEXT_FILENAME)
 
 
 def project_config_resource_dir(project_dir: str) -> str:
