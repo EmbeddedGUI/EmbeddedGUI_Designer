@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 import html2egui_helper as h
 from ui_designer.model.workspace import sdk_example_app_dir
 from ui_designer.utils.resource_config_overlay import make_empty_resource_config_content
+from ui_designer.utils.scaffold import sdk_example_resource_images_dir, sdk_example_supported_text_path
 from ui_designer.utils.scaffold import RESOURCE_IMAGES_DIR_RELPATH, RESOURCE_SRC_DIR_RELPATH, SUPPORTED_TEXT_RELPATH
 
 
@@ -87,9 +88,7 @@ class TestHelperResourceSync:
         assert h._resolve_export_image_output_dir(
             str(sdk_root),
             app_name="DemoApp",
-        ) == str(
-            sdk_root / "example" / "DemoApp" / ".eguiproject" / "resources" / "images"
-        )
+        ) == sdk_example_resource_images_dir(str(sdk_root), "DemoApp")
 
     def test_resolve_export_image_output_dir_requires_output_or_app(self, tmp_path):
         with pytest.raises(ValueError, match="Must specify either --output or --app"):
@@ -113,9 +112,7 @@ class TestHelperResourceSync:
             app_name="DemoApp",
         )
 
-        assert out_path == str(
-            sdk_root / "example" / "DemoApp" / SUPPORTED_TEXT_RELPATH
-        )
+        assert out_path == sdk_example_supported_text_path(str(sdk_root), "DemoApp")
         assert (sdk_root / "example" / "DemoApp" / "resource" / "src").is_dir()
 
     def test_extract_text_help_uses_shared_supported_text_relpath(self, monkeypatch, capsys):

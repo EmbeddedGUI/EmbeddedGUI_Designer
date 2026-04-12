@@ -34,17 +34,16 @@ from html2egui_helper import (
     _lucide_name_to_material,
     _extract_tw_color,
     _find_sdk_root,
-    _get_app_dir,
-    _get_app_layout_dir,
-    _get_app_resource_images_dir,
-    _get_app_resource_src_dir,
 )
 from figmamake_anim_extractor import AnimExtractor
-from ui_designer.model.workspace import sdk_example_project_path
+from ui_designer.model.workspace import sdk_example_app_dir, sdk_example_project_path
 from ui_designer.utils.scaffold import (
     build_empty_project_xml,
     build_empty_resources_xml,
     project_resource_catalog_path,
+    sdk_example_layout_dir,
+    sdk_example_resource_images_dir,
+    sdk_example_resource_src_dir,
 )
 from ui_designer.utils.xml_utils import write_xml_file
 
@@ -490,7 +489,7 @@ class FigmaMakeCodegen:
         Returns dict with generated file paths.
         """
         sdk_root = _find_sdk_root()
-        app_dir = _get_app_dir(sdk_root, self.app_name)
+        app_dir = sdk_example_app_dir(sdk_root, self.app_name)
 
         # 1. Discover project structure
         print(f"[1/5] Discovering Figma Make project: {project_dir}")
@@ -518,9 +517,12 @@ class FigmaMakeCodegen:
 
         # 3. Generate XML layout files
         print(f"[3/5] Generating XML layouts...")
-        os.makedirs(_get_app_layout_dir(app_dir), exist_ok=True)
-        os.makedirs(_get_app_resource_images_dir(app_dir), exist_ok=True)
-        os.makedirs(_get_app_resource_src_dir(app_dir), exist_ok=True)
+        layout_dir = sdk_example_layout_dir(sdk_root, self.app_name)
+        images_dir = sdk_example_resource_images_dir(sdk_root, self.app_name)
+        resource_src_dir = sdk_example_resource_src_dir(sdk_root, self.app_name)
+        os.makedirs(layout_dir, exist_ok=True)
+        os.makedirs(images_dir, exist_ok=True)
+        os.makedirs(resource_src_dir, exist_ok=True)
 
         page_names = []
         for page_info in discovery["pages"]:
@@ -568,9 +570,7 @@ class FigmaMakeCodegen:
             gen.cleanup_xml(xml_root)
 
             # Write XML
-            xml_path = os.path.join(
-                _get_app_layout_dir(app_dir), f"{page_name}.xml"
-            )
+            xml_path = os.path.join(layout_dir, f"{page_name}.xml")
             write_xml_file(xml_path, xml_root)
             print(f"  Generated: {page_name}.xml")
 

@@ -97,6 +97,13 @@ from ui_designer.utils.scaffold import (
     scaffold_designer_project_with_sdk_root,
     save_project_with_designer_scaffold,
     sdk_example_reference_frames_dir,
+    sdk_example_config_dir,
+    sdk_example_layout_dir,
+    sdk_example_config_resource_dir,
+    sdk_example_resource_images_dir,
+    sdk_example_generated_resource_dir,
+    sdk_example_resource_src_dir,
+    sdk_example_supported_text_path,
     sdk_example_regression_report_path,
     sdk_example_regression_results_path,
     sync_project_resources_and_generate_designer_resource_config,
@@ -466,6 +473,27 @@ class TestCoreProjectScaffold:
     def test_sdk_example_scaffold_path_helpers_use_sdk_example_layout(self):
         sdk_root = "D:/sdk/EmbeddedGUI"
 
+        assert os.path.normpath(sdk_example_config_dir(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject"
+        )
+        assert os.path.normpath(sdk_example_layout_dir(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/layout"
+        )
+        assert os.path.normpath(sdk_example_config_resource_dir(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/resources"
+        )
+        assert os.path.normpath(sdk_example_resource_images_dir(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/resources/images"
+        )
+        assert os.path.normpath(sdk_example_generated_resource_dir(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/resource"
+        )
+        assert os.path.normpath(sdk_example_resource_src_dir(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/resource/src"
+        )
+        assert os.path.normpath(sdk_example_supported_text_path(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/resource/src/supported_text.txt"
+        )
         assert os.path.normpath(sdk_example_reference_frames_dir(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/reference_frames"
         )

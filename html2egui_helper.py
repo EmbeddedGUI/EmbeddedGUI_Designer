@@ -70,6 +70,9 @@ from ui_designer.utils.scaffold import (
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_conversion_project_with_sdk_root,
+    sdk_example_resource_images_dir,
+    sdk_example_supported_text_path,
+    sdk_example_resource_src_dir,
     sync_project_resources_and_generate_designer_resource_config,
 )
 
@@ -139,7 +142,7 @@ def _resolve_export_image_output_dir(sdk_root, *, output_path="", app_name=None)
     if output_path:
         return output_path
     if app_name:
-        return _get_app_resource_images_dir(_get_app_dir(sdk_root, app_name))
+        return sdk_example_resource_images_dir(sdk_root, app_name)
     raise ValueError("Must specify either --output or --app")
 
 
@@ -148,10 +151,9 @@ def _resolve_extract_text_output_path(sdk_root, *, output_path="", app_name=None
     if output_path:
         return output_path
     if app_name:
-        app_dir = _get_app_dir(sdk_root, app_name)
-        src_dir = _get_app_resource_src_dir(app_dir)
+        src_dir = sdk_example_resource_src_dir(sdk_root, app_name)
         os.makedirs(src_dir, exist_ok=True)
-        return project_supported_text_path(app_dir)
+        return sdk_example_supported_text_path(sdk_root, app_name)
     return ""
 
 
@@ -2814,7 +2816,7 @@ def cmd_figma2xml(args):
     # Export vector images if any
     if vector_nodes and not args.no_export:
         print(f"\nExporting {len(vector_nodes)} vector node(s) as PNG...")
-        images_dir = _get_app_resource_images_dir(app_dir)
+        images_dir = sdk_example_resource_images_dir(sdk_root, app_name)
         _figma_export_images(file_key, vector_nodes, token, images_dir, scale=2)
 
     print(f"\nFigma conversion complete: {app_name}")

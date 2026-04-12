@@ -266,6 +266,55 @@ def project_config_regression_results_path(project_dir: str) -> str:
     return project_config_path(project_dir, "regression_results.json")
 
 
+def sdk_example_config_dir(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_config_dir(app_dir)
+
+
+def sdk_example_layout_dir(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_config_layout_dir(app_dir)
+
+
+def sdk_example_config_resource_dir(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_config_resource_dir(app_dir)
+
+
+def sdk_example_resource_images_dir(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_config_images_dir(app_dir)
+
+
+def sdk_example_generated_resource_dir(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_generated_resource_dir(app_dir)
+
+
+def sdk_example_resource_src_dir(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_resource_src_dir(app_dir)
+
+
+def sdk_example_supported_text_path(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_supported_text_path(app_dir)
+
+
 def sdk_example_reference_frames_dir(sdk_root: str | None, app_name: str | None) -> str:
     app_dir = sdk_example_app_dir(sdk_root, app_name)
     if not app_dir:
