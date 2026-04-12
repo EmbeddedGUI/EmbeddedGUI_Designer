@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -10,6 +11,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 
 from figmamake import figmamake2egui as pipeline
 from figmamake import figmamake_codegen as codegen_module
+from ui_designer.model.workspace import sdk_runtime_check_output_dir
 from ui_designer.utils.scaffold import project_resource_catalog_path
 
 
@@ -114,3 +116,50 @@ def test_figmamake_pipeline_reports_sdk_root_label(tmp_path, monkeypatch, capsys
     assert "EGUI root:" not in out
     assert seen["project_dir"] == str(project_dir)
     assert seen["sdk_root"] == str(sdk_root)
+
+
+def test_figmamake_stage_build_and_run_uses_shared_runtime_output_dir(tmp_path, monkeypatch):
+    sdk_root = tmp_path / "sdk"
+    sdk_root.mkdir(parents=True)
+    expected_rendered_dir = sdk_runtime_check_output_dir(str(sdk_root), "DemoApp", "regression")
+    seen = {}
+
+    monkeypatch.setattr(pipeline, "_ensure_sdk_scripts_on_path", lambda _sdk_root: None)
+    monkeypatch.setattr(
+        pipeline.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout="", stderr=""),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "code_runtime_check",
+        SimpleNamespace(
+            compile_app=lambda app_name: app_name == "DemoApp",
+            capture_animation_frames=lambda app_name, rendered_dir, fps=0, duration=0, speed=0: (
+                seen.update(
+                    {
+                        "app_name": app_name,
+                        "rendered_dir": rendered_dir,
+                        "fps": fps,
+                        "duration": duration,
+                        "speed": speed,
+                    }
+                )
+                or True,
+                12,
+                "captured 12 frames",
+            ),
+        ),
+    )
+
+    success, rendered_dir = pipeline.stage_build_and_run("DemoApp", str(sdk_root), 320, 240)
+
+    assert success is True
+    assert rendered_dir == expected_rendered_dir
+    assert seen == {
+        "app_name": "DemoApp",
+        "rendered_dir": expected_rendered_dir,
+        "fps": 10,
+        "duration": 5,
+        "speed": 1,
+    }

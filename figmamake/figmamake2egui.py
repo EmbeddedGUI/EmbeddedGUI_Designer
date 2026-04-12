@@ -31,7 +31,7 @@ import sys
 import time
 from pathlib import Path
 
-from ui_designer.model.workspace import require_designer_sdk_root
+from ui_designer.model.workspace import require_designer_sdk_root, sdk_runtime_check_output_dir
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS_DIR = os.path.dirname(SCRIPT_DIR)
@@ -112,8 +112,6 @@ def stage_build_and_run(app_name, sdk_root, width, height):
     print("STAGE 3: BUILD & RUN — Compile and capture rendered frames")
     print("=" * 60)
 
-    app_dir = os.path.join(sdk_root, "example", app_name)
-
     # Generate resources first
     print("  [3a] Generating resources...")
     gen_res_cmd = [
@@ -137,9 +135,7 @@ def stage_build_and_run(app_name, sdk_root, width, height):
 
     # Run and capture frames
     print("  [3c] Running and capturing frames...")
-    rendered_dir = os.path.join(
-        "runtime_check_output", app_name, "regression"
-    )
+    rendered_dir = sdk_runtime_check_output_dir(sdk_root, app_name, "regression")
     _ensure_sdk_scripts_on_path(sdk_root)
     from code_runtime_check import capture_animation_frames
     success, frames, msg = capture_animation_frames(
