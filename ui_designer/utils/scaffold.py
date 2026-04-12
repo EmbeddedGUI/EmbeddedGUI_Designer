@@ -256,6 +256,16 @@ def resource_images_dir(resource_dir: str) -> str:
     return os.path.join(resource_dir, "images") if resource_dir else ""
 
 
+def preferred_resource_source_dir(resource_dir: str) -> str:
+    resource_dir = os.path.normpath(resource_dir or "")
+    if not resource_dir or not os.path.isdir(resource_dir):
+        return ""
+    images_dir = resource_images_dir(resource_dir)
+    if os.path.isdir(images_dir):
+        return images_dir
+    return resource_dir
+
+
 def resource_source_path(resource_dir: str, resource_type: str, filename: str) -> str:
     if not resource_dir or not filename:
         return ""

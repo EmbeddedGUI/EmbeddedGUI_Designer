@@ -32,7 +32,12 @@ from ..model.widget_name import resolve_widget_name, sanitize_widget_name, is_va
 from ..model.widget_registry import WidgetRegistry
 from ..settings.ui_prefs import _normalize_inspector_group_expanded
 from ..utils.resource_config_overlay import is_designer_resource_path
-from ..utils.scaffold import generated_resource_font_dir, resource_images_dir, resource_source_path
+from ..utils.scaffold import (
+    generated_resource_font_dir,
+    preferred_resource_source_dir,
+    resource_images_dir,
+    resource_source_path,
+)
 from .widgets.collapsible_group import CollapsibleGroupBox
 from .widgets.color_picker import EguiColorPicker
 from .widgets.font_selector import EguiFontSelector
@@ -2764,9 +2769,9 @@ class PropertyPanel(QWidget):
 
         lower_filter = (file_filter or "").lower()
         if any(ext in lower_filter for ext in (".png", ".bmp", ".jpg", ".jpeg")):
-            images_dir = resource_images_dir(src_dir)
-            if os.path.isdir(images_dir):
-                return images_dir
+            preferred_dir = preferred_resource_source_dir(src_dir)
+            if preferred_dir:
+                return preferred_dir
 
         return src_dir
 

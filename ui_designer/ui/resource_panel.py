@@ -59,7 +59,7 @@ from ..services.font_charset_presets import (
     summarize_charset_diff,
 )
 from ..utils.resource_config_overlay import is_designer_resource_path
-from ..utils.scaffold import resource_images_dir
+from ..utils.scaffold import preferred_resource_source_dir, resource_images_dir
 from .theme import designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size
 
 
@@ -3904,8 +3904,10 @@ class ResourcePanel(QWidget):
         if candidate and os.path.isdir(candidate):
             return candidate
 
-        if resource_type == "image" and self._images_dir and os.path.isdir(self._images_dir):
-            return self._images_dir
+        if resource_type == "image":
+            preferred_dir = preferred_resource_source_dir(self._src_dir)
+            if preferred_dir:
+                return preferred_dir
 
         if self._src_dir and os.path.isdir(self._src_dir):
             return self._src_dir

@@ -93,6 +93,7 @@ from ui_designer.utils.scaffold import (
     resource_catalog_path,
     generated_resource_font_dir,
     generated_resource_img_dir,
+    preferred_resource_source_dir,
     resource_images_dir,
     resource_source_path,
     project_file_relpath,
@@ -526,6 +527,22 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(project_file_path("D:/workspace/DemoApp", "DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/DemoApp.egui"
         )
+
+    def test_preferred_resource_source_dir_prefers_existing_images_subdir(self, tmp_path):
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+
+        assert os.path.normpath(preferred_resource_source_dir(str(resource_dir))) == os.path.normpath(
+            str(resource_dir)
+        )
+
+        images_dir = resource_dir / "images"
+        images_dir.mkdir()
+        assert os.path.normpath(preferred_resource_source_dir(str(resource_dir))) == os.path.normpath(
+            str(images_dir)
+        )
+
+        assert preferred_resource_source_dir(str(tmp_path / "missing")) == ""
 
     def test_sdk_example_scaffold_path_helpers_use_sdk_example_layout(self):
         sdk_root = "D:/sdk/EmbeddedGUI"

@@ -43,6 +43,7 @@ from ..utils.scaffold import (
     project_designer_dir,
     project_designer_resource_dir,
     project_config_resource_dir,
+    preferred_resource_source_dir,
     project_file_path,
     project_generated_font_dir,
     project_generated_img_dir,
@@ -409,7 +410,6 @@ class Project:
         # Determine canonical resource directories
         config_dir = proj.get_eguiproject_dir()
         eguiproject_res_dir = proj.get_eguiproject_resource_dir()
-        eguiproject_images_dir = proj.get_eguiproject_images_dir()
 
         # Load resource catalog
         catalog = ResourceCatalog.load(eguiproject_res_dir)
@@ -425,12 +425,7 @@ class Project:
         proj.string_catalog = StringResourceCatalog.scan_and_load(eguiproject_res_dir)
 
         # Determine the authoritative source dir for page loading.
-        # Prefer images/ for current projects, then the resource root if present.
-        effective_src_dir = None
-        if os.path.isdir(eguiproject_images_dir):
-            effective_src_dir = eguiproject_images_dir
-        elif os.path.isdir(eguiproject_res_dir):
-            effective_src_dir = eguiproject_res_dir
+        effective_src_dir = preferred_resource_source_dir(eguiproject_res_dir) or None
 
         # Load pages
         pages_elem = root.find("Pages")
