@@ -26,13 +26,12 @@ import argparse
 from html.parser import HTMLParser
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
 
 from ui_designer.model.workspace import (
-    require_designer_sdk_root,
+    require_designer_sdk_root_for_path,
     sdk_example_app_dir,
     sdk_example_project_path,
     sdk_output_dir,
@@ -73,15 +72,14 @@ from ui_designer.utils.scaffold import (
 )
 
 
-REPO_ROOT = Path(__file__).resolve().parent
 
 
 # ── Path helpers ──────────────────────────────────────────────────
 
 def _find_sdk_root():
     """Resolve the EmbeddedGUI SDK root for the standalone Designer repo."""
-    return require_designer_sdk_root(
-        repo_root=str(REPO_ROOT),
+    return require_designer_sdk_root_for_path(
+        __file__,
         cli_flag="EMBEDDEDGUI_SDK_ROOT",
     )
 

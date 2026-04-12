@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 
 from ui_designer.model.build_metadata import is_git_worktree_dirty, write_designer_build_metadata
-from ui_designer.model.workspace import require_designer_sdk_root
+from ui_designer.model.workspace import require_designer_sdk_root_for_path
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -175,8 +175,8 @@ def looks_like_sdk_root(path: str | Path) -> bool:
 
 def resolve_sdk_bundle_root(sdk_root: str | Path | None = None) -> Path:
     """Resolve the SDK root to bundle into the package."""
-    resolved = require_designer_sdk_root(
-        repo_root=str(PROJECT_ROOT),
+    resolved = require_designer_sdk_root_for_path(
+        __file__,
         cli_sdk_root=str(sdk_root) if sdk_root else None,
         cli_flag="--sdk-root",
     )

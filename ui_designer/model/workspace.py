@@ -473,6 +473,18 @@ def fallback_designer_sdk_root(repo_root: str | None, dirname: str = DEFAULT_DES
     return normalize_path(os.path.join(os.path.dirname(repo_root), dirname))
 
 
+def designer_repo_root_from_path(path: str | None, levels_up: int = 0) -> str:
+    """Resolve a Designer repo root from a script or directory path."""
+    resolved = normalize_path(path)
+    if not resolved:
+        return ""
+    if not os.path.isdir(resolved):
+        resolved = os.path.dirname(resolved)
+    for _index in range(max(int(levels_up or 0), 0)):
+        resolved = os.path.dirname(resolved)
+    return normalize_path(resolved)
+
+
 def describe_designer_sdk_root_help(repo_root: str | None, cli_flag: str = "--sdk-root") -> str:
     """Return a user-facing hint for resolving the external SDK root."""
     submodule_sdk_root = default_designer_sdk_root(repo_root)
@@ -558,6 +570,23 @@ def require_designer_sdk_root(
     raise RuntimeError(
         "EmbeddedGUI SDK root not found.\n"
         f"{describe_designer_sdk_root_help(repo_root, cli_flag=cli_flag)}"
+    )
+
+
+def require_designer_sdk_root_for_path(
+    path: str | None,
+    *,
+    levels_up: int = 0,
+    cli_sdk_root: str | None = None,
+    env: dict[str, str] | None = None,
+    cli_flag: str = "--sdk-root",
+) -> str:
+    """Resolve the Designer SDK root for a script or directory anchor path."""
+    return require_designer_sdk_root(
+        repo_root=designer_repo_root_from_path(path, levels_up=levels_up),
+        cli_sdk_root=cli_sdk_root,
+        env=env,
+        cli_flag=cli_flag,
     )
 
 

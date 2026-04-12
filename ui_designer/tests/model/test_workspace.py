@@ -12,6 +12,7 @@ from ui_designer.model.workspace import (
     SDK_ROOT_ENV_VAR,
     compute_make_app_root_arg,
     default_designer_sdk_root,
+    designer_repo_root_from_path,
     designer_examples_root,
     designer_runtime_root,
     fallback_designer_sdk_root,
@@ -23,6 +24,7 @@ from ui_designer.model.workspace import (
     list_designer_example_entries,
     normalize_path,
     require_designer_sdk_root,
+    require_designer_sdk_root_for_path,
     resolve_available_sdk_root,
     resolve_designer_sdk_root,
     resolve_preferred_sdk_root,
@@ -276,6 +278,29 @@ class TestWorkspaceHelpers:
         repo_root.mkdir()
 
         assert fallback_designer_sdk_root(str(repo_root)) == normalize_path(str(tmp_path / "EmbeddedGUI"))
+
+    def test_designer_repo_root_from_path_resolves_script_ancestors(self, tmp_path):
+        script_path = tmp_path / "EmbeddedGUI_Designer" / "figmamake" / "figmamake2egui.py"
+
+        assert designer_repo_root_from_path(str(script_path), levels_up=1) == normalize_path(
+            str(tmp_path / "EmbeddedGUI_Designer")
+        )
+        assert designer_repo_root_from_path(str(script_path), levels_up=0) == normalize_path(
+            str(tmp_path / "EmbeddedGUI_Designer" / "figmamake")
+        )
+
+    def test_require_designer_sdk_root_for_path_uses_script_relative_repo_root(self, tmp_path):
+        repo_root = tmp_path / "EmbeddedGUI_Designer"
+        sdk_root = repo_root / "sdk" / "EmbeddedGUI"
+        script_path = repo_root / "figmamake" / "figmamake2egui.py"
+        repo_root.mkdir()
+        _create_sdk_root(sdk_root)
+
+        assert require_designer_sdk_root_for_path(
+            str(script_path),
+            levels_up=1,
+            env={},
+        ) == normalize_path(str(sdk_root))
 
     def test_resolve_designer_sdk_root_prefers_cli_root(self, tmp_path, monkeypatch):
         repo_root = tmp_path / "EmbeddedGUI_Designer"

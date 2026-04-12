@@ -29,10 +29,9 @@ import os
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 from ui_designer.model.workspace import (
-    require_designer_sdk_root,
+    require_designer_sdk_root_for_path,
     sdk_example_app_dir,
     sdk_runtime_check_output_dir,
 )
@@ -48,13 +47,11 @@ sys.path.insert(0, SCRIPT_DIR)
 sys.path.insert(0, SCRIPTS_DIR)
 
 
-REPO_ROOT = Path(SCRIPTS_DIR).resolve()
-
-
 def _find_sdk_root():
     """Resolve the EmbeddedGUI SDK root for the standalone Designer repo."""
-    return require_designer_sdk_root(
-        repo_root=str(REPO_ROOT),
+    return require_designer_sdk_root_for_path(
+        __file__,
+        levels_up=1,
         cli_flag="EMBEDDEDGUI_SDK_ROOT",
     )
 
