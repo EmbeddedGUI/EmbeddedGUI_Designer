@@ -8,6 +8,8 @@ from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widget,
     build_project_model_and_page_with_widgets,
     build_project_model_and_root_with_widgets,
+    build_project_model_with_page_widgets_and_save,
+    build_project_model_with_widgets_and_save,
     build_project_model_with_widget,
     build_project_model_with_page_widgets,
     build_project_model_only_with_page_widgets,
@@ -550,24 +552,19 @@ def build_saved_test_project_with_widgets(
     overwrite_scaffold=False,
 ):
     """Build, populate, optionally customize, and save a single-page test project to disk."""
-    project_root = Path(project_dir)
-    project, page, root = build_test_project_with_widgets(
+    project, page, root, _actions = build_project_model_with_widgets_and_save(
         app_name,
         page_name=page_name,
         screen_width=screen_width,
         screen_height=screen_height,
         sdk_root=sdk_root,
-        project_dir=str(project_root),
+        project_dir=str(project_dir),
         widgets=widgets,
         page_customizer=page_customizer,
         project_customizer=project_customizer,
-    )
-    _save_test_project_model(
-        project,
-        project_root,
-        sdk_root=sdk_root,
         with_designer_scaffold=with_designer_scaffold,
         overwrite_scaffold=overwrite_scaffold,
+        remove_legacy_designer_files=True,
     )
     return project, page, root
 
@@ -587,23 +584,18 @@ def build_saved_test_project_with_page_widgets(
     overwrite_scaffold=False,
 ):
     """Build, populate, optionally customize, and save a multi-page test project to disk."""
-    project_root = Path(project_dir)
-    project, roots = build_test_project_with_page_widgets(
+    project, roots, _actions = build_project_model_with_page_widgets_and_save(
         app_name,
         screen_width,
         screen_height,
         sdk_root=sdk_root,
-        project_dir=str(project_root),
+        project_dir=str(project_dir),
         page_widgets=page_widgets,
         page_customizers=page_customizers,
         pages=pages,
         project_customizer=project_customizer,
-    )
-    _save_test_project_model(
-        project,
-        project_root,
-        sdk_root=sdk_root,
         with_designer_scaffold=with_designer_scaffold,
         overwrite_scaffold=overwrite_scaffold,
+        remove_legacy_designer_files=True,
     )
     return project, roots

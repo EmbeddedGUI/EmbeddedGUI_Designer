@@ -213,6 +213,74 @@ class TestProjectBuilders:
         assert roots["main_page"].children == [home_label]
         assert roots["detail_page"].children == [detail_button]
 
+    def test_build_saved_test_project_with_page_widgets_reuses_shared_build_save_helper(self, tmp_path, monkeypatch):
+        project_dir = tmp_path / "SharedSavedWidgetBuilderDemo"
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+        captured = {}
+
+        def fake_build_project_model_with_page_widgets_and_save(
+            app_name,
+            screen_width=240,
+            screen_height=320,
+            **kwargs,
+        ):
+            captured["app_name"] = app_name
+            captured["screen_width"] = screen_width
+            captured["screen_height"] = screen_height
+            captured["kwargs"] = kwargs
+            project, roots = build_test_project_with_page_widgets(
+                app_name,
+                screen_width,
+                screen_height,
+                sdk_root=kwargs.get("sdk_root", ""),
+                project_dir=kwargs.get("project_dir", ""),
+                page_widgets=kwargs.get("page_widgets"),
+                page_customizers=kwargs.get("page_customizers"),
+                pages=kwargs.get("pages"),
+                project_customizer=kwargs.get("project_customizer"),
+            )
+            return project, roots, {}
+
+        monkeypatch.setattr(
+            project_builders_module,
+            "build_project_model_with_page_widgets_and_save",
+            fake_build_project_model_with_page_widgets_and_save,
+        )
+
+        project, roots = build_saved_test_project_with_page_widgets(
+            project_dir,
+            "SharedSavedWidgetBuilderDemo",
+            page_widgets={
+                "main_page": [home_label],
+                "detail_page": [detail_button],
+            },
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+        )
+
+        assert project.app_name == "SharedSavedWidgetBuilderDemo"
+        assert list(roots) == ["main_page", "detail_page"]
+        assert captured == {
+            "app_name": "SharedSavedWidgetBuilderDemo",
+            "screen_width": 240,
+            "screen_height": 320,
+            "kwargs": {
+                "sdk_root": "",
+                "project_dir": str(project_dir),
+                "page_widgets": {
+                    "main_page": [home_label],
+                    "detail_page": [detail_button],
+                },
+                "page_customizers": None,
+                "pages": None,
+                "project_customizer": None,
+                "with_designer_scaffold": True,
+                "overwrite_scaffold": True,
+                "remove_legacy_designer_files": True,
+            },
+        }
+
     def test_build_saved_test_project_with_page_widgets_applies_project_customizer(self, tmp_path):
         project_dir = tmp_path / "SavedMultiPageProjectCustomizerDemo"
         home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
@@ -252,6 +320,70 @@ class TestProjectBuilders:
         assert page.name == "home"
         assert (project_dir / "SavedSinglePageWidgetBuilderDemo.egui").is_file()
         assert root.children == [label, button]
+
+    def test_build_saved_test_project_with_widgets_reuses_shared_build_save_helper(self, tmp_path, monkeypatch):
+        project_dir = tmp_path / "SharedSavedSinglePageWidgetBuilderDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+        button = WidgetModel("button", name="confirm", x=10, y=48, width=80, height=32)
+        captured = {}
+
+        def fake_build_project_model_with_widgets_and_save(
+            app_name,
+            screen_width=240,
+            screen_height=320,
+            **kwargs,
+        ):
+            captured["app_name"] = app_name
+            captured["screen_width"] = screen_width
+            captured["screen_height"] = screen_height
+            captured["kwargs"] = kwargs
+            project, page, root = build_test_project_with_widgets(
+                app_name,
+                page_name=kwargs.get("page_name", "main_page"),
+                screen_width=screen_width,
+                screen_height=screen_height,
+                sdk_root=kwargs.get("sdk_root", ""),
+                project_dir=kwargs.get("project_dir", ""),
+                widgets=kwargs.get("widgets"),
+                page_customizer=kwargs.get("page_customizer"),
+                project_customizer=kwargs.get("project_customizer"),
+            )
+            return project, page, root, {}
+
+        monkeypatch.setattr(
+            project_builders_module,
+            "build_project_model_with_widgets_and_save",
+            fake_build_project_model_with_widgets_and_save,
+        )
+
+        project, page, root = build_saved_test_project_with_widgets(
+            project_dir,
+            "SharedSavedSinglePageWidgetBuilderDemo",
+            page_name="home",
+            widgets=[label, button],
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+        )
+
+        assert project.app_name == "SharedSavedSinglePageWidgetBuilderDemo"
+        assert page.name == "home"
+        assert root.children == [label, button]
+        assert captured == {
+            "app_name": "SharedSavedSinglePageWidgetBuilderDemo",
+            "screen_width": 240,
+            "screen_height": 320,
+            "kwargs": {
+                "sdk_root": "",
+                "project_dir": str(project_dir),
+                "page_name": "home",
+                "widgets": [label, button],
+                "page_customizer": None,
+                "project_customizer": None,
+                "with_designer_scaffold": True,
+                "overwrite_scaffold": True,
+                "remove_legacy_designer_files": True,
+            },
+        }
 
     def test_build_saved_test_project_with_widgets_applies_page_customizer(self, tmp_path):
         project_dir = tmp_path / "SavedSinglePageCustomizerDemo"

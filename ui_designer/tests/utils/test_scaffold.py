@@ -38,6 +38,8 @@ from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widget,
     build_project_model_and_page_with_widgets,
     build_project_model_with_widgets_and_materialize_codegen,
+    build_project_model_with_page_widgets_and_save,
+    build_project_model_with_widgets_and_save,
     build_project_model_and_root_with_widgets,
     build_project_model_only_with_page_widgets,
     build_project_model_only_with_widget,
@@ -1125,6 +1127,64 @@ class TestCoreProjectScaffold:
 
         assert project.app_name == "DemoApp"
         assert [child.name for child in root.children] == ["title"]
+
+    def test_build_project_model_with_widgets_and_save_writes_project_and_returns_actions(self, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "BuiltSavedHelperApp"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+        hook_calls = []
+
+        project, page, root, actions = build_project_model_with_widgets_and_save(
+            "BuiltSavedHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            page_name="home",
+            widgets=[label],
+            before_save=lambda output_dir: hook_calls.append(output_dir),
+        )
+
+        assert actions == {}
+        assert hook_calls == [os.path.normpath(str(project_dir))]
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert page.name == "home"
+        assert root.children == [label]
+        assert (project_dir / "BuiltSavedHelperApp.egui").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
+        assert not (project_dir / ".designer" / "build_designer.mk").exists()
+
+    def test_build_project_model_with_page_widgets_and_save_can_include_designer_scaffold(self, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "BuiltSavedMultiPageHelperApp"
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+
+        project, roots, actions = build_project_model_with_page_widgets_and_save(
+            "BuiltSavedMultiPageHelperApp",
+            320,
+            240,
+            project_dir=str(project_dir),
+            page_widgets={
+                "home": [home_label],
+                "detail": [detail_button],
+            },
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+            remove_legacy_designer_files=True,
+        )
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert roots["home"].children == [home_label]
+        assert roots["detail"].children == [detail_button]
+        assert actions[BUILD_MK_RELPATH] == "created"
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
+        assert (project_dir / "BuiltSavedMultiPageHelperApp.egui").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "detail.xml").is_file()
 
     def test_build_project_model_with_widgets_and_materialize_codegen_writes_generated_outputs(self, tmp_path):
         from ui_designer.model.widget_model import WidgetModel
