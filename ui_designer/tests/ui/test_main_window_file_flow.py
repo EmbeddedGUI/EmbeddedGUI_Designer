@@ -3877,6 +3877,9 @@ class TestMainWindowFileFlow:
         _open_project_window(window, project, project_dir, sdk_root)
 
         assert "main.exe" in window._auto_compile_retry_block_reason
+        assert window._compile_action.isEnabled() is False
+        assert window._rebuild_action.isEnabled() is False
+        assert "main.exe" in window._compile_action.toolTip()
         assert "cannot recover missing build targets" in window.debug_panel._output.toPlainText()
         window._undo_manager.mark_all_saved()
         _close_window(window)

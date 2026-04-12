@@ -1656,6 +1656,10 @@ class MainWindow(QMainWindow):
             build_error = build_error_getter() if callable(build_error_getter) else ""
             if build_error:
                 return build_error
+        preview_error_getter = getattr(self.compiler, "get_preview_build_error", None)
+        preview_error = preview_error_getter() if callable(preview_error_getter) else ""
+        if preview_error:
+            return preview_error
         return "compile preview is unavailable"
 
     def _clean_all_action_blocked_reason(self):
@@ -2649,11 +2653,14 @@ class MainWindow(QMainWindow):
             self.compiler.set_screen_size(self.project.screen_width, self.project.screen_height)
 
     def _update_compile_availability(self):
+        preview_error_getter = getattr(self.compiler, "get_preview_build_error", None)
+        preview_error = preview_error_getter() if callable(preview_error_getter) else ""
         can_compile = (
             self.project is not None
             and self.compiler is not None
             and self._has_valid_sdk_root()
             and self.compiler.can_build()
+            and not preview_error
         )
         resources_dir = self._get_eguiproject_resource_dir()
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
