@@ -7385,6 +7385,10 @@ class MainWindow(QMainWindow):
         if self.compiler is None:
             self._refresh_python_preview("SDK unavailable, compile preview disabled")
             return
+        preview_unavailable_reason = self._effective_preview_unavailable_reason()
+        if preview_unavailable_reason:
+            self._switch_to_python_preview(preview_unavailable_reason)
+            return
         self._compile_timer.start()
 
     def _flush_pending_xml(self):
@@ -7403,6 +7407,10 @@ class MainWindow(QMainWindow):
 
     def _run_auto_compile_cycle(self):
         if self._is_auto_compile_retry_blocked():
+            return
+        preview_unavailable_reason = self._effective_preview_unavailable_reason()
+        if preview_unavailable_reason:
+            self._switch_to_python_preview(preview_unavailable_reason)
             return
         self._start_compile_cycle(force_rebuild=False)
 

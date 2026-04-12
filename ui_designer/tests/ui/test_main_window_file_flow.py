@@ -4397,6 +4397,75 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_trigger_compile_skips_timer_when_only_effective_preview_block_reason_exists(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _SilentProbeFailCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return ""
+
+            def ensure_preview_build_available(self, force=False):
+                return False
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+            def precompile_async(self, callback):
+                raise AssertionError("precompile_async should not be called when preview target probe fails")
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewSilentAutoCompileBlockDemo"
+        project = _create_project(project_dir, "PreviewSilentAutoCompileBlockDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        compile_cycle_calls = []
+        preview_reasons = []
+        window.auto_compile = False
+        window._compile_timer.stop()
+        window._compile_timer.setInterval(0)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _SilentProbeFailCompiler(project_dir)))
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window.auto_compile = True
+        window._trigger_compile()
+        qapp.processEvents()
+        window._run_auto_compile_cycle()
+
+        assert compile_cycle_calls == []
+        assert preview_reasons[-1] == "Preview build unavailable"
+        assert window._compile_timer.isActive() is False
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_apply_sdk_root_reports_editing_only_mode_without_status_prefix(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
