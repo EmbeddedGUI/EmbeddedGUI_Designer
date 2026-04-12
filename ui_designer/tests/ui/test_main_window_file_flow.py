@@ -141,6 +141,29 @@ def _context_submenu(menu, label):
     raise AssertionError(f"{label} submenu not found")
 
 
+def test_resource_path_helpers_delegate_to_project_paths(qapp, isolated_config):
+    from ui_designer.ui.main_window import MainWindow
+
+    class _FakeProject:
+        def get_resource_dir(self):
+            return "D:/demo/resource"
+
+        def get_eguiproject_resource_dir(self):
+            return "D:/demo/.eguiproject/resources"
+
+        def get_eguiproject_images_dir(self):
+            return "D:/demo/.eguiproject/resources/images"
+
+    window = MainWindow("")
+    window.project = _FakeProject()
+    window._project_dir = ""
+
+    assert window._get_resource_dir() == "D:/demo/resource"
+    assert window._get_eguiproject_resource_dir() == "D:/demo/.eguiproject/resources"
+    assert window._get_eguiproject_images_dir() == "D:/demo/.eguiproject/resources/images"
+    _close_window(window)
+
+
 class _DisabledCompiler:
     def can_build(self):
         return False

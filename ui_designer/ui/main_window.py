@@ -5025,6 +5025,10 @@ class MainWindow(QMainWindow):
         Used for the generation pipeline and for property_panel to scan
         generated fonts in resource/font/.
         """
+        if self.project:
+            path = self.project.get_resource_dir()
+            if path:
+                return path
         if self._project_dir:
             return project_generated_resource_dir(self._project_dir)
         return ""
@@ -5035,6 +5039,10 @@ class MainWindow(QMainWindow):
         This is the authoritative directory for all source resource files.
         Used by the resource panel for browsing and importing.
         """
+        if self.project:
+            path = self.project.get_eguiproject_resource_dir()
+            if path:
+                return path
         if self._project_dir:
             return project_config_resource_dir(self._project_dir)
         return ""
@@ -5045,6 +5053,10 @@ class MainWindow(QMainWindow):
         Authoritative directory for source image files.
         Used for Page XML image path resolution.
         """
+        if self.project:
+            path = self.project.get_eguiproject_images_dir()
+            if path:
+                return path
         if self._project_dir:
             return project_config_images_dir(self._project_dir)
         return ""
