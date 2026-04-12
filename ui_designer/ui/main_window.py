@@ -5025,43 +5025,30 @@ class MainWindow(QMainWindow):
         Used for the generation pipeline and for property_panel to scan
         generated fonts in resource/font/.
         """
+        return self._resolve_project_path("get_resource_dir", project_generated_resource_dir)
+
+    def _resolve_project_path(self, project_getter_name, fallback_resolver):
         if self.project:
-            path = self.project.get_resource_dir()
-            if path:
-                return path
+            getter = getattr(self.project, project_getter_name, None)
+            if callable(getter):
+                path = getter()
+                if path:
+                    return path
         if self._project_dir:
-            return project_generated_resource_dir(self._project_dir)
+            return fallback_resolver(self._project_dir)
         return ""
 
     def _get_resource_src_dir(self):
         """Compute the generated resource source directory (resource/src/)."""
-        if self.project:
-            path = self.project.get_resource_src_dir()
-            if path:
-                return path
-        if self._project_dir:
-            return project_resource_src_dir(self._project_dir)
-        return ""
+        return self._resolve_project_path("get_resource_src_dir", project_resource_src_dir)
 
     def _get_user_resource_config_path(self):
         """Compute the user-owned resource overlay config path."""
-        if self.project:
-            path = self.project.get_user_resource_config_path()
-            if path:
-                return path
-        if self._project_dir:
-            return project_user_resource_config_path(self._project_dir)
-        return ""
+        return self._resolve_project_path("get_user_resource_config_path", project_user_resource_config_path)
 
     def _get_designer_resource_dir(self):
         """Compute the designer-managed resource metadata directory path."""
-        if self.project:
-            path = self.project.get_designer_resource_dir()
-            if path:
-                return path
-        if self._project_dir:
-            return project_designer_resource_dir(self._project_dir)
-        return ""
+        return self._resolve_project_path("get_designer_resource_dir", project_designer_resource_dir)
 
     def _get_eguiproject_resource_dir(self):
         """Compute the .eguiproject/resources/ path for the current project.
@@ -5069,33 +5056,15 @@ class MainWindow(QMainWindow):
         This is the authoritative directory for all source resource files.
         Used by the resource panel for browsing and importing.
         """
-        if self.project:
-            path = self.project.get_eguiproject_resource_dir()
-            if path:
-                return path
-        if self._project_dir:
-            return project_config_resource_dir(self._project_dir)
-        return ""
+        return self._resolve_project_path("get_eguiproject_resource_dir", project_config_resource_dir)
 
     def _get_eguiproject_layout_dir(self):
         """Compute the .eguiproject/layout/ path for the current project."""
-        if self.project:
-            path = self.project.get_eguiproject_layout_dir()
-            if path:
-                return path
-        if self._project_dir:
-            return project_config_layout_dir(self._project_dir)
-        return ""
+        return self._resolve_project_path("get_eguiproject_layout_dir", project_config_layout_dir)
 
     def _get_eguiproject_mockup_dir(self):
         """Compute the .eguiproject/mockup/ path for the current project."""
-        if self.project:
-            path = self.project.get_eguiproject_mockup_dir()
-            if path:
-                return path
-        if self._project_dir:
-            return project_config_mockup_dir(self._project_dir)
-        return ""
+        return self._resolve_project_path("get_eguiproject_mockup_dir", project_config_mockup_dir)
 
     def _get_eguiproject_images_dir(self):
         """Compute the .eguiproject/resources/images/ path.
@@ -5103,13 +5072,7 @@ class MainWindow(QMainWindow):
         Authoritative directory for source image files.
         Used for Page XML image path resolution.
         """
-        if self.project:
-            path = self.project.get_eguiproject_images_dir()
-            if path:
-                return path
-        if self._project_dir:
-            return project_config_images_dir(self._project_dir)
-        return ""
+        return self._resolve_project_path("get_eguiproject_images_dir", project_config_images_dir)
 
     def _on_resource_selected(self, res_type, filename):
         """User selected/assigned a resource from the ResourcePanel."""
