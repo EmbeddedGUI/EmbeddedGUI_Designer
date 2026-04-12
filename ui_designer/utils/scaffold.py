@@ -1852,6 +1852,40 @@ def _save_built_project_model(
     )
 
 
+def _save_built_project_result(
+    built,
+    project_dir,
+    *,
+    sdk_root="",
+    before_save=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Persist a built project result and append scaffold actions to its return value."""
+    project = built[0] if isinstance(built, tuple) else built
+    actions = _save_built_project_model(
+        project,
+        project_dir,
+        sdk_root=sdk_root,
+        before_save=before_save,
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+    )
+    if isinstance(built, tuple):
+        return (*built, actions)
+    return built, actions
+
+
 def _save_built_project_and_materialize_codegen(
     project,
     project_dir,
@@ -1916,19 +1950,18 @@ def build_project_model_with_page_widgets_and_save(
     remove_legacy_designer_files=False,
 ):
     """Build a multi-page project model, save it, and return the populated page roots."""
-    project, roots = build_project_model_with_page_widgets(
-        app_name,
-        screen_width,
-        screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_widgets=page_widgets,
-        page_customizers=page_customizers,
-        pages=pages,
-        project_customizer=project_customizer,
-    )
-    actions = _save_built_project_model(
-        project,
+    return _save_built_project_result(
+        build_project_model_with_page_widgets(
+            app_name,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_widgets=page_widgets,
+            page_customizers=page_customizers,
+            pages=pages,
+            project_customizer=project_customizer,
+        ),
         project_dir,
         sdk_root=sdk_root,
         before_save=before_save,
@@ -1940,7 +1973,6 @@ def build_project_model_with_page_widgets_and_save(
         refresh_designer_resource_config=refresh_designer_resource_config,
         remove_legacy_designer_files=remove_legacy_designer_files,
     )
-    return project, roots, actions
 
 
 def build_project_model_with_widgets_and_save(
@@ -1964,19 +1996,18 @@ def build_project_model_with_widgets_and_save(
     remove_legacy_designer_files=False,
 ):
     """Build a single-page project model, save it, and return the populated page and root."""
-    project, page, root = build_project_model_with_widgets(
-        app_name,
-        screen_width,
-        screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_name=page_name,
-        widgets=widgets,
-        page_customizer=page_customizer,
-        project_customizer=project_customizer,
-    )
-    actions = _save_built_project_model(
-        project,
+    return _save_built_project_result(
+        build_project_model_with_widgets(
+            app_name,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_name=page_name,
+            widgets=widgets,
+            page_customizer=page_customizer,
+            project_customizer=project_customizer,
+        ),
         project_dir,
         sdk_root=sdk_root,
         before_save=before_save,
@@ -1988,7 +2019,6 @@ def build_project_model_with_widgets_and_save(
         refresh_designer_resource_config=refresh_designer_resource_config,
         remove_legacy_designer_files=remove_legacy_designer_files,
     )
-    return project, page, root, actions
 
 
 def build_project_model_with_widgets_and_materialize_codegen(
@@ -2017,7 +2047,7 @@ def build_project_model_with_widgets_and_materialize_codegen(
     before_materialize=None,
 ):
     """Build a single-page project model, save it, and materialize generated outputs."""
-    project, page, root, _actions = build_project_model_with_widgets_and_save(
+    project, page, root = build_project_model_with_widgets(
         app_name,
         screen_width,
         screen_height,
@@ -2027,14 +2057,6 @@ def build_project_model_with_widgets_and_materialize_codegen(
         widgets=widgets,
         page_customizer=page_customizer,
         project_customizer=project_customizer,
-        before_save=before_save,
-        with_designer_scaffold=True,
-        overwrite_scaffold=overwrite,
-        color_depth=color_depth,
-        circle_radius=circle_radius,
-        extra_config_macros=extra_config_macros,
-        refresh_designer_resource_config=refresh_designer_resource_config,
-        remove_legacy_designer_files=remove_legacy_designer_files,
     )
     resolved_extra_files = {}
     if callable(extra_files_builder):
@@ -2497,7 +2519,7 @@ def build_empty_project_model_and_save(
     )
     if callable(project_customizer):
         project_customizer(project)
-    actions = _save_built_project_model(
+    return _save_built_project_result(
         project,
         project_dir,
         sdk_root=sdk_root,
@@ -2510,7 +2532,6 @@ def build_empty_project_model_and_save(
         refresh_designer_resource_config=refresh_designer_resource_config,
         remove_legacy_designer_files=remove_legacy_designer_files,
     )
-    return project, actions
 
 
 def save_empty_project_with_designer_scaffold(

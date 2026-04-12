@@ -1252,6 +1252,40 @@ class TestCoreProjectScaffold:
         assert (project_dir / "README.txt").read_text(encoding="utf-8") == "generated fixture\n"
         assert "home_ext.h" in materialized.files
 
+    def test_build_project_model_with_widgets_and_materialize_codegen_runs_before_save_hook_once_after_binding(self, tmp_path):
+        project_dir = tmp_path / "BuiltMaterializedHookHelperApp"
+        project_refs = []
+        hook_calls = []
+
+        project, page, root, materialized = build_project_model_with_widgets_and_materialize_codegen(
+            "BuiltMaterializedHookHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            page_name="home",
+            project_customizer=lambda current_project: project_refs.append(current_project),
+            before_save=lambda output_dir: hook_calls.append(
+                (output_dir, project_refs[0].project_dir, project_refs[0].sdk_root)
+            ),
+            backup=False,
+        )
+
+        assert project_refs == [project]
+        assert hook_calls == [
+            (
+                os.path.normpath(str(project_dir)),
+                os.path.normpath(str(project_dir)),
+                os.path.normpath("D:/sdk"),
+            )
+        ]
+        assert page.name == "home"
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert (project_dir / "BuiltMaterializedHookHelperApp.egui").is_file()
+        assert (project_dir / ".designer" / "home.h").is_file()
+        assert "home_ext.h" in materialized.files
+
     def test_build_project_model_only_with_widgets_returns_populated_project(self):
         from ui_designer.model.widget_model import WidgetModel
 
