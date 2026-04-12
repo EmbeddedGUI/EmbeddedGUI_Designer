@@ -3890,6 +3890,9 @@ class TestMainWindowFileFlow:
         assert window._compile_action.isEnabled() is False
         assert window._rebuild_action.isEnabled() is False
         assert "main.exe" in window._compile_action.toolTip()
+        assert "Opened project in editing-only mode:" in window.statusBar().currentMessage()
+        assert "main.exe" in window.statusBar().currentMessage()
+        assert "Preview: Editing Only" in window._workspace_status_label.text()
         assert "cannot recover missing build targets" in window.debug_panel._output.toPlainText()
         window._undo_manager.mark_all_saved()
         _close_window(window)

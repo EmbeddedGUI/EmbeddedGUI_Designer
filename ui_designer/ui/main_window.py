@@ -1651,15 +1651,9 @@ class MainWindow(QMainWindow):
             return "set a valid SDK root first"
         if self.compiler is None:
             return "save the project to a valid SDK workspace first"
-        if not self.compiler.can_build():
-            build_error_getter = getattr(self.compiler, "get_build_error", None)
-            build_error = build_error_getter() if callable(build_error_getter) else ""
-            if build_error:
-                return build_error
-        preview_error_getter = getattr(self.compiler, "get_preview_build_error", None)
-        preview_error = preview_error_getter() if callable(preview_error_getter) else ""
-        if preview_error:
-            return preview_error
+        preview_unavailable_reason = self._preview_unavailable_reason()
+        if preview_unavailable_reason:
+            return preview_unavailable_reason
         return "compile preview is unavailable"
 
     def _clean_all_action_blocked_reason(self):
@@ -2157,6 +2151,35 @@ class MainWindow(QMainWindow):
             return "Edit selection"
         return "Ready"
 
+    def _preview_unavailable_reason(self):
+        if getattr(self, "project", None) is None:
+            return ""
+        compiler = getattr(self, "compiler", None)
+        if compiler is None:
+            return "SDK unavailable, compile preview disabled"
+        if not compiler.can_build():
+            build_error_getter = getattr(compiler, "get_build_error", None)
+            build_error = build_error_getter() if callable(build_error_getter) else ""
+            return build_error or "SDK unavailable, compile preview disabled"
+        preview_error_getter = getattr(compiler, "get_preview_build_error", None)
+        preview_error = preview_error_getter() if callable(preview_error_getter) else ""
+        return str(preview_error or "").strip()
+
+    def _preview_mode_text(self):
+        if getattr(self, "project", None) is None:
+            return "No Preview"
+        if self._preview_unavailable_reason():
+            return "Editing Only"
+        if hasattr(self, "preview_panel") and self.preview_panel.is_python_preview_active():
+            return "Python Preview"
+        is_preview_running = getattr(self.compiler, "is_preview_running", None)
+        if callable(is_preview_running) and is_preview_running():
+            return "Live Preview"
+        is_exe_ready = getattr(self.compiler, "is_exe_ready", None)
+        if callable(is_exe_ready) and is_exe_ready():
+            return "Preview Ready"
+        return "Preview Idle"
+
     def _update_status_bar_summary(self):
         if not hasattr(self, "_workspace_status_label"):
             return
@@ -2185,7 +2208,11 @@ class MainWindow(QMainWindow):
             warning_count=warning_count,
             selection_count=selection_count,
         )
-        summary = f"Page: {current_page} | Selection: {selection_text} | Warnings: {warning_count} | {hint}"
+        preview_text = self._preview_mode_text()
+        summary = (
+            f"Page: {current_page} | Preview: {preview_text} | Selection: {selection_text} "
+            f"| Warnings: {warning_count} | {hint}"
+        )
         self._workspace_status_label.setText(summary)
         self._set_metadata_summary(
             self._workspace_status_label,
@@ -2234,11 +2261,6 @@ class MainWindow(QMainWindow):
 
     def _update_workspace_chips(self):
         diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0, "info": 0}
-        preview_text = "Preview Ready"
-        if self.preview_panel.is_python_preview_active():
-            preview_text = "Python Preview"
-        elif self.compiler is not None and self.compiler.is_preview_running():
-            preview_text = "Live Preview"
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
         dirty_count = len(dirty_pages)
         selection_count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
@@ -2612,17 +2634,19 @@ class MainWindow(QMainWindow):
             self._shutdown_async_activity()
             self._recreate_compiler()
             self._update_compile_availability()
-            if self.compiler is None or not self.compiler.can_build():
-                reason = "SDK unavailable, compile preview disabled"
-                if self.compiler is not None and self.compiler.get_build_error():
-                    reason = self.compiler.get_build_error()
-                self._switch_to_python_preview(reason)
+            preview_unavailable_reason = self._preview_unavailable_reason()
+            if preview_unavailable_reason:
+                self._switch_to_python_preview(preview_unavailable_reason)
+                if status_message:
+                    self.statusBar().showMessage(
+                        f"{status_message} | Editing-only mode: {preview_unavailable_reason}"
+                    )
             elif self.auto_compile:
                 self._trigger_compile()
 
         self._welcome_page.refresh()
         self._update_sdk_status_label()
-        if status_message:
+        if status_message and not (self.project is not None and self._preview_unavailable_reason()):
             self.statusBar().showMessage(status_message)
 
     def _has_valid_sdk_root(self):
@@ -3045,12 +3069,10 @@ class MainWindow(QMainWindow):
             silent=silent,
         )
 
-        if self.compiler is None or not self.compiler.can_build():
-            reason = "SDK unavailable, compile preview disabled"
-            if self.compiler is not None and self.compiler.get_build_error():
-                reason = self.compiler.get_build_error()
-            self._switch_to_python_preview(reason)
-            self.statusBar().showMessage(f"Opened project in editing-only mode: {reason}")
+        preview_unavailable_reason = self._preview_unavailable_reason()
+        if preview_unavailable_reason:
+            self._switch_to_python_preview(preview_unavailable_reason)
+            self.statusBar().showMessage(f"Opened project in editing-only mode: {preview_unavailable_reason}")
         else:
             self._trigger_compile()
             sdk_source = self._describe_sdk_source(project.sdk_root)
