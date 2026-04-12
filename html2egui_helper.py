@@ -100,7 +100,7 @@ def _resolve_export_image_output_dir(sdk_root, *, output_path="", app_name=None)
     if output_path:
         return output_path
     if app_name:
-        return sdk_example_resource_images_dir(sdk_root, app_name)
+        return sdk_example_paths(sdk_root, app_name)["resource_images_dir"]
     raise ValueError("Must specify either --output or --app")
 
 
@@ -109,9 +109,10 @@ def _resolve_extract_text_output_path(sdk_root, *, output_path="", app_name=None
     if output_path:
         return output_path
     if app_name:
-        src_dir = sdk_example_resource_src_dir(sdk_root, app_name)
+        example_paths = sdk_example_paths(sdk_root, app_name)
+        src_dir = example_paths["resource_src_dir"]
         os.makedirs(src_dir, exist_ok=True)
-        return sdk_example_supported_text_path(sdk_root, app_name)
+        return example_paths["supported_text_path"]
     return ""
 
 
@@ -1419,10 +1420,11 @@ def cmd_gen_resource(args):
     """Run resource generation (wraps make resource)."""
     app_name = args.app
     sdk_root, app_dir = _resolve_existing_app_dir(app_name)
+    example_paths = sdk_example_paths(sdk_root, app_name)
 
-    resource_dir = sdk_example_generated_resource_dir(sdk_root, app_name)
-    user_config_path = sdk_example_user_resource_config_path(sdk_root, app_name)
-    designer_config_path = sdk_example_designer_resource_config_path(sdk_root, app_name)
+    resource_dir = example_paths["generated_resource_dir"]
+    user_config_path = example_paths["user_resource_config_path"]
+    designer_config_path = example_paths["designer_resource_config_path"]
 
     if not os.path.isfile(user_config_path) and not os.path.isfile(designer_config_path):
         print(f"ERROR: Resource config not found: {user_config_path}")
@@ -1508,7 +1510,7 @@ def cmd_generate_code(args):
     print(f"Loaded project: {app_name} ({project.screen_width}x{project.screen_height})")
     print(f"  Pages: {', '.join(p.name for p in project.pages)}")
 
-    src_dir = sdk_example_resource_src_dir(sdk_root, app_name)
+    src_dir = example_paths["resource_src_dir"]
     user_config_created, _designer_config_path = (
         sync_project_resources_and_generate_designer_resource_config(
             project,
@@ -1517,7 +1519,7 @@ def cmd_generate_code(args):
             before_generate=lambda _project_dir: _sync_font_files(project, sdk_root, src_dir),
         )
     )
-    if os.path.isdir(sdk_example_config_resource_dir(sdk_root, app_name)):
+    if os.path.isdir(example_paths["config_resource_dir"]):
         print(f"  Synced project resources to {os.path.dirname(RESOURCE_CONFIG_RELPATH)}/")
     if user_config_created:
         print(f"  Created: {RESOURCE_CONFIG_RELPATH}")

@@ -37,11 +37,9 @@ from html2egui_helper import (
 )
 from figmamake_anim_extractor import AnimExtractor
 from ui_designer.utils.scaffold import (
-    sdk_example_layout_xml_path,
-    sdk_example_layout_dir,
-    sdk_example_resource_images_dir,
-    sdk_example_resource_src_dir,
     scaffold_sdk_example_conversion_project,
+    sdk_example_layout_xml_path,
+    sdk_example_paths,
 )
 from ui_designer.utils.xml_utils import write_xml_file
 
@@ -536,9 +534,10 @@ class FigmaMakeCodegen:
 
         # 4. Generate XML layout files
         print(f"[4/5] Generating XML layouts...")
-        layout_dir = sdk_example_layout_dir(sdk_root, self.app_name)
-        images_dir = sdk_example_resource_images_dir(sdk_root, self.app_name)
-        resource_src_dir = sdk_example_resource_src_dir(sdk_root, self.app_name)
+        example_paths = sdk_example_paths(sdk_root, self.app_name)
+        layout_dir = example_paths["layout_dir"]
+        images_dir = example_paths["resource_images_dir"]
+        resource_src_dir = example_paths["resource_src_dir"]
         os.makedirs(layout_dir, exist_ok=True)
         os.makedirs(images_dir, exist_ok=True)
         os.makedirs(resource_src_dir, exist_ok=True)

@@ -614,9 +614,25 @@ class TestCoreProjectScaffold:
             "app_name": "DemoApp",
             "app_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp"),
             "config_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject"),
+            "layout_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/layout"),
+            "config_resource_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/resources"),
+            "resource_images_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/resources/images"),
+            "generated_resource_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/resource"),
+            "generated_img_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/resource/img"),
+            "generated_font_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/resource/font"),
+            "resource_src_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/resource/src"),
+            "supported_text_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/resource/src/supported_text.txt"),
+            "resource_catalog_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/resources/resources.xml"),
+            "user_resource_config_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/resource/src/app_resource_config.json"),
+            "designer_resource_config_path": os.path.normpath(
+                "D:/sdk/EmbeddedGUI/example/DemoApp/resource/src/.designer/app_resource_config_designer.json"
+            ),
             "app_config_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/app_egui_config.h"),
             "build_mk_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/build.mk"),
             "project_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/DemoApp.egui"),
+            "reference_frames_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/reference_frames"),
+            "regression_report_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/regression_report.html"),
+            "regression_results_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/regression_results.json"),
         }
         assert os.path.normpath(sdk_example_reference_frames_dir(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/reference_frames"
