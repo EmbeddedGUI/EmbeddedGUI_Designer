@@ -8,6 +8,7 @@ import sys
 
 from ..utils.scaffold import sdk_example_paths
 from .workspace import (
+    build_project_entry,
     infer_sdk_root_from_project_dir,
     is_valid_sdk_root,
     normalize_path,
@@ -340,15 +341,7 @@ class DesignerConfig:
             if not has_project and not include_unmanaged:
                 continue
 
-            entries.append(
-                {
-                    "app_name": name,
-                    "app_dir": app_path,
-                    "project_path": project_path if has_project else "",
-                    "has_project": has_project,
-                    "is_unmanaged": not has_project,
-                }
-            )
+            entries.append(build_project_entry(name, app_path, project_path if has_project else ""))
         return sorted(entries, key=lambda item: item["app_name"].lower())
 
     def list_available_apps(self, sdk_root=None, include_unmanaged=False):

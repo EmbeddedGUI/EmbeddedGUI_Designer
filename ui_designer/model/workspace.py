@@ -274,6 +274,28 @@ def sdk_example_project_path(sdk_root: str | None, app_name: str | None) -> str:
     return sdk_example_project_file_path(sdk_root, app_name)
 
 
+def build_project_entry(
+    app_name: str | None,
+    app_dir: str | None,
+    project_path: str | None = "",
+    *,
+    source: str = "",
+) -> dict[str, object]:
+    """Return a normalized project entry payload used across workspace views."""
+    normalized_project_path = normalize_path(project_path)
+    entry = {
+        "app_name": str(app_name or "").strip(),
+        "app_dir": normalize_path(app_dir),
+        "project_path": normalized_project_path,
+        "has_project": bool(normalized_project_path),
+        "is_unmanaged": not bool(normalized_project_path),
+    }
+    normalized_source = str(source or "").strip()
+    if normalized_source:
+        entry["source"] = normalized_source
+    return entry
+
+
 def compute_make_app_root_arg(sdk_root: str, app_dir: str, app_name: str) -> str:
     """Compute ``EGUI_APP_ROOT_PATH`` for make."""
     sdk_root = normalize_path(sdk_root)
@@ -438,14 +460,12 @@ def list_designer_example_entries(repo_root: str | None = None) -> list[dict[str
 
         project_name = os.path.splitext(project_files[0])[0]
         entries.append(
-            {
-                "app_name": project_name,
-                "app_dir": app_dir,
-                "project_path": normalize_path(os.path.join(app_dir, project_files[0])),
-                "has_project": True,
-                "is_unmanaged": False,
-                "source": "designer",
-            }
+            build_project_entry(
+                project_name,
+                app_dir,
+                os.path.join(app_dir, project_files[0]),
+                source="designer",
+            )
         )
 
     return sorted(entries, key=lambda item: str(item.get("app_name", "")).lower())

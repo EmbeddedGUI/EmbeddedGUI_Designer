@@ -10,6 +10,7 @@ from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_ro
 import ui_designer.model.workspace as workspace_module
 from ui_designer.model.workspace import (
     SDK_ROOT_ENV_VAR,
+    build_project_entry,
     compute_make_app_root_arg,
     default_designer_sdk_root,
     designer_repo_root_from_path,
@@ -90,6 +91,29 @@ class TestWorkspaceHelpers:
         assert sdk_example_app_dir(str(sdk_root), "") == ""
         assert sdk_example_project_path("", "HelloApp") == ""
         assert sdk_example_project_path(str(sdk_root), "") == ""
+
+    def test_build_project_entry_normalizes_managed_and_unmanaged_entries(self, tmp_path):
+        app_dir = tmp_path / "examples" / "HelloApp"
+        project_path = app_dir / "HelloApp.egui"
+
+        managed = build_project_entry(" HelloApp ", str(app_dir), str(project_path), source="designer")
+        unmanaged = build_project_entry("LegacyApp", str(tmp_path / "examples" / "LegacyApp"))
+
+        assert managed == {
+            "app_name": "HelloApp",
+            "app_dir": normalize_path(str(app_dir)),
+            "project_path": normalize_path(str(project_path)),
+            "has_project": True,
+            "is_unmanaged": False,
+            "source": "designer",
+        }
+        assert unmanaged == {
+            "app_name": "LegacyApp",
+            "app_dir": normalize_path(str(tmp_path / "examples" / "LegacyApp")),
+            "project_path": "",
+            "has_project": False,
+            "is_unmanaged": True,
+        }
 
     def test_compute_make_app_root_arg_for_external_app(self, tmp_path):
         sdk_root = tmp_path / "sdk"
