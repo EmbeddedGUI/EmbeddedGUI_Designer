@@ -37,6 +37,7 @@ from html2egui_helper import (
 )
 from figmamake_anim_extractor import AnimExtractor
 from ui_designer.utils.scaffold import (
+    materialize_project_codegen_outputs,
     scaffold_sdk_example_conversion_paths,
     sdk_example_layout_xml_path,
 )
@@ -608,17 +609,17 @@ class FigmaMakeCodegen:
     def _generate_c_code(self, sdk_root, app_dir):
         """Invoke the existing code generator."""
         from ui_designer.model.project import Project
-        from ui_designer.generator.code_generator import generate_all_files_preserved
 
         project = Project.load(app_dir)
         print(f"  Loaded: {len(project.pages)} pages")
 
-        files = generate_all_files_preserved(project, app_dir, backup=False)
-        for filename, content in files.items():
-            filepath = os.path.join(app_dir, filename)
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
-            with open(filepath, "w", encoding="utf-8", newline="\n") as f:
-                f.write(content)
+        materialized = materialize_project_codegen_outputs(
+            project,
+            app_dir,
+            backup=False,
+            newline="\n",
+        )
+        files = materialized.files
 
         print(f"  Generated {len(files)} C files")
 

@@ -79,6 +79,48 @@ def test_figmamake_codegen_writes_project_with_canonical_sdk_root(tmp_path, monk
     assert "<Resources" in resources_xml
 
 
+def test_figmamake_codegen_uses_shared_codegen_materializer(tmp_path, monkeypatch, capsys):
+    app_dir = tmp_path / "sdk" / "example" / "DemoApp"
+    app_dir.mkdir(parents=True)
+    fake_project = SimpleNamespace(pages=[object(), object(), object()])
+    seen = {}
+
+    from ui_designer.model.project import Project
+
+    def fake_load(cls, project_path):
+        seen["load_path"] = project_path
+        return fake_project
+
+    monkeypatch.setattr(Project, "load", classmethod(fake_load))
+    monkeypatch.setattr(
+        codegen_module,
+        "materialize_project_codegen_outputs",
+        lambda project, output_dir, **kwargs: (
+            seen.update(
+                {
+                    "materialize_project": project,
+                    "materialize_output_dir": output_dir,
+                    "materialize_kwargs": kwargs,
+                }
+            )
+            or SimpleNamespace(files={"main_page.c": "// generated\n"})
+        ),
+    )
+
+    codegen_module.FigmaMakeCodegen("DemoApp", 320, 240)._generate_c_code(
+        "ignored-sdk-root",
+        str(app_dir),
+    )
+
+    assert seen["load_path"] == str(app_dir)
+    assert seen["materialize_project"] is fake_project
+    assert seen["materialize_output_dir"] == str(app_dir)
+    assert seen["materialize_kwargs"] == {"backup": False, "newline": "\n"}
+    out = capsys.readouterr().out
+    assert "Loaded: 3 pages" in out
+    assert "Generated 1 C files" in out
+
+
 def test_figmamake_pipeline_reports_sdk_root_label(tmp_path, monkeypatch, capsys):
     sdk_root = tmp_path / "sdk"
     (sdk_root / "example" / "DemoApp").mkdir(parents=True)
