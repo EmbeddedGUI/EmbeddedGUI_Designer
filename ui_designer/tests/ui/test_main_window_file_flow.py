@@ -659,6 +659,79 @@ class TestMainWindowFileFlow:
         assert "Saved:" in window.statusBar().currentMessage()
         _close_window(window)
 
+    def test_save_project_clears_environmental_auto_retry_block_when_preview_recovers(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _ProbeFailCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return "make: *** No rule to make target 'main.exe'.  Stop."
+
+            def ensure_preview_build_available(self, force=False):
+                return False
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+            def precompile_async(self, callback):
+                raise AssertionError("precompile_async should not be called when preview target probe fails")
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SaveRetryRecoveryDemo"
+        project = _create_project(project_dir, "SaveRetryRecoveryDemo", sdk_root)
+        good_compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+        recreate_calls = {"count": 0}
+
+        window = MainWindow(str(sdk_root))
+
+        def _recreate_compiler():
+            recreate_calls["count"] += 1
+            if recreate_calls["count"] == 1:
+                window.compiler = _ProbeFailCompiler(project_dir)
+            else:
+                window.compiler = good_compiler
+
+        monkeypatch.setattr(window, "_recreate_compiler", _recreate_compiler)
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.save_project_and_materialize_codegen",
+            _fake_save_project_and_materialize_codegen("generated.c", "// generated\n"),
+        )
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        assert "main.exe" in window._auto_compile_retry_block_reason
+
+        assert window._save_project() is True
+
+        assert window._auto_compile_retry_block_reason == ""
+        assert "Editing-only mode" not in window.statusBar().currentMessage()
+        _close_window(window)
+
     def test_save_project_files_writes_split_page_outputs_on_disk(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -2942,6 +3015,67 @@ class TestMainWindowFileFlow:
         assert (dst_dir / "resource" / "src" / "legacy.png").is_file()
         assert not (dst_dir / "resource" / "src" / "_generated_text_preview.png").exists()
         assert not (dst_dir / "resource" / "src" / "_generated_text_demo_16_4.txt").exists()
+        _close_window(window)
+
+    def test_save_project_as_reports_editing_only_mode_when_preview_unavailable(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _PreviewIncompatibleCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return "make: *** No rule to make target 'main.exe'.  Stop."
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        src_dir = tmp_path / "SaveAsEditingOnlySrcDemo"
+        dst_dir = tmp_path / "SaveAsEditingOnlyDstDemo"
+        project = _create_project(src_dir, "SaveAsEditingOnlyDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        window.project = project
+        window.project_root = str(sdk_root)
+        window._project_dir = str(src_dir)
+        window.app_name = "SaveAsEditingOnlyDemo"
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(dst_dir))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _PreviewIncompatibleCompiler(dst_dir)))
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.save_project_and_materialize_codegen",
+            _fake_save_project_and_materialize_codegen("generated.c", "// save as\n"),
+        )
+
+        assert window._save_project_as() is True
+
+        assert "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop." in window.statusBar().currentMessage()
+        assert "main.exe" in window._auto_compile_retry_block_reason
+        assert "main.exe" in window._compile_action.toolTip()
         _close_window(window)
 
     def test_save_project_as_writes_split_page_outputs_with_real_generator(self, qapp, isolated_config, tmp_path, monkeypatch):

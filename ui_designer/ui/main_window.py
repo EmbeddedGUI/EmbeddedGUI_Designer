@@ -4709,12 +4709,18 @@ class MainWindow(QMainWindow):
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._recreate_compiler()
+        preview_unavailable_reason = ""
+        if self.compiler is not None:
+            preview_unavailable_reason = self._sync_auto_compile_retry_block_for_preview_state(preload_preview_error=True)
         self._undo_manager.mark_all_saved()
         self._persist_current_project_to_config()
         self._refresh_project_watch_snapshot()
         self._update_window_title()
         self._update_compile_availability()
-        self.statusBar().showMessage(f"Saved: {self._project_dir} ({len(files)} code file(s) updated)")
+        status_message = f"Saved: {self._project_dir} ({len(files)} code file(s) updated)"
+        if preview_unavailable_reason:
+            status_message = f"{status_message} | Editing-only mode: {preview_unavailable_reason}"
+        self.statusBar().showMessage(status_message)
         return True
 
     def _save_project_as(self):
@@ -4746,12 +4752,18 @@ class MainWindow(QMainWindow):
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._recreate_compiler()
+        preview_unavailable_reason = ""
+        if self.compiler is not None:
+            preview_unavailable_reason = self._sync_auto_compile_retry_block_for_preview_state(preload_preview_error=True)
         self._undo_manager.mark_all_saved()
         self._persist_current_project_to_config()
         self._refresh_project_watch_snapshot()
         self._update_window_title()
         self._update_compile_availability()
-        self.statusBar().showMessage(f"Saved: {path} ({len(files)} code file(s) updated)")
+        status_message = f"Saved: {path} ({len(files)} code file(s) updated)"
+        if preview_unavailable_reason:
+            status_message = f"{status_message} | Editing-only mode: {preview_unavailable_reason}"
+        self.statusBar().showMessage(status_message)
         return True
 
     def _close_project(self):
