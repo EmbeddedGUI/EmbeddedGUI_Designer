@@ -11,6 +11,8 @@ from types import SimpleNamespace
 import pytest
 
 from ui_designer.tests.project_builders import (
+    build_saved_test_project_and_page_with_widgets as _create_project_and_page_with_widgets,
+    build_saved_test_project_and_root_with_widgets as _create_project_and_root_with_widgets,
     build_saved_test_project as _create_project,
     build_saved_test_project_only_with_page_widgets as _create_project_only_with_page_widgets,
     build_saved_test_project_only_with_widgets as _create_project_only_with_widgets,
@@ -1033,7 +1035,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "DeleteLockedDemo"
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "DeleteLockedDemo",
             sdk_root,
@@ -1067,7 +1069,7 @@ class TestMainWindowFileFlow:
         removable = WidgetModel("switch", name="removable")
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "DeleteMixedDemo",
             sdk_root,
@@ -1103,7 +1105,7 @@ class TestMainWindowFileFlow:
         removable = WidgetModel("switch", name="removable")
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "CutMixedDemo",
             sdk_root,
@@ -1137,7 +1139,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "DeleteRecentMoveTargetDemo"
         target = WidgetModel("group", name="target")
         sibling = WidgetModel("label", name="sibling")
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "DeleteRecentMoveTargetDemo",
             sdk_root,
@@ -1175,7 +1177,7 @@ class TestMainWindowFileFlow:
         removable = WidgetModel("switch", name="removable")
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "TreeDeleteMixedDemo",
             sdk_root,
@@ -1533,7 +1535,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "GroupSelectionDemo"
         first = WidgetModel("label", name="first", x=10, y=20, width=30, height=10)
         second = WidgetModel("button", name="second", x=60, y=40, width=20, height=20)
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "GroupSelectionDemo",
             sdk_root,
@@ -1787,7 +1789,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "StructureActionDisabledDemo"
         first = WidgetModel("label", name="first")
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "StructureActionDisabledDemo",
             sdk_root,
@@ -2380,7 +2382,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "TreeGroupSelectionDemo"
         first = WidgetModel("label", name="first", x=10, y=20, width=30, height=10)
         second = WidgetModel("button", name="second", x=60, y=40, width=20, height=20)
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "TreeGroupSelectionDemo",
             sdk_root,
@@ -2414,7 +2416,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("label", name="first")
         second = WidgetModel("label", name="second")
         third = WidgetModel("label", name="third")
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "TreeDropMoveDemo",
             sdk_root,
@@ -2469,7 +2471,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("label", name="first")
         second = WidgetModel("label", name="second")
         third = WidgetModel("label", name="third")
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "MoveToEdgeDemo",
             sdk_root,
@@ -6667,7 +6669,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "UserCodeUpdateDemo"
-        project, page, _root = _create_project_with_widgets(
+        project, page = _create_project_and_page_with_widgets(
             project_dir,
             "UserCodeUpdateDemo",
             sdk_root,
@@ -6709,7 +6711,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "UserCodeDuplicateDemo"
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=160, height=24)
         slider.events["onValueChanged"] = "on_volume_changed"
-        project, page, _root = _create_project_with_widgets(
+        project, page = _create_project_and_page_with_widgets(
             project_dir,
             "UserCodeDuplicateDemo",
             sdk_root,
@@ -6816,7 +6818,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MockupDemo"
-        project, page, _root = _create_project_with_widgets(
+        project, page = _create_project_and_page_with_widgets(
             project_dir,
             "MockupDemo",
             sdk_root,
@@ -6853,7 +6855,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MockupDemo"
-        project, page, _root = _create_project_with_widgets(
+        project, page = _create_project_and_page_with_widgets(
             project_dir,
             "MockupDemo",
             sdk_root,
@@ -6884,7 +6886,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MockupCopyDemo"
-        project, page, _root = _create_project_with_widgets(
+        project, page = _create_project_and_page_with_widgets(
             project_dir,
             "MockupCopyDemo",
             sdk_root,
@@ -6924,7 +6926,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "XmlMockupDemo"
-        project, xml_page, _root = _create_project_with_widgets(
+        project, xml_page = _create_project_and_page_with_widgets(
             project_dir,
             "XmlMockupDemo",
             sdk_root,
@@ -9124,7 +9126,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ClipboardDemo"
         label = WidgetModel("label", name="title", x=10, y=10, width=80, height=20)
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "ClipboardDemo",
             sdk_root,
@@ -12525,7 +12527,7 @@ class TestMainWindowCanvasActions:
         second = WidgetModel("button", name="second", x=16, y=40, width=80, height=24)
         hidden = WidgetModel("switch", name="hidden", x=24, y=72, width=60, height=20)
         hidden.designer_hidden = True
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "SelectAllDemo",
             sdk_root,
@@ -12895,7 +12897,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewStructureActionDisabledDemo"
         child = WidgetModel("label", name="child", x=8, y=8, width=60, height=20)
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "PreviewStructureActionDisabledDemo",
             sdk_root,
@@ -13148,7 +13150,7 @@ class TestMainWindowCanvasActions:
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         solo = WidgetModel("label", name="solo", x=140, y=24, width=40, height=16)
         _add_widget_children(container, [child_a, child_b])
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "PreviewSelectMenuRelationshipsDemo",
             sdk_root,
@@ -14106,7 +14108,7 @@ class TestMainWindowCanvasActions:
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         child_c = WidgetModel("label", name="child_c", x=4, y=52, width=48, height=16)
         _add_widget_children(container, [child_a, child_b, child_c])
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "PreviewChildTraversalContextMenuDemo",
             sdk_root,
@@ -14248,7 +14250,7 @@ class TestMainWindowCanvasActions:
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         _add_widget_children(nested_group, [nested_leaf])
         _add_widget_children(container, [nested_group])
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "PreviewAncestorsContextMenuDemo",
             sdk_root,
@@ -14288,7 +14290,7 @@ class TestMainWindowCanvasActions:
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         _add_widget_children(nested_group, [nested_leaf])
         _add_widget_children(container, [nested_group])
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "PreviewRootContextMenuDemo",
             sdk_root,
@@ -14328,7 +14330,7 @@ class TestMainWindowCanvasActions:
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         _add_widget_children(nested_group, [nested_leaf])
         _add_widget_children(container, [nested_group])
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "PreviewPathContextMenuDemo",
             sdk_root,
@@ -14846,7 +14848,7 @@ class TestMainWindowCanvasActions:
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         _add_widget_children(nested_group, [nested_leaf])
         _add_widget_children(container, [nested_group])
-        project, _page, root = _create_project_with_widgets(
+        project, root = _create_project_and_root_with_widgets(
             project_dir,
             "PreviewSubtreeTypeContextMenuDemo",
             sdk_root,
