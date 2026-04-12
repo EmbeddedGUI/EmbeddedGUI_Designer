@@ -2656,6 +2656,7 @@ class MainWindow(QMainWindow):
                 preload_preview_error=True,
                 probe_preview_availability=True,
             )
+            preview_unavailable_reason = preview_unavailable_reason or self._effective_preview_unavailable_reason()
             if preview_unavailable_reason:
                 self.statusBar().showMessage(
                     self._status_message_with_editing_only_mode(status_message, preview_unavailable_reason)
@@ -2667,7 +2668,7 @@ class MainWindow(QMainWindow):
 
         self._welcome_page.refresh()
         self._update_sdk_status_label()
-        if status_message and not (self.project is not None and self._preview_unavailable_reason()):
+        if status_message and not (self.project is not None and self._effective_preview_unavailable_reason()):
             self.statusBar().showMessage(status_message)
 
     def _has_valid_sdk_root(self):
@@ -2992,7 +2993,7 @@ class MainWindow(QMainWindow):
                 self._switch_page(current_page_name)
 
         summary = self._summarize_changed_paths(changed_paths or [])
-        preview_unavailable_reason = self._preview_unavailable_reason()
+        preview_unavailable_reason = self._effective_preview_unavailable_reason()
         if auto:
             self.debug_panel.log_info(f"Project reloaded from disk: {summary or 'external changes applied'}")
             self.statusBar().showMessage(
@@ -3064,7 +3065,9 @@ class MainWindow(QMainWindow):
         missing_target = self._missing_make_target_name(normalized).lower()
         return (
             missing_target in {"main.exe", "main", "clean"}
+            or "preview build unavailable" in lowered
             or "preview build target unavailable" in lowered
+            or "preview build target probe timed out" in lowered
             or "sdk unavailable, compile preview disabled" in lowered
             or "make not found" in lowered
         )
@@ -3173,7 +3176,7 @@ class MainWindow(QMainWindow):
             opened_status_message = f"Opened: {project_dir} | SDK: {sdk_source}{suffix}"
         else:
             opened_status_message = f"Opened: {project_dir}{suffix}"
-        preview_unavailable_reason = self._preview_unavailable_reason()
+        preview_unavailable_reason = self._effective_preview_unavailable_reason()
         if preview_unavailable_reason:
             self._switch_to_python_preview(preview_unavailable_reason)
             self.statusBar().showMessage(
@@ -4709,7 +4712,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(
             self._status_message_with_editing_only_mode(
                 f"Created project: {dialog.app_name}",
-                self._preview_unavailable_reason(),
+                self._effective_preview_unavailable_reason(),
             )
         )
 
@@ -4787,6 +4790,7 @@ class MainWindow(QMainWindow):
             preload_preview_error=True,
             probe_environmental_recovery=True,
         )
+        preview_unavailable_reason = preview_unavailable_reason or self._effective_preview_unavailable_reason()
         self._undo_manager.mark_all_saved()
         self._persist_current_project_to_config()
         self._refresh_project_watch_snapshot()
@@ -4833,6 +4837,7 @@ class MainWindow(QMainWindow):
             preload_preview_error=True,
             probe_environmental_recovery=True,
         )
+        preview_unavailable_reason = preview_unavailable_reason or self._effective_preview_unavailable_reason()
         self._undo_manager.mark_all_saved()
         self._persist_current_project_to_config()
         self._refresh_project_watch_snapshot()
@@ -7471,6 +7476,7 @@ class MainWindow(QMainWindow):
             preload_preview_error=True,
             probe_environmental_recovery=True,
         )
+        preview_unavailable_reason = preview_unavailable_reason or self._effective_preview_unavailable_reason()
         self._undo_manager.mark_all_saved()
         self._refresh_project_watch_snapshot()
         self._update_window_title()
