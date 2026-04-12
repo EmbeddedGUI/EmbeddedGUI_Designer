@@ -28,6 +28,21 @@ from ..utils.scaffold import (
 )
 
 
+def _run_make_dry_run_main_target(project_root, app_name, app_root_arg):
+    return subprocess.run(
+        [
+            "make", "V=1", "--dry-run", "--always-make", "main.exe",
+            f"APP={app_name}", "PORT=designer",
+            f"EGUI_APP_ROOT_PATH={app_root_arg}",
+            "COMPILE_DEBUG=", "COMPILE_OPT_LEVEL=-O0",
+        ],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
 class BuildConfig:
     """Cached build configuration extracted from ``make V=1 --dry-run``.
 
@@ -61,14 +76,7 @@ class BuildConfig:
         Returns a populated BuildConfig, or None on failure.
         """
         try:
-            result = subprocess.run(
-                ["make", "V=1", "--dry-run", "--always-make", "main.exe",
-                 f"APP={app_name}", "PORT=designer",
-                 f"EGUI_APP_ROOT_PATH={app_root_arg}",
-                 "COMPILE_DEBUG=", "COMPILE_OPT_LEVEL=-O0"],
-                cwd=project_root,
-                capture_output=True, text=True, timeout=30,
-            )
+            result = _run_make_dry_run_main_target(project_root, app_name, app_root_arg)
             if result.returncode != 0:
                 return None
         except (subprocess.TimeoutExpired, FileNotFoundError):
@@ -257,6 +265,8 @@ class CompilerEngine:
         self._build_config = None  # BuildConfig cache for fast compile
         self._last_changed_files = []  # tracks files changed in last write
         self._last_runtime_error = ""
+        self._preview_build_probe_ran = False
+        self._preview_build_error = ""
 
         # Clean up any stale processes from previous abnormal exits
         self._cleanup_stale_processes()
@@ -517,6 +527,37 @@ class CompilerEngine:
 
         return self._make_compile()
 
+    @staticmethod
+    def _probe_output_summary(output, default="Preview build unavailable"):
+        lines = [line.strip() for line in str(output or "").splitlines() if line.strip()]
+        return lines[0] if lines else default
+
+    def ensure_preview_build_available(self, force=False):
+        if getattr(self, "_app_root_error", ""):
+            return False
+        if getattr(self, "_preview_build_probe_ran", False) and not force:
+            return not bool(getattr(self, "_preview_build_error", ""))
+
+        try:
+            result = _run_make_dry_run_main_target(self.project_root, self.app_name, self.app_root_arg)
+        except subprocess.TimeoutExpired:
+            self._preview_build_error = "Preview build target probe timed out"
+        except FileNotFoundError:
+            self._preview_build_error = "make not found in PATH"
+        else:
+            if result.returncode == 0:
+                self._preview_build_error = ""
+            else:
+                combined = (result.stderr or "") + (result.stdout or "")
+                self._preview_build_error = self._probe_output_summary(combined)
+
+        self._preview_build_probe_ran = True
+        return not bool(self._preview_build_error)
+
+    def reset_preview_build_probe(self):
+        self._preview_build_probe_ran = False
+        self._preview_build_error = ""
+
     def _make_compile(self, force_rebuild=False):
         """Full make-based compilation (slow path). Also refreshes BuildConfig."""
         if getattr(self, "_app_root_error", ""):
@@ -553,6 +594,8 @@ class CompilerEngine:
 
             # After successful make, extract build config for future fast compiles
             if success:
+                self._preview_build_probe_ran = True
+                self._preview_build_error = ""
                 cfg = BuildConfig.extract(self.project_root, self.app_name, self.app_root_arg)
                 if cfg:
                     self._build_config = cfg
@@ -804,6 +847,10 @@ class CompilerEngine:
     def get_build_error(self):
         """Return the compile-time path/config error, if any."""
         return getattr(self, "_app_root_error", "")
+
+    def get_preview_build_error(self):
+        """Return the preview target/build-tool probe error, if any."""
+        return getattr(self, "_preview_build_error", "") or getattr(self, "_app_root_error", "")
 
     def is_preview_running(self):
         """Return True when the preview bridge is alive."""

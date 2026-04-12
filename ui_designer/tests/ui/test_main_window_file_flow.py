@@ -3820,6 +3820,67 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_open_project_skips_precompile_when_preview_target_probe_fails(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _ProbeFailCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+                self.reset_calls = 0
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return "make: *** No rule to make target 'main.exe'.  Stop."
+
+            def ensure_preview_build_available(self, force=False):
+                return False
+
+            def reset_preview_build_probe(self):
+                self.reset_calls += 1
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+            def precompile_async(self, callback):
+                raise AssertionError("precompile_async should not be called when preview target probe fails")
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewTargetProbeDemo"
+        project = _create_project(project_dir, "PreviewTargetProbeDemo", sdk_root)
+        compiler = _ProbeFailCompiler(project_dir)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        assert "main.exe" in window._auto_compile_retry_block_reason
+        assert "cannot recover missing build targets" in window.debug_panel._output.toPlainText()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_precompile_failure_blocks_auto_precompile_after_external_reload(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):

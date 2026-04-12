@@ -389,6 +389,36 @@ class TestCompilerRuntime:
         assert not ready
         assert "not running" in err
 
+    @patch("ui_designer.engine.compiler._run_make_dry_run_main_target")
+    def test_preview_build_probe_reports_missing_main_target(self, mock_dry_run, tmp_path):
+        engine = self._make_engine(tmp_path)
+        mock_dry_run.return_value = MagicMock(
+            returncode=2,
+            stdout="",
+            stderr="make: *** No rule to make target 'main.exe'.  Stop.\n",
+        )
+
+        assert engine.ensure_preview_build_available() is False
+        assert "main.exe" in engine.get_preview_build_error()
+        assert engine.ensure_preview_build_available() is False
+        assert mock_dry_run.call_count == 1
+
+    @patch("ui_designer.engine.compiler._run_make_dry_run_main_target")
+    def test_reset_preview_build_probe_allows_retry(self, mock_dry_run, tmp_path):
+        engine = self._make_engine(tmp_path)
+        mock_dry_run.side_effect = [
+            MagicMock(returncode=2, stdout="", stderr="make: *** No rule to make target 'main.exe'.  Stop.\n"),
+            MagicMock(returncode=0, stdout="dry run ok\n", stderr=""),
+        ]
+
+        assert engine.ensure_preview_build_available() is False
+
+        engine.reset_preview_build_probe()
+
+        assert engine.ensure_preview_build_available() is True
+        assert engine.get_preview_build_error() == ""
+        assert mock_dry_run.call_count == 2
+
     def test_executable_paths_use_shared_output_helpers(self, tmp_path):
         engine = self._make_engine(tmp_path)
         main_name = "main.exe" if os.name == "nt" else "main"

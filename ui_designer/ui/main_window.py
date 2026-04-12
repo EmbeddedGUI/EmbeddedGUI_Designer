@@ -4967,6 +4967,8 @@ class MainWindow(QMainWindow):
                 reason = self.compiler.get_build_error()
             self._switch_to_python_preview(reason)
             return
+        if not self._ensure_preview_build_available(auto=True):
+            return
         if self._precompile_worker is not None and self._precompile_worker.isRunning():
             return
         if not self.compiler.is_exe_ready():
@@ -7234,6 +7236,9 @@ class MainWindow(QMainWindow):
     def _do_compile_and_run(self):
         """Execute compile and run cycle (async, multi-file)."""
         self._clear_auto_compile_retry_block()
+        reset_probe = getattr(self.compiler, "reset_preview_build_probe", None)
+        if callable(reset_probe):
+            reset_probe()
         self._start_compile_cycle(force_rebuild=False)
 
     def _run_auto_compile_cycle(self):
@@ -7244,6 +7249,9 @@ class MainWindow(QMainWindow):
     def _do_rebuild_egui_project(self):
         """Run a clean rebuild for the current EGUI project and restart preview."""
         self._clear_auto_compile_retry_block()
+        reset_probe = getattr(self.compiler, "reset_preview_build_probe", None)
+        if callable(reset_probe):
+            reset_probe()
         self._start_compile_cycle(force_rebuild=True)
 
     def _clean_all_confirmation_text(self):
@@ -7373,6 +7381,31 @@ class MainWindow(QMainWindow):
             "Build > Clean All && Reconstruct to rebuild from Designer source state.",
         )
 
+    def _ensure_preview_build_available(self, *, force_rebuild=False, auto=False):
+        compiler = self.compiler
+        if compiler is None:
+            return True
+        ensure_available = getattr(compiler, "ensure_preview_build_available", None)
+        if not callable(ensure_available):
+            return True
+        if ensure_available(force=bool(force_rebuild)):
+            return True
+
+        reason_getter = getattr(compiler, "get_preview_build_error", None)
+        reason = reason_getter() if callable(reason_getter) else ""
+        reason = reason or "Preview build unavailable"
+        self._last_runtime_error_text = reason
+        self._block_auto_compile_retry(reason)
+        status_message, guidance_message = self._compile_failure_feedback(reason, force_rebuild=force_rebuild)
+        self.debug_panel.log_error(reason if auto else f"Preview build unavailable: {reason}")
+        if guidance_message:
+            self.debug_panel.log_info(guidance_message)
+        self._switch_to_python_preview(reason)
+        if status_message:
+            self.statusBar().showMessage(status_message, 5000)
+        self._update_compile_availability()
+        return False
+
     def _start_compile_cycle(self, *, force_rebuild=False):
         """Execute compile or clean rebuild asynchronously."""
         if not self.project:
@@ -7387,6 +7420,8 @@ class MainWindow(QMainWindow):
             self._switch_to_python_preview(reason)
             self.statusBar().showMessage("Compile preview unavailable")
             self._update_workspace_chips()
+            return
+        if not self._ensure_preview_build_available(force_rebuild=force_rebuild):
             return
         if self._compile_worker is not None and self._compile_worker.isRunning():
             if force_rebuild:
