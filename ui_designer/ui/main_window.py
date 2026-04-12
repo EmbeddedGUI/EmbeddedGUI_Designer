@@ -3053,6 +3053,15 @@ class MainWindow(QMainWindow):
                 self._clear_auto_compile_retry_block()
         return reason
 
+    def _sync_preview_after_compiler_recreation(self, *, clear_when_available=False, preload_preview_error=False):
+        reason = self._sync_auto_compile_retry_block_for_preview_state(
+            clear_when_available=clear_when_available,
+            preload_preview_error=preload_preview_error,
+        )
+        if reason:
+            self._switch_to_python_preview(reason)
+        return reason
+
     def _open_loaded_project(self, project, project_dir, preferred_sdk_root="", silent=False):
         project_dir = normalize_path(project_dir)
         self._bump_async_generation()
@@ -4709,9 +4718,7 @@ class MainWindow(QMainWindow):
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._recreate_compiler()
-        preview_unavailable_reason = ""
-        if self.compiler is not None:
-            preview_unavailable_reason = self._sync_auto_compile_retry_block_for_preview_state(preload_preview_error=True)
+        preview_unavailable_reason = self._sync_preview_after_compiler_recreation(preload_preview_error=True)
         self._undo_manager.mark_all_saved()
         self._persist_current_project_to_config()
         self._refresh_project_watch_snapshot()
@@ -4752,9 +4759,7 @@ class MainWindow(QMainWindow):
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._recreate_compiler()
-        preview_unavailable_reason = ""
-        if self.compiler is not None:
-            preview_unavailable_reason = self._sync_auto_compile_retry_block_for_preview_state(preload_preview_error=True)
+        preview_unavailable_reason = self._sync_preview_after_compiler_recreation(preload_preview_error=True)
         self._undo_manager.mark_all_saved()
         self._persist_current_project_to_config()
         self._refresh_project_watch_snapshot()
