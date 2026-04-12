@@ -10,6 +10,7 @@ import pytest
 sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 import html2egui_helper as h
+from ui_designer.model.workspace import sdk_example_app_dir
 from ui_designer.utils.resource_config_overlay import make_empty_resource_config_content
 from ui_designer.utils.scaffold import RESOURCE_IMAGES_DIR_RELPATH, RESOURCE_SRC_DIR_RELPATH, SUPPORTED_TEXT_RELPATH
 
@@ -36,7 +37,7 @@ class TestHelperResourceSync:
 
         app_dir = h._get_app_dir(str(sdk_root), "DemoApp")
 
-        assert app_dir == str(sdk_root / "example" / "DemoApp")
+        assert app_dir == sdk_example_app_dir(str(sdk_root), "DemoApp")
         assert h._get_app_config_dir(app_dir) == str(
             sdk_root / "example" / "DemoApp" / ".eguiproject"
         )

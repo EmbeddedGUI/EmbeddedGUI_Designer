@@ -42,7 +42,7 @@ from ..utils.scaffold import (
 )
 from ..utils.resource_config_overlay import is_designer_resource_path
 from ..utils.xml_utils import element_to_xml_string
-from .workspace import normalize_path, resolve_project_sdk_root, serialize_sdk_root
+from .workspace import normalize_path, resolve_project_sdk_root, sdk_example_app_dir, serialize_sdk_root
 from .sdk_fingerprint import SdkFingerprint
 
 
@@ -186,7 +186,7 @@ class Project:
         if self.project_dir:
             return self.project_dir
         if self.sdk_root:
-            return os.path.join(self.sdk_root, "example", self.app_name)
+            return sdk_example_app_dir(self.sdk_root, self.app_name)
         return ""
 
     def get_resource_dir(self):

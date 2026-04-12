@@ -31,7 +31,11 @@ import sys
 import time
 from pathlib import Path
 
-from ui_designer.model.workspace import require_designer_sdk_root, sdk_runtime_check_output_dir
+from ui_designer.model.workspace import (
+    require_designer_sdk_root,
+    sdk_example_app_dir,
+    sdk_runtime_check_output_dir,
+)
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS_DIR = os.path.dirname(SCRIPT_DIR)
@@ -62,7 +66,7 @@ def stage_capture(figma_url, app_name, width, height, sdk_root):
     print("STAGE 1: CAPTURE — Reference frames from Figma Make")
     print("=" * 60)
 
-    app_dir = os.path.join(sdk_root, "example", app_name)
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
     ref_dir = os.path.join(app_dir, ".eguiproject", "reference_frames")
     os.makedirs(ref_dir, exist_ok=True)
 
@@ -167,7 +171,7 @@ def stage_verify(ref_dir, rendered_dir, app_name, sdk_root):
         print(f"  [{status:4s}] {r['name']:30s}  SSIM={r['ssim']:.4f}")
 
     # Generate HTML report
-    app_dir = os.path.join(sdk_root, "example", app_name)
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
     report_path = os.path.join(app_dir, ".eguiproject", "regression_report.html")
     generate_html_report(summary, report_path)
 
@@ -215,8 +219,11 @@ def main():
     print(f"  SDK root: {sdk_root}")
 
     # Stage 1: Capture
-    ref_dir = os.path.join(sdk_root, "example", args.app,
-                           ".eguiproject", "reference_frames")
+    ref_dir = os.path.join(
+        sdk_example_app_dir(sdk_root, args.app),
+        ".eguiproject",
+        "reference_frames",
+    )
     if args.figma_url and not args.skip_capture:
         success, ref_dir = stage_capture(
             args.figma_url, args.app, args.width, args.height, sdk_root
@@ -244,7 +251,7 @@ def main():
     if args.convert_only:
         elapsed = time.time() - start_time
         print(f"\nConversion complete in {elapsed:.1f}s")
-        print(f"  App dir: {os.path.join(sdk_root, 'example', args.app)}")
+        print(f"  App dir: {sdk_example_app_dir(sdk_root, args.app)}")
         sys.exit(0)
 
     # Stage 3: Build & Run

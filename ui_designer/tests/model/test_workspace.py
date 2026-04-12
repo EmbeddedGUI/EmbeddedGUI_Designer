@@ -28,6 +28,8 @@ from ui_designer.model.workspace import (
     resolve_preferred_sdk_root,
     resolve_project_sdk_root,
     resolve_sdk_root_candidate,
+    sdk_example_app_dir,
+    sdk_examples_dir,
     sdk_output_dir,
     sdk_output_executable_name,
     sdk_output_executable_path,
@@ -70,6 +72,16 @@ class TestWorkspaceHelpers:
         app_dir = sdk_root / "example" / "HelloApp"
         app_dir.mkdir(parents=True)
         assert compute_make_app_root_arg(str(sdk_root), str(app_dir), "HelloApp") == "example"
+
+    def test_sdk_example_dir_helpers(self, tmp_path):
+        sdk_root = tmp_path / "sdk"
+
+        assert sdk_examples_dir(str(sdk_root)) == normalize_path(str(sdk_root / "example"))
+        assert sdk_example_app_dir(str(sdk_root), "HelloApp") == normalize_path(
+            str(sdk_root / "example" / "HelloApp")
+        )
+        assert sdk_example_app_dir("", "HelloApp") == ""
+        assert sdk_example_app_dir(str(sdk_root), "") == ""
 
     def test_compute_make_app_root_arg_for_external_app(self, tmp_path):
         sdk_root = tmp_path / "sdk"

@@ -12,6 +12,7 @@ SDK_ROOT_ENV_VAR = "EMBEDDEDGUI_SDK_ROOT"
 DEFAULT_DESIGNER_SDK_CONTAINER = "sdk"
 DEFAULT_DESIGNER_SDK_DIRNAME = "EmbeddedGUI"
 DEFAULT_DESIGNER_EXAMPLES_DIRNAME = "examples"
+SDK_EXAMPLES_DIRNAME = "example"
 SDK_RESOURCE_GENERATOR_RELPATH = os.path.join("scripts", "tools", "app_resource_generate.py")
 SDK_OUTPUT_DIRNAME = "output"
 SDK_RUNTIME_CHECK_OUTPUT_DIRNAME = "runtime_check_output"
@@ -241,12 +242,29 @@ def infer_sdk_root_from_project_dir(project_dir: str) -> str:
     if not project_dir:
         return ""
     example_dir = os.path.dirname(project_dir)
-    if os.path.basename(example_dir) != "example":
+    if os.path.basename(example_dir) != SDK_EXAMPLES_DIRNAME:
         return ""
     candidate = os.path.dirname(example_dir)
     if is_valid_sdk_root(candidate):
         return candidate
     return ""
+
+
+def sdk_examples_dir(sdk_root: str | None) -> str:
+    """Return the absolute SDK ``example`` directory path."""
+    root = normalize_path(sdk_root)
+    if not root:
+        return ""
+    return normalize_path(os.path.join(root, SDK_EXAMPLES_DIRNAME))
+
+
+def sdk_example_app_dir(sdk_root: str | None, app_name: str | None) -> str:
+    """Return the absolute SDK example app directory path."""
+    examples_dir = sdk_examples_dir(sdk_root)
+    app_name = str(app_name or "").strip()
+    if not examples_dir or not app_name:
+        return ""
+    return normalize_path(os.path.join(examples_dir, app_name))
 
 
 def compute_make_app_root_arg(sdk_root: str, app_dir: str, app_name: str) -> str:
@@ -256,7 +274,7 @@ def compute_make_app_root_arg(sdk_root: str, app_dir: str, app_name: str) -> str
     if not sdk_root or not app_dir or not app_name:
         raise ValueError("sdk_root, app_dir, and app_name are required")
 
-    example_app_dir = normalize_path(os.path.join(sdk_root, "example", app_name))
+    example_app_dir = sdk_example_app_dir(sdk_root, app_name)
     if app_dir == example_app_dir:
         return "example"
 

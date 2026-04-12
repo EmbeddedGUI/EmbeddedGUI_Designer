@@ -33,6 +33,7 @@ import sys
 
 from ui_designer.model.workspace import (
     require_designer_sdk_root,
+    sdk_example_app_dir,
     sdk_output_dir,
     sdk_resource_generator_path,
     sdk_runtime_check_output_dir,
@@ -88,7 +89,7 @@ def _find_sdk_root():
 
 def _get_app_dir(sdk_root, app_name):
     """Return the absolute app directory under the SDK example tree."""
-    return os.path.join(sdk_root, "example", app_name)
+    return sdk_example_app_dir(sdk_root, app_name)
 
 
 def _get_app_config_dir(app_dir):

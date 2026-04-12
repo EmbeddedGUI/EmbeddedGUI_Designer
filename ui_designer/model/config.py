@@ -7,7 +7,14 @@ import os
 import sys
 
 from ..utils.scaffold import project_build_mk_path, project_file_path
-from .workspace import infer_sdk_root_from_project_dir, is_valid_sdk_root, normalize_path, resolve_available_sdk_root
+from .workspace import (
+    infer_sdk_root_from_project_dir,
+    is_valid_sdk_root,
+    normalize_path,
+    resolve_available_sdk_root,
+    sdk_example_app_dir,
+    sdk_examples_dir,
+)
 
 
 CONFIG_DIR_ENV_VAR = "EMBEDDEDGUI_DESIGNER_CONFIG_DIR"
@@ -304,7 +311,7 @@ class DesignerConfig:
         sdk_root = self._resolve_sdk_root(sdk_root)
         if not sdk_root or not app_name:
             return ""
-        return os.path.join(sdk_root, "example", app_name)
+        return sdk_example_app_dir(sdk_root, app_name)
 
     def get_project_path(self, app_name=None, sdk_root=None):
         """Get the default SDK example project path for an app."""
@@ -320,7 +327,7 @@ class DesignerConfig:
         if not sdk_root:
             return []
 
-        example_dir = os.path.join(sdk_root, "example")
+        example_dir = sdk_examples_dir(sdk_root)
         if not os.path.isdir(example_dir):
             return []
 
