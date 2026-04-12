@@ -1651,7 +1651,7 @@ class MainWindow(QMainWindow):
             return "set a valid SDK root first"
         if self.compiler is None:
             return "save the project to a valid SDK workspace first"
-        preview_unavailable_reason = self._preview_unavailable_reason()
+        preview_unavailable_reason = self._effective_preview_unavailable_reason()
         if preview_unavailable_reason:
             return preview_unavailable_reason
         return "compile preview is unavailable"
@@ -2165,10 +2165,22 @@ class MainWindow(QMainWindow):
         preview_error = preview_error_getter() if callable(preview_error_getter) else ""
         return str(preview_error or "").strip()
 
+    def _preview_retry_blocked_reason(self):
+        reason = str(getattr(self, "_auto_compile_retry_block_reason", "") or "").strip()
+        if self._preview_retry_block_reason_is_environmental(reason):
+            return reason
+        return ""
+
+    def _effective_preview_unavailable_reason(self):
+        reason = self._preview_unavailable_reason()
+        if reason:
+            return reason
+        return self._preview_retry_blocked_reason()
+
     def _preview_mode_text(self):
         if getattr(self, "project", None) is None:
             return "No Preview"
-        if self._preview_unavailable_reason():
+        if self._effective_preview_unavailable_reason():
             return "Editing Only"
         if hasattr(self, "preview_panel") and self.preview_panel.is_python_preview_active():
             return "Python Preview"
@@ -2680,8 +2692,7 @@ class MainWindow(QMainWindow):
             self.compiler.set_screen_size(self.project.screen_width, self.project.screen_height)
 
     def _update_compile_availability(self):
-        preview_error_getter = getattr(self.compiler, "get_preview_build_error", None)
-        preview_error = preview_error_getter() if callable(preview_error_getter) else ""
+        preview_error = self._effective_preview_unavailable_reason()
         can_compile = (
             self.project is not None
             and self.compiler is not None
@@ -3099,6 +3110,9 @@ class MainWindow(QMainWindow):
         if status_message:
             return f"{status_message} | Editing-only mode: {reason}"
         return f"Editing-only mode: {reason}"
+
+    def _should_offer_debug_rebuild_action(self, reason=""):
+        return not self._preview_retry_block_reason_is_environmental(reason)
 
     def _open_loaded_project(self, project, project_dir, preferred_sdk_root="", silent=False):
         project_dir = normalize_path(project_dir)
@@ -7650,7 +7664,7 @@ class MainWindow(QMainWindow):
                 self._switch_to_python_preview(failure_summary)
                 self.preview_panel.status_label.setText(failure_summary)
                 self.statusBar().showMessage(failure_summary, 5000)
-                self._update_debug_rebuild_action(show=True)
+                self._update_debug_rebuild_action(show=self._should_offer_debug_rebuild_action(failure_summary))
                 self._update_compile_availability()
                 return
         finally:
@@ -7727,7 +7741,7 @@ class MainWindow(QMainWindow):
             self._switch_to_python_preview(failure_summary)
             # Show debug dock on compile failure
             self._show_bottom_panel("Debug Output")
-            self._update_debug_rebuild_action(show=True)
+            self._update_debug_rebuild_action(show=self._should_offer_debug_rebuild_action(failure_summary))
         if pending_rebuild:
             self._start_compile_cycle(force_rebuild=True)
         elif pending_compile:

@@ -4221,6 +4221,11 @@ class TestMainWindowFileFlow:
         assert "main.exe" in window.statusBar().currentMessage()
         assert "Clean All" not in window.statusBar().currentMessage()
         assert "cannot recover missing build targets" in window.debug_panel._output.toPlainText()
+        assert window._compile_action.isEnabled() is False
+        assert window._rebuild_action.isEnabled() is False
+        assert "main.exe" in window._compile_action.toolTip()
+        assert "Preview: Editing Only" in window._workspace_status_label.text()
+        assert window.debug_panel._rebuild_btn.isHidden() is True
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
