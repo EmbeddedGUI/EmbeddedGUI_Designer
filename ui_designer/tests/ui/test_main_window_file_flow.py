@@ -4269,6 +4269,12 @@ class TestMainWindowFileFlow:
         assert window._compile_action.isEnabled() is True
         assert window._rebuild_action.isEnabled() is False
         assert "clean" in window._rebuild_action.toolTip()
+        assert window._clean_all_action.toolTip() == (
+            "Destructive recovery: delete project-side generated/code files outside the preserved "
+            "Designer source set, reconstruct the project, and rerun the preview (Ctrl+Shift+F5). "
+            "Project: open. Saved project: saved. SDK: valid. Preview: python preview. "
+            "Preview rerun will be skipped: make: *** No rule to make target 'clean'.  Stop."
+        )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
             "Project: open. SDK: valid. Compile: available. Rebuild: unavailable. Reconstruct: available. Auto compile: on. "

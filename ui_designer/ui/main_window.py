@@ -1680,6 +1680,15 @@ class MainWindow(QMainWindow):
             return "save the project first"
         return "clean-all recovery is unavailable"
 
+    def _clean_all_action_runtime_note(self):
+        if not hasattr(self, "_clean_all_action") or not self._clean_all_action.isEnabled():
+            return ""
+        rebuild_unavailable_reason = self._effective_rebuild_unavailable_reason()
+        if rebuild_unavailable_reason:
+            suffix = "" if str(rebuild_unavailable_reason).rstrip().endswith((".", "!", "?")) else "."
+            return f" Preview rerun will be skipped: {rebuild_unavailable_reason}{suffix}"
+        return ""
+
     def _build_preview_state_text(self):
         if self.project is not None and self._effective_preview_unavailable_reason():
             return "editing only"
@@ -1781,7 +1790,7 @@ class MainWindow(QMainWindow):
             )
             clean_context = self._clean_all_action_context_summary()
             if self._clean_all_action.isEnabled():
-                clean_hint = f"{base_text} {clean_context}"
+                clean_hint = f"{base_text} {clean_context}{self._clean_all_action_runtime_note()}"
             else:
                 clean_hint = f"{base_text} {clean_context} Unavailable: {self._clean_all_action_blocked_reason()}."
             self._apply_action_hint(self._clean_all_action, clean_hint)
