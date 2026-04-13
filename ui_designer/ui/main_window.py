@@ -7538,7 +7538,7 @@ class MainWindow(QMainWindow):
         )
 
     def _do_clean_all_and_reconstruct(self):
-        """Delete reconstructible outputs, rebuild from designer state, and rerun preview."""
+        """Delete reconstructible outputs, rebuild from designer state, and rerun preview when available."""
         if self.project is None:
             return
         if self._compile_worker is not None and self._compile_worker.isRunning():
@@ -7663,7 +7663,8 @@ class MainWindow(QMainWindow):
             return (
                 "Clean rebuild target 'clean' is unavailable, switched to Python fallback.",
                 "Build system does not define the 'clean' target. Verify the SDK/designer Makefile setup. "
-                "Regular Compile remains available, but Rebuild EGUI Project is disabled until the build "
+                "Regular Compile remains available, Rebuild EGUI Project is disabled, and Clean All && "
+                "Reconstruct will rebuild project files without rerunning the preview until the build "
                 "environment changes.",
             )
         if "make not found" in lowered:
@@ -7681,9 +7682,10 @@ class MainWindow(QMainWindow):
         if rebuild_missing_target == "clean":
             return (
                 "EXE build failed, switched to Python fallback. Rebuild-based recovery is unavailable until the build environment changes.",
-                "Build failed. The build system does not define the 'clean' target required by Rebuild EGUI Project "
-                "and Clean All && Reconstruct. Verify the SDK/designer Makefile setup before relying on rebuild-based "
-                "recovery.",
+                "Build failed. The build system does not define the 'clean' target required by Rebuild EGUI Project. "
+                "Verify the SDK/designer Makefile setup before relying on rebuild-based recovery. Clean All && "
+                "Reconstruct can still rebuild project files, but preview rerun will be skipped until the build "
+                "environment changes.",
             )
         return (
             "EXE build failed, switched to Python fallback. Use Build > Rebuild EGUI Project first, "

@@ -4326,7 +4326,8 @@ class TestMainWindowFileFlow:
 
         assert "Rebuild-based recovery is unavailable" in window.statusBar().currentMessage()
         debug_output = window.debug_panel._output.toPlainText()
-        assert "required by Rebuild EGUI Project and Clean All && Reconstruct" in debug_output
+        assert "required by Rebuild EGUI Project" in debug_output
+        assert "Clean All && Reconstruct can still rebuild project files" in debug_output
         assert "Use Build > Rebuild EGUI Project first" not in debug_output
         assert window._compile_action.isEnabled() is True
         assert window._rebuild_action.isEnabled() is False
@@ -4389,6 +4390,7 @@ class TestMainWindowFileFlow:
 
         assert status == "Clean rebuild target 'clean' is unavailable, switched to Python fallback."
         assert "Regular Compile remains available" in guidance
+        assert "Clean All && Reconstruct will rebuild project files without rerunning the preview" in guidance
 
     def test_compile_failure_feedback_handles_generic_compile_failure_when_clean_target_is_unavailable(self):
         from ui_designer.ui.main_window import MainWindow
@@ -4399,7 +4401,8 @@ class TestMainWindowFileFlow:
         )
 
         assert "Rebuild-based recovery is unavailable" in status
-        assert "required by Rebuild EGUI Project and Clean All && Reconstruct" in guidance
+        assert "required by Rebuild EGUI Project" in guidance
+        assert "Clean All && Reconstruct can still rebuild project files" in guidance
 
     def test_compile_failure_feedback_handles_preview_probe_timeout(self):
         from ui_designer.ui.main_window import MainWindow
