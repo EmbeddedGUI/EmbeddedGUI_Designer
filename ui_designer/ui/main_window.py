@@ -5230,9 +5230,17 @@ class MainWindow(QMainWindow):
         self._cleanup_worker_ref(worker, "_precompile_worker")
         if self._is_closing or generation != self._async_generation:
             return
+        pending_rebuild = bool(self._pending_rebuild)
+        pending_compile = bool(self._pending_compile) and not pending_rebuild
+        self._pending_rebuild = False
+        self._pending_compile = False
         if success:
             self.statusBar().showMessage("Ready (precompiled)", 3000)
             self.debug_panel.log_success("Background precompile completed")
+            if pending_rebuild:
+                self._start_compile_cycle(force_rebuild=True)
+            elif pending_compile:
+                self._start_compile_cycle(force_rebuild=False)
         else:
             self._block_auto_compile_retry(self._compile_failure_summary(message, "Precompile failed"))
             self.statusBar().showMessage("Precompile failed", 5000)
