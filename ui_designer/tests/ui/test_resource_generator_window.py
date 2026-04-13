@@ -214,6 +214,36 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_main_window_close_is_blocked_by_path_only_changes_in_resource_generator(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QCloseEvent
+
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = build_test_sdk_root(tmp_path / "sdk")
+        window = MainWindow(str(sdk_root))
+
+        window._open_resource_generator_window()
+        qapp.processEvents()
+        generator_window = window._resource_generator_window
+        assert generator_window is not None
+        generator_window._config_path_edit.setText("D:/tmp/app_resource_config.json")
+        generator_window._on_path_edited("config_path", generator_window._config_path_edit)
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.No)
+
+        event = QCloseEvent()
+        window.closeEvent(event)
+
+        assert generator_window.has_unsaved_changes() is True
+        assert event.isAccepted() is False
+        assert window._is_closing is False
+        assert generator_window.isVisible() is True
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.Yes)
+        _close_window(generator_window)
+        _close_window(window)
+
+    @_skip_no_qt
     def test_generate_resources_logs_success_result(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import ResourceGenerationResult
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
