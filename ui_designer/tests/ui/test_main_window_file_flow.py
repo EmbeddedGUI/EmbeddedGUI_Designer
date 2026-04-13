@@ -4762,7 +4762,9 @@ class TestMainWindowFileFlow:
         window._on_widget_selected(window._current_page.root_widget)
 
         debug_output = window.debug_panel._output.toPlainText()
-        assert "Selection changed (tree):" in debug_output
+        assert "Selection event (tree):" in debug_output
+        assert "Selection pipeline:" in debug_output
+        assert "Selection applied (tree):" in debug_output
         assert "No compile queued." in debug_output
         assert "Auto compile trigger" not in debug_output
         assert "Compile trigger:" not in debug_output

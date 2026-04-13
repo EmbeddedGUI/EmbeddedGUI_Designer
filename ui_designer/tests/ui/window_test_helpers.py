@@ -15,7 +15,7 @@ def disable_main_window_compile(window, compiler_factory):
         existing_compiler.cleanup()
     window.compiler = compiler_factory()
     window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", compiler_factory())
-    window._trigger_compile = lambda: None
+    window._trigger_compile = lambda *args, **kwargs: None
     return window
 
 

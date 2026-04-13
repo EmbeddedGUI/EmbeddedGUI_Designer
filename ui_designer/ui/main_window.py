@@ -5249,6 +5249,7 @@ class MainWindow(QMainWindow):
         if not self.compiler.is_exe_ready():
             self.statusBar().showMessage("Background compiling...")
             self.debug_panel.log_action("Starting background precompile...")
+            self.debug_panel.log_info(f"Background precompile requested | {self._preview_runtime_snapshot()}")
             target_name_getter = getattr(self.compiler, "get_preview_make_target_name", None)
             target_name = target_name_getter() if callable(target_name_getter) else "main.exe"
             self.debug_panel.log_cmd(
@@ -5266,6 +5267,9 @@ class MainWindow(QMainWindow):
         self._cleanup_worker_ref(worker, "_precompile_worker")
         if self._is_closing or generation != self._async_generation:
             return
+        self.debug_panel.log_info(
+            f"Background precompile callback: success={success} message={message} | {self._preview_runtime_snapshot()}"
+        )
         pending_rebuild = bool(self._pending_rebuild)
         pending_compile = bool(self._pending_compile) and not pending_rebuild
         self._pending_rebuild = False
@@ -6510,9 +6514,63 @@ class MainWindow(QMainWindow):
             summary = f"{summary}; primary={self._widget_log_label(normalized_primary)}"
         return summary
 
-    def _log_selection_change(self, source, widgets=None, primary=None):
+    @staticmethod
+    def _worker_runtime_state(worker):
+        if worker is None:
+            return "none"
+        try:
+            return "running" if worker.isRunning() else "idle"
+        except Exception:
+            return "unknown"
+
+    def _preview_runtime_snapshot(self):
+        preview_mode = "idle"
+        if getattr(self.preview_panel, "is_python_preview_active", None) and self.preview_panel.is_python_preview_active():
+            preview_mode = "python"
+        elif bool(getattr(self.preview_panel, "is_embedded", False)):
+            preview_mode = "headless"
+
+        preview_running = "n/a"
+        exe_ready = "n/a"
+        if self.compiler is not None:
+            try:
+                preview_running = "running" if self.compiler.is_preview_running() else "stopped"
+            except Exception:
+                preview_running = "unknown"
+            try:
+                exe_ready = "ready" if self.compiler.is_exe_ready() else "missing"
+            except Exception:
+                exe_ready = "unknown"
+
+        queued_reasons = self._format_compile_reasons(self._queued_compile_reasons) if self._queued_compile_reasons else "none"
+        return (
+            f"preview={preview_mode}/{preview_running}, exe={exe_ready}, "
+            f"compile_worker={self._worker_runtime_state(self._compile_worker)}, "
+            f"precompile_worker={self._worker_runtime_state(self._precompile_worker)}, "
+            f"auto_compile={self.auto_compile}, pending_compile={self._pending_compile}, "
+            f"pending_rebuild={self._pending_rebuild}, queued={queued_reasons}, "
+            f"retry_block={self._auto_compile_retry_block_reason or 'none'}, "
+            f"rebuild_block={self._rebuild_retry_block_reason or 'none'}"
+        )
+
+    @staticmethod
+    def _format_timed_step(elapsed_ms, skipped=False):
+        if skipped:
+            return "skip"
+        return f"{elapsed_ms:.1f}ms"
+
+    def _log_selection_change(self, source, widgets=None, primary=None, elapsed_ms=0.0, changed=True):
         summary = self._selection_log_summary(widgets, primary=primary)
-        self.debug_panel.log_info(f"Selection changed ({source}): {summary}. No compile queued.")
+        state = self._preview_runtime_snapshot()
+        if changed:
+            self.debug_panel.log_info(
+                f"Selection applied ({source}): {summary}. No compile queued. "
+                f"elapsed={elapsed_ms:.1f}ms | {state}"
+            )
+        else:
+            self.debug_panel.log_info(
+                f"Selection unchanged ({source}): {summary}. elapsed={elapsed_ms:.1f}ms | {state}"
+            )
 
     def _set_selection(self, widgets=None, primary=None, sync_tree=True, sync_preview=True):
         normalized_widgets, normalized_primary = self._normalized_selection(widgets, primary=primary)
@@ -6524,24 +6582,63 @@ class MainWindow(QMainWindow):
                 self.preview_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
             return False
 
+        total_started = time.perf_counter()
         self._selection_state.set_widgets(normalized_widgets, primary=normalized_primary)
         self._selected_widget = self._selection_state.primary
         if hasattr(self, "_state_store"):
             selected_id = getattr(self._selected_widget, "name", None) if self._selected_widget is not None else None
             self._state_store.set_selection(selected_id)
+        step_started = time.perf_counter()
         self.property_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
+        property_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
         self.animations_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
+        animations_ms = (time.perf_counter() - step_started) * 1000.0
+        tree_ms = 0.0
         if sync_tree:
+            step_started = time.perf_counter()
             self.widget_tree.set_selected_widgets(self._selection_state.widgets, self._selection_state.primary)
+            tree_ms = (time.perf_counter() - step_started) * 1000.0
+        preview_ms = 0.0
         if sync_preview:
+            step_started = time.perf_counter()
             self.preview_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
+            preview_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
         self._update_edit_actions()
+        edit_actions_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
         self._update_diagnostics_panel()
+        diagnostics_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
         self._show_selection_feedback()
+        feedback_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
         self._update_widget_browser_target()
+        browser_target_ms = (time.perf_counter() - step_started) * 1000.0
+        browser_focus_ms = 0.0
         if hasattr(self, "widget_browser") and self._selection_state.primary is not None:
+            step_started = time.perf_counter()
             self.widget_browser.select_widget_type(self._selection_state.primary.widget_type)
+            browser_focus_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
         self._update_workspace_chips()
+        workspace_ms = (time.perf_counter() - step_started) * 1000.0
+        total_ms = (time.perf_counter() - total_started) * 1000.0
+        self.debug_panel.log_info(
+            "Selection pipeline: "
+            f"properties={self._format_timed_step(property_ms)}, "
+            f"animations={self._format_timed_step(animations_ms)}, "
+            f"tree={self._format_timed_step(tree_ms, skipped=not sync_tree)}, "
+            f"preview={self._format_timed_step(preview_ms, skipped=not sync_preview)}, "
+            f"edit_actions={self._format_timed_step(edit_actions_ms)}, "
+            f"diagnostics={self._format_timed_step(diagnostics_ms)}, "
+            f"feedback={self._format_timed_step(feedback_ms)}, "
+            f"browser_target={self._format_timed_step(browser_target_ms)}, "
+            f"browser_focus={self._format_timed_step(browser_focus_ms, skipped=self._selection_state.primary is None)}, "
+            f"workspace={self._format_timed_step(workspace_ms)}, "
+            f"total={total_ms:.1f}ms"
+        )
         return True
 
     def _clear_selection(self, sync_tree=True, sync_preview=True):
@@ -7234,26 +7331,64 @@ class MainWindow(QMainWindow):
         self._update_edit_menu_metadata()
 
     def _on_tree_selection_changed(self, widgets, primary):
+        selection_started = time.perf_counter()
+        self.debug_panel.log_info(
+            f"Selection event (tree): {self._selection_log_summary(widgets, primary=primary)} | "
+            f"{self._preview_runtime_snapshot()}"
+        )
         if self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True) is not False:
-            self._log_selection_change("tree", widgets, primary=primary)
+            elapsed_ms = (time.perf_counter() - selection_started) * 1000.0
+            self._log_selection_change("tree", widgets, primary=primary, elapsed_ms=elapsed_ms, changed=True)
             self._focus_properties_for_selection()
+        else:
+            elapsed_ms = (time.perf_counter() - selection_started) * 1000.0
+            self._log_selection_change("tree", widgets, primary=primary, elapsed_ms=elapsed_ms, changed=False)
 
     def _on_preview_selection_changed(self, widgets, primary):
+        selection_started = time.perf_counter()
+        self.debug_panel.log_info(
+            f"Selection event (preview): {self._selection_log_summary(widgets, primary=primary)} | "
+            f"{self._preview_runtime_snapshot()}"
+        )
         if self._set_selection(widgets, primary=primary, sync_tree=True, sync_preview=False) is not False:
-            self._log_selection_change("preview", widgets, primary=primary)
+            elapsed_ms = (time.perf_counter() - selection_started) * 1000.0
+            self._log_selection_change("preview", widgets, primary=primary, elapsed_ms=elapsed_ms, changed=True)
             self._focus_properties_for_selection()
+        else:
+            elapsed_ms = (time.perf_counter() - selection_started) * 1000.0
+            self._log_selection_change("preview", widgets, primary=primary, elapsed_ms=elapsed_ms, changed=False)
 
     def _on_widget_selected(self, widget):
         """Widget selected from tree panel."""
-        if self._set_selection([widget] if widget is not None else [], primary=widget, sync_tree=False, sync_preview=True) is not False:
-            self._log_selection_change("tree", [widget] if widget is not None else [], primary=widget)
+        widgets = [widget] if widget is not None else []
+        selection_started = time.perf_counter()
+        self.debug_panel.log_info(
+            f"Selection event (tree): {self._selection_log_summary(widgets, primary=widget)} | "
+            f"{self._preview_runtime_snapshot()}"
+        )
+        if self._set_selection(widgets, primary=widget, sync_tree=False, sync_preview=True) is not False:
+            elapsed_ms = (time.perf_counter() - selection_started) * 1000.0
+            self._log_selection_change("tree", widgets, primary=widget, elapsed_ms=elapsed_ms, changed=True)
             self._focus_properties_for_selection()
+        else:
+            elapsed_ms = (time.perf_counter() - selection_started) * 1000.0
+            self._log_selection_change("tree", widgets, primary=widget, elapsed_ms=elapsed_ms, changed=False)
 
     def _on_preview_widget_selected(self, widget):
         """Widget selected from preview panel overlay."""
-        if self._set_selection([widget] if widget is not None else [], primary=widget, sync_tree=True, sync_preview=False) is not False:
-            self._log_selection_change("preview", [widget] if widget is not None else [], primary=widget)
+        widgets = [widget] if widget is not None else []
+        selection_started = time.perf_counter()
+        self.debug_panel.log_info(
+            f"Selection event (preview): {self._selection_log_summary(widgets, primary=widget)} | "
+            f"{self._preview_runtime_snapshot()}"
+        )
+        if self._set_selection(widgets, primary=widget, sync_tree=True, sync_preview=False) is not False:
+            elapsed_ms = (time.perf_counter() - selection_started) * 1000.0
+            self._log_selection_change("preview", widgets, primary=widget, elapsed_ms=elapsed_ms, changed=True)
             self._focus_properties_for_selection()
+        else:
+            elapsed_ms = (time.perf_counter() - selection_started) * 1000.0
+            self._log_selection_change("preview", widgets, primary=widget, elapsed_ms=elapsed_ms, changed=False)
 
     def _focus_properties_for_selection(self):
         if self._selection_state.primary is None:
@@ -7923,7 +8058,7 @@ class MainWindow(QMainWindow):
             self._clear_queued_compile_reasons()
             return
         compile_reason_text = self._format_compile_reasons(self._peek_compile_reasons(compile_reason_fallback))
-        self.debug_panel.log_info(f"Compile request received: {compile_reason_text}")
+        self.debug_panel.log_info(f"Compile request received: {compile_reason_text} | {self._preview_runtime_snapshot()}")
         if self.compiler is None or not self.compiler.can_build():
             self._clear_queued_compile_reasons()
             reason = "SDK unavailable, compile preview disabled"
@@ -7982,8 +8117,10 @@ class MainWindow(QMainWindow):
         self.preview_panel.status_label.setText(action_label)
 
         if force_rebuild:
+            self.debug_panel.log_info("Preview stop requested for clean rebuild before restart")
             self.preview_panel.stop_rendering()
             if self.compiler is not None:
+                self.debug_panel.log_info("Compiler stop_exe requested for clean rebuild before restart")
                 self.compiler.stop_exe()
 
         self.debug_panel.log_action("Starting clean rebuild and run..." if force_rebuild else "Starting compile and run...")
@@ -8080,10 +8217,12 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(message)
             self.preview_panel.status_label.setText(f"OK - {message}")
             # Start headless frame rendering
+            self.debug_panel.log_info("Preview start_rendering requested after successful compile")
             self.preview_panel.start_rendering(self.compiler)
             self.debug_panel.log_action(
                 "Headless preview restarted after clean rebuild" if force_rebuild else "Headless preview started"
             )
+            self.debug_panel.log_info(f"Preview runtime after compile success | {self._preview_runtime_snapshot()}")
             self._update_debug_rebuild_action(show=False)
             if pending_rebuild:
                 self._start_compile_cycle(force_rebuild=True, reason_fallback="pending clean rebuild")
@@ -8110,6 +8249,7 @@ class MainWindow(QMainWindow):
             if guidance_message:
                 self.debug_panel.log_info(guidance_message)
             if self.compiler is not None:
+                self.debug_panel.log_info("Compiler stop_exe requested after compile failure")
                 self.compiler.stop_exe()
             self._switch_to_python_preview(failure_summary)
             # Show debug dock on compile failure
@@ -8127,6 +8267,7 @@ class MainWindow(QMainWindow):
     def _handle_preview_failure(self, reason: str) -> None:
         self._last_runtime_error_text = reason
         if self.compiler is not None:
+            self.debug_panel.log_info("Compiler stop_exe requested after preview runtime failure")
             self.compiler.stop_exe()
         self.debug_panel.log_error(reason)
         self._show_bottom_panel("Debug Output")
@@ -8141,9 +8282,11 @@ class MainWindow(QMainWindow):
 
     def _stop_exe(self):
         self._stop_background_timers()
+        self.debug_panel.log_info("Manual preview stop requested")
         self.preview_panel.stop_rendering()
         self._last_runtime_error_text = ""
         if self.compiler is not None:
+            self.debug_panel.log_info("Compiler stop_exe requested by manual preview stop")
             self.compiler.stop_exe()
         self.preview_panel.status_label.setText("Preview stopped")
         self._update_compile_availability()
