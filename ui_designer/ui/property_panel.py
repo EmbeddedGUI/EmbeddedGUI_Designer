@@ -262,9 +262,9 @@ def _create_property_panel_spin_box():
     return editor
 
 
-def _create_property_panel_action_button(text):
+def _create_property_panel_action_button(text, parent=None):
     """Inline action buttons should stay lightweight because they are rebuilt on every selection."""
-    button = QToolButton()
+    button = QToolButton(parent)
     button.setObjectName("property_panel_action_button")
     button.setProperty("propertyPanelActionButton", True)
     button.setText(str(text or ""))
@@ -834,7 +834,7 @@ class PropertyPanel(QWidget):
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(6, 2, 6, 2)
         header_layout.setSpacing(3)
-        arrow_button = QToolButton()
+        arrow_button = QToolButton(header_frame)
         arrow_button.setObjectName("property_grid_section_indicator")
         arrow_button.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         arrow_button.setAutoRaise(True)
@@ -2668,7 +2668,7 @@ class PropertyPanel(QWidget):
         layout.setSpacing(2)
         layout.addWidget(editor, 1)
 
-        button = _create_property_panel_action_button("Open")
+        button = _create_property_panel_action_button("Open", parent=container)
         button.setVisible(enabled)
         button.setEnabled(enabled)
         self._update_callback_button_metadata(button, event_name, enabled, tooltip)
@@ -2868,7 +2868,7 @@ class PropertyPanel(QWidget):
         combo.currentTextChanged.connect(lambda _val, name=prop_name, target=combo: self._update_file_selector_metadata(name, target))
         h_layout.addWidget(combo, 1)
 
-        browse_btn = _create_property_panel_action_button("Pick")
+        browse_btn = _create_property_panel_action_button("Pick", parent=container)
         _set_widget_metadata(
             browse_btn,
             tooltip=self._browse_button_tooltip(prop_name, file_filter),
@@ -2878,7 +2878,7 @@ class PropertyPanel(QWidget):
         h_layout.addWidget(browse_btn)
 
         if prop_name == "font_text_file":
-            generate_btn = _create_property_panel_action_button("Gen")
+            generate_btn = _create_property_panel_action_button("Gen", parent=container)
             generate_btn.clicked.connect(lambda: self._request_generate_charset_for_file_property(prop_name, combo))
             combo.currentTextChanged.connect(
                 lambda _val, name=prop_name, target=combo, button=generate_btn: self._update_generate_charset_button_metadata(name, target, button)

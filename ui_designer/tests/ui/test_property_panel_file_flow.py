@@ -128,6 +128,22 @@ class TestPropertyPanelFileFlow:
         assert "clear[widgets=" in rebuild_log
         panel.deleteLater()
 
+    def test_inline_action_buttons_are_parented_widgets_not_top_level_windows(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        panel = PropertyPanel()
+        panel.set_widget(WidgetModel("button", name="hello_btn", x=12, y=34, width=96, height=32))
+        panel.show()
+        qapp.processEvents()
+
+        buttons = panel.findChildren(QToolButton, "property_panel_action_button")
+
+        assert buttons
+        assert all(button.parentWidget() is not None for button in buttons)
+        assert all(button.isWindow() is False for button in buttons)
+        panel.deleteLater()
+
     def test_property_metric_cards_use_compact_flat_layout(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

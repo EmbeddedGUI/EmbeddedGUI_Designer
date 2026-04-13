@@ -6646,10 +6646,19 @@ class MainWindow(QMainWindow):
         )
 
     def _begin_selection_window_trace(self, source, widgets=None, primary=None):
+        summary = self._selection_log_summary(widgets, primary=primary)
+        if (
+            not self._is_closing
+            and self._selection_window_trace_deadline > 0.0
+            and time.monotonic() <= self._selection_window_trace_deadline
+            and self._selection_window_trace_source == str(source or "unknown")
+            and self._selection_window_trace_summary == summary
+        ):
+            return
         self._selection_window_trace_token += 1
         token = self._selection_window_trace_token
         self._selection_window_trace_source = str(source or "unknown")
-        self._selection_window_trace_summary = self._selection_log_summary(widgets, primary=primary)
+        self._selection_window_trace_summary = summary
         self._selection_window_trace_events = 0
         self._selection_window_trace_deadline = time.monotonic() + 1.0
         QTimer.singleShot(1000, lambda token=token: self._finish_selection_window_trace(token))
