@@ -4869,12 +4869,55 @@ class TestMainWindowFileFlow:
         worker = window._precompile_worker
         window._on_precompile_done(worker, window._async_generation, False, "Compilation failed:\nboom")
 
+        assert "EXE build failed, switched to Python fallback" in window.statusBar().currentMessage()
+        assert window._compile_action.isEnabled() is True
+        assert window.preview_panel.is_python_preview_active() is True
+
         layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
         layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- blocked precompile retry -->\n", encoding="utf-8")
 
         assert window._poll_project_files() is None
         assert compiler.precompile_calls == 1
         assert window._auto_compile_retry_block_reason == "boom"
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_precompile_failure_with_missing_preview_target_updates_editing_only_state(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PrecompilePreviewTargetMissingDemo"
+        project = _create_project(project_dir, "PrecompilePreviewTargetMissingDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=False)
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        worker = window._precompile_worker
+        window._on_precompile_done(
+            worker,
+            window._async_generation,
+            False,
+            "Compilation failed:\nmake: *** No rule to make target 'main.exe'.  Stop.",
+        )
+
+        assert "main.exe" in window._auto_compile_retry_block_reason
+        assert window._compile_action.isEnabled() is False
+        assert window._rebuild_action.isEnabled() is False
+        assert "Preview build target 'main.exe' is unavailable" in window.statusBar().currentMessage()
+        assert window.preview_panel.is_python_preview_active() is True
+        assert window._clean_all_action.toolTip() == (
+            "Destructive recovery: delete project-side generated/code files outside the preserved "
+            "Designer source set and reconstruct the project (Ctrl+Shift+F5). "
+            "Project: open. Saved project: saved. SDK: valid. Preview: editing only. "
+            "Preview rerun will be skipped: make: *** No rule to make target 'main.exe'.  Stop."
+        )
         window._undo_manager.mark_all_saved()
         _close_window(window)
 

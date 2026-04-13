@@ -5242,17 +5242,21 @@ class MainWindow(QMainWindow):
             elif pending_compile:
                 self._start_compile_cycle(force_rebuild=False)
         else:
-            self._block_auto_compile_retry(self._compile_failure_summary(message, "Precompile failed"))
-            self.statusBar().showMessage("Precompile failed", 5000)
+            failure_summary = self._compile_failure_summary(message, "Precompile failed")
+            self._block_auto_compile_retry(failure_summary)
             self.debug_panel.log_error("Background precompile failed")
             self.debug_panel.log_compile_output(False, message)
-            _, guidance_message = self._compile_failure_feedback(
+            status_message, guidance_message = self._compile_failure_feedback(
                 message,
                 force_rebuild=False,
                 rebuild_unavailable_reason=self._rebuild_retry_blocked_reason(),
             )
+            self.statusBar().showMessage(status_message, 5000)
             if guidance_message:
                 self.debug_panel.log_info(guidance_message)
+            self._switch_to_python_preview(failure_summary)
+            self._update_debug_rebuild_action(show=self._should_offer_debug_rebuild_action(failure_summary))
+            self._update_compile_availability()
             self._show_bottom_panel("Debug Output")
 
     def _refresh_page_navigator(self):
