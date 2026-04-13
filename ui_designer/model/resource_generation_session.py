@@ -426,9 +426,10 @@ class ResourceGenerationSession:
             )
 
         staged_config_path = self.stage_workspace()
+        generator_script = _resolved_existing_path(sdk_resource_generator_path(self.sdk_root))
         command = [
             sys.executable,
-            sdk_resource_generator_path(self.sdk_root),
+            generator_script,
             "-r",
             self.paths.workspace_dir,
             "-o",
@@ -437,13 +438,7 @@ class ResourceGenerationSession:
             "true",
         ]
         try:
-            completed = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=timeout_seconds,
-                cwd=self.sdk_root or None,
-            )
+            completed = self._run_generator_subprocess(command, timeout_seconds=timeout_seconds)
         except subprocess.TimeoutExpired as exc:
             return ResourceGenerationResult(
                 success=False,
@@ -486,6 +481,27 @@ class ResourceGenerationSession:
             staged_config_path=staged_config_path,
             issues=issues,
         )
+
+    def _run_generator_subprocess(self, command: list[str], *, timeout_seconds: int):
+        preferred_cwd = _resolved_existing_path(self.sdk_root) or None
+        try:
+            return subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=timeout_seconds,
+                cwd=preferred_cwd,
+            )
+        except OSError as exc:
+            if not preferred_cwd:
+                raise
+            return subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=timeout_seconds,
+                cwd=None,
+            )
 
 
 def _ordered_user_config(data: dict | None) -> dict:
@@ -727,6 +743,15 @@ def _build_in_dir_for_generator(generator_script: str) -> str:
     if not generator_script:
         return ""
     return normalize_path(os.path.join(os.path.dirname(generator_script), "build_in"))
+
+
+def _resolved_existing_path(path: str) -> str:
+    normalized = normalize_path(path)
+    if not normalized:
+        return ""
+    if not os.path.exists(normalized):
+        return normalized
+    return normalize_path(os.path.realpath(normalized))
 
 
 def _copy_source_tree(source_dir: str, target_dir: str, *, skip_roots: list[str] | None = None):

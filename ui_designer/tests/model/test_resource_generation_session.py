@@ -165,3 +165,41 @@ def test_run_generation_uses_sdk_script_and_workspace_paths(tmp_path, monkeypatc
     ]
     assert captured["kwargs"]["cwd"] == str(sdk_root.resolve())
     assert (workspace_dir / "src" / "app_resource_config.json").is_file()
+
+
+def test_run_generation_retries_without_cwd_when_process_launch_cwd_is_unsupported(tmp_path, monkeypatch):
+    sdk_root = _build_sdk_with_generator(tmp_path / "sdk")
+    source_dir = tmp_path / "source"
+    workspace_dir = tmp_path / "workspace"
+    bin_output_dir = tmp_path / "bin"
+    source_dir.mkdir()
+
+    calls = []
+
+    def _flaky_run(command, **kwargs):
+        calls.append(kwargs.get("cwd"))
+        if len(calls) == 1:
+            raise OSError(50, "cwd unsupported")
+        return subprocess.CompletedProcess(command, 0, stdout="generated\n", stderr="")
+
+    monkeypatch.setattr("ui_designer.model.resource_generation_session.subprocess.run", _flaky_run)
+
+    session = ResourceGenerationSession(str(sdk_root))
+    session.reset(
+        GenerationPaths(
+            config_path=str(source_dir / "app_resource_config.json"),
+            source_dir=str(source_dir),
+            workspace_dir=str(workspace_dir),
+            bin_output_dir=str(bin_output_dir),
+        ),
+        {
+            "img": [],
+            "font": [],
+            "mp4": [],
+        },
+    )
+
+    result = session.run_generation()
+
+    assert result.success is True
+    assert calls == [str(sdk_root.resolve()), None]

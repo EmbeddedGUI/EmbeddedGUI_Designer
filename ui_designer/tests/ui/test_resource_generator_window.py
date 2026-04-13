@@ -181,3 +181,37 @@ class TestResourceGeneratorWindow:
         monkeypatch.setattr("ui_designer.ui.resource_generator_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.Yes)
         _close_window(generator_window)
         _close_window(window)
+
+    @_skip_no_qt
+    def test_generate_resources_logs_success_result(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import ResourceGenerationResult
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        warnings = []
+        monkeypatch.setattr(QMessageBox, "warning", lambda *args: warnings.append(args[2]) or QMessageBox.Ok)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        monkeypatch.setattr(window._session, "validation_issues", lambda for_generation=True: [])
+        monkeypatch.setattr(
+            window._session,
+            "run_generation",
+            lambda: ResourceGenerationResult(
+                success=True,
+                command=["python", "app_resource_generate.py", "-r", str(tmp_path / "resource"), "-o", str(tmp_path / "output")],
+                stdout="generated from staged config\n",
+                stderr="",
+                issues=[],
+            ),
+        )
+
+        window._generate_resources()
+        qapp.processEvents()
+
+        log_text = window._log_output.toPlainText()
+        assert "Resource generation completed successfully." in log_text
+        assert "generated from staged config" in log_text
+        assert "app_resource_generate.py" in log_text
+        assert window._status_label.text() == "Resource generation completed."
+        assert warnings == []
+        _close_window(window)
