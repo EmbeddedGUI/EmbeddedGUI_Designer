@@ -3020,6 +3020,12 @@ class MainWindow(QMainWindow):
 
         self._reload_project_from_disk(auto=True, changed_paths=changed_paths)
 
+    def _resume_pending_external_reload_if_ready(self, generation):
+        if not self._external_reload_pending or self._has_unsaved_changes():
+            return False
+        self._poll_project_files()
+        return self._is_closing or generation != self._async_generation or self._external_reload_pending
+
     def _reload_project_from_disk(self, checked=False, auto=False, changed_paths=None):
         del checked
         if self.project is None or not self._project_dir:
@@ -5235,10 +5241,8 @@ class MainWindow(QMainWindow):
         self._pending_rebuild = False
         self._pending_compile = False
         if success:
-            if self._external_reload_pending and not self._has_unsaved_changes():
-                self._poll_project_files()
-                if self._is_closing or generation != self._async_generation or self._external_reload_pending:
-                    return
+            if self._resume_pending_external_reload_if_ready(generation):
+                return
             self.statusBar().showMessage("Ready (precompiled)", 3000)
             self.debug_panel.log_success("Background precompile completed")
             if pending_rebuild:
@@ -7886,10 +7890,8 @@ class MainWindow(QMainWindow):
 
         if success:
             self._last_runtime_error_text = ""
-            if self._external_reload_pending and not self._has_unsaved_changes():
-                self._poll_project_files()
-                if self._is_closing or generation != self._async_generation or self._external_reload_pending:
-                    return
+            if self._resume_pending_external_reload_if_ready(generation):
+                return
             self.statusBar().showMessage(message)
             self.preview_panel.status_label.setText(f"OK - {message}")
             # Start headless frame rendering
