@@ -286,6 +286,34 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_remove_selected_simple_asset_updates_session_and_preview(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._remove_selected_simple_asset()
+
+        assert window._session.section_entries("img") == []
+        assert window._simple_asset_table.rowCount() == 0
+        assert "hero.png" not in window._simple_preview.toPlainText()
+        assert "hero.png" not in window._merged_preview.toPlainText()
+        assert window._status_label.text() == "Removed image 'hero'."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_selection_updates_image_preview(self, qapp, tmp_path):
         from PyQt5.QtGui import QPixmap
 

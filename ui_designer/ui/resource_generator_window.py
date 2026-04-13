@@ -343,6 +343,10 @@ class ResourceGeneratorWindow(QDialog):
         self._rotate_image_button.clicked.connect(self._open_rotate_image_helper)
         helper_row.addWidget(self._rotate_image_button)
 
+        self._remove_simple_asset_button = QPushButton("Remove Selected")
+        self._remove_simple_asset_button.clicked.connect(self._remove_selected_simple_asset)
+        helper_row.addWidget(self._remove_simple_asset_button)
+
         self._open_professional_button = QPushButton("Open Professional Mode")
         self._open_professional_button.clicked.connect(lambda: self._set_ui_mode("professional"))
         helper_row.addWidget(self._open_professional_button)
@@ -1114,21 +1118,32 @@ class ResourceGeneratorWindow(QDialog):
 
     def _add_entry(self):
         if not self._commit_raw_json_if_needed():
-            return
+            return False
         index = self._session.add_entry(self._active_section, default_entry_for_section(self._active_section))
         self._active_entry_index = index
         self._mark_dirty()
         self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(f"Added new {_resource_kind_label(self._active_section)} entry.")
+        return True
 
     def _remove_entry(self):
         if not self._commit_raw_json_if_needed():
-            return
+            return False
         if self._active_entry_index < 0:
-            return
+            return False
+        entry = self._current_entry() or {}
+        label = section_entry_label(self._active_section, entry, self._active_entry_index)
+        section = self._active_section
         self._session.remove_entry(self._active_section, self._active_entry_index)
         self._active_entry_index = max(-1, self._active_entry_index - 1)
         self._mark_dirty()
         self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(f"Removed {_resource_kind_label(section)} '{label}'.")
+        return True
 
     # -- Signals/field updates -----------------------------------------
 
@@ -1459,6 +1474,25 @@ class ResourceGeneratorWindow(QDialog):
         self._update_simple_asset_preview()
         if not QDesktopServices.openUrl(QUrl.fromLocalFile(resolved_path)):
             QMessageBox.warning(self, "Open Asset", f"Failed to open asset with the system editor:\n{resolved_path}")
+
+    def _remove_selected_simple_asset(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None or not section:
+            QMessageBox.warning(self, "Remove Asset", "Select an asset in Simple mode first.")
+            return
+        label = section_entry_label(section, entry, index)
+        answer = QMessageBox.question(
+            self,
+            "Remove Asset",
+            f"Remove {_resource_kind_label(section)} '{label}' from the config?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if answer != QMessageBox.Yes:
+            return
+        self._active_section = section
+        self._active_entry_index = index
+        self._remove_entry()
 
     def _open_resize_image_helper(self):
         section, index, entry = self._selected_simple_asset_context()
@@ -2128,6 +2162,14 @@ def _supported_asset_file_filter() -> str:
         f"Text Files ({_pattern(text_extensions)});;"
         "All files (*)"
     )
+
+
+def _resource_kind_label(section: str) -> str:
+    return {
+        "img": "image",
+        "font": "font",
+        "mp4": "video",
+    }.get(str(section or ""), str(section or "asset"))
 
 
 def _section_for_asset_extension(extension: str) -> str:
