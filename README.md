@@ -100,6 +100,18 @@ The resource panel now includes `Fonts -> Generate Charset...` for creating proj
 
 More detail: [`docs/FONT_CHARSET_GENERATOR.md`](docs/FONT_CHARSET_GENERATOR.md)
 
+## Standalone resource generator
+
+The `Build -> Resource Generator...` entry opens a standalone editor for `app_resource_config.json`.
+
+- It can be used without opening an `.egui` project first.
+- It supports `New`, `Open`, `Save`, `Save As`, merged preview, and direct resource generation.
+- Known sections currently have structured editors for `img`, `font`, and `mp4`.
+- Generation uses an explicit path model: `Config`, `Source Dir`, `Workspace`, and `Bin Output`.
+- When `resource/src/.designer/app_resource_config_designer.json` exists next to the config, the window shows the merged effective view without modifying the designer-owned overlay.
+
+More detail: [`docs/RESOURCE_GENERATOR.md`](docs/RESOURCE_GENERATOR.md)
+
 ## Updating the SDK pin
 
 - Move the submodule to the SDK revision you want to verify:

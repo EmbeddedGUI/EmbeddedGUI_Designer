@@ -25,6 +25,7 @@ Designer 既支持设计态预览，也支持真实构建后的 EXE 预览。
 - `Auto Compile`
 - `Stop Exe`
 - `Generate Resources`
+- `Resource Generator...`
 
 ## 什么时候用 Build EXE && Run
 
@@ -71,6 +72,25 @@ Build -> Rebuild EGUI Project
 - 新增字体
 - 改了字符集
 - 改了资源配置
+
+## Resource Generator... 什么时候用
+
+`Build -> Resource Generator...` 适合下面这些场景：
+
+- 你还没有打开 `.egui` 工程，但需要先整理或生成 `app_resource_config.json`
+- 你想单独维护资源配置，而不是先进入页面编辑流
+- 你需要在图形化表单和原始 JSON 之间切换编辑
+- 你要检查用户配置和 `.designer/app_resource_config_designer.json` 合并后的实际结果
+
+这个窗口和项目内的 `Generate Resources` 不是同一个入口：
+
+- `Generate Resources`
+  - 面向当前已打开工程
+  - 直接使用工程自己的 `resource/` 目录
+- `Resource Generator...`
+  - 可以脱离工程单独工作
+  - 需要你明确给出 `Config`、`Source Dir`、`Workspace`、`Bin Output`
+  - 适合导入现有配置或新建一个新的 `app_resource_config.json`
 
 ## 构建失败后的 Designer 行为
 
