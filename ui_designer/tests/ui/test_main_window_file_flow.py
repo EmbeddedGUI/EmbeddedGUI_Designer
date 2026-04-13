@@ -4763,6 +4763,7 @@ class TestMainWindowFileFlow:
 
         debug_output = window.debug_panel._output.toPlainText()
         assert "Selection event (tree):" in debug_output
+        assert "Property panel rebuild: mode=single" in debug_output
         assert "Selection pipeline:" in debug_output
         assert "Selection applied (tree):" in debug_output
         assert "No compile queued." in debug_output

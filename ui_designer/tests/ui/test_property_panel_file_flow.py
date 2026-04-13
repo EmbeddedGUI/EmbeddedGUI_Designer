@@ -106,6 +106,28 @@ class TestPropertyPanelFileFlow:
         assert second_group_count == first_group_count
         panel.deleteLater()
 
+    def test_rebuild_form_emits_stage_timing_logs_when_debug_logger_is_set(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("button", name="hello_btn", x=12, y=34, width=96, height=32)
+        logs = []
+
+        panel = PropertyPanel()
+        panel.set_debug_logger(logs.append)
+        panel.set_widget(widget)
+
+        assert logs
+        assert any("Property panel rebuild: mode=single" in entry for entry in logs)
+        rebuild_log = next(entry for entry in logs if "Property panel rebuild: mode=single" in entry)
+        assert "selection=hello_btn (button)" in rebuild_log
+        assert "layout_group=" in rebuild_log
+        assert "basic_group=" in rebuild_log
+        assert "appearance_group=" in rebuild_log
+        assert "theme_refresh=" in rebuild_log
+        assert "clear[widgets=" in rebuild_log
+        panel.deleteLater()
+
     def test_property_metric_cards_use_compact_flat_layout(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

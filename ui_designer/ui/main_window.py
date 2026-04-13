@@ -32,7 +32,7 @@ from PyQt5.QtWidgets import (
     QApplication, QDialog, QStackedWidget, QToolBar, QInputDialog, QLabel,
     QLineEdit, QPlainTextEdit, QTextEdit, QSizePolicy,
 )
-from PyQt5.QtCore import Qt, QTimer, QByteArray, QSignalBlocker
+from PyQt5.QtCore import Qt, QTimer, QByteArray, QSignalBlocker, QEvent
 from PyQt5.QtGui import QGuiApplication
 
 from qfluentwidgets import TabBar, TabCloseButtonDisplayMode
@@ -386,12 +386,19 @@ class MainWindow(QMainWindow):
         self._auto_compile_retry_block_reason = ""
         self._rebuild_retry_block_reason = ""
         self._queued_compile_reasons = []
+        self._selection_window_trace_token = 0
+        self._selection_window_trace_deadline = 0.0
+        self._selection_window_trace_source = ""
+        self._selection_window_trace_summary = ""
+        self._selection_window_trace_events = 0
 
         self._project_watch_timer = QTimer(self)
         self._project_watch_timer.setInterval(1000)
         self._project_watch_timer.timeout.connect(self._poll_project_files)
 
         self._init_ui()
+        self.property_panel.set_debug_logger(self.debug_panel.log_info)
+        self._install_debug_window_trace()
         self._init_renderer_manager()
         self._init_menus()
         self._init_toolbar()
@@ -6572,6 +6579,107 @@ class MainWindow(QMainWindow):
                 f"Selection unchanged ({source}): {summary}. elapsed={elapsed_ms:.1f}ms | {state}"
             )
 
+    def _install_debug_window_trace(self):
+        app = QApplication.instance()
+        if app is not None:
+            app.installEventFilter(self)
+
+    def _remove_debug_window_trace(self):
+        app = QApplication.instance()
+        if app is not None:
+            app.removeEventFilter(self)
+
+    @staticmethod
+    def _selection_window_event_name(event_type):
+        if event_type == QEvent.Show:
+            return "show"
+        if event_type == QEvent.Hide:
+            return "hide"
+        if event_type == QEvent.WindowStateChange:
+            return "state"
+        return str(int(event_type))
+
+    def _is_traceable_top_level_widget(self, widget):
+        if not isinstance(widget, QWidget) or widget is self:
+            return False
+        try:
+            return bool(widget.isWindow())
+        except RuntimeError:
+            return False
+
+    @staticmethod
+    def _top_level_widget_kind(widget):
+        try:
+            flags = int(widget.windowFlags())
+        except Exception:
+            return "window"
+        kinds = []
+        if flags & int(Qt.Popup):
+            kinds.append("popup")
+        if flags & int(Qt.Tool):
+            kinds.append("tool")
+        if flags & int(Qt.Dialog):
+            kinds.append("dialog")
+        if flags & int(Qt.Sheet):
+            kinds.append("sheet")
+        if flags & int(Qt.ToolTip):
+            kinds.append("tooltip")
+        return "/".join(kinds) or "window"
+
+    def _describe_top_level_widget(self, widget):
+        object_name = ""
+        title = ""
+        visible = False
+        try:
+            object_name = widget.objectName() or "-"
+            title = str(widget.windowTitle() or "")
+            visible = bool(widget.isVisible())
+            geometry = widget.frameGeometry()
+            geom_text = f"{geometry.x()},{geometry.y()} {geometry.width()}x{geometry.height()}"
+        except RuntimeError:
+            object_name = object_name or "-"
+            geom_text = "deleted"
+        return (
+            f"{type(widget).__name__}#{object_name} "
+            f"kind={self._top_level_widget_kind(widget)} "
+            f"title={title!r} visible={int(visible)} geom={geom_text}"
+        )
+
+    def _begin_selection_window_trace(self, source, widgets=None, primary=None):
+        self._selection_window_trace_token += 1
+        token = self._selection_window_trace_token
+        self._selection_window_trace_source = str(source or "unknown")
+        self._selection_window_trace_summary = self._selection_log_summary(widgets, primary=primary)
+        self._selection_window_trace_events = 0
+        self._selection_window_trace_deadline = time.monotonic() + 1.0
+        QTimer.singleShot(1000, lambda token=token: self._finish_selection_window_trace(token))
+
+    def _finish_selection_window_trace(self, token):
+        if token != self._selection_window_trace_token or self._is_closing:
+            return
+        self._selection_window_trace_deadline = 0.0
+        self.debug_panel.log_info(
+            f"Selection window trace ({self._selection_window_trace_source}): "
+            f"{self._selection_window_trace_events} Qt top-level event(s) for "
+            f"{self._selection_window_trace_summary}"
+        )
+
+    def eventFilter(self, watched, event):
+        if (
+            not self._is_closing
+            and self._selection_window_trace_deadline > 0.0
+            and time.monotonic() <= self._selection_window_trace_deadline
+            and event.type() in (QEvent.Show, QEvent.Hide, QEvent.WindowStateChange)
+            and self._is_traceable_top_level_widget(watched)
+        ):
+            self._selection_window_trace_events += 1
+            self.debug_panel.log_info(
+                f"Selection window event "
+                f"({self._selection_window_trace_source}/{self._selection_window_event_name(event.type())}): "
+                f"{self._describe_top_level_widget(watched)}"
+            )
+        return super().eventFilter(watched, event)
+
     def _set_selection(self, widgets=None, primary=None, sync_tree=True, sync_preview=True):
         normalized_widgets, normalized_primary = self._normalized_selection(widgets, primary=primary)
         if self._selection_matches(normalized_widgets, primary=normalized_primary):
@@ -7332,6 +7440,7 @@ class MainWindow(QMainWindow):
 
     def _on_tree_selection_changed(self, widgets, primary):
         selection_started = time.perf_counter()
+        self._begin_selection_window_trace("tree", widgets, primary=primary)
         self.debug_panel.log_info(
             f"Selection event (tree): {self._selection_log_summary(widgets, primary=primary)} | "
             f"{self._preview_runtime_snapshot()}"
@@ -7346,6 +7455,7 @@ class MainWindow(QMainWindow):
 
     def _on_preview_selection_changed(self, widgets, primary):
         selection_started = time.perf_counter()
+        self._begin_selection_window_trace("preview", widgets, primary=primary)
         self.debug_panel.log_info(
             f"Selection event (preview): {self._selection_log_summary(widgets, primary=primary)} | "
             f"{self._preview_runtime_snapshot()}"
@@ -7362,6 +7472,7 @@ class MainWindow(QMainWindow):
         """Widget selected from tree panel."""
         widgets = [widget] if widget is not None else []
         selection_started = time.perf_counter()
+        self._begin_selection_window_trace("tree", widgets, primary=widget)
         self.debug_panel.log_info(
             f"Selection event (tree): {self._selection_log_summary(widgets, primary=widget)} | "
             f"{self._preview_runtime_snapshot()}"
@@ -7378,6 +7489,7 @@ class MainWindow(QMainWindow):
         """Widget selected from preview panel overlay."""
         widgets = [widget] if widget is not None else []
         selection_started = time.perf_counter()
+        self._begin_selection_window_trace("preview", widgets, primary=widget)
         self.debug_panel.log_info(
             f"Selection event (preview): {self._selection_log_summary(widgets, primary=widget)} | "
             f"{self._preview_runtime_snapshot()}"
@@ -8323,6 +8435,7 @@ class MainWindow(QMainWindow):
         self._bump_async_generation()
         self._shutdown_async_activity(wait_ms=500)
         self.widget_tree.shutdown()
+        self._remove_debug_window_trace()
         self._cleanup_compiler()
         event.accept()
 

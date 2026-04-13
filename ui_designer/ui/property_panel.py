@@ -3,6 +3,7 @@
 import os
 import re
 import json
+import time
 from collections import OrderedDict
 
 from PyQt5.QtWidgets import (
@@ -312,6 +313,7 @@ class PropertyPanel(QWidget):
         self._inspector_group_expanded = {}
         self._header_size_chip = None
         self._property_tree_name_column_width = 176
+        self._debug_logger = None
         self.setAcceptDrops(True)
         self._init_ui()
 
@@ -376,6 +378,109 @@ class PropertyPanel(QWidget):
 
     def property_grid_name_column_width(self):
         return int(getattr(self, "_property_tree_name_column_width", 176) or 176)
+
+    def set_debug_logger(self, logger):
+        self._debug_logger = logger if callable(logger) else None
+
+    def _debug_log(self, message):
+        logger = self._debug_logger
+        if not callable(logger):
+            return
+        try:
+            logger(message)
+        except Exception:
+            return
+
+    @staticmethod
+    def _format_debug_step(elapsed_ms):
+        if elapsed_ms is None:
+            return "skip"
+        return f"{elapsed_ms:.1f}ms"
+
+    def _selection_debug_summary(self):
+        if self._primary_widget is None:
+            return "none"
+        if len(self._selection) > 1:
+            primary_name = getattr(self._primary_widget, "name", "none")
+            primary_type = getattr(self._primary_widget, "widget_type", "unknown")
+            return f"{len(self._selection)} widgets, primary={primary_name} ({primary_type})"
+        widget = self._primary_widget
+        return f"{widget.name} ({widget.widget_type})"
+
+    def _property_tree_counts(self):
+        section_count = len(self._property_sections)
+        row_count = sum(len(section.get("rows", ())) for section in self._property_sections.values())
+        return section_count, row_count
+
+    def _measure_debug_step(self, timings, name, callback):
+        started = time.perf_counter()
+        try:
+            return callback()
+        finally:
+            timings[name] = (time.perf_counter() - started) * 1000.0
+
+    def _emit_rebuild_debug_log(self, mode, timings, clear_stats, previous_counts):
+        current_sections, current_rows = self._property_tree_counts()
+        previous_sections, previous_rows = previous_counts
+        clear_summary = (
+            f"widgets={clear_stats.get('widgets', 0)}, "
+            f"deleted={clear_stats.get('deleted_widgets', 0)}, "
+            f"preserved={clear_stats.get('preserved_widgets', 0)}, "
+            f"layouts={clear_stats.get('layouts', 0)}, "
+            f"spacers={clear_stats.get('spacers', 0)}"
+        )
+        if mode == "single":
+            ordered_steps = [
+                "clear_layout",
+                "reset_tree",
+                "header",
+                "layout_group",
+                "basic_group",
+                "grouped_properties",
+                "data_group",
+                "appearance_group",
+                "callbacks_group",
+                "designer_group",
+                "feedback_group",
+                "sync_groups",
+                "search_filter",
+                "theme_refresh",
+                "total",
+            ]
+        elif mode == "multi":
+            ordered_steps = [
+                "clear_layout",
+                "reset_tree",
+                "multi_callback_entries",
+                "header",
+                "batch_geometry_group",
+                "common_properties_group",
+                "multi_callbacks_group",
+                "designer_group",
+                "feedback_group",
+                "sync_groups",
+                "search_filter",
+                "theme_refresh",
+                "total",
+            ]
+        else:
+            ordered_steps = [
+                "clear_layout",
+                "reset_tree",
+                "empty_state",
+                "metadata",
+                "total",
+            ]
+        step_summary = ", ".join(
+            f"{name}={self._format_debug_step(timings.get(name))}" for name in ordered_steps
+        )
+        self._debug_log(
+            "Property panel rebuild: "
+            f"mode={mode}, selection={self._selection_debug_summary()}, "
+            f"prev_sections={previous_sections}, prev_rows={previous_rows}, "
+            f"sections={current_sections}, rows={current_rows}, editors={len(self._editors)}, "
+            f"clear[{clear_summary}], {step_summary}"
+        )
 
     def _inspector_group_storage_key(self, title: str) -> str:
         title = (title or "").strip()
@@ -648,19 +753,29 @@ class PropertyPanel(QWidget):
             self._update_numeric_editor_value(f"multi_{field}", getattr(primary_widget, field))
         return True
 
-    def _clear_layout(self, layout):
+    def _clear_layout(self, layout, stats=None):
         while layout.count():
             item = layout.takeAt(0)
             if item.widget():
                 widget = item.widget()
+                if stats is not None:
+                    stats["widgets"] = stats.get("widgets", 0) + 1
                 if widget is self._property_tree:
+                    if stats is not None:
+                        stats["preserved_widgets"] = stats.get("preserved_widgets", 0) + 1
                     widget.hide()
                     continue
                 widget.hide()
                 widget.setParent(None)
                 widget.deleteLater()
+                if stats is not None:
+                    stats["deleted_widgets"] = stats.get("deleted_widgets", 0) + 1
             elif item.layout():
-                self._clear_layout(item.layout())
+                if stats is not None:
+                    stats["layouts"] = stats.get("layouts", 0) + 1
+                self._clear_layout(item.layout(), stats=stats)
+            elif stats is not None:
+                stats["spacers"] = stats.get("spacers", 0) + 1
 
     def _sync_collapsible_group_states(self):
         self._apply_property_tree_expanded_state()
@@ -1640,24 +1755,34 @@ class PropertyPanel(QWidget):
     def _rebuild_form(self):
         panel_updates_enabled = self.updatesEnabled()
         tree_updates_enabled = self._property_tree.updatesEnabled() if hasattr(self, "_property_tree") else True
+        total_started = time.perf_counter()
+        timings = {}
+        clear_stats = {}
+        previous_counts = self._property_tree_counts()
+        rebuild_mode = "empty"
         self.setUpdatesEnabled(False)
         if hasattr(self, "_property_tree"):
             self._property_tree.setUpdatesEnabled(False)
         try:
-            self._clear_layout(self._layout)
-            self._reset_property_tree()
+            self._measure_debug_step(timings, "clear_layout", lambda: self._clear_layout(self._layout, stats=clear_stats))
+            self._measure_debug_step(timings, "reset_tree", self._reset_property_tree)
             self._editors = {}
             self._callback_open_buttons = {}
             self._header_size_chip = None
 
             if self._primary_widget is None:
+                rebuild_mode = "empty"
                 self._context_frame.setVisible(False)
                 self._search_shell.setVisible(False)
                 self._search_edit.setVisible(False)
                 self._property_tree.hide()
-                self._no_selection_label = self._create_no_selection_label()
+                self._no_selection_label = self._measure_debug_step(
+                    timings,
+                    "empty_state",
+                    self._create_no_selection_label,
+                )
                 self._layout.addWidget(self._no_selection_label)
-                self._update_panel_metadata()
+                self._measure_debug_step(timings, "metadata", self._update_panel_metadata)
                 return
 
             self._context_frame.setVisible(False)
@@ -1665,39 +1790,61 @@ class PropertyPanel(QWidget):
             self._search_edit.setVisible(True)
             self._property_tree.show()
             if len(self._selection) > 1:
-                header = self._build_multi_selection_header(self._collect_multi_callback_entries())
+                rebuild_mode = "multi"
+                callback_entries = self._measure_debug_step(
+                    timings,
+                    "multi_callback_entries",
+                    self._collect_multi_callback_entries,
+                )
+                header = self._measure_debug_step(
+                    timings,
+                    "header",
+                    lambda: self._build_multi_selection_header(callback_entries),
+                )
                 header.hide()
                 self._layout.addWidget(header)
-                self._build_multi_selection_form()
-                self._sync_collapsible_group_states()
-                self._on_search_changed(self._search_edit.text())
-                self._refresh_property_tree_theme_patches()
+                self._build_multi_selection_form(callback_entries=callback_entries, timings=timings)
+                self._measure_debug_step(
+                    timings,
+                    "search_filter",
+                    lambda: self._on_search_changed(self._search_edit.text()),
+                )
+                self._measure_debug_step(timings, "theme_refresh", self._refresh_property_tree_theme_patches)
                 return
 
+            rebuild_mode = "single"
             w = self._primary_widget
-            header = self._build_single_selection_header(w)
+            header = self._measure_debug_step(
+                timings,
+                "header",
+                lambda: self._build_single_selection_header(w),
+            )
             header.hide()
             self._layout.addWidget(header)
 
-            # Layout group
-            layout_group, layout_form = self._build_inspector_group("Layout")
-            for field, label in [("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")]:
-                spin = _create_property_panel_spin_box()
-                spin.setRange(-9999, 9999)
-                spin.setValue(getattr(w, field))
-                spin.valueChanged.connect(lambda val, f=field: self._on_common_changed(f, val))
-                layout_form.addRow(label, spin)
-                self._editors[field] = spin
+            def _build_layout_group():
+                _layout_group, layout_form = self._build_inspector_group("Layout")
+                for field, label in [("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")]:
+                    spin = _create_property_panel_spin_box()
+                    spin.setRange(-9999, 9999)
+                    spin.setValue(getattr(w, field))
+                    spin.valueChanged.connect(lambda val, f=field: self._on_common_changed(f, val))
+                    layout_form.addRow(label, spin)
+                    self._editors[field] = spin
 
-            # Basic group
-            _basic_group, basic_form = self._build_inspector_group("Basic")
+            self._measure_debug_step(timings, "layout_group", _build_layout_group)
 
-            name_edit = LineEdit()
-            name_edit.setText(w.name)
-            name_edit.editingFinished.connect(lambda editor=name_edit: self._on_name_editing_finished(editor))
-            basic_form.addRow("Name:", name_edit)
-            self._editors["name"] = name_edit
-            self._update_name_editor_metadata(name_edit)
+            def _build_basic_group():
+                _basic_group, basic_form = self._build_inspector_group("Basic")
+
+                name_edit = LineEdit()
+                name_edit.setText(w.name)
+                name_edit.editingFinished.connect(lambda editor=name_edit: self._on_name_editing_finished(editor))
+                basic_form.addRow("Name:", name_edit)
+                self._editors["name"] = name_edit
+                self._update_name_editor_metadata(name_edit)
+
+            self._measure_debug_step(timings, "basic_group", _build_basic_group)
 
             # Type-specific properties - grouped by data vs other
             type_info = WidgetRegistry.instance().get(w.widget_type)
@@ -1711,37 +1858,44 @@ class PropertyPanel(QWidget):
                     name: info for name, info in props.items() if info.get("type") not in _DATA_PROPERTY_TYPES
                 }
                 if other_props:
-                    self._build_grouped_properties(w, other_props)
+                    self._measure_debug_step(
+                        timings,
+                        "grouped_properties",
+                        lambda: self._build_grouped_properties(w, other_props),
+                    )
                 if data_props:
-                    self._build_data_group(w, data_props)
+                    self._measure_debug_step(
+                        timings,
+                        "data_group",
+                        lambda: self._build_data_group(w, data_props),
+                    )
 
-            # Style properties
-            _bg_group, bg_form = self._build_inspector_group("Appearance")
+            def _build_appearance_group():
+                _bg_group, bg_form = self._build_inspector_group("Appearance")
 
-            bg = w.background or BackgroundModel()
+                bg = w.background or BackgroundModel()
 
-            bg_type_combo = ComboBox()
-            bg_type_combo.addItems(BG_TYPES)
-            bg_type_combo.setCurrentText(bg.bg_type)
-            bg_type_combo.currentTextChanged.connect(lambda val: self._on_bg_changed("bg_type", val))
-            bg_form.addRow("Type:", bg_type_combo)
-            self._editors["bg_type"] = bg_type_combo
+                bg_type_combo = ComboBox()
+                bg_type_combo.addItems(BG_TYPES)
+                bg_type_combo.setCurrentText(bg.bg_type)
+                bg_type_combo.currentTextChanged.connect(lambda val: self._on_bg_changed("bg_type", val))
+                bg_form.addRow("Type:", bg_type_combo)
+                self._editors["bg_type"] = bg_type_combo
 
-            if bg.bg_type != "none":
-                # Color
+                if bg.bg_type == "none":
+                    return
+
                 bg_color = EguiColorPicker()
                 bg_color.set_value(bg.color)
                 bg_color.color_changed.connect(lambda val: self._on_bg_changed("color", val))
                 bg_form.addRow("Color:", bg_color)
 
-                # Alpha
                 bg_alpha = ComboBox()
                 bg_alpha.addItems(ALPHAS)
                 bg_alpha.setCurrentText(bg.alpha)
                 bg_alpha.currentTextChanged.connect(lambda val: self._on_bg_changed("alpha", val))
                 bg_form.addRow("Alpha:", bg_alpha)
 
-                # Radius (for round_rectangle and circle)
                 if bg.bg_type in ("round_rectangle", "circle"):
                     radius_spin = _create_property_panel_spin_box()
                     radius_spin.setRange(0, 999)
@@ -1749,7 +1903,6 @@ class PropertyPanel(QWidget):
                     radius_spin.valueChanged.connect(lambda val: self._on_bg_changed("radius", val))
                     bg_form.addRow("Radius:", radius_spin)
 
-                # Corner radii (for round_rectangle_corners)
                 if bg.bg_type == "round_rectangle_corners":
                     for corner in ["radius_left_top", "radius_left_bottom", "radius_right_top", "radius_right_bottom"]:
                         spin = _create_property_panel_spin_box()
@@ -1759,7 +1912,6 @@ class PropertyPanel(QWidget):
                         label = self._corner_radius_row_label(corner)
                         bg_form.addRow(label, spin)
 
-                # Stroke
                 stroke_spin = _create_property_panel_spin_box()
                 stroke_spin.setRange(0, 50)
                 stroke_spin.setValue(bg.stroke_width)
@@ -1778,7 +1930,6 @@ class PropertyPanel(QWidget):
                     stroke_alpha.currentTextChanged.connect(lambda val: self._on_bg_changed("stroke_alpha", val))
                     bg_form.addRow(self._appearance_row_label("stroke_alpha", "Stroke Alpha:"), stroke_alpha)
 
-                # Pressed state
                 pressed_check = CheckBox("Pressed state")
                 pressed_check.setChecked(bg.has_pressed)
                 pressed_check.toggled.connect(lambda val: self._on_bg_changed("has_pressed", val))
@@ -1790,46 +1941,79 @@ class PropertyPanel(QWidget):
                     pressed_color.color_changed.connect(lambda val: self._on_bg_changed("pressed_color", val))
                     bg_form.addRow(self._appearance_row_label("pressed_color", "Pressed Color:"), pressed_color)
 
-            self._build_callbacks_group(w)
-            self._build_designer_state_group()
+            self._measure_debug_step(timings, "appearance_group", _build_appearance_group)
+            self._measure_debug_step(timings, "callbacks_group", lambda: self._build_callbacks_group(w))
+            self._measure_debug_step(timings, "designer_group", self._build_designer_state_group)
             self._layout.addWidget(self._property_tree, 1)
-            feedback_group = self._build_selection_feedback_group()
+            feedback_group = self._measure_debug_step(
+                timings,
+                "feedback_group",
+                self._build_selection_feedback_group,
+            )
             if feedback_group is not None:
                 self._layout.addWidget(feedback_group)
-            self._sync_collapsible_group_states()
-            self._on_search_changed(self._search_edit.text())
-            self._refresh_property_tree_theme_patches()
+            self._measure_debug_step(timings, "sync_groups", self._sync_collapsible_group_states)
+            self._measure_debug_step(
+                timings,
+                "search_filter",
+                lambda: self._on_search_changed(self._search_edit.text()),
+            )
+            self._measure_debug_step(timings, "theme_refresh", self._refresh_property_tree_theme_patches)
         finally:
+            timings["total"] = (time.perf_counter() - total_started) * 1000.0
+            self._emit_rebuild_debug_log(rebuild_mode, timings, clear_stats, previous_counts)
             if hasattr(self, "_property_tree"):
                 self._property_tree.setUpdatesEnabled(tree_updates_enabled)
                 self._property_tree.viewport().update()
             self.setUpdatesEnabled(panel_updates_enabled)
             self.update()
 
-    def _build_multi_selection_form(self):
-        callback_entries = self._collect_multi_callback_entries()
+    def _build_multi_selection_form(self, callback_entries=None, timings=None):
+        callback_entries = list(callback_entries) if callback_entries is not None else self._collect_multi_callback_entries()
 
-        _geometry_group, geometry_form = self._build_inspector_group("Batch Geometry")
-        for field, label in (("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")):
-            spin = _create_property_panel_spin_box()
-            spin.setRange(-9999, 9999)
-            spin.setValue(getattr(self._primary_widget, field))
-            is_mixed = self._is_mixed_values(getattr(widget, field) for widget in self._selection)
-            if is_mixed:
-                self._update_mixed_editor_metadata(spin, f"Batch {label[:-1]}")
-            spin.valueChanged.connect(lambda value, f=field: self._on_multi_common_changed(f, value))
-            # UIX-005: mixed-state hint is centralized; avoid repeating "(Mixed)" on every row.
-            geometry_form.addRow(label, spin)
-            self._editors[f"multi_{field}"] = spin
+        def _build_geometry_group():
+            _geometry_group, geometry_form = self._build_inspector_group("Batch Geometry")
+            for field, label in (("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")):
+                spin = _create_property_panel_spin_box()
+                spin.setRange(-9999, 9999)
+                spin.setValue(getattr(self._primary_widget, field))
+                is_mixed = self._is_mixed_values(getattr(widget, field) for widget in self._selection)
+                if is_mixed:
+                    self._update_mixed_editor_metadata(spin, f"Batch {label[:-1]}")
+                spin.valueChanged.connect(lambda value, f=field: self._on_multi_common_changed(f, value))
+                geometry_form.addRow(label, spin)
+                self._editors[f"multi_{field}"] = spin
 
-        self._build_multi_common_properties_group()
-        self._build_multi_callbacks_group(callback_entries)
-        self._build_designer_state_group()
+        if timings is not None:
+            self._measure_debug_step(timings, "batch_geometry_group", _build_geometry_group)
+            self._measure_debug_step(timings, "common_properties_group", self._build_multi_common_properties_group)
+            self._measure_debug_step(
+                timings,
+                "multi_callbacks_group",
+                lambda: self._build_multi_callbacks_group(callback_entries),
+            )
+            self._measure_debug_step(timings, "designer_group", self._build_designer_state_group)
+        else:
+            _build_geometry_group()
+            self._build_multi_common_properties_group()
+            self._build_multi_callbacks_group(callback_entries)
+            self._build_designer_state_group()
+
         self._layout.addWidget(self._property_tree, 1)
-        feedback_group = self._build_selection_feedback_group()
+        if timings is not None:
+            feedback_group = self._measure_debug_step(
+                timings,
+                "feedback_group",
+                self._build_selection_feedback_group,
+            )
+        else:
+            feedback_group = self._build_selection_feedback_group()
         if feedback_group is not None:
             self._layout.addWidget(feedback_group)
-        self._sync_collapsible_group_states()
+        if timings is not None:
+            self._measure_debug_step(timings, "sync_groups", self._sync_collapsible_group_states)
+        else:
+            self._sync_collapsible_group_states()
 
     def _build_designer_state_group(self):
         group, form = self._build_inspector_group("Designer")
