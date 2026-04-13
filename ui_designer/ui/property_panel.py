@@ -17,7 +17,7 @@ from PyQt5.QtCore import pyqtSignal, Qt, QSignalBlocker, QMargins, QSize, QEvent
 from PyQt5.QtGui import QFont, QColor, QBrush
 
 from qfluentwidgets import (
-    ComboBox, EditableComboBox, LineEdit, CheckBox, ToolButton,
+    ComboBox, EditableComboBox, LineEdit, CheckBox,
     ListWidget, SearchLineEdit,
 )
 
@@ -259,6 +259,19 @@ def _create_property_panel_spin_box():
     editor.setProperty("propertyPanelSpin", True)
     editor.setMinimumHeight(24)
     return editor
+
+
+def _create_property_panel_action_button(text):
+    """Inline action buttons should stay lightweight because they are rebuilt on every selection."""
+    button = QToolButton()
+    button.setObjectName("property_panel_action_button")
+    button.setProperty("propertyPanelActionButton", True)
+    button.setText(str(text or ""))
+    button.setToolButtonStyle(Qt.ToolButtonTextOnly)
+    button.setAutoRaise(False)
+    button.setCursor(Qt.PointingHandCursor)
+    button.setMinimumHeight(24)
+    return button
 
 
 def _inspector_form():
@@ -1625,161 +1638,173 @@ class PropertyPanel(QWidget):
         return frame
 
     def _rebuild_form(self):
-        self._clear_layout(self._layout)
-        self._reset_property_tree()
-        self._editors = {}
-        self._callback_open_buttons = {}
-        self._header_size_chip = None
+        panel_updates_enabled = self.updatesEnabled()
+        tree_updates_enabled = self._property_tree.updatesEnabled() if hasattr(self, "_property_tree") else True
+        self.setUpdatesEnabled(False)
+        if hasattr(self, "_property_tree"):
+            self._property_tree.setUpdatesEnabled(False)
+        try:
+            self._clear_layout(self._layout)
+            self._reset_property_tree()
+            self._editors = {}
+            self._callback_open_buttons = {}
+            self._header_size_chip = None
 
-        if self._primary_widget is None:
+            if self._primary_widget is None:
+                self._context_frame.setVisible(False)
+                self._search_shell.setVisible(False)
+                self._search_edit.setVisible(False)
+                self._property_tree.hide()
+                self._no_selection_label = self._create_no_selection_label()
+                self._layout.addWidget(self._no_selection_label)
+                self._update_panel_metadata()
+                return
+
             self._context_frame.setVisible(False)
-            self._search_shell.setVisible(False)
-            self._search_edit.setVisible(False)
-            self._property_tree.hide()
-            self._no_selection_label = self._create_no_selection_label()
-            self._layout.addWidget(self._no_selection_label)
-            self._update_panel_metadata()
-            return
+            self._search_shell.setVisible(True)
+            self._search_edit.setVisible(True)
+            self._property_tree.show()
+            if len(self._selection) > 1:
+                header = self._build_multi_selection_header(self._collect_multi_callback_entries())
+                header.hide()
+                self._layout.addWidget(header)
+                self._build_multi_selection_form()
+                self._sync_collapsible_group_states()
+                self._on_search_changed(self._search_edit.text())
+                self._refresh_property_tree_theme_patches()
+                return
 
-        self._context_frame.setVisible(False)
-        self._search_shell.setVisible(True)
-        self._search_edit.setVisible(True)
-        self._property_tree.show()
-        if len(self._selection) > 1:
-            header = self._build_multi_selection_header(self._collect_multi_callback_entries())
+            w = self._primary_widget
+            header = self._build_single_selection_header(w)
             header.hide()
             self._layout.addWidget(header)
-            self._build_multi_selection_form()
+
+            # Layout group
+            layout_group, layout_form = self._build_inspector_group("Layout")
+            for field, label in [("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")]:
+                spin = _create_property_panel_spin_box()
+                spin.setRange(-9999, 9999)
+                spin.setValue(getattr(w, field))
+                spin.valueChanged.connect(lambda val, f=field: self._on_common_changed(f, val))
+                layout_form.addRow(label, spin)
+                self._editors[field] = spin
+
+            # Basic group
+            _basic_group, basic_form = self._build_inspector_group("Basic")
+
+            name_edit = LineEdit()
+            name_edit.setText(w.name)
+            name_edit.editingFinished.connect(lambda editor=name_edit: self._on_name_editing_finished(editor))
+            basic_form.addRow("Name:", name_edit)
+            self._editors["name"] = name_edit
+            self._update_name_editor_metadata(name_edit)
+
+            # Type-specific properties - grouped by data vs other
+            type_info = WidgetRegistry.instance().get(w.widget_type)
+            props = type_info.get("properties", {})
+
+            if props:
+                data_props = {
+                    name: info for name, info in props.items() if info.get("type") in _DATA_PROPERTY_TYPES
+                }
+                other_props = {
+                    name: info for name, info in props.items() if info.get("type") not in _DATA_PROPERTY_TYPES
+                }
+                if other_props:
+                    self._build_grouped_properties(w, other_props)
+                if data_props:
+                    self._build_data_group(w, data_props)
+
+            # Style properties
+            _bg_group, bg_form = self._build_inspector_group("Appearance")
+
+            bg = w.background or BackgroundModel()
+
+            bg_type_combo = ComboBox()
+            bg_type_combo.addItems(BG_TYPES)
+            bg_type_combo.setCurrentText(bg.bg_type)
+            bg_type_combo.currentTextChanged.connect(lambda val: self._on_bg_changed("bg_type", val))
+            bg_form.addRow("Type:", bg_type_combo)
+            self._editors["bg_type"] = bg_type_combo
+
+            if bg.bg_type != "none":
+                # Color
+                bg_color = EguiColorPicker()
+                bg_color.set_value(bg.color)
+                bg_color.color_changed.connect(lambda val: self._on_bg_changed("color", val))
+                bg_form.addRow("Color:", bg_color)
+
+                # Alpha
+                bg_alpha = ComboBox()
+                bg_alpha.addItems(ALPHAS)
+                bg_alpha.setCurrentText(bg.alpha)
+                bg_alpha.currentTextChanged.connect(lambda val: self._on_bg_changed("alpha", val))
+                bg_form.addRow("Alpha:", bg_alpha)
+
+                # Radius (for round_rectangle and circle)
+                if bg.bg_type in ("round_rectangle", "circle"):
+                    radius_spin = _create_property_panel_spin_box()
+                    radius_spin.setRange(0, 999)
+                    radius_spin.setValue(bg.radius)
+                    radius_spin.valueChanged.connect(lambda val: self._on_bg_changed("radius", val))
+                    bg_form.addRow("Radius:", radius_spin)
+
+                # Corner radii (for round_rectangle_corners)
+                if bg.bg_type == "round_rectangle_corners":
+                    for corner in ["radius_left_top", "radius_left_bottom", "radius_right_top", "radius_right_bottom"]:
+                        spin = _create_property_panel_spin_box()
+                        spin.setRange(0, 999)
+                        spin.setValue(getattr(bg, corner))
+                        spin.valueChanged.connect(lambda val, c=corner: self._on_bg_changed(c, val))
+                        label = self._corner_radius_row_label(corner)
+                        bg_form.addRow(label, spin)
+
+                # Stroke
+                stroke_spin = _create_property_panel_spin_box()
+                stroke_spin.setRange(0, 50)
+                stroke_spin.setValue(bg.stroke_width)
+                stroke_spin.valueChanged.connect(lambda val: self._on_bg_changed("stroke_width", val))
+                bg_form.addRow(self._appearance_row_label("stroke_width", "Stroke Width:"), stroke_spin)
+
+                if bg.stroke_width > 0:
+                    stroke_color = EguiColorPicker()
+                    stroke_color.set_value(bg.stroke_color)
+                    stroke_color.color_changed.connect(lambda val: self._on_bg_changed("stroke_color", val))
+                    bg_form.addRow(self._appearance_row_label("stroke_color", "Stroke Color:"), stroke_color)
+
+                    stroke_alpha = ComboBox()
+                    stroke_alpha.addItems(ALPHAS)
+                    stroke_alpha.setCurrentText(bg.stroke_alpha)
+                    stroke_alpha.currentTextChanged.connect(lambda val: self._on_bg_changed("stroke_alpha", val))
+                    bg_form.addRow(self._appearance_row_label("stroke_alpha", "Stroke Alpha:"), stroke_alpha)
+
+                # Pressed state
+                pressed_check = CheckBox("Pressed state")
+                pressed_check.setChecked(bg.has_pressed)
+                pressed_check.toggled.connect(lambda val: self._on_bg_changed("has_pressed", val))
+                bg_form.addRow(pressed_check)
+
+                if bg.has_pressed:
+                    pressed_color = EguiColorPicker()
+                    pressed_color.set_value(bg.pressed_color)
+                    pressed_color.color_changed.connect(lambda val: self._on_bg_changed("pressed_color", val))
+                    bg_form.addRow(self._appearance_row_label("pressed_color", "Pressed Color:"), pressed_color)
+
+            self._build_callbacks_group(w)
+            self._build_designer_state_group()
+            self._layout.addWidget(self._property_tree, 1)
+            feedback_group = self._build_selection_feedback_group()
+            if feedback_group is not None:
+                self._layout.addWidget(feedback_group)
             self._sync_collapsible_group_states()
             self._on_search_changed(self._search_edit.text())
             self._refresh_property_tree_theme_patches()
-            return
-
-        w = self._primary_widget
-        header = self._build_single_selection_header(w)
-        header.hide()
-        self._layout.addWidget(header)
-
-        # Layout group
-        layout_group, layout_form = self._build_inspector_group("Layout")
-        for field, label in [("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")]:
-            spin = _create_property_panel_spin_box()
-            spin.setRange(-9999, 9999)
-            spin.setValue(getattr(w, field))
-            spin.valueChanged.connect(lambda val, f=field: self._on_common_changed(f, val))
-            layout_form.addRow(label, spin)
-            self._editors[field] = spin
-
-        # Basic group
-        _basic_group, basic_form = self._build_inspector_group("Basic")
-
-        name_edit = LineEdit()
-        name_edit.setText(w.name)
-        name_edit.editingFinished.connect(lambda editor=name_edit: self._on_name_editing_finished(editor))
-        basic_form.addRow("Name:", name_edit)
-        self._editors["name"] = name_edit
-        self._update_name_editor_metadata(name_edit)
-
-        # Type-specific properties - grouped by data vs other
-        type_info = WidgetRegistry.instance().get(w.widget_type)
-        props = type_info.get("properties", {})
-
-        if props:
-            data_props = {
-                name: info for name, info in props.items() if info.get("type") in _DATA_PROPERTY_TYPES
-            }
-            other_props = {
-                name: info for name, info in props.items() if info.get("type") not in _DATA_PROPERTY_TYPES
-            }
-            if other_props:
-                self._build_grouped_properties(w, other_props)
-            if data_props:
-                self._build_data_group(w, data_props)
-
-        # Style properties
-        _bg_group, bg_form = self._build_inspector_group("Appearance")
-
-        bg = w.background or BackgroundModel()
-
-        bg_type_combo = ComboBox()
-        bg_type_combo.addItems(BG_TYPES)
-        bg_type_combo.setCurrentText(bg.bg_type)
-        bg_type_combo.currentTextChanged.connect(lambda val: self._on_bg_changed("bg_type", val))
-        bg_form.addRow("Type:", bg_type_combo)
-        self._editors["bg_type"] = bg_type_combo
-
-        if bg.bg_type != "none":
-            # Color
-            bg_color = EguiColorPicker()
-            bg_color.set_value(bg.color)
-            bg_color.color_changed.connect(lambda val: self._on_bg_changed("color", val))
-            bg_form.addRow("Color:", bg_color)
-
-            # Alpha
-            bg_alpha = ComboBox()
-            bg_alpha.addItems(ALPHAS)
-            bg_alpha.setCurrentText(bg.alpha)
-            bg_alpha.currentTextChanged.connect(lambda val: self._on_bg_changed("alpha", val))
-            bg_form.addRow("Alpha:", bg_alpha)
-
-            # Radius (for round_rectangle and circle)
-            if bg.bg_type in ("round_rectangle", "circle"):
-                radius_spin = _create_property_panel_spin_box()
-                radius_spin.setRange(0, 999)
-                radius_spin.setValue(bg.radius)
-                radius_spin.valueChanged.connect(lambda val: self._on_bg_changed("radius", val))
-                bg_form.addRow("Radius:", radius_spin)
-
-            # Corner radii (for round_rectangle_corners)
-            if bg.bg_type == "round_rectangle_corners":
-                for corner in ["radius_left_top", "radius_left_bottom", "radius_right_top", "radius_right_bottom"]:
-                    spin = _create_property_panel_spin_box()
-                    spin.setRange(0, 999)
-                    spin.setValue(getattr(bg, corner))
-                    spin.valueChanged.connect(lambda val, c=corner: self._on_bg_changed(c, val))
-                    label = self._corner_radius_row_label(corner)
-                    bg_form.addRow(label, spin)
-
-            # Stroke
-            stroke_spin = _create_property_panel_spin_box()
-            stroke_spin.setRange(0, 50)
-            stroke_spin.setValue(bg.stroke_width)
-            stroke_spin.valueChanged.connect(lambda val: self._on_bg_changed("stroke_width", val))
-            bg_form.addRow(self._appearance_row_label("stroke_width", "Stroke Width:"), stroke_spin)
-
-            if bg.stroke_width > 0:
-                stroke_color = EguiColorPicker()
-                stroke_color.set_value(bg.stroke_color)
-                stroke_color.color_changed.connect(lambda val: self._on_bg_changed("stroke_color", val))
-                bg_form.addRow(self._appearance_row_label("stroke_color", "Stroke Color:"), stroke_color)
-
-                stroke_alpha = ComboBox()
-                stroke_alpha.addItems(ALPHAS)
-                stroke_alpha.setCurrentText(bg.stroke_alpha)
-                stroke_alpha.currentTextChanged.connect(lambda val: self._on_bg_changed("stroke_alpha", val))
-                bg_form.addRow(self._appearance_row_label("stroke_alpha", "Stroke Alpha:"), stroke_alpha)
-
-            # Pressed state
-            pressed_check = CheckBox("Pressed state")
-            pressed_check.setChecked(bg.has_pressed)
-            pressed_check.toggled.connect(lambda val: self._on_bg_changed("has_pressed", val))
-            bg_form.addRow(pressed_check)
-
-            if bg.has_pressed:
-                pressed_color = EguiColorPicker()
-                pressed_color.set_value(bg.pressed_color)
-                pressed_color.color_changed.connect(lambda val: self._on_bg_changed("pressed_color", val))
-                bg_form.addRow(self._appearance_row_label("pressed_color", "Pressed Color:"), pressed_color)
-
-        self._build_callbacks_group(w)
-        self._build_designer_state_group()
-        self._layout.addWidget(self._property_tree, 1)
-        feedback_group = self._build_selection_feedback_group()
-        if feedback_group is not None:
-            self._layout.addWidget(feedback_group)
-        self._sync_collapsible_group_states()
-        self._on_search_changed(self._search_edit.text())
-        self._refresh_property_tree_theme_patches()
+        finally:
+            if hasattr(self, "_property_tree"):
+                self._property_tree.setUpdatesEnabled(tree_updates_enabled)
+                self._property_tree.viewport().update()
+            self.setUpdatesEnabled(panel_updates_enabled)
+            self.update()
 
     def _build_multi_selection_form(self):
         callback_entries = self._collect_multi_callback_entries()
@@ -2459,8 +2484,7 @@ class PropertyPanel(QWidget):
         layout.setSpacing(2)
         layout.addWidget(editor, 1)
 
-        button = ToolButton()
-        button.setText("Open")
+        button = _create_property_panel_action_button("Open")
         button.setVisible(enabled)
         button.setEnabled(enabled)
         self._update_callback_button_metadata(button, event_name, enabled, tooltip)
@@ -2660,8 +2684,7 @@ class PropertyPanel(QWidget):
         combo.currentTextChanged.connect(lambda _val, name=prop_name, target=combo: self._update_file_selector_metadata(name, target))
         h_layout.addWidget(combo, 1)
 
-        browse_btn = ToolButton()
-        browse_btn.setText("Pick")
+        browse_btn = _create_property_panel_action_button("Pick")
         _set_widget_metadata(
             browse_btn,
             tooltip=self._browse_button_tooltip(prop_name, file_filter),
@@ -2671,8 +2694,7 @@ class PropertyPanel(QWidget):
         h_layout.addWidget(browse_btn)
 
         if prop_name == "font_text_file":
-            generate_btn = ToolButton()
-            generate_btn.setText("Gen")
+            generate_btn = _create_property_panel_action_button("Gen")
             generate_btn.clicked.connect(lambda: self._request_generate_charset_for_file_property(prop_name, combo))
             combo.currentTextChanged.connect(
                 lambda _val, name=prop_name, target=combo, button=generate_btn: self._update_generate_charset_button_metadata(name, target, button)

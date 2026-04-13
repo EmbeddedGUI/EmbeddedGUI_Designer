@@ -245,6 +245,7 @@ class WidgetBrowserPanel(QWidget):
         self._selected_type = ""
         self._insert_target_label = "Current page root"
         self._cards = {}
+        self._cards_by_type = {}
         self._category_ids = []
         self._search_refresh_timer = QTimer(self)
         self._search_refresh_timer.setSingleShot(True)
@@ -402,13 +403,26 @@ class WidgetBrowserPanel(QWidget):
         self._update_insert_target()
         self._update_accessibility_summary(len(self._cards))
 
-    def select_widget_type(self, widget_type):
+    def _set_selected_type(self, widget_type, *, update_accessibility=False):
         widget_type = str(widget_type or "").strip()
         if not widget_type:
-            return
+            return False
+        if widget_type == self._selected_type:
+            return False
+        previous_type = self._selected_type
         self._selected_type = widget_type
-        for card in self._cards.values():
-            card.set_selected(card.type_name == widget_type)
+        previous_card = self._cards_by_type.get(previous_type)
+        if previous_card is not None:
+            previous_card.set_selected(False)
+        current_card = self._cards_by_type.get(widget_type)
+        if current_card is not None:
+            current_card.set_selected(True)
+        if update_accessibility:
+            self._update_accessibility_summary()
+        return True
+
+    def select_widget_type(self, widget_type):
+        self._set_selected_type(widget_type, update_accessibility=True)
 
     def record_insert(self, widget_type):
         if self._recent_service.record_insert(widget_type):
@@ -432,14 +446,10 @@ class WidgetBrowserPanel(QWidget):
         self._insert_target.setText(f"Into {self._insert_target_label}")
 
     def _selected_display_name(self):
-        return next(
-            (
-                str(card._item.get("display_name", card.type_name) or card.type_name)
-                for card in self._cards.values()
-                if card.type_name == self._selected_type
-            ),
-            "none",
-        )
+        card = self._cards_by_type.get(self._selected_type)
+        if card is None:
+            return "none"
+        return str(card._item.get("display_name", card.type_name) or card.type_name)
 
     def _category_scope_text(self, category_label, search_text):
         scope = "All Components" if category_label == "All" else category_label
@@ -595,6 +605,7 @@ class WidgetBrowserPanel(QWidget):
                 widget.setParent(None)
                 widget.deleteLater()
         self._cards = {}
+        self._cards_by_type = {}
 
     def _empty_state_hint_text(self):
         search_active = bool((self._search.text() or "").strip())
@@ -681,14 +692,12 @@ class WidgetBrowserPanel(QWidget):
             card.drag_requested.connect(self._start_widget_drag)
             self._cards_layout.addWidget(card)
             self._cards[index] = card
+            self._cards_by_type[card.type_name] = card
             card.set_selected(card.type_name == self._selected_type)
 
 
     def _select_card(self, widget_type):
-        self._selected_type = widget_type
-        for card in self._cards.values():
-            card.set_selected(card.type_name == widget_type)
-        self._update_accessibility_summary()
+        self._set_selected_type(widget_type, update_accessibility=True)
 
     def _toggle_favorite(self, widget_type):
         self._favorite_service.toggle(widget_type)

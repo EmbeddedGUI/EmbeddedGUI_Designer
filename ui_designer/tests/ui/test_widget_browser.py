@@ -456,6 +456,37 @@ class TestWidgetBrowserPanel:
         assert f"Selected: {display_name}." in panel.accessibleName()
         panel.deleteLater()
 
+    def test_select_widget_type_only_updates_changed_cards(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        initial_type = panel._selected_type
+        target_type = next(card.type_name for card in panel._cards.values() if card.type_name != initial_type)
+        calls = []
+
+        for card in panel._cards.values():
+            original = card.set_selected
+
+            def make_wrapper(current_card, original_method):
+                def wrapper(selected):
+                    calls.append((current_card.type_name, bool(selected)))
+                    return original_method(selected)
+                return wrapper
+
+            monkeypatch.setattr(card, "set_selected", make_wrapper(card, original))
+
+        panel.select_widget_type(target_type)
+
+        assert calls == [
+            (initial_type, False),
+            (target_type, True),
+        ]
+
+        calls.clear()
+        panel.select_widget_type(target_type)
+        assert calls == []
+        panel.deleteLater()
+
     def test_empty_state_for_search_uses_clear_search_action(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 

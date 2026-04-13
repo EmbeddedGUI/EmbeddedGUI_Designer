@@ -552,13 +552,16 @@ class TestPropertyPanelFileFlow:
         panel.deleteLater()
 
     def test_file_selector_sets_accessibility_metadata(self, qapp):
-        from qfluentwidgets import ToolButton
+        from PyQt5.QtWidgets import QToolButton
         from ui_designer.ui.property_panel import PropertyPanel
 
         panel = PropertyPanel()
         selector = panel._create_file_selector("font_file", "title.ttf", ["title.ttf"], "Font files (*.ttf *.otf)")
         combo = panel._editors["prop_font_file"]
-        browse_btn = selector.findChild(ToolButton)
+        browse_btn = next(
+            (button for button in selector.findChildren(QToolButton) if button.objectName() == "property_panel_action_button"),
+            None,
+        )
 
         assert combo.toolTip() == "Font File: title.ttf. Choose a project resource file or type a filename."
         assert combo.statusTip() == combo.toolTip()
@@ -571,12 +574,15 @@ class TestPropertyPanelFileFlow:
         panel.deleteLater()
 
     def test_font_text_file_selector_exposes_generate_charset_button(self, qapp):
-        from qfluentwidgets import ToolButton
+        from PyQt5.QtWidgets import QToolButton
         from ui_designer.ui.property_panel import PropertyPanel
 
         panel = PropertyPanel()
         selector = panel._create_file_selector("font_text_file", "chars.txt", ["chars.txt"], "Text files (*.txt)")
-        buttons = selector.findChildren(ToolButton)
+        buttons = [
+            button for button in selector.findChildren(QToolButton)
+            if button.objectName() == "property_panel_action_button"
+        ]
 
         assert len(buttons) == 2
         assert buttons[0].text() == "Pick"
@@ -587,7 +593,7 @@ class TestPropertyPanelFileFlow:
         panel.deleteLater()
 
     def test_font_text_file_selector_generate_button_uses_font_context_metadata(self, qapp, tmp_path):
-        from qfluentwidgets import ToolButton
+        from PyQt5.QtWidgets import QToolButton
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
 
@@ -602,7 +608,10 @@ class TestPropertyPanelFileFlow:
         panel.set_source_resource_dir(str(resource_dir))
         panel.set_widget(widget)
         selector = panel._create_file_selector("font_text_file", "chars.txt", ["chars.txt"], "Text files (*.txt)")
-        buttons = selector.findChildren(ToolButton)
+        buttons = [
+            button for button in selector.findChildren(QToolButton)
+            if button.objectName() == "property_panel_action_button"
+        ]
 
         assert len(buttons) == 2
         assert buttons[1].isEnabled() is True
@@ -611,7 +620,7 @@ class TestPropertyPanelFileFlow:
         panel.deleteLater()
 
     def test_generate_charset_button_emits_signal_with_font_context(self, qapp, tmp_path):
-        from qfluentwidgets import ToolButton
+        from PyQt5.QtWidgets import QToolButton
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
 
@@ -625,7 +634,10 @@ class TestPropertyPanelFileFlow:
         panel.set_source_resource_dir(str(resource_dir))
         panel.set_widget(widget)
         selector = panel._create_file_selector("font_text_file", "chars.txt", ["chars.txt"], "Text files (*.txt)")
-        buttons = selector.findChildren(ToolButton)
+        buttons = [
+            button for button in selector.findChildren(QToolButton)
+            if button.objectName() == "property_panel_action_button"
+        ]
         generated = []
         panel.generate_charset_requested.connect(lambda resource_type, source_name, initial_filename: generated.append((resource_type, source_name, initial_filename)))
 
