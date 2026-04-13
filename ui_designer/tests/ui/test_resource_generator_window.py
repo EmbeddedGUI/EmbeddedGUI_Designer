@@ -94,7 +94,32 @@ class TestResourceGeneratorWindow:
         assert generator_window._session.paths.source_dir == ""
         assert generator_window._session.paths.workspace_dir == ""
         assert generator_window._session.paths.bin_output_dir == ""
+        assert window._resource_generator_action.isEnabled() is True
         _close_window(generator_window)
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_config_path_edit_rebases_default_paths_with_new_location(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        monkeypatch.setattr(QMessageBox, "warning", lambda *args: QMessageBox.Ok)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        original_config = tmp_path / "OldApp" / "resource" / "src" / "app_resource_config.json"
+        new_config = tmp_path / "NewApp" / "resource" / "src" / "app_resource_config.json"
+
+        window = ResourceGeneratorWindow("")
+        window.open_with_paths(infer_generation_paths(str(original_config)), load_existing=False)
+        qapp.processEvents()
+
+        window._config_path_edit.setText(str(new_config))
+        window._on_path_edited("config_path", window._config_path_edit)
+
+        expected = infer_generation_paths(str(new_config))
+        assert window._session.paths.config_path == expected.config_path
+        assert window._session.paths.source_dir == expected.source_dir
+        assert window._session.paths.workspace_dir == expected.workspace_dir
+        assert window._session.paths.bin_output_dir == expected.bin_output_dir
         _close_window(window)
 
     @_skip_no_qt
@@ -127,4 +152,32 @@ class TestResourceGeneratorWindow:
         assert window._session.paths.workspace_dir == expected.workspace_dir
         assert window._session.paths.bin_output_dir == expected.bin_output_dir
         assert new_config.is_file()
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_main_window_close_is_blocked_when_resource_generator_cancelled(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QCloseEvent
+
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = build_test_sdk_root(tmp_path / "sdk")
+        window = MainWindow(str(sdk_root))
+
+        window._open_resource_generator_window()
+        qapp.processEvents()
+        generator_window = window._resource_generator_window
+        assert generator_window is not None
+        generator_window._dirty = True
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.No)
+
+        event = QCloseEvent()
+        window.closeEvent(event)
+
+        assert event.isAccepted() is False
+        assert window._is_closing is False
+        assert generator_window.isVisible() is True
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.Yes)
+        _close_window(generator_window)
         _close_window(window)
