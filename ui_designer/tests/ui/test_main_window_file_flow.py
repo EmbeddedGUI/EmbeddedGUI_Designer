@@ -1606,6 +1606,10 @@ class TestMainWindowFileFlow:
 
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project_only_with_widgets
+            from ui_designer.tests.ui.window_test_helpers import (
+                disable_main_window_compile as _disable_window_compile,
+                open_loaded_test_project as _open_project_window,
+            )
             from ui_designer.ui.main_window import MainWindow
             from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
@@ -9094,6 +9098,10 @@ class TestMainWindowFileFlow:
             from ui_designer.model.string_resource import DEFAULT_LOCALE
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project_only_with_page_widgets
+            from ui_designer.tests.ui.window_test_helpers import (
+                disable_main_window_compile as _disable_window_compile,
+                open_loaded_test_project as _open_project_window,
+            )
             from ui_designer.ui.main_window import MainWindow
             from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
@@ -9207,6 +9215,10 @@ class TestMainWindowFileFlow:
             from ui_designer.model.string_resource import DEFAULT_LOCALE
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project_only_with_page_widgets
+            from ui_designer.tests.ui.window_test_helpers import (
+                disable_main_window_compile as _disable_window_compile,
+                open_loaded_test_project as _open_project_window,
+            )
             from ui_designer.ui.main_window import MainWindow
             from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
@@ -12043,6 +12055,10 @@ class TestMainWindowFileFlow:
 
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project_only_with_widgets
+            from ui_designer.tests.ui.window_test_helpers import (
+                disable_main_window_compile as _disable_window_compile,
+                open_loaded_test_project as _open_project_window,
+            )
             from ui_designer.ui.main_window import MainWindow
             from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
@@ -12146,6 +12162,10 @@ class TestMainWindowFileFlow:
 
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project_only_with_widgets
+            from ui_designer.tests.ui.window_test_helpers import (
+                disable_main_window_compile as _disable_window_compile,
+                open_loaded_test_project as _open_project_window,
+            )
             from ui_designer.ui.main_window import MainWindow
             from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
