@@ -4848,6 +4848,7 @@ class MainWindow(QMainWindow):
         self._clear_rebuild_retry_block()
         self._recreate_compiler()
         preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
+            clear_when_available=True,
             preload_preview_error=True,
             probe_environmental_recovery=True,
         )
@@ -4896,6 +4897,7 @@ class MainWindow(QMainWindow):
         self._clear_rebuild_retry_block()
         self._recreate_compiler()
         preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
+            clear_when_available=True,
             preload_preview_error=True,
             probe_environmental_recovery=True,
         )
@@ -7552,6 +7554,7 @@ class MainWindow(QMainWindow):
 
         self._recreate_compiler()
         preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
+            clear_when_available=True,
             preload_preview_error=True,
             probe_environmental_recovery=True,
         )

@@ -5417,7 +5417,9 @@ class TestMainWindowFileFlow:
 
         window = MainWindow(str(sdk_root))
         _open_project_window(window, project, project_dir, sdk_root)
+        window._block_auto_compile_retry("boom")
         window._block_rebuild_retry("make: *** No rule to make target 'clean'.  Stop.")
+        compile_cycle_calls = []
 
         monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", lambda *args: QMessageBox.Yes)
         monkeypatch.setattr(
@@ -5440,11 +5442,16 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: pytest.fail("_start_compile_cycle should not run"))
 
         window._do_clean_all_and_reconstruct()
+        window.auto_compile = True
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        window._run_auto_compile_cycle()
 
         assert "Preview rerun skipped: make: *** No rule to make target 'clean'.  Stop." in window.statusBar().currentMessage()
         assert "Preview rerun skipped after reconstruction: make: *** No rule to make target 'clean'.  Stop." in (
             window.debug_panel._output.toPlainText()
         )
+        assert compile_cycle_calls == [False]
+        assert window._auto_compile_retry_block_reason == ""
         assert window._compile_action.isEnabled() is True
         assert window._rebuild_action.isEnabled() is False
         assert window._rebuild_retry_block_reason == "make: *** No rule to make target 'clean'.  Stop."
