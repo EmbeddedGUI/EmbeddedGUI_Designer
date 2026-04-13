@@ -385,6 +385,7 @@ class MainWindow(QMainWindow):
         self._last_runtime_error_text = ""
         self._auto_compile_retry_block_reason = ""
         self._rebuild_retry_block_reason = ""
+        self._queued_compile_reasons = []
 
         self._project_watch_timer = QTimer(self)
         self._project_watch_timer.setInterval(1000)
@@ -2570,6 +2571,7 @@ class MainWindow(QMainWindow):
         self._async_generation += 1
         self._pending_compile = False
         self._pending_rebuild = False
+        self._queued_compile_reasons = []
 
     def _stop_background_timers(self):
         for timer in (
@@ -2751,7 +2753,7 @@ class MainWindow(QMainWindow):
                 )
             else:
                 if self.auto_compile:
-                    self._trigger_compile()
+                    self._trigger_compile(reason="sdk root change")
             self._update_compile_availability()
 
         self._welcome_page.refresh()
@@ -3154,6 +3156,7 @@ class MainWindow(QMainWindow):
         self._auto_compile_retry_block_reason = str(reason or "").strip()
         self._compile_timer.stop()
         self._pending_compile = False
+        self._queued_compile_reasons = []
 
     def _block_rebuild_retry(self, reason=""):
         self._rebuild_retry_block_reason = str(reason or "").strip()
@@ -3294,7 +3297,7 @@ class MainWindow(QMainWindow):
                 self._status_message_with_editing_only_mode(opened_status_message, preview_unavailable_reason)
             )
         else:
-            self._trigger_compile()
+            self._trigger_compile(reason="project open")
             self.statusBar().showMessage(opened_status_message)
 
         if not project.sdk_root and not silent:
@@ -5273,9 +5276,9 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Ready (precompiled)", 3000)
             self.debug_panel.log_success("Background precompile completed")
             if pending_rebuild:
-                self._start_compile_cycle(force_rebuild=True)
+                self._start_compile_cycle(force_rebuild=True, reason_fallback="pending clean rebuild")
             elif pending_compile:
-                self._start_compile_cycle(force_rebuild=False)
+                self._start_compile_cycle(force_rebuild=False, reason_fallback="pending auto compile")
         else:
             failure_summary = self._compile_failure_summary(message, "Precompile failed")
             self._block_auto_compile_retry(failure_summary)
@@ -5758,7 +5761,7 @@ class MainWindow(QMainWindow):
         self._apply_page_mockup()
 
         # Trigger compile to show current page in preview
-        self._trigger_compile()
+        self._trigger_compile(reason="page switch")
         self._update_undo_actions()
         self._update_edit_actions()
         self._update_window_title()
@@ -5982,7 +5985,7 @@ class MainWindow(QMainWindow):
         self._ensure_page_tab(page_name)
         self._switch_page(page_name)
         self._mark_project_dirty("pages")
-        self._trigger_compile()
+        self._trigger_compile(reason="page add")
 
     def _on_page_duplicated(self, source_name, page_name):
         """User requested duplicating an existing page."""
@@ -5994,7 +5997,7 @@ class MainWindow(QMainWindow):
         self._ensure_page_tab(page_name)
         self._switch_page(page_name)
         self._mark_project_dirty("pages")
-        self._trigger_compile()
+        self._trigger_compile(reason="page duplicate")
 
     def _on_page_removed(self, page_name):
         """User deleted a page."""
@@ -6029,7 +6032,7 @@ class MainWindow(QMainWindow):
                 self.page_navigator.set_current_page(self._current_page.name)
                 self._update_preview_overlay()
             self._mark_project_dirty("pages")
-            self._trigger_compile()
+            self._trigger_compile(reason="page remove")
             self._update_window_title()
             self._update_edit_actions()
 
@@ -6055,7 +6058,7 @@ class MainWindow(QMainWindow):
             elif self._current_page:
                 self.project_dock.set_current_page(self._current_page.name)
                 self.page_navigator.set_current_page(self._current_page.name)
-                self._trigger_compile()
+                self._trigger_compile(reason="page rename")
                 self._update_edit_actions()
 
     def _record_pending_page_rename(self, old_name, new_name):
@@ -6181,14 +6184,14 @@ class MainWindow(QMainWindow):
             self._update_page_tab_bar_metadata()
             self._update_workspace_chips()
             self._mark_project_dirty("startup page")
-            self._trigger_compile()
+            self._trigger_compile(reason="startup page")
 
     def _on_page_mode_changed(self, mode):
         """User switched between easy_page and activity mode."""
         if self.project and self.project.page_mode != mode:
             self.project.page_mode = mode
             self._mark_project_dirty("page mode")
-            self._trigger_compile()
+            self._trigger_compile(reason="page mode")
 
     # 鈹€鈹€ Page tabs (qfluentwidgets TabBar) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
@@ -7341,7 +7344,7 @@ class MainWindow(QMainWindow):
         if refresh_resources:
             self._update_resource_usage_panel()
         if trigger_compile:
-            self._trigger_compile()
+            self._trigger_compile(reason=source or "model change")
         self._update_undo_actions()
         self._update_window_title()
         message = self._format_page_change_message(source)
@@ -7384,7 +7387,7 @@ class MainWindow(QMainWindow):
             self._apply_page_mockup()
             self._sync_xml_to_editors()
             self._update_resource_usage_panel()
-            self._trigger_compile()
+            self._trigger_compile(reason="undo/redo")
         finally:
             self._undoing = False
         self._update_undo_actions()
@@ -7427,7 +7430,7 @@ class MainWindow(QMainWindow):
                 self._update_preview_overlay()
                 self._sync_xml_to_editors()
                 self._update_resource_usage_panel()
-                self._trigger_compile()
+                self._trigger_compile(reason=self._active_batch_source or "canvas drag")
                 message = self._format_page_change_message(self._active_batch_source)
                 if message and not self._undoing:
                     self.statusBar().showMessage(message, 3000)
@@ -7471,7 +7474,7 @@ class MainWindow(QMainWindow):
             self._update_preview_overlay()
             self._apply_page_mockup()
             self._update_resource_usage_panel()
-            self._trigger_compile()
+            self._trigger_compile(reason="xml edit")
             self._update_undo_actions()
             self._update_window_title()
             if not self._undoing:
@@ -7546,23 +7549,77 @@ class MainWindow(QMainWindow):
         if not enabled:
             self._compile_timer.stop()
             self._pending_compile = False
+            self._queued_compile_reasons = []
         self._update_build_menu_metadata()
 
-    def _trigger_compile(self):
+    def _normalize_compile_reason(self, reason=""):
+        normalized = str(reason or "").strip()
+        return normalized or "unspecified change"
+
+    def _append_compile_reason(self, reason=""):
+        normalized = self._normalize_compile_reason(reason)
+        if normalized in self._queued_compile_reasons:
+            return False, normalized
+        self._queued_compile_reasons.append(normalized)
+        return True, normalized
+
+    def _consume_compile_reasons(self, fallback=""):
+        reasons = list(self._queued_compile_reasons)
+        self._queued_compile_reasons = []
+        if reasons:
+            return reasons
+        return [self._normalize_compile_reason(fallback)]
+
+    def _peek_compile_reasons(self, fallback=""):
+        if self._queued_compile_reasons:
+            return list(self._queued_compile_reasons)
+        return [self._normalize_compile_reason(fallback)]
+
+    def _format_compile_reasons(self, reasons):
+        ordered = []
+        seen = set()
+        for reason in reasons or []:
+            normalized = self._normalize_compile_reason(reason)
+            if normalized in seen:
+                continue
+            ordered.append(normalized)
+            seen.add(normalized)
+        if not ordered:
+            return self._normalize_compile_reason("")
+        return "; ".join(ordered)
+
+    def _clear_queued_compile_reasons(self):
+        self._queued_compile_reasons = []
+
+    def _trigger_compile(self, reason=""):
         """Trigger a debounced compile."""
         if self._is_closing:
+            self._clear_queued_compile_reasons()
             return
         if not self.auto_compile:
+            self._clear_queued_compile_reasons()
             return
         if self._is_auto_compile_retry_blocked():
+            self._clear_queued_compile_reasons()
             return
         if self.compiler is None:
+            self._clear_queued_compile_reasons()
             self._refresh_python_preview("SDK unavailable, compile preview disabled")
             return
         preview_unavailable_reason = self._effective_preview_unavailable_reason()
         if preview_unavailable_reason:
+            self._clear_queued_compile_reasons()
             self._switch_to_python_preview(preview_unavailable_reason)
             return
+        normalized_reason = str(reason or "").strip()
+        should_append_reason = bool(normalized_reason) or not self._queued_compile_reasons
+        if should_append_reason:
+            added, merged_reason = self._append_compile_reason(reason)
+            if added:
+                if self._compile_timer.isActive():
+                    self.debug_panel.log_info(f"Auto compile trigger merged: {merged_reason}")
+                else:
+                    self.debug_panel.log_info(f"Auto compile trigger queued: {merged_reason}")
         self._compile_timer.start()
 
     def _flush_pending_xml(self):
@@ -7577,7 +7634,7 @@ class MainWindow(QMainWindow):
         reset_probe = getattr(self.compiler, "reset_preview_build_probe", None)
         if callable(reset_probe):
             reset_probe()
-        self._start_compile_cycle(force_rebuild=False)
+        self._start_compile_cycle(force_rebuild=False, reason_fallback="manual compile")
 
     def _run_auto_compile_cycle(self):
         if not self.auto_compile:
@@ -7586,9 +7643,10 @@ class MainWindow(QMainWindow):
             return
         preview_unavailable_reason = self._effective_preview_unavailable_reason()
         if preview_unavailable_reason:
+            self._clear_queued_compile_reasons()
             self._switch_to_python_preview(preview_unavailable_reason)
             return
-        self._start_compile_cycle(force_rebuild=False)
+        self._start_compile_cycle(force_rebuild=False, reason_fallback="auto compile")
 
     def _do_rebuild_egui_project(self):
         """Run a clean rebuild for the current EGUI project and restart preview."""
@@ -7596,7 +7654,7 @@ class MainWindow(QMainWindow):
         reset_probe = getattr(self.compiler, "reset_preview_build_probe", None)
         if callable(reset_probe):
             reset_probe()
-        self._start_compile_cycle(force_rebuild=True)
+        self._start_compile_cycle(force_rebuild=True, reason_fallback="manual clean rebuild")
 
     def _clean_all_confirmation_text(self):
         preserved_lines = "\n".join(f"  - {item}" for item in DESIGNER_SOURCE_PRESERVE_SUMMARY)
@@ -7703,7 +7761,7 @@ class MainWindow(QMainWindow):
 
         if self.compiler is not None and self.compiler.can_build() and not rebuild_unavailable_reason:
             self._clear_auto_compile_retry_block()
-            self._start_compile_cycle(force_rebuild=True)
+            self._start_compile_cycle(force_rebuild=True, reason_fallback="clean all reconstruct")
 
     @staticmethod
     def _compile_failure_summary(message, default):
@@ -7813,13 +7871,17 @@ class MainWindow(QMainWindow):
         self._update_compile_availability()
         return False
 
-    def _start_compile_cycle(self, *, force_rebuild=False):
+    def _start_compile_cycle(self, *, force_rebuild=False, reason_fallback=""):
         """Execute compile or clean rebuild asynchronously."""
+        compile_reason_fallback = reason_fallback or ("manual clean rebuild" if force_rebuild else "manual compile")
         if not self.project:
+            self._clear_queued_compile_reasons()
             return
         if self._is_closing:
+            self._clear_queued_compile_reasons()
             return
         if self.compiler is None or not self.compiler.can_build():
+            self._clear_queued_compile_reasons()
             reason = "SDK unavailable, compile preview disabled"
             if self.compiler is not None and self.compiler.get_build_error():
                 reason = self.compiler.get_build_error()
@@ -7829,6 +7891,7 @@ class MainWindow(QMainWindow):
             self._update_workspace_chips()
             return
         if not self._ensure_preview_build_available(force_rebuild=force_rebuild):
+            self._clear_queued_compile_reasons()
             return
         if self._compile_worker is not None and self._compile_worker.isRunning():
             if force_rebuild:
@@ -7860,13 +7923,17 @@ class MainWindow(QMainWindow):
         # Always use the latest editor content
         self._flush_pending_xml()
         self._update_diagnostics_panel()
+        compile_reason_text = self._format_compile_reasons(self._peek_compile_reasons(compile_reason_fallback))
         if not self._ensure_codegen_preflight(
             "Rebuild preview" if force_rebuild else "Compile preview",
             show_dialog=False,
             switch_to_python_preview=True,
         ):
+            self.debug_panel.log_info(f"Compile request blocked: {compile_reason_text}")
+            self._clear_queued_compile_reasons()
             return
 
+        compile_reason_text = self._format_compile_reasons(self._consume_compile_reasons(compile_reason_fallback))
         action_label = "Rebuilding..." if force_rebuild else "Compiling..."
         self.statusBar().showMessage(action_label)
         self.preview_panel.status_label.setText(action_label)
@@ -7877,6 +7944,7 @@ class MainWindow(QMainWindow):
                 self.compiler.stop_exe()
 
         self.debug_panel.log_action("Starting clean rebuild and run..." if force_rebuild else "Starting compile and run...")
+        self.debug_panel.log_info(f"Compile trigger: {compile_reason_text}")
         self.debug_panel.log_info(f"Generating code for {len(self.project.pages)} page(s)")
 
         # Generate resource config + resource C files if needed
@@ -7975,9 +8043,11 @@ class MainWindow(QMainWindow):
             )
             self._update_debug_rebuild_action(show=False)
             if pending_rebuild:
-                self._start_compile_cycle(force_rebuild=True)
+                self._start_compile_cycle(force_rebuild=True, reason_fallback="pending clean rebuild")
             elif pending_compile:
-                self._trigger_compile()
+                self._trigger_compile(
+                    reason="" if self._queued_compile_reasons else "pending compile after previous run"
+                )
         else:
             failure_summary = self._compile_failure_summary(
                 message,

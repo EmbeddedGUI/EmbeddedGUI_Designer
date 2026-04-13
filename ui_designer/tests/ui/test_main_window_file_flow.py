@@ -539,7 +539,7 @@ class TestMainWindowFileFlow:
         )
 
         compile_calls = []
-        monkeypatch.setattr(window, "_trigger_compile", lambda: compile_calls.append("compile"))
+        monkeypatch.setattr(window, "_trigger_compile", lambda *args, **kwargs: compile_calls.append("compile"))
 
         loaded = _load_project(project_dir)
         _open_project_window(window, loaded, project_dir, sdk_root, silent=False)
@@ -3768,7 +3768,11 @@ class TestMainWindowFileFlow:
 
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(new_sdk))
         monkeypatch.setattr(window, "_recreate_compiler", fake_recreate)
-        monkeypatch.setattr(window, "_trigger_compile", lambda: calls.__setitem__("compile", calls["compile"] + 1))
+        monkeypatch.setattr(
+            window,
+            "_trigger_compile",
+            lambda *args, **kwargs: calls.__setitem__("compile", calls["compile"] + 1),
+        )
 
         window._set_sdk_root()
 
@@ -4595,7 +4599,11 @@ class TestMainWindowFileFlow:
         window._compile_timer.stop()
         window._compile_timer.setInterval(0)
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _SilentProbeFailCompiler(project_dir)))
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -4626,7 +4634,11 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         window.auto_compile = False
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -4645,6 +4657,112 @@ class TestMainWindowFileFlow:
         assert window.auto_compile is False
         assert window._compile_timer.isActive() is False
         assert window._pending_compile is False
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_compile_reason_logs_show_queue_merge_and_start(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _CaptureCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+                self.compile_calls = 0
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return True
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+            def compile_and_run_async(self, *args, **kwargs):
+                self.compile_calls += 1
+                return _IdleWorker()
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CompileReasonLogDemo"
+        project = _create_project(project_dir, "CompileReasonLogDemo", sdk_root)
+        compiler = _CaptureCompiler(project_dir)
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_ensure_resources_generated", lambda: None)
+        monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
+        monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.prepare_project_codegen_outputs",
+            _fake_prepare_project_codegen_outputs(
+                {".designer/uicode.c": "// compile reason log test\n"},
+            ),
+        )
+
+        _open_project_window(window, project, project_dir, sdk_root)
+        window.debug_panel._output.clear()
+
+        window.auto_compile = True
+        window._compile_timer.stop()
+        window._compile_timer.setInterval(60000)
+        window._trigger_compile(reason="property edit")
+        window._trigger_compile(reason="page fields edit")
+        window._compile_timer.stop()
+        window._start_compile_cycle(force_rebuild=False, reason_fallback="auto compile")
+
+        debug_output = window.debug_panel._output.toPlainText()
+        assert "Auto compile trigger queued: property edit" in debug_output
+        assert "Auto compile trigger merged: page fields edit" in debug_output
+        assert "Compile trigger: property edit; page fields edit" in debug_output
+        assert window._queued_compile_reasons == []
+        assert compiler.compile_calls == 1
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_widget_selection_change_does_not_queue_compile_reason(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SelectionNoCompileDemo"
+        project = _create_project(project_dir, "SelectionNoCompileDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+        window.debug_panel._output.clear()
+        window.auto_compile = True
+        window._compile_timer.stop()
+        window._clear_selection(sync_tree=False, sync_preview=False)
+        window._on_widget_selected(window._current_page.root_widget)
+
+        debug_output = window.debug_panel._output.toPlainText()
+        assert "Auto compile trigger" not in debug_output
+        assert "Compile trigger:" not in debug_output
+        assert window._compile_timer.isActive() is False
+        assert window._queued_compile_reasons == []
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -4761,7 +4879,11 @@ class TestMainWindowFileFlow:
         compile_cycle_calls = []
         window._compile_timer.stop()
         window._compile_timer.setInterval(0)
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
 
         def _recreate_compiler():
             if window.project_root == os.path.normpath(os.path.abspath(good_sdk_root)):
@@ -4935,7 +5057,11 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         window.auto_compile = False
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -4963,7 +5089,11 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         window.auto_compile = False
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -4994,7 +5124,11 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         window.auto_compile = False
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
 
         def _capture_reload(*args, **kwargs):
             reload_calls.append(kwargs)
@@ -5046,7 +5180,11 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         window.auto_compile = False
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -5124,7 +5262,11 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         window.auto_compile = False
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -5207,7 +5349,7 @@ class TestMainWindowFileFlow:
         _open_project_window(window, project, project_dir, sdk_root)
 
         window.auto_compile = True
-        monkeypatch.setattr(window, "_trigger_compile", lambda: trigger_calls.append("compile"))
+        monkeypatch.setattr(window, "_trigger_compile", lambda *args, **kwargs: trigger_calls.append("compile"))
         window._pending_compile = True
         window._pending_rebuild = False
         window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
@@ -5232,7 +5374,11 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         window.auto_compile = False
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -5263,7 +5409,11 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         window.auto_compile = False
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
         monkeypatch.setattr(window.preview_panel, "start_rendering", lambda _compiler: None)
 
         def _capture_reload(*args, **kwargs):
@@ -5364,8 +5514,8 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(
             window,
             "_start_compile_cycle",
-            lambda *, force_rebuild=False: captured.update(
-                force_rebuild=force_rebuild,
+            lambda *args, **kwargs: captured.update(
+                force_rebuild=kwargs.get("force_rebuild", False),
                 blocked=window._is_auto_compile_retry_blocked(),
             ),
         )
@@ -5626,7 +5776,11 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: captured.setdefault("snapshot_refreshed", True))
         monkeypatch.setattr(window, "_update_window_title", lambda: captured.setdefault("title_updated", True))
         monkeypatch.setattr(window, "_update_compile_availability", lambda: captured.setdefault("availability_updated", True))
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: captured.setdefault("compile_force_rebuild", force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: captured.setdefault("compile_force_rebuild", kwargs.get("force_rebuild", False)),
+        )
 
         window._do_clean_all_and_reconstruct()
 
@@ -5684,7 +5838,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: None)
         monkeypatch.setattr(window, "_update_window_title", lambda: None)
         monkeypatch.setattr(window, "_update_compile_availability", lambda: None)
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: pytest.fail("_start_compile_cycle should not run"))
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *args, **kwargs: pytest.fail("_start_compile_cycle should not run"))
         window._do_clean_all_and_reconstruct()
 
         assert preview_reasons == ["SDK unavailable, compile preview disabled"]
@@ -5746,7 +5900,7 @@ class TestMainWindowFileFlow:
             "_save_project_files",
             lambda *args, **kwargs: pytest.fail("_save_project_files should not run"),
         )
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: pytest.fail("_start_compile_cycle should not run"))
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *args, **kwargs: pytest.fail("_start_compile_cycle should not run"))
 
         assert window._clean_all_action.isEnabled() is False
         window._do_clean_all_and_reconstruct()
@@ -5828,11 +5982,15 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: None)
         monkeypatch.setattr(window, "_update_window_title", lambda: None)
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": None)
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: pytest.fail("_start_compile_cycle should not run"))
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *args, **kwargs: pytest.fail("_start_compile_cycle should not run"))
 
         window._do_clean_all_and_reconstruct()
         window.auto_compile = True
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
         window._run_auto_compile_cycle()
 
         assert "Preview rerun skipped: make: *** No rule to make target 'clean'.  Stop." in window.statusBar().currentMessage()
@@ -10804,7 +10962,11 @@ class TestMainWindowFileFlow:
         recreate_calls = {"count": 0}
         window._compile_timer.stop()
         window._compile_timer.setInterval(0)
-        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *args, **kwargs: compile_cycle_calls.append(kwargs.get("force_rebuild", False)),
+        )
 
         def _recreate_compiler():
             recreate_calls["count"] += 1
