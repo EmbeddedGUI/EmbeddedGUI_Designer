@@ -4271,7 +4271,7 @@ class TestMainWindowFileFlow:
         assert "clean" in window._rebuild_action.toolTip()
         assert window._clean_all_action.toolTip() == (
             "Destructive recovery: delete project-side generated/code files outside the preserved "
-            "Designer source set, reconstruct the project, and rerun the preview (Ctrl+Shift+F5). "
+            "Designer source set and reconstruct the project (Ctrl+Shift+F5). "
             "Project: open. Saved project: saved. SDK: valid. Preview: python preview. "
             "Preview rerun will be skipped: make: *** No rule to make target 'clean'.  Stop."
         )
@@ -5371,7 +5371,6 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _PreviewIncompatibleCompiler()))
         monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: None)
         monkeypatch.setattr(window, "_update_window_title", lambda: None)
-        monkeypatch.setattr(window, "_update_compile_availability", lambda: None)
         monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: pytest.fail("_start_compile_cycle should not run"))
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
 
@@ -5380,6 +5379,12 @@ class TestMainWindowFileFlow:
         assert preview_reasons == ["make: *** No rule to make target 'main.exe'.  Stop."]
         assert "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop." in window.statusBar().currentMessage()
         assert "main.exe" in window._auto_compile_retry_block_reason
+        assert window._clean_all_action.toolTip() == (
+            "Destructive recovery: delete project-side generated/code files outside the preserved "
+            "Designer source set and reconstruct the project (Ctrl+Shift+F5). "
+            "Project: open. Saved project: saved. SDK: valid. Preview: editing only. "
+            "Preview rerun will be skipped: make: *** No rule to make target 'main.exe'.  Stop."
+        )
         build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "

@@ -1692,6 +1692,24 @@ class MainWindow(QMainWindow):
             return f" Preview rerun will be skipped: {rebuild_unavailable_reason}{suffix}"
         return ""
 
+    def _clean_all_action_will_skip_preview_rerun(self):
+        return bool(
+            hasattr(self, "_clean_all_action")
+            and self._clean_all_action.isEnabled()
+            and self._effective_rebuild_unavailable_reason()
+        )
+
+    def _clean_all_action_base_text(self):
+        if self._clean_all_action_will_skip_preview_rerun():
+            return (
+                "Destructive recovery: delete project-side generated/code files outside the preserved "
+                "Designer source set and reconstruct the project (Ctrl+Shift+F5)."
+            )
+        return (
+            "Destructive recovery: delete project-side generated/code files outside the preserved "
+            "Designer source set, reconstruct the project, and rerun the preview (Ctrl+Shift+F5)."
+        )
+
     def _build_preview_state_text(self):
         if self.project is not None and self._effective_preview_unavailable_reason():
             return "editing only"
@@ -1787,10 +1805,7 @@ class MainWindow(QMainWindow):
             self._apply_action_hint(self._rebuild_action, rebuild_hint)
             self._update_debug_rebuild_action()
         if hasattr(self, "_clean_all_action"):
-            base_text = (
-                "Destructive recovery: delete project-side generated/code files outside the preserved "
-                "Designer source set, reconstruct the project, and rerun the preview (Ctrl+Shift+F5)."
-            )
+            base_text = self._clean_all_action_base_text()
             clean_context = self._clean_all_action_context_summary()
             if self._clean_all_action.isEnabled():
                 clean_hint = f"{base_text} {clean_context}{self._clean_all_action_runtime_note()}"
