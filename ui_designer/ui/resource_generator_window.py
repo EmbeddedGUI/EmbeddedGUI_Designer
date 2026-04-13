@@ -11,8 +11,10 @@ from PyQt5.QtCore import Qt, QSignalBlocker, QUrl
 from PyQt5.QtGui import QDesktopServices, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
+    QCheckBox,
     QComboBox,
     QDialog,
+    QDialogButtonBox,
     QFileDialog,
     QFormLayout,
     QGridLayout,
@@ -28,6 +30,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QSplitter,
     QStackedWidget,
+    QSpinBox,
     QTabWidget,
     QTableWidget,
     QTableWidgetItem,
@@ -57,6 +60,79 @@ _IMAGE_FILE_EXTENSIONS = {".png", ".bmp", ".jpg", ".jpeg", ".gif", ".webp"}
 _FONT_FILE_EXTENSIONS = {".ttf", ".otf"}
 _VIDEO_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv"}
 _TEXT_FILE_EXTENSIONS = {".txt"}
+
+
+class _QuickImageResizeDialog(QDialog):
+    def __init__(self, *, width: int, height: int, output_filename: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Resize Image")
+        self.setMinimumWidth(360)
+        self._aspect_ratio = (float(width) / float(height)) if width and height else 1.0
+        self._syncing_size = False
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        summary = QLabel(f"Current size: {width} x {height}")
+        layout.addWidget(summary)
+
+        form = QFormLayout()
+        form.setSpacing(8)
+
+        self._width_spin = QSpinBox()
+        self._width_spin.setRange(1, 8192)
+        self._width_spin.setValue(max(int(width or 1), 1))
+        self._width_spin.valueChanged.connect(self._on_width_changed)
+        form.addRow("Width", self._width_spin)
+
+        self._height_spin = QSpinBox()
+        self._height_spin.setRange(1, 8192)
+        self._height_spin.setValue(max(int(height or 1), 1))
+        self._height_spin.valueChanged.connect(self._on_height_changed)
+        form.addRow("Height", self._height_spin)
+
+        self._keep_ratio_check = QCheckBox("Keep aspect ratio")
+        self._keep_ratio_check.setChecked(True)
+        form.addRow("", self._keep_ratio_check)
+
+        self._filename_edit = QLineEdit(str(output_filename or "").strip())
+        form.addRow("Output File", self._filename_edit)
+        layout.addLayout(form)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def _on_width_changed(self, value: int):
+        if self._syncing_size or not self._keep_ratio_check.isChecked():
+            return
+        self._syncing_size = True
+        try:
+            height = max(1, int(round(float(value) / self._aspect_ratio))) if self._aspect_ratio else self._height_spin.value()
+            self._height_spin.setValue(height)
+        finally:
+            self._syncing_size = False
+
+    def _on_height_changed(self, value: int):
+        if self._syncing_size or not self._keep_ratio_check.isChecked():
+            return
+        self._syncing_size = True
+        try:
+            width = max(1, int(round(float(value) * self._aspect_ratio))) if self._aspect_ratio else self._width_spin.value()
+            self._width_spin.setValue(width)
+        finally:
+            self._syncing_size = False
+
+    def width_value(self) -> int:
+        return int(self._width_spin.value())
+
+    def height_value(self) -> int:
+        return int(self._height_spin.value())
+
+    def output_filename(self) -> str:
+        return str(self._filename_edit.text() or "").strip()
 
 
 class ResourceGeneratorWindow(QDialog):
@@ -200,6 +276,10 @@ class ResourceGeneratorWindow(QDialog):
         self._edit_asset_button = QPushButton("Edit / Open Asset...")
         self._edit_asset_button.clicked.connect(self._open_selected_asset_in_external_editor)
         helper_row.addWidget(self._edit_asset_button)
+
+        self._resize_image_button = QPushButton("Resize Image...")
+        self._resize_image_button.clicked.connect(self._open_resize_image_helper)
+        helper_row.addWidget(self._resize_image_button)
 
         self._open_professional_button = QPushButton("Open Professional Mode")
         self._open_professional_button.clicked.connect(lambda: self._set_ui_mode("professional"))
@@ -1125,6 +1205,105 @@ class ResourceGeneratorWindow(QDialog):
         self._update_simple_asset_preview()
         if not QDesktopServices.openUrl(QUrl.fromLocalFile(resolved_path)):
             QMessageBox.warning(self, "Open Asset", f"Failed to open asset with the system editor:\n{resolved_path}")
+
+    def _open_resize_image_helper(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None or section != "img":
+            QMessageBox.warning(self, "Resize Image", "Select an image asset in Simple mode first.")
+            return
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path("img", "file", file_name)
+        if not resolved_path or not os.path.isfile(resolved_path):
+            QMessageBox.warning(self, "Resize Image", f"Image file does not exist:\n{resolved_path or file_name}")
+            return
+
+        pixmap = QPixmap(resolved_path)
+        if pixmap.isNull():
+            QMessageBox.warning(self, "Resize Image", f"Qt could not decode the selected image:\n{resolved_path}")
+            return
+
+        dialog = _QuickImageResizeDialog(
+            width=pixmap.width(),
+            height=pixmap.height(),
+            output_filename=file_name,
+            parent=self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        output_filename = dialog.output_filename()
+        width = dialog.width_value()
+        height = dialog.height_value()
+        if not output_filename:
+            QMessageBox.warning(self, "Resize Image", "Enter an output filename.")
+            return
+        if os.path.isabs(output_filename):
+            QMessageBox.warning(self, "Resize Image", "Output filename must stay inside Source Dir.")
+            return
+
+        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
+        if not normalized_output or normalized_output.startswith(".."):
+            QMessageBox.warning(self, "Resize Image", "Output filename must stay inside Source Dir.")
+            return
+
+        self._apply_image_resize(entry, index, resolved_path, normalized_output, width, height)
+
+    def _apply_image_resize(self, entry: dict, index: int, source_path: str, output_filename: str, width: int, height: int):
+        try:
+            from PIL import Image
+        except Exception as exc:
+            QMessageBox.warning(self, "Resize Image", f"Pillow is required for image resizing:\n{exc}")
+            return
+
+        source_dir = self._session.paths.source_dir
+        if not source_dir:
+            QMessageBox.warning(self, "Resize Image", "Set Source Dir before resizing images.")
+            return
+
+        target_path = normalize_path(os.path.join(source_dir, output_filename))
+        if not _is_subpath(target_path, source_dir) and normalize_path(target_path) != normalize_path(source_path):
+            QMessageBox.warning(self, "Resize Image", "Output filename must stay inside Source Dir.")
+            return
+
+        existed_before = os.path.isfile(target_path)
+        if normalize_path(target_path) != normalize_path(source_path) and existed_before:
+            answer = QMessageBox.question(
+                self,
+                "Overwrite Image",
+                f"Overwrite existing image?\n\n{output_filename}",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if answer != QMessageBox.Yes:
+                return
+
+        try:
+            with Image.open(source_path) as image:
+                resized = image.resize((max(int(width), 1), max(int(height), 1)), Image.LANCZOS)
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                resized.save(target_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Resize Image", f"Failed to resize image:\n{exc}")
+            return
+
+        current_file = str(entry.get("file", "") or "").replace("\\", "/")
+        if output_filename != current_file:
+            new_entry = copy.deepcopy(entry if isinstance(entry, dict) else {})
+            new_entry["file"] = output_filename
+            new_entry["name"] = os.path.splitext(os.path.basename(output_filename))[0]
+            self._session.section_entries("img").append(new_entry)
+            self._active_section = "img"
+            self._active_entry_index = len(self._session.section_entries("img")) - 1
+            self._mark_dirty()
+        else:
+            self._active_section = "img"
+            self._active_entry_index = index
+
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        action = "Created" if output_filename != current_file else "Updated"
+        self._set_status(f"{action} resized image '{output_filename}' ({width} x {height}).")
 
     # -- Browsing helpers ----------------------------------------------
 

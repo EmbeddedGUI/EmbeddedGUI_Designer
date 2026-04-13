@@ -280,6 +280,114 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_resize_image_helper_overwrites_selected_image(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+        from PyQt5.QtWidgets import QDialog
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        assert pixmap.save(str(image_path), "PNG")
+
+        class _FakeDialog:
+            def __init__(self, *, width, height, output_filename, parent=None):
+                assert width == 12
+                assert height == 8
+                assert output_filename == "hero.png"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def output_filename(self):
+                return "hero.png"
+
+            def width_value(self):
+                return 6
+
+            def height_value(self):
+                return 4
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickImageResizeDialog", _FakeDialog)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_resize_image_helper()
+
+        resized = QPixmap(str(image_path))
+        assert resized.width() == 6
+        assert resized.height() == 4
+        assert len(window._session.section_entries("img")) == 1
+        assert window._status_label.text() == "Updated resized image 'hero.png' (6 x 4)."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_resize_image_helper_can_create_new_image_entry(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+        from PyQt5.QtWidgets import QDialog, QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        assert pixmap.save(str(image_path), "PNG")
+
+        class _FakeDialog:
+            def __init__(self, *, width, height, output_filename, parent=None):
+                assert width == 12
+                assert height == 8
+                assert output_filename == "hero.png"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def output_filename(self):
+                return "variants/hero_small.png"
+
+            def width_value(self):
+                return 5
+
+            def height_value(self):
+                return 3
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickImageResizeDialog", _FakeDialog)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_resize_image_helper()
+
+        resized_path = source_dir / "variants" / "hero_small.png"
+        resized = QPixmap(str(resized_path))
+        assert resized.width() == 5
+        assert resized.height() == 3
+        files = [entry["file"] for entry in window._session.section_entries("img")]
+        assert files == ["hero.png", "variants/hero_small.png"]
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Created resized image 'variants/hero_small.png' (5 x 3)."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_normalize_selected_image_requires_source_dir(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
