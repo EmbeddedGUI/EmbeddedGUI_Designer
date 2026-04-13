@@ -6458,8 +6458,43 @@ class MainWindow(QMainWindow):
 
     # 鈹€鈹€ Widget selection / editing 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
+    def _normalized_selection(self, widgets=None, primary=None):
+        ordered = []
+        seen = set()
+        for widget in widgets or []:
+            if widget is None:
+                continue
+            ident = id(widget)
+            if ident in seen:
+                continue
+            ordered.append(widget)
+            seen.add(ident)
+        if not ordered:
+            return [], None
+        if primary is None or all(widget is not primary for widget in ordered):
+            primary = ordered[-1]
+        return ordered, primary
+
+    def _selection_matches(self, widgets=None, primary=None):
+        normalized_widgets, normalized_primary = self._normalized_selection(widgets, primary=primary)
+        current_widgets = self._selection_state.widgets
+        if normalized_primary is not self._selection_state.primary:
+            return False
+        if len(normalized_widgets) != len(current_widgets):
+            return False
+        return all(current is incoming for current, incoming in zip(current_widgets, normalized_widgets))
+
     def _set_selection(self, widgets=None, primary=None, sync_tree=True, sync_preview=True):
-        self._selection_state.set_widgets(widgets or [], primary=primary)
+        normalized_widgets, normalized_primary = self._normalized_selection(widgets, primary=primary)
+        if self._selection_matches(normalized_widgets, primary=normalized_primary):
+            self._selected_widget = self._selection_state.primary
+            if sync_tree:
+                self.widget_tree.set_selected_widgets(self._selection_state.widgets, self._selection_state.primary)
+            if sync_preview:
+                self.preview_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
+            return False
+
+        self._selection_state.set_widgets(normalized_widgets, primary=normalized_primary)
         self._selected_widget = self._selection_state.primary
         if hasattr(self, "_state_store"):
             selected_id = getattr(self._selected_widget, "name", None) if self._selected_widget is not None else None
@@ -6477,6 +6512,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, "widget_browser") and self._selection_state.primary is not None:
             self.widget_browser.select_widget_type(self._selection_state.primary.widget_type)
         self._update_workspace_chips()
+        return True
 
     def _clear_selection(self, sync_tree=True, sync_preview=True):
         self._set_selection([], primary=None, sync_tree=sync_tree, sync_preview=sync_preview)
@@ -7168,22 +7204,22 @@ class MainWindow(QMainWindow):
         self._update_edit_menu_metadata()
 
     def _on_tree_selection_changed(self, widgets, primary):
-        self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)
-        self._focus_properties_for_selection()
+        if self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True) is not False:
+            self._focus_properties_for_selection()
 
     def _on_preview_selection_changed(self, widgets, primary):
-        self._set_selection(widgets, primary=primary, sync_tree=True, sync_preview=False)
-        self._focus_properties_for_selection()
+        if self._set_selection(widgets, primary=primary, sync_tree=True, sync_preview=False) is not False:
+            self._focus_properties_for_selection()
 
     def _on_widget_selected(self, widget):
         """Widget selected from tree panel."""
-        self._set_selection([widget] if widget is not None else [], primary=widget, sync_tree=False, sync_preview=True)
-        self._focus_properties_for_selection()
+        if self._set_selection([widget] if widget is not None else [], primary=widget, sync_tree=False, sync_preview=True) is not False:
+            self._focus_properties_for_selection()
 
     def _on_preview_widget_selected(self, widget):
         """Widget selected from preview panel overlay."""
-        self._set_selection([widget] if widget is not None else [], primary=widget, sync_tree=True, sync_preview=False)
-        self._focus_properties_for_selection()
+        if self._set_selection([widget] if widget is not None else [], primary=widget, sync_tree=True, sync_preview=False) is not False:
+            self._focus_properties_for_selection()
 
     def _focus_properties_for_selection(self):
         if self._selection_state.primary is None:

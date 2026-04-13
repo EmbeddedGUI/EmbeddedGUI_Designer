@@ -14279,6 +14279,52 @@ class TestMainWindowFileFlow:
         assert window._inspector_tabs.currentIndex() == 1
         _close_window(window)
 
+    @pytest.mark.parametrize(
+        ("first_handler", "second_handler"),
+        [
+            ("_on_widget_selected", "_on_tree_selection_changed"),
+            ("_on_preview_widget_selected", "_on_preview_selection_changed"),
+        ],
+    )
+    def test_redundant_selection_signals_skip_expensive_rebuilds(
+        self, qapp, isolated_config, monkeypatch, first_handler, second_handler
+    ):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        label = WidgetModel("textinput", name="title", x=4, y=4, width=120, height=28)
+        counts = {
+            "property": 0,
+            "animations": 0,
+            "focus": 0,
+        }
+
+        def _bump(key):
+            counts[key] += 1
+
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: _bump("property"))
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: _bump("animations"))
+        monkeypatch.setattr(window.widget_tree, "set_selected_widgets", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.preview_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window, "_update_edit_actions", lambda: None)
+        monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
+        monkeypatch.setattr(window, "_show_selection_feedback", lambda: None)
+        monkeypatch.setattr(window, "_update_widget_browser_target", lambda: None)
+        monkeypatch.setattr(window, "_update_workspace_chips", lambda: None)
+        monkeypatch.setattr(window.widget_browser, "select_widget_type", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window, "_focus_properties_for_selection", lambda: _bump("focus"))
+
+        getattr(window, first_handler)([label], label) if first_handler.endswith("selection_changed") else getattr(window, first_handler)(label)
+        getattr(window, second_handler)([label], label) if second_handler.endswith("selection_changed") else getattr(window, second_handler)(label)
+
+        assert counts == {
+            "property": 1,
+            "animations": 1,
+            "focus": 1,
+        }
+        _close_window(window)
+
     @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_workspace_actions_switch_left_panel(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
