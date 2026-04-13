@@ -5235,6 +5235,10 @@ class MainWindow(QMainWindow):
         self._pending_rebuild = False
         self._pending_compile = False
         if success:
+            if self._external_reload_pending and not self._has_unsaved_changes():
+                self._poll_project_files()
+                if self._is_closing or generation != self._async_generation or self._external_reload_pending:
+                    return
             self.statusBar().showMessage("Ready (precompiled)", 3000)
             self.debug_panel.log_success("Background precompile completed")
             if pending_rebuild:
