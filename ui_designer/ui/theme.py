@@ -836,7 +836,8 @@ QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QAbstractSpinBox:focus, 
 
 QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
+    background-color: {t['shell_bg']};
+    border-color: {t['border_strong']};
 }}
 
 QSpinBox[propertyPanelSpin="true"], QDoubleSpinBox[propertyPanelSpin="true"] {{
@@ -900,8 +901,8 @@ QPushButton:pressed, QToolButton:pressed {{
 
 QPushButton:disabled, QToolButton:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
-    border-color: {t['border']};
+    background-color: {t['shell_bg']};
+    border-color: {t['border_strong']};
 }}
 
 QListView, QTreeView, QTableView, QListWidget, QTreeWidget, QTableWidget {{
@@ -1007,12 +1008,12 @@ QMenu::item:selected {{
 
 QMenu::item:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
+    background-color: {t['shell_bg']};
 }}
 
 QMenu::item:selected:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
+    background-color: {t['shell_bg']};
 }}
 
 QMenu::separator {{
@@ -1598,7 +1599,7 @@ QToolBar#main_toolbar QToolButton:focus {{
 
 QToolBar#main_toolbar QToolButton:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
+    background-color: {t['shell_bg']};
     border-color: {t['border_strong']};
 }}
 
@@ -2195,8 +2196,8 @@ QPushButton#project_dock_add_page_button:hover {{
 
 QPushButton#project_dock_add_page_button:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
-    border-color: {t['border']};
+    background-color: {t['shell_bg']};
+    border-color: {t['border_strong']};
 }}
 
 #project_dock_metric_card {{
@@ -2296,8 +2297,8 @@ QTreeWidget#project_dock_tree {{
 #structure_selection_strip QToolButton:disabled,
 #structure_filter_bar QPushButton:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
-    border-color: {t['border']};
+    background-color: {t['shell_bg']};
+    border-color: {t['border_strong']};
 }}
 
 #diagnostics_header {{
@@ -2353,8 +2354,8 @@ QTreeWidget#project_dock_tree {{
 #diagnostics_controls_strip QPushButton:disabled,
 #diagnostics_export_strip QPushButton:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
-    border-color: {t['border']};
+    background-color: {t['shell_bg']};
+    border-color: {t['border_strong']};
 }}
 
 QListWidget#diagnostics_list {{
@@ -2410,8 +2411,8 @@ QListWidget#diagnostics_list {{
 
 #debug_panel_controls_strip QPushButton:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
-    border-color: {t['border']};
+    background-color: {t['shell_bg']};
+    border-color: {t['border_strong']};
 }}
 
 QPlainTextEdit#debug_output_surface {{
@@ -2499,8 +2500,8 @@ QListWidget#history_panel_list {{
 
 #animations_panel_actions_strip QPushButton:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
-    border-color: {t['border']};
+    background-color: {t['shell_bg']};
+    border-color: {t['border_strong']};
 }}
 
 QTableWidget#animations_panel_table {{
@@ -2656,8 +2657,8 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_editor_section QPushButton:disabled,
 #page_editor_table_shell QPushButton:disabled {{
     color: {t['text_soft']};
-    background-color: {t['panel_alt']};
-    border-color: {t['border']};
+    background-color: {t['shell_bg']};
+    border-color: {t['border_strong']};
 }}
 
 #page_navigator_header {{

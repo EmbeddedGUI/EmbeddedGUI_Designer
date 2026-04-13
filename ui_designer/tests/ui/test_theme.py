@@ -115,10 +115,10 @@ def test_disabled_menu_items_and_combo_boxes_use_panel_alt_backgrounds():
         menu_item_disabled = css.split("QMenu::item:disabled {", 1)[1].split("}", 1)[0]
         menu_item_selected_disabled = css.split("QMenu::item:selected:disabled {", 1)[1].split("}", 1)[0]
 
-        assert f"background-color: {t['panel_alt']};" in combo_disabled
-        assert f"background-color: {t['panel_alt']};" in menu_item_disabled
+        assert f"background-color: {t['shell_bg']};" in combo_disabled
+        assert f"background-color: {t['shell_bg']};" in menu_item_disabled
         assert f"color: {t['text_soft']};" in menu_item_disabled
-        assert f"background-color: {t['panel_alt']};" in menu_item_selected_disabled
+        assert f"background-color: {t['shell_bg']};" in menu_item_selected_disabled
         assert f"color: {t['text_soft']};" in menu_item_selected_disabled
 
 
@@ -390,7 +390,7 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         assert "min-height: 20px;" in buttons
         assert "max-height: 20px;" in buttons
         assert f"padding: 0px {t['space_sm']}px;" in buttons
-        assert f"background-color: {t['panel_alt']};" in buttons_disabled
+        assert f"background-color: {t['shell_bg']};" in buttons_disabled
 
 
 def test_page_timers_panel_styles_use_engineering_surface_tokens():
@@ -424,7 +424,7 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         assert "min-height: 20px;" in buttons
         assert "max-height: 20px;" in buttons
         assert f"padding: 0px {t['space_sm']}px;" in buttons
-        assert f"background-color: {t['panel_alt']};" in buttons_disabled
+        assert f"background-color: {t['shell_bg']};" in buttons_disabled
 
 
 def test_editor_tabs_styles_use_engineering_shell_tokens():
@@ -505,7 +505,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "padding: 0px 4px;" in toolbar_button
         assert "min-height: 20px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
-        assert f"background-color: {t['panel_alt']};" in toolbar_button_disabled
+        assert f"background-color: {t['shell_bg']};" in toolbar_button_disabled
         assert f"border-color: {t['border_strong']};" in toolbar_button_disabled
         assert "min-width: 1px;" in host_separator
         assert "max-width: 1px;" in host_separator
@@ -968,7 +968,7 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in buttons
         assert "min-height: 26px;" in buttons
         assert f"padding: 2px {t['space_sm']}px;" in buttons
-        assert f"background-color: {t['panel_alt']};" in buttons_disabled
+        assert f"background-color: {t['shell_bg']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in tree
         _assert_default_border(tree, t)
         assert "border-radius: 0px;" in tree
@@ -1001,7 +1001,7 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in buttons
         assert "min-height: 24px;" in buttons
         assert f"padding: 1px {t['space_sm']}px;" in buttons
-        assert f"background-color: {t['panel_alt']};" in buttons_disabled
+        assert f"background-color: {t['shell_bg']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in list_block
         assert "border-radius: 0px;" in list_block
 
@@ -1032,7 +1032,7 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in button
         assert "min-height: 24px;" in button
         assert f"padding: 1px {t['space_sm']}px;" in button
-        assert f"background-color: {t['panel_alt']};" in button_disabled
+        assert f"background-color: {t['shell_bg']};" in button_disabled
         assert f"background-color: {t['canvas_stage']};" in surface
         assert "border-radius: 0px;" in surface
 
@@ -1085,7 +1085,7 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         assert "min-height: 20px;" in buttons
         assert "max-height: 20px;" in buttons
         assert f"padding: 0px {t['space_sm']}px;" in buttons
-        assert f"background-color: {t['panel_alt']};" in buttons_disabled
+        assert f"background-color: {t['shell_bg']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in table
         assert "border-radius: 0px;" in table
         assert "background-color: transparent;" in detail
@@ -1115,7 +1115,7 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         assert "padding: 0px 6px;" in buttons
         assert "min-height: 20px;" in buttons
         assert "max-height: 20px;" in buttons
-        assert f"background-color: {t['panel_alt']};" in add_page_disabled
+        assert f"background-color: {t['shell_bg']};" in add_page_disabled
 
 
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
