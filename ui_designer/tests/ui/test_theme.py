@@ -463,6 +463,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         toolbar_separator = css.split("QToolBar#main_toolbar::separator {", 1)[1].split("}", 1)[0]
         toolbar_button = css.split("QToolBar#main_toolbar QToolButton {", 1)[1].split("}", 1)[0]
         toolbar_button_hover = css.split("QToolBar#main_toolbar QToolButton:hover {", 1)[1].split("}", 1)[0]
+        toolbar_button_disabled = css.split("QToolBar#main_toolbar QToolButton:disabled {", 1)[1].split("}", 1)[0]
         host_separator = css.split("QFrame#toolbar_host_separator {", 1)[1].split("}", 1)[0]
         insert_button = css.split("QPushButton#workspace_insert_button {", 1)[1].split("}", 1)[0]
         insert_button_hover = css.split("QPushButton#workspace_insert_button:hover {", 1)[1].split("}", 1)[0]
@@ -481,6 +482,8 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "padding: 0px 4px;" in toolbar_button
         assert "min-height: 20px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
+        assert f"background-color: {t['panel_alt']};" in toolbar_button_disabled
+        assert f"border-color: {t['border_strong']};" in toolbar_button_disabled
         assert "min-width: 1px;" in host_separator
         assert "max-width: 1px;" in host_separator
         assert "margin-left: 2px;" in host_separator

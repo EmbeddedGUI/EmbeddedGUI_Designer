@@ -1588,6 +1588,8 @@ QToolBar#main_toolbar QToolButton:focus {{
 
 QToolBar#main_toolbar QToolButton:disabled {{
     color: {t['text_soft']};
+    background-color: {t['panel_alt']};
+    border-color: {t['border_strong']};
 }}
 
 QPushButton#workspace_mode_button {{
