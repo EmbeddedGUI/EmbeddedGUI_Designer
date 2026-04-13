@@ -435,7 +435,7 @@ class TestSyncProjectScaffoldSidecars:
         assert (project_dir / "app_egui_config_designer.h").exists() is False
         assert '"user_asset"' in (resource_src_dir / "app_resource_config.json").read_text(encoding="utf-8")
         assert (designer_resource_dir / "app_resource_config_designer.json").read_text(encoding="utf-8") == (
-            '{\n    "img": [],\n    "font": []\n}\n'
+            '{\n    "img": [],\n    "font": [],\n    "mp4": []\n}\n'
         )
 
 
@@ -1861,7 +1861,7 @@ class TestApplyDesignerProjectScaffold:
 
         assert actions[BUILD_MK_RELPATH] == "created"
         assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "updated"
-        assert designer_resource_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+        assert designer_resource_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": [],\n    "mp4": []\n}\n'
 
     def test_can_preserve_designer_resource_config_while_refreshing_wrappers(self, tmp_path):
         project_dir = tmp_path / "HelperApp"
@@ -1923,7 +1923,7 @@ class TestApplyDesignerProjectScaffold:
         actions = save_project_with_designer_scaffold(project, str(project_dir), overwrite=True)
 
         assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "updated"
-        assert designer_resource_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+        assert designer_resource_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": [],\n    "mp4": []\n}\n'
 
     def test_generate_designer_resource_config_creates_user_overlay_and_designer_file(self, tmp_path):
         src_dir = tmp_path / "resource" / "src"
@@ -1942,7 +1942,7 @@ class TestApplyDesignerProjectScaffold:
         assert created_again is False
         assert os.path.normpath(config_path) == os.path.normpath(str(designer_config_path))
         assert os.path.normpath(config_path_again) == os.path.normpath(str(designer_config_path))
-        assert (src_dir / "app_resource_config.json").read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+        assert (src_dir / "app_resource_config.json").read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": [],\n    "mp4": []\n}\n'
         assert json.loads(designer_config_path.read_text(encoding="utf-8")) == {
             "img": [],
             "font": [],

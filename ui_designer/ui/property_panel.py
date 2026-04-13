@@ -1179,14 +1179,16 @@ class PropertyPanel(QWidget):
         arrow_label = section.get("arrow_label")
         title_label = section.get("title_label")
         if isinstance(header_frame, QWidget):
-            if bool(header_frame.property("sectionExpanded")) != bool(expanded):
+            current_expanded = header_frame.property("sectionExpanded")
+            if current_expanded is None or bool(current_expanded) != bool(expanded):
                 header_frame.setProperty("sectionExpanded", bool(expanded))
                 style = header_frame.style()
                 style.unpolish(header_frame)
                 style.polish(header_frame)
                 header_frame.update()
         if isinstance(header_fill, QWidget):
-            if bool(header_fill.property("sectionExpanded")) != bool(expanded):
+            current_expanded = header_fill.property("sectionExpanded")
+            if current_expanded is None or bool(current_expanded) != bool(expanded):
                 header_fill.setProperty("sectionExpanded", bool(expanded))
                 style = header_fill.style()
                 style.unpolish(header_fill)
@@ -1197,7 +1199,8 @@ class PropertyPanel(QWidget):
             desired_arrow = Qt.DownArrow if expanded else Qt.RightArrow
             if arrow_label.arrowType() != desired_arrow:
                 arrow_label.setArrowType(desired_arrow)
-            if bool(arrow_label.property("sectionExpanded")) != bool(expanded):
+            current_expanded = arrow_label.property("sectionExpanded")
+            if current_expanded is None or bool(current_expanded) != bool(expanded):
                 arrow_label.setProperty("sectionExpanded", bool(expanded))
                 changed = True
             if changed:
@@ -1206,7 +1209,8 @@ class PropertyPanel(QWidget):
                 style.polish(arrow_label)
                 arrow_label.update()
         if isinstance(title_label, QWidget):
-            if bool(title_label.property("sectionExpanded")) != bool(expanded):
+            current_expanded = title_label.property("sectionExpanded")
+            if current_expanded is None or bool(current_expanded) != bool(expanded):
                 title_label.setProperty("sectionExpanded", bool(expanded))
                 style = title_label.style()
                 style.unpolish(title_label)

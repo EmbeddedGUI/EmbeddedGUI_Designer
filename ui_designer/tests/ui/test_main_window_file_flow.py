@@ -571,6 +571,7 @@ class TestMainWindowFileFlow:
         assert json.loads((project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").read_text(encoding="utf-8")) == {
             "img": [],
             "font": [],
+            "mp4": [],
         }
         assert compile_calls
         assert "Project scaffold reset" in window.statusBar().currentMessage()
@@ -3059,7 +3060,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(
             window,
             "_trigger_compile",
-            lambda: calls.__setitem__("trigger_compile", calls["trigger_compile"] + 1),
+            lambda *args, **kwargs: calls.__setitem__("trigger_compile", calls["trigger_compile"] + 1),
         )
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -8641,7 +8642,7 @@ class TestMainWindowFileFlow:
         )
 
         assert window._run_resource_generation(silent=True) is True
-        assert user_config_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+        assert user_config_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": [],\n    "mp4": []\n}\n'
         _close_window(window)
 
     def test_run_resource_generation_syncs_watch_snapshot_before_missing_generator_return(
