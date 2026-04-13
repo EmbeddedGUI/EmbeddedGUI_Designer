@@ -1146,7 +1146,8 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "_build_menu"):
             return
         compile_state = "available" if getattr(getattr(self, "_compile_action", None), "isEnabled", lambda: False)() else "unavailable"
-        clean_state = "available" if getattr(getattr(self, "_clean_all_action", None), "isEnabled", lambda: False)() else "unavailable"
+        rebuild_state = "available" if getattr(getattr(self, "_rebuild_action", None), "isEnabled", lambda: False)() else "unavailable"
+        reconstruct_state = "available" if getattr(getattr(self, "_clean_all_action", None), "isEnabled", lambda: False)() else "unavailable"
         auto_compile_state = "on" if getattr(getattr(self, "auto_compile_action", None), "isChecked", lambda: False)() else "off"
         preview_state = self._build_preview_state_text()
         project_state = "open" if getattr(self, "project", None) is not None else "none"
@@ -1157,7 +1158,8 @@ class MainWindow(QMainWindow):
             self._build_menu.menuAction(),
             (
                 "Compile previews, generate resources, or reconstruct a project from Designer sources. "
-                f"Project: {project_state}. SDK: {sdk_state}. Compile: {compile_state}. Recovery: {clean_state}. Auto compile: {auto_compile_state}. "
+                f"Project: {project_state}. SDK: {sdk_state}. Compile: {compile_state}. Rebuild: {rebuild_state}. Reconstruct: {reconstruct_state}. "
+                f"Auto compile: {auto_compile_state}. "
                 f"Preview: {preview_state}. Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}."
             ),
         )

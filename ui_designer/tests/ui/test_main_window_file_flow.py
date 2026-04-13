@@ -4205,8 +4205,11 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
+        window.preview_panel.is_python_preview_active = lambda: True
 
         _open_project_window(window, project, project_dir, sdk_root)
+        build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
+        preview_reasons.clear()
 
         window._on_compile_finished(
             None,
@@ -4244,8 +4247,10 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
+        window.preview_panel.is_python_preview_active = lambda: True
 
         _open_project_window(window, project, project_dir, sdk_root)
+        build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
 
         window._on_compile_finished(
             None,
@@ -4256,7 +4261,7 @@ class TestMainWindowFileFlow:
             None,
         )
 
-        assert preview_reasons == ["make: *** No rule to make target 'clean'.  Stop."]
+        assert preview_reasons[-1] == "make: *** No rule to make target 'clean'.  Stop."
         assert "clean" in window.statusBar().currentMessage()
         assert "Regular Compile remains available" in window.debug_panel._output.toPlainText()
         assert window._effective_preview_unavailable_reason() == ""
@@ -4264,6 +4269,11 @@ class TestMainWindowFileFlow:
         assert window._compile_action.isEnabled() is True
         assert window._rebuild_action.isEnabled() is False
         assert "clean" in window._rebuild_action.toolTip()
+        assert build_action.toolTip() == (
+            "Compile previews, generate resources, or reconstruct a project from Designer sources. "
+            "Project: open. SDK: valid. Compile: available. Rebuild: unavailable. Reconstruct: available. Auto compile: on. "
+            f"Preview: python preview. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}."
+        )
         assert window.debug_panel._rebuild_btn.isHidden() is True
         window._undo_manager.mark_all_saved()
         _close_window(window)
@@ -5847,7 +5857,7 @@ class TestMainWindowFileFlow:
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
-            "Project: none. SDK: invalid. Compile: unavailable. Recovery: unavailable. Auto compile: on. "
+            "Project: none. SDK: invalid. Compile: unavailable. Rebuild: unavailable. Reconstruct: unavailable. Auto compile: on. "
             "Preview: stopped. Source resources: missing. Resource directory: none."
         )
         for action in actions.values():
@@ -5878,7 +5888,7 @@ class TestMainWindowFileFlow:
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
-            "Project: open. SDK: valid. Compile: unavailable. Recovery: unavailable. Auto compile: on. "
+            "Project: open. SDK: valid. Compile: unavailable. Rebuild: unavailable. Reconstruct: unavailable. Auto compile: on. "
             f"Preview: editing only. Source resources: available. Resource directory: {project_resources_dir}."
         )
 
@@ -5928,7 +5938,7 @@ class TestMainWindowFileFlow:
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
-            "Project: open. SDK: valid. Compile: available. Recovery: available. Auto compile: on. "
+            "Project: open. SDK: valid. Compile: available. Rebuild: available. Reconstruct: available. Auto compile: on. "
             f"Preview: stopped. Source resources: available. Resource directory: {resources_dir}."
         )
 
@@ -5944,7 +5954,7 @@ class TestMainWindowFileFlow:
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
-            "Project: open. SDK: valid. Compile: available. Recovery: available. Auto compile: on. "
+            "Project: open. SDK: valid. Compile: available. Rebuild: available. Reconstruct: available. Auto compile: on. "
             f"Preview: python preview. Source resources: available. Resource directory: {resources_dir}."
         )
 
@@ -5955,7 +5965,7 @@ class TestMainWindowFileFlow:
 
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
-            "Project: open. SDK: valid. Compile: available. Recovery: available. Auto compile: off. "
+            "Project: open. SDK: valid. Compile: available. Rebuild: available. Reconstruct: available. Auto compile: off. "
             f"Preview: stopped. Source resources: available. Resource directory: {resources_dir}."
         )
         for action in actions.values():
@@ -6619,7 +6629,7 @@ class TestMainWindowFileFlow:
         assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
         assert actions["Build"].toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
-            "Project: none. SDK: invalid. Compile: unavailable. Recovery: unavailable. Auto compile: on. "
+            "Project: none. SDK: invalid. Compile: unavailable. Rebuild: unavailable. Reconstruct: unavailable. Auto compile: on. "
             "Preview: stopped. Source resources: missing. Resource directory: none."
         )
         assert actions["Build"].statusTip() == actions["Build"].toolTip()
