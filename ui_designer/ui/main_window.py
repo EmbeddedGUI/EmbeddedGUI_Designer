@@ -5266,6 +5266,8 @@ class MainWindow(QMainWindow):
             self._update_debug_rebuild_action(show=self._should_offer_debug_rebuild_action(failure_summary))
             self._update_compile_availability()
             self._show_bottom_panel("Debug Output")
+            if self._resume_pending_external_reload_if_ready(generation):
+                return
 
     def _refresh_page_navigator(self):
         if not self.project:
@@ -7929,6 +7931,8 @@ class MainWindow(QMainWindow):
             self._show_bottom_panel("Debug Output")
             self._update_debug_rebuild_action(show=self._should_offer_debug_rebuild_action(failure_summary))
         self._update_compile_availability()
+        if not success and self._resume_pending_external_reload_if_ready(generation):
+            return
 
     def _on_preview_runtime_failed(self, reason):
         if self._is_closing:

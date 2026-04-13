@@ -5061,6 +5061,53 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_precompile_failure_resumes_pending_external_reload_without_waiting_for_watch_tick(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PrecompileFailureReloadResumeDemo"
+        project = _create_project(project_dir, "PrecompileFailureReloadResumeDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=False)
+        reload_calls = []
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        def _capture_reload(*args, **kwargs):
+            reload_calls.append(kwargs)
+            window._bump_async_generation()
+            window._clear_external_reload_pending()
+            return True
+
+        monkeypatch.setattr(window, "_reload_project_from_disk", _capture_reload)
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        worker = window._precompile_worker
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        window._set_external_reload_pending([os.path.normpath(os.path.abspath(layout_file))])
+        monkeypatch.setattr(
+            window,
+            "_pending_external_reload_changed_paths",
+            lambda: [os.path.normpath(os.path.abspath(layout_file))],
+        )
+        current_generation = window._async_generation
+        window._on_precompile_done(worker, current_generation, False, "Compilation failed:\nboom")
+
+        assert reload_calls == [
+            {
+                "auto": True,
+                "changed_paths": [os.path.normpath(os.path.abspath(layout_file))],
+            }
+        ]
+        assert window._auto_compile_retry_block_reason == "boom"
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_compile_failure_blocks_auto_retry_after_external_reload(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -5092,6 +5139,52 @@ class TestMainWindowFileFlow:
         assert window._poll_project_files() is None
         qapp.processEvents()
         assert compile_cycle_calls == []
+        assert window._auto_compile_retry_block_reason == "boom"
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_compile_failure_resumes_pending_external_reload_without_waiting_for_watch_tick(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CompileFailureReloadResumeDemo"
+        project = _create_project(project_dir, "CompileFailureReloadResumeDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+        reload_calls = []
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        def _capture_reload(*args, **kwargs):
+            reload_calls.append(kwargs)
+            window._bump_async_generation()
+            window._clear_external_reload_pending()
+            return True
+
+        monkeypatch.setattr(window, "_reload_project_from_disk", _capture_reload)
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        window._set_external_reload_pending([os.path.normpath(os.path.abspath(layout_file))])
+        monkeypatch.setattr(
+            window,
+            "_pending_external_reload_changed_paths",
+            lambda: [os.path.normpath(os.path.abspath(layout_file))],
+        )
+        current_generation = window._async_generation
+        window._on_compile_finished(None, current_generation, False, False, "Compilation failed:\nboom", None)
+
+        assert reload_calls == [
+            {
+                "auto": True,
+                "changed_paths": [os.path.normpath(os.path.abspath(layout_file))],
+            }
+        ]
         assert window._auto_compile_retry_block_reason == "boom"
         window._undo_manager.mark_all_saved()
         _close_window(window)
