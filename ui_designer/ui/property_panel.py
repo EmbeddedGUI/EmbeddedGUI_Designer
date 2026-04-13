@@ -913,21 +913,19 @@ class PropertyPanel(QWidget):
             "label_frame": label_frame,
             "editor": editor,
             "editor_host": editor_host,
+            "rowTone": "",
+            "focusActive": False,
+            "hoverActive": False,
         }
         section["rows"].append(row_data)
         self._register_property_grid_row_widget(row_data, label_widget)
         self._register_property_grid_row_widget(row_data, label_frame)
         self._register_property_grid_row_widget(row_data, editor)
         self._register_property_grid_row_widget(row_data, editor_host)
-        for child in label_frame.findChildren(QWidget):
-            self._register_property_grid_row_widget(row_data, child)
         for child in editor.findChildren(QWidget):
             self._register_property_grid_row_widget(row_data, child)
-        self._set_property_grid_row_tone(editor, None)
         row_visible = section["item"].isExpanded()
-        label_frame.setVisible(row_visible)
-        editor_host.setVisible(row_visible)
-        editor.setVisible(row_visible)
+        self._set_property_grid_row_visible(row_data, row_visible)
 
     def _register_property_grid_row_widget(self, row_data, widget):
         if isinstance(widget, QWidget):
@@ -988,26 +986,56 @@ class PropertyPanel(QWidget):
             target = row_data.get(key)
             if not isinstance(target, QWidget):
                 continue
-            target.setProperty("rowTone", tone_value)
-            target.setProperty("focusActive", focus_active)
-            target.setProperty("hoverActive", hover_active)
-            style = target.style()
-            style.unpolish(target)
-            style.polish(target)
-            target.update()
+            changed = False
+            if str(target.property("rowTone") or "") != tone_value:
+                target.setProperty("rowTone", tone_value)
+                changed = True
+            if bool(target.property("focusActive")) != focus_active:
+                target.setProperty("focusActive", focus_active)
+                changed = True
+            if bool(target.property("hoverActive")) != hover_active:
+                target.setProperty("hoverActive", hover_active)
+                changed = True
+            if changed:
+                style = target.style()
+                style.unpolish(target)
+                style.polish(target)
+                target.update()
+
+    @staticmethod
+    def _set_widget_hidden_state(widget, hidden):
+        if not isinstance(widget, QWidget):
+            return
+        hidden = bool(hidden)
+        if widget.isHidden() != hidden:
+            widget.setHidden(hidden)
+
+    def _set_property_grid_row_visible(self, row_data, visible):
+        hidden = not bool(visible)
+        self._set_widget_hidden_state(row_data.get("label_frame"), hidden)
+        self._set_widget_hidden_state(row_data.get("editor_host"), hidden)
+        self._set_widget_hidden_state(row_data.get("editor"), hidden)
 
     def _apply_property_tree_expanded_state(self):
-        for title, section in self._property_sections.items():
-            key = section["key"]
-            default_open = self._inspector_group_default_expanded(title, key)
-            expanded = bool(self._inspector_group_expanded.get(key, default_open))
-            section["item"].setExpanded(expanded)
-            self._refresh_property_section_style(section, expanded=expanded)
-            for row in section["rows"]:
-                row_visible = expanded and not row["item"].isHidden()
-                row["label_frame"].setVisible(row_visible)
-                row["editor_host"].setVisible(row_visible)
-                row["editor"].setVisible(row_visible)
+        tree = getattr(self, "_property_tree", None)
+        previous_updating = self._updating
+        previous_blocked = tree.blockSignals(True) if tree is not None else False
+        self._updating = True
+        try:
+            for title, section in self._property_sections.items():
+                key = section["key"]
+                default_open = self._inspector_group_default_expanded(title, key)
+                expanded = bool(self._inspector_group_expanded.get(key, default_open))
+                if section["item"].isExpanded() != expanded:
+                    section["item"].setExpanded(expanded)
+                self._refresh_property_section_style(section, expanded=expanded)
+                for row in section["rows"]:
+                    row_visible = expanded and not row["item"].isHidden()
+                    self._set_property_grid_row_visible(row, row_visible)
+        finally:
+            self._updating = previous_updating
+            if tree is not None:
+                tree.blockSignals(previous_blocked)
 
     def _on_property_tree_item_expanded(self, item):
         title = self._property_tree_items.get(id(item))
@@ -1020,9 +1048,7 @@ class PropertyPanel(QWidget):
             self._refresh_property_section_style(section, expanded=True)
             for row in section["rows"]:
                 if not row["item"].isHidden():
-                    row["label_frame"].setVisible(True)
-                    row["editor_host"].setVisible(True)
-                    row["editor"].setVisible(True)
+                    self._set_property_grid_row_visible(row, True)
 
     def _on_property_tree_item_collapsed(self, item):
         title = self._property_tree_items.get(id(item))
@@ -1034,9 +1060,7 @@ class PropertyPanel(QWidget):
         if section:
             self._refresh_property_section_style(section, expanded=False)
             for row in section["rows"]:
-                row["label_frame"].setVisible(False)
-                row["editor_host"].setVisible(False)
-                row["editor"].setVisible(False)
+                self._set_property_grid_row_visible(row, False)
 
     def _on_property_tree_item_clicked(self, item, _column):
         if item is None or item.parent() is not None:
@@ -1073,9 +1097,7 @@ class PropertyPanel(QWidget):
                 row_match = not text or title_match or text in row["label_text"].lower()
                 row["item"].setHidden(not row_match)
                 row_visible = row_match and item.isExpanded()
-                row["label_frame"].setVisible(row_visible)
-                row["editor_host"].setVisible(row_visible)
-                row["editor"].setVisible(row_visible)
+                self._set_property_grid_row_visible(row, row_visible)
                 any_visible = any_visible or row_match
             item.setHidden(not any_visible)
             any_section_visible = any_section_visible or any_visible
@@ -1103,35 +1125,46 @@ class PropertyPanel(QWidget):
         arrow_label = section.get("arrow_label")
         title_label = section.get("title_label")
         if isinstance(header_frame, QWidget):
-            header_frame.setProperty("sectionExpanded", bool(expanded))
-            style = header_frame.style()
-            style.unpolish(header_frame)
-            style.polish(header_frame)
-            header_frame.update()
+            if bool(header_frame.property("sectionExpanded")) != bool(expanded):
+                header_frame.setProperty("sectionExpanded", bool(expanded))
+                style = header_frame.style()
+                style.unpolish(header_frame)
+                style.polish(header_frame)
+                header_frame.update()
         if isinstance(header_fill, QWidget):
-            header_fill.setProperty("sectionExpanded", bool(expanded))
-            style = header_fill.style()
-            style.unpolish(header_fill)
-            style.polish(header_fill)
-            header_fill.update()
+            if bool(header_fill.property("sectionExpanded")) != bool(expanded):
+                header_fill.setProperty("sectionExpanded", bool(expanded))
+                style = header_fill.style()
+                style.unpolish(header_fill)
+                style.polish(header_fill)
+                header_fill.update()
         if isinstance(arrow_label, QToolButton):
-            arrow_label.setArrowType(Qt.DownArrow if expanded else Qt.RightArrow)
-            arrow_label.setProperty("sectionExpanded", bool(expanded))
-            style = arrow_label.style()
-            style.unpolish(arrow_label)
-            style.polish(arrow_label)
-            arrow_label.update()
+            changed = False
+            desired_arrow = Qt.DownArrow if expanded else Qt.RightArrow
+            if arrow_label.arrowType() != desired_arrow:
+                arrow_label.setArrowType(desired_arrow)
+            if bool(arrow_label.property("sectionExpanded")) != bool(expanded):
+                arrow_label.setProperty("sectionExpanded", bool(expanded))
+                changed = True
+            if changed:
+                style = arrow_label.style()
+                style.unpolish(arrow_label)
+                style.polish(arrow_label)
+                arrow_label.update()
         if isinstance(title_label, QWidget):
-            title_label.setProperty("sectionExpanded", bool(expanded))
-            style = title_label.style()
-            style.unpolish(title_label)
-            style.polish(title_label)
-            title_label.update()
+            if bool(title_label.property("sectionExpanded")) != bool(expanded):
+                title_label.setProperty("sectionExpanded", bool(expanded))
+                style = title_label.style()
+                style.unpolish(title_label)
+                style.polish(title_label)
+                title_label.update()
 
     def _refresh_property_section_hover(self, section, hovered):
         for key in ("header_frame", "header_fill", "arrow_label", "title_label"):
             target = section.get(key)
             if not isinstance(target, QWidget):
+                continue
+            if bool(target.property("sectionHovered")) == bool(hovered):
                 continue
             target.setProperty("sectionHovered", bool(hovered))
             style = target.style()
