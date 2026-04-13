@@ -247,6 +247,42 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_browse_font_text_duplicate_keeps_clean_state(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QFileDialog
+
+        from ui_designer.model.resource_generation_session import GenerationPaths, RESOURCE_SECTION_SPECS
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        text_file = source_dir / "charset" / "basic.txt"
+        text_file.parent.mkdir(parents=True)
+        text_file.write_text("abc", encoding="utf-8")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "text": "charset/basic.txt"}], "mp4": []},
+            dirty=False,
+        )
+        window._active_section = "font"
+        window._active_entry_index = 0
+        window._refresh_entry_table()
+
+        text_field = next(field for field in RESOURCE_SECTION_SPECS["font"].fields if field.name == "text")
+        monkeypatch.setattr(
+            QFileDialog,
+            "getOpenFileName",
+            lambda *args, **kwargs: (str(text_file), text_field.file_filter),
+        )
+
+        window._browse_entry_field(text_field)
+
+        entry = window._session.section_entries("font")[0]
+        assert entry["text"] == "charset/basic.txt"
+        assert window.has_unsaved_changes() is False
+        _close_window(window)
+
+    @_skip_no_qt
     def test_main_window_close_is_blocked_when_resource_generator_cancelled(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QCloseEvent
 

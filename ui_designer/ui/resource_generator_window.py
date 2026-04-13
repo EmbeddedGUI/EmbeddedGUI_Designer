@@ -719,6 +719,9 @@ class ResourceGeneratorWindow(QDialog):
                 if stored_value not in items:
                     items.append(stored_value)
                 stored_value = ",".join(items)
+        current_value = str(current_entry.get(field_spec.name, "") or "")
+        if current_value == stored_value:
+            return
         self._session.update_entry_value(self._active_section, self._active_entry_index, field_spec.name, stored_value)
         self._mark_dirty()
         self._refresh_entry_table()
