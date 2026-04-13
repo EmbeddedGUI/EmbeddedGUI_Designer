@@ -120,6 +120,8 @@ class TestResourceGeneratorWindow:
         assert window._session.paths.source_dir == expected.source_dir
         assert window._session.paths.workspace_dir == expected.workspace_dir
         assert window._session.paths.bin_output_dir == expected.bin_output_dir
+        assert window.has_unsaved_changes() is True
+        assert window.windowTitle().endswith(" *")
         _close_window(window)
 
     @_skip_no_qt

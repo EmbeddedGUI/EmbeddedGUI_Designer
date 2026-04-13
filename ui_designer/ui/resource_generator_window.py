@@ -306,6 +306,8 @@ class ResourceGeneratorWindow(QDialog):
         if field_name == "config_path":
             self._rebase_inferred_paths(previous_paths, self._session.paths.config_path)
             self._refresh_path_fields()
+        if self._session.paths != previous_paths:
+            self._mark_dirty()
         self._update_merged_preview()
         self._update_form()
 
