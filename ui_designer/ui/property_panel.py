@@ -486,6 +486,37 @@ class PropertyPanel(QWidget):
             f"clear[{clear_summary}], {step_summary}"
         )
 
+    def _emit_grouped_properties_debug_log(self, stats):
+        if not stats:
+            return
+        prop_entries = stats.get("properties", ())
+        if not prop_entries:
+            return
+        prop_summary = "; ".join(
+            f"{entry['name']}/{entry['type']}="
+            f"{entry['total_ms']:.1f}ms(editor={entry['editor_ms']:.1f}, "
+            f"meta={entry['meta_ms']:.1f}, row={entry['row_ms']:.1f})"
+            for entry in prop_entries
+        )
+        group_summary = "; ".join(
+            f"{entry['label']}={entry['count']} props/{entry['total_ms']:.1f}ms"
+            for entry in stats.get("groups", ())
+        )
+        type_summary = "; ".join(
+            f"{prop_type}={elapsed_ms:.1f}ms"
+            for prop_type, elapsed_ms in stats.get("types", ())
+        )
+        self._debug_log(
+            "Property panel grouped properties: "
+            f"groups={stats.get('group_count', 0)}, props={stats.get('prop_count', 0)}, "
+            f"group_create={stats.get('group_create_ms', 0.0):.1f}ms, "
+            f"editor_total={stats.get('editor_total_ms', 0.0):.1f}ms, "
+            f"meta_total={stats.get('meta_total_ms', 0.0):.1f}ms, "
+            f"row_total={stats.get('row_total_ms', 0.0):.1f}ms | "
+            f"groups[{group_summary or 'none'}] | types[{type_summary or 'none'}] | "
+            f"props[{prop_summary}]"
+        )
+
     def _inspector_group_storage_key(self, title: str) -> str:
         title = (title or "").strip()
         if len(self._selection) > 1:
@@ -1906,6 +1937,7 @@ class PropertyPanel(QWidget):
             type_info = WidgetRegistry.instance().get(w.widget_type)
             props = type_info.get("properties", {})
 
+            grouped_properties_stats = None
             if props:
                 data_props = {
                     name: info for name, info in props.items() if info.get("type") in _DATA_PROPERTY_TYPES
@@ -1914,10 +1946,11 @@ class PropertyPanel(QWidget):
                     name: info for name, info in props.items() if info.get("type") not in _DATA_PROPERTY_TYPES
                 }
                 if other_props:
+                    grouped_properties_stats = {}
                     self._measure_debug_step(
                         timings,
                         "grouped_properties",
-                        lambda: self._build_grouped_properties(w, other_props),
+                        lambda: self._build_grouped_properties(w, other_props, debug_stats=grouped_properties_stats),
                     )
                 if data_props:
                     self._measure_debug_step(
@@ -2016,6 +2049,7 @@ class PropertyPanel(QWidget):
                 lambda: self._on_search_changed(self._search_edit.text()),
             )
             self._measure_debug_step(timings, "theme_refresh", self._refresh_property_tree_theme_patches)
+            self._emit_grouped_properties_debug_log(grouped_properties_stats)
         finally:
             timings["total"] = (time.perf_counter() - total_started) * 1000.0
             self._emit_rebuild_debug_log(rebuild_mode, timings, clear_stats, previous_counts)
@@ -2381,7 +2415,7 @@ class PropertyPanel(QWidget):
                     return False
         return True
 
-    def _build_grouped_properties(self, w, props):
+    def _build_grouped_properties(self, w, props, debug_stats=None):
         """Build property groups driven by ui_group and ui_visible_when descriptors.
 
         Properties are grouped by their ``ui_group`` value (default "properties").
@@ -2409,22 +2443,92 @@ class PropertyPanel(QWidget):
 
         sorted_groups = sorted(groups.items(), key=_group_sort_key)
 
+        if debug_stats is not None:
+            debug_stats.clear()
+            debug_stats["groups"] = []
+            debug_stats["properties"] = []
+            debug_stats["types"] = []
+            debug_stats["group_count"] = len(sorted_groups)
+            debug_stats["prop_count"] = sum(len(group_props) for _, group_props in sorted_groups)
+            debug_stats["group_create_ms"] = 0.0
+            debug_stats["editor_total_ms"] = 0.0
+            debug_stats["meta_total_ms"] = 0.0
+            debug_stats["row_total_ms"] = 0.0
+
+        type_totals = {}
+
         for group_key, group_props in sorted_groups:
             group_label = _UI_GROUP_LABELS.get(group_key, group_key.replace("_", " ").title())
             if group_label in {"Properties", "Main"}:
                 group_label = "Behavior"
+            group_started = time.perf_counter()
             group_box, form = self._build_inspector_group(group_label)
+            group_elapsed_ms = (time.perf_counter() - group_started) * 1000.0
+            group_total_ms = group_elapsed_ms
+            if debug_stats is not None:
+                debug_stats["group_create_ms"] += group_elapsed_ms
 
             for prop_name, prop_info in group_props:
-                editor = self._create_property_editor(prop_name, prop_info, w.properties.get(prop_name))
+                prop_type = str(prop_info.get("type", "string") or "string")
+                current_value = w.properties.get(prop_name)
+                editor_started = time.perf_counter()
+                editor = self._create_property_editor(prop_name, prop_info, current_value)
+                editor_elapsed_ms = (time.perf_counter() - editor_started) * 1000.0
                 if editor:
+                    meta_started = time.perf_counter()
                     # Derive a human-readable label from prop_name
                     label = self._property_row_label(prop_name, strip_asset_prefix=group_key != "main")
-                    if self._is_missing_file_property(prop_name, prop_info, w.properties.get(prop_name)):
+                    if self._is_missing_file_property(prop_name, prop_info, current_value):
                         label += " (Missing)"
-                        self._apply_missing_file_editor_state(editor, prop_name, prop_info, w.properties.get(prop_name))
+                        self._apply_missing_file_editor_state(editor, prop_name, prop_info, current_value)
                     label += ":"
+                    meta_elapsed_ms = (time.perf_counter() - meta_started) * 1000.0
+                    row_started = time.perf_counter()
                     form.addRow(label, editor)
+                    row_elapsed_ms = (time.perf_counter() - row_started) * 1000.0
+                    prop_total_ms = editor_elapsed_ms + meta_elapsed_ms + row_elapsed_ms
+                    group_total_ms += prop_total_ms
+                    if debug_stats is not None:
+                        debug_stats["editor_total_ms"] += editor_elapsed_ms
+                        debug_stats["meta_total_ms"] += meta_elapsed_ms
+                        debug_stats["row_total_ms"] += row_elapsed_ms
+                        debug_stats["properties"].append(
+                            {
+                                "name": prop_name,
+                                "type": prop_type,
+                                "editor_ms": editor_elapsed_ms,
+                                "meta_ms": meta_elapsed_ms,
+                                "row_ms": row_elapsed_ms,
+                                "total_ms": prop_total_ms,
+                            }
+                        )
+                        type_totals[prop_type] = type_totals.get(prop_type, 0.0) + prop_total_ms
+                elif debug_stats is not None:
+                    debug_stats["editor_total_ms"] += editor_elapsed_ms
+                    type_totals[prop_type] = type_totals.get(prop_type, 0.0) + editor_elapsed_ms
+                    debug_stats["properties"].append(
+                        {
+                            "name": prop_name,
+                            "type": prop_type,
+                            "editor_ms": editor_elapsed_ms,
+                            "meta_ms": 0.0,
+                            "row_ms": 0.0,
+                            "total_ms": editor_elapsed_ms,
+                        }
+                    )
+                    group_total_ms += editor_elapsed_ms
+
+            if debug_stats is not None:
+                debug_stats["groups"].append(
+                    {
+                        "label": group_label,
+                        "count": len(group_props),
+                        "total_ms": group_total_ms,
+                    }
+                )
+
+        if debug_stats is not None:
+            debug_stats["types"] = sorted(type_totals.items(), key=lambda item: item[1], reverse=True)
 
     def _build_data_group(self, w, props):
         group_box, form = self._build_inspector_group("Data")

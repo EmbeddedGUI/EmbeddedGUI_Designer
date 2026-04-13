@@ -126,6 +126,11 @@ class TestPropertyPanelFileFlow:
         assert "appearance_group=" in rebuild_log
         assert "theme_refresh=" in rebuild_log
         assert "clear[widgets=" in rebuild_log
+        grouped_log = next(entry for entry in logs if "Property panel grouped properties:" in entry)
+        assert "groups=" in grouped_log
+        assert "props[" in grouped_log
+        assert "text/string=" in grouped_log
+        assert "font_builtin/font=" in grouped_log
         panel.deleteLater()
 
     def test_inline_action_buttons_are_parented_widgets_not_top_level_windows(self, qapp):
