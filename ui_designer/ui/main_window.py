@@ -55,6 +55,7 @@ from .debug_panel import DebugPanel
 from .iconography import make_icon
 from .project_workspace import ProjectWorkspacePanel
 from .widget_browser import WidgetBrowserPanel
+from .resource_generator_window import ResourceGeneratorWindow
 from ..model.widget_model import WidgetModel
 from ..model.project import Project
 from ..model.project_cleaner import (
@@ -96,6 +97,7 @@ from ..model.structure_ops import (
     ungroup_selection,
 )
 from ..model.selection_state import SelectionState
+from ..model.resource_generation_session import GenerationPaths
 from ..model.diagnostics import (
     analyze_app_local_widget_issues,
     analyze_page,
@@ -391,6 +393,7 @@ class MainWindow(QMainWindow):
         self._selection_window_trace_source = ""
         self._selection_window_trace_summary = ""
         self._selection_window_trace_events = 0
+        self._resource_generator_window = None
 
         self._project_watch_timer = QTimer(self)
         self._project_watch_timer.setInterval(1000)
@@ -3734,6 +3737,14 @@ class MainWindow(QMainWindow):
         self._generate_resources_action.triggered.connect(self._generate_resources)
         build_menu.addAction(self._generate_resources_action)
         self._update_generate_resources_action_metadata()
+
+        self._resource_generator_action = QAction("Resource Generator...", self)
+        self._apply_action_hint(
+            self._resource_generator_action,
+            "Open the standalone resource generator for editing and building app_resource_config.json files.",
+        )
+        self._resource_generator_action.triggered.connect(self._open_resource_generator_window)
+        build_menu.addAction(self._resource_generator_action)
         self._update_build_menu_metadata()
 
         # View menu surface map (UI-S0-003):
@@ -5400,6 +5411,39 @@ class MainWindow(QMainWindow):
     def _get_designer_resource_dir(self):
         """Compute the designer-managed resource metadata directory path."""
         return self._resolve_project_path("get_designer_resource_dir", project_designer_resource_dir)
+
+    def _resource_generator_initial_paths(self):
+        if not self.project or not self._project_dir:
+            return GenerationPaths()
+        workspace_dir = self._get_resource_dir()
+        bin_output_dir = sdk_output_dir(self.project_root) if self._has_valid_sdk_root() else workspace_dir
+        return GenerationPaths(
+            config_path=self._get_user_resource_config_path(),
+            source_dir=self._get_resource_src_dir(),
+            workspace_dir=workspace_dir,
+            bin_output_dir=bin_output_dir,
+        )
+
+    def _open_resource_generator_window(self):
+        window = getattr(self, "_resource_generator_window", None)
+        if window is None:
+            window = ResourceGeneratorWindow(self._active_sdk_root(), self)
+            self._resource_generator_window = window
+
+        if not window.isVisible() and not window.has_unsaved_changes():
+            try:
+                window.open_with_paths(
+                    self._resource_generator_initial_paths(),
+                    sdk_root=self._active_sdk_root(),
+                    load_existing=True,
+                )
+            except Exception as exc:
+                QMessageBox.warning(self, "Resource Generator", f"Failed to open resource generator:\n{exc}")
+                return
+
+        window.show()
+        window.raise_()
+        window.activateWindow()
 
     def _get_eguiproject_resource_dir(self):
         """Compute the .eguiproject/resources/ path for the current project.
@@ -8415,6 +8459,13 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         self._is_closing = True
+        resource_window = getattr(self, "_resource_generator_window", None)
+        if resource_window is not None and resource_window.isVisible():
+            resource_window.close()
+            if resource_window.isVisible():
+                self._is_closing = False
+                event.ignore()
+                return
         if self.project and self._has_unsaved_changes():
             reply = QMessageBox.question(
                 self, "Unsaved Changes",

@@ -26,6 +26,7 @@ def make_empty_resource_config() -> dict:
     return {
         "img": [],
         "font": [],
+        "mp4": [],
     }
 
 
@@ -54,6 +55,11 @@ def load_resource_config(path: str) -> dict | None:
     with open(path, "r", encoding="utf-8") as f:
         content = f.read()
 
+    return parse_resource_config_content(content)
+
+
+def parse_resource_config_content(content: str) -> dict | None:
+    """Parse JSON/JSON5-like resource config text."""
     try:
         import json5
 
