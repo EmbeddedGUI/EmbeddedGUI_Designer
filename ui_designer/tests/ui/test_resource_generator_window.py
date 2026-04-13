@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -16,6 +17,21 @@ _skip_no_qt = skip_if_no_qt
 
 @pytest.mark.usefixtures("isolated_config")
 class TestResourceGeneratorWindow:
+    @_skip_no_qt
+    def test_resource_generator_starts_in_simple_mode_and_can_switch_to_professional(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+
+        assert window._mode_combo.currentData() == "simple"
+        assert window._workspace_stack.currentWidget() is window._simple_page
+
+        window._set_ui_mode("professional")
+
+        assert window._mode_combo.currentData() == "professional"
+        assert window._workspace_stack.currentWidget() is window._professional_page
+        _close_window(window)
+
     @_skip_no_qt
     def test_invalid_raw_json_blocks_tab_switch(self, qapp, monkeypatch):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -157,6 +173,55 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_scan_assets_from_directory_sets_source_dir_and_populates_entries(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        import_dir = tmp_path / "imports"
+        import_dir.mkdir(parents=True)
+        (import_dir / "hero.png").write_bytes(b"png")
+        (import_dir / "display.ttf").write_bytes(b"ttf")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._scan_assets_from_directory(str(import_dir))
+
+        assert window._session.paths.source_dir == str(import_dir.resolve())
+        assert [entry["file"] for entry in window._session.section_entries("img")] == ["hero.png"]
+        assert [entry["file"] for entry in window._session.section_entries("font")] == ["display.ttf"]
+        assert window._simple_asset_table.rowCount() == 2
+        assert window.has_unsaved_changes() is True
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_scan_assets_from_directory_can_copy_into_existing_source_dir(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        import_dir = tmp_path / "imports"
+        (import_dir / "fonts").mkdir(parents=True)
+        (import_dir / "fonts" / "display.ttf").write_bytes(b"ttf")
+        (import_dir / "fonts" / "display.txt").write_text("ABC", encoding="utf-8")
+        (import_dir / "images").mkdir(parents=True)
+        (import_dir / "images" / "hero.png").write_bytes(b"png")
+
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(GenerationPaths(source_dir=str(source_dir)), {"img": [], "font": [], "mp4": []}, dirty=False)
+
+        window._scan_assets_from_directory(str(import_dir))
+
+        assert (source_dir / "fonts" / "display.ttf").read_bytes() == b"ttf"
+        assert (source_dir / "fonts" / "display.txt").read_text(encoding="utf-8") == "ABC"
+        assert (source_dir / "images" / "hero.png").read_bytes() == b"png"
+        font_entry = window._session.section_entries("font")[0]
+        assert font_entry["file"] == "fonts/display.ttf"
+        assert font_entry["text"] == "fonts/display.txt"
+        assert window._session.section_entries("img")[0]["file"] == "images/hero.png"
+        _close_window(window)
+
+    @_skip_no_qt
     def test_normalize_selected_image_requires_source_dir(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -280,6 +345,59 @@ class TestResourceGeneratorWindow:
         entry = window._session.section_entries("font")[0]
         assert entry["text"] == "charset/basic.txt"
         assert window.has_unsaved_changes() is False
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_generate_charset_helper_writes_text_file_and_assigns_current_font(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QDialog
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        captured = {}
+
+        class _FakeDialog:
+            def __init__(self, resource_dir, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+                captured["resource_dir"] = resource_dir
+                captured["initial_filename"] = initial_filename
+                captured["source_label"] = source_label
+                captured["initial_preset_ids"] = tuple(initial_preset_ids or ())
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def filename(self):
+                return "display_charset.txt"
+
+            def generated_text(self):
+                return "A\nB\n"
+
+            def overwrite_diff(self):
+                return SimpleNamespace(existing_count=0, new_count=2, added_count=2, removed_count=0)
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._GenerateCharsetDialog", _FakeDialog)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "text": ""}], "mp4": []},
+            dirty=False,
+        )
+        window._active_section = "font"
+        window._active_entry_index = 0
+        window._refresh_entry_table()
+
+        window._open_generate_charset_helper()
+
+        assert captured["resource_dir"] == str(source_dir)
+        assert captured["initial_filename"] == "display_charset.txt"
+        assert captured["source_label"] == "display.ttf"
+        assert (source_dir / "display_charset.txt").read_text(encoding="utf-8") == "A\nB\n"
+        assert window._session.section_entries("font")[0]["text"] == "display_charset.txt"
+        assert window.has_unsaved_changes() is True
         _close_window(window)
 
     @_skip_no_qt

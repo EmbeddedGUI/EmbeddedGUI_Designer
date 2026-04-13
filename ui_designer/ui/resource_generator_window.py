@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QSplitter,
+    QStackedWidget,
     QTabWidget,
     QTableWidget,
     QTableWidgetItem,
@@ -44,6 +45,17 @@ from ..model.resource_generation_session import (
 )
 from ..model.workspace import normalize_path
 from ..utils.resource_config_overlay import APP_RESOURCE_CONFIG_FILENAME, make_empty_resource_config
+from .resource_panel import (
+    _GenerateCharsetDialog,
+    _suggest_charset_filename_for_resource,
+    _suggest_charset_presets_for_resource,
+)
+
+
+_IMAGE_FILE_EXTENSIONS = {".png", ".bmp", ".jpg", ".jpeg", ".gif", ".webp"}
+_FONT_FILE_EXTENSIONS = {".ttf", ".otf"}
+_VIDEO_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv"}
+_TEXT_FILE_EXTENSIONS = {".txt"}
 
 
 class ResourceGeneratorWindow(QDialog):
@@ -65,6 +77,8 @@ class ResourceGeneratorWindow(QDialog):
         self._last_tab_index = 0
         self._clean_paths = GenerationPaths()
         self._clean_user_data = make_empty_resource_config()
+        self._ui_mode = "simple"
+        self._simple_row_map: list[tuple[str, int]] = []
 
         self._build_ui()
         self._apply_paths_and_data(GenerationPaths(), make_empty_resource_config(), dirty=False)
@@ -99,8 +113,7 @@ class ResourceGeneratorWindow(QDialog):
 
         layout.addLayout(self._build_toolbar())
         layout.addWidget(self._build_path_group())
-        layout.addWidget(self._build_center_splitter(), 1)
-        layout.addWidget(self._build_bottom_tabs(), 1)
+        layout.addWidget(self._build_workspace_stack(), 1)
 
         self._status_label = QLabel("")
         layout.addWidget(self._status_label)
@@ -130,8 +143,106 @@ class ResourceGeneratorWindow(QDialog):
         self._generate_button.clicked.connect(self._generate_resources)
         layout.addWidget(self._generate_button)
 
+        layout.addSpacing(16)
+        layout.addWidget(QLabel("Mode"))
+
+        self._mode_combo = QComboBox()
+        self._mode_combo.addItem("Simple", "simple")
+        self._mode_combo.addItem("Professional", "professional")
+        self._mode_combo.currentIndexChanged.connect(self._on_mode_changed)
+        layout.addWidget(self._mode_combo)
+
         layout.addStretch(1)
         return layout
+
+    def _build_workspace_stack(self):
+        self._workspace_stack = QStackedWidget()
+        self._simple_page = self._build_simple_page()
+        self._professional_page = self._build_professional_page()
+        self._workspace_stack.addWidget(self._simple_page)
+        self._workspace_stack.addWidget(self._professional_page)
+        return self._workspace_stack
+
+    def _build_simple_page(self):
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+
+        intro_group = QGroupBox("Quick Mode")
+        intro_layout = QVBoxLayout(intro_group)
+        intro_layout.setContentsMargins(12, 12, 12, 12)
+        intro_layout.setSpacing(8)
+
+        intro = QLabel(
+            "Use quick helpers to scan an asset folder, generate font text files, and build resources without editing every field manually."
+        )
+        intro.setWordWrap(True)
+        intro_layout.addWidget(intro)
+
+        helper_row = QHBoxLayout()
+        helper_row.setContentsMargins(0, 0, 0, 0)
+        helper_row.setSpacing(8)
+
+        self._scan_assets_button = QPushButton("Scan Asset Folder...")
+        self._scan_assets_button.clicked.connect(self._scan_assets_directory_dialog)
+        helper_row.addWidget(self._scan_assets_button)
+
+        self._generate_font_text_button = QPushButton("Generate Font Text...")
+        self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
+        helper_row.addWidget(self._generate_font_text_button)
+
+        self._open_professional_button = QPushButton("Open Professional Mode")
+        self._open_professional_button.clicked.connect(lambda: self._set_ui_mode("professional"))
+        helper_row.addWidget(self._open_professional_button)
+
+        helper_row.addStretch(1)
+        intro_layout.addLayout(helper_row)
+
+        counts_row = QHBoxLayout()
+        counts_row.setContentsMargins(0, 0, 0, 0)
+        counts_row.setSpacing(16)
+        self._simple_image_count = QLabel("Images: 0")
+        counts_row.addWidget(self._simple_image_count)
+        self._simple_font_count = QLabel("Fonts: 0")
+        counts_row.addWidget(self._simple_font_count)
+        self._simple_mp4_count = QLabel("MP4: 0")
+        counts_row.addWidget(self._simple_mp4_count)
+        counts_row.addStretch(1)
+        intro_layout.addLayout(counts_row)
+        layout.addWidget(intro_group)
+
+        self._simple_asset_table = QTableWidget(0, 4)
+        self._simple_asset_table.setHorizontalHeaderLabels(["Type", "Name", "File", "Details"])
+        self._simple_asset_table.verticalHeader().setVisible(False)
+        self._simple_asset_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self._simple_asset_table.setSelectionMode(QAbstractItemView.SingleSelection)
+        self._simple_asset_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self._simple_asset_table.itemDoubleClicked.connect(self._open_simple_selection_in_professional_mode)
+        simple_header = self._simple_asset_table.horizontalHeader()
+        simple_header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        simple_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        simple_header.setSectionResizeMode(2, QHeaderView.Stretch)
+        simple_header.setSectionResizeMode(3, QHeaderView.Stretch)
+        layout.addWidget(self._simple_asset_table, 1)
+
+        preview_group = QGroupBox("Merged Preview")
+        preview_layout = QVBoxLayout(preview_group)
+        preview_layout.setContentsMargins(8, 8, 8, 8)
+        self._simple_preview = QPlainTextEdit()
+        self._simple_preview.setReadOnly(True)
+        preview_layout.addWidget(self._simple_preview)
+        layout.addWidget(preview_group, 1)
+        return page
+
+    def _build_professional_page(self):
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+        layout.addWidget(self._build_center_splitter(), 1)
+        layout.addWidget(self._build_bottom_tabs(), 1)
+        return page
 
     def _build_path_group(self):
         group = QGroupBox("Paths")
@@ -291,6 +402,8 @@ class ResourceGeneratorWindow(QDialog):
         self._update_form()
         self._update_raw_editor(force=True)
         self._update_merged_preview()
+        self._refresh_simple_page()
+        self._set_ui_mode(self._ui_mode)
         self._set_status("Ready.")
         self._update_title()
 
@@ -355,6 +468,7 @@ class ResourceGeneratorWindow(QDialog):
         else:
             self._active_entry_index = -1
         self._update_form()
+        self._refresh_simple_page()
 
     def _refresh_current_table_row(self):
         entry = self._current_entry()
@@ -373,6 +487,7 @@ class ResourceGeneratorWindow(QDialog):
             file_item = QTableWidgetItem()
             self._entry_table.setItem(row, 1, file_item)
         file_item.setText(str(entry.get("file", "") or ""))
+        self._refresh_simple_page()
 
     def _current_entry(self) -> dict | None:
         entries = self._session.section_entries(self._active_section)
@@ -492,6 +607,144 @@ class ResourceGeneratorWindow(QDialog):
             return
         self._apply_session_state(dirty=False)
         self._set_status(f"Opened {normalize_path(path)}.")
+
+    def _scan_assets_directory_dialog(self):
+        start_dir = self._session.paths.source_dir or self._default_open_dir()
+        directory = QFileDialog.getExistingDirectory(self, "Scan Asset Folder", start_dir)
+        if not directory:
+            return
+        self._scan_assets_from_directory(directory)
+
+    def _scan_assets_from_directory(self, directory: str):
+        import_root = normalize_path(directory)
+        if not import_root or not os.path.isdir(import_root):
+            QMessageBox.warning(self, "Scan Asset Folder", f"Folder does not exist:\n{directory}")
+            return
+
+        previous_paths = GenerationPaths(
+            config_path=self._session.paths.config_path,
+            source_dir=self._session.paths.source_dir,
+            workspace_dir=self._session.paths.workspace_dir,
+            bin_output_dir=self._session.paths.bin_output_dir,
+        )
+        source_changed = False
+        source_dir = normalize_path(self._session.paths.source_dir)
+        asset_paths: list[tuple[str, str]] = []
+        text_paths: list[str] = []
+        copied_files = 0
+
+        if not source_dir:
+            self._apply_source_dir_change(import_root)
+            source_dir = self._session.paths.source_dir
+            source_changed = self._session.paths != previous_paths
+            asset_paths, text_paths = _discover_supported_assets(import_root)
+        elif import_root == source_dir or _is_subpath(import_root, source_dir):
+            asset_paths, text_paths = _discover_supported_assets(import_root)
+        else:
+            answer = QMessageBox.question(
+                self,
+                "Import Asset Folder",
+                (
+                    f"{import_root}\n\n"
+                    f"Yes: copy supported assets into the current Source Dir:\n{source_dir}\n\n"
+                    "No: switch Source Dir to this folder and scan in place."
+                ),
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Yes,
+            )
+            if answer == QMessageBox.Cancel:
+                return
+            if answer == QMessageBox.No:
+                self._apply_source_dir_change(import_root)
+                source_dir = self._session.paths.source_dir
+                source_changed = self._session.paths != previous_paths
+                asset_paths, text_paths = _discover_supported_assets(import_root)
+            else:
+                discovered_assets, discovered_texts = _discover_supported_assets(import_root)
+                asset_paths, text_paths, copied_files = self._copy_supported_assets_into_source_dir(
+                    import_root,
+                    source_dir,
+                    discovered_assets,
+                    discovered_texts,
+                )
+
+        entries_by_section = self._build_entries_from_asset_paths(asset_paths, text_paths, source_dir)
+        added, updated = self._merge_discovered_entries(entries_by_section)
+        if source_changed or added or updated:
+            self._mark_dirty()
+            self._refresh_path_fields()
+            self._refresh_entry_table()
+            self._update_merged_preview()
+            self._update_raw_editor()
+
+        discovered_total = sum(len(items) for items in entries_by_section.values())
+        if not discovered_total and not source_changed:
+            self._set_status("No supported assets found in the selected folder.")
+            return
+
+        summary = [f"Imported {discovered_total} assets"]
+        if copied_files:
+            summary.append(f"copied {copied_files} files")
+        if added:
+            summary.append(f"added {added}")
+        if updated:
+            summary.append(f"updated {updated}")
+        if source_changed:
+            summary.append("updated Source Dir")
+        self._set_status(", ".join(summary) + ".")
+
+    def _open_generate_charset_helper(self):
+        source_dir = self._session.paths.source_dir
+        if not source_dir:
+            QMessageBox.warning(
+                self,
+                "Generate Font Text",
+                "Set Source Dir first, or scan an asset folder so Designer knows where to save the generated text file.",
+            )
+            return
+
+        resource_type, source_name = self._charset_helper_context()
+        dialog = _GenerateCharsetDialog(
+            source_dir,
+            initial_filename=_suggest_charset_filename_for_resource(resource_type, source_name),
+            source_label=source_name if resource_type in {"font", "text"} else "",
+            initial_preset_ids=_suggest_charset_presets_for_resource(resource_type, source_name),
+            parent=self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        filename = dialog.filename()
+        target_path = os.path.join(source_dir, filename)
+        if os.path.isfile(target_path):
+            diff = dialog.overwrite_diff()
+            reply = QMessageBox.question(
+                self,
+                "Overwrite Charset Resource",
+                (
+                    f"Overwrite '{filename}'?\n\n"
+                    f"Existing chars: {diff.existing_count}\n"
+                    f"New chars: {diff.new_count}\n"
+                    f"Added: {diff.added_count}\n"
+                    f"Removed: {diff.removed_count}"
+                ),
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if reply != QMessageBox.Yes:
+                return
+
+        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+        with open(target_path, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(dialog.generated_text())
+
+        assigned = self._assign_generated_text_to_font(filename)
+        self._update_merged_preview()
+        self._update_raw_editor()
+        if assigned:
+            self._set_status(f"Generated '{filename}' and linked it to a font entry.")
+        else:
+            self._set_status(f"Generated '{filename}'.")
 
     def _save_config(self):
         if not self._commit_raw_json_if_needed():
@@ -673,8 +926,63 @@ class ResourceGeneratorWindow(QDialog):
 
     def _update_merged_preview(self):
         self._merged_preview.setPlainText(self._session.merged_json_text())
+        self._simple_preview.setPlainText(self._session.merged_json_text())
         if self._current_entry() is not None:
             self._entry_summary.setPlainText(self._entry_summary_text(self._current_entry()))
+
+    def _refresh_simple_page(self):
+        counts = {section: len(self._session.section_entries(section)) for section in KNOWN_RESOURCE_SECTIONS}
+        self._simple_image_count.setText(f"Images: {counts['img']}")
+        self._simple_font_count.setText(f"Fonts: {counts['font']}")
+        self._simple_mp4_count.setText(f"MP4: {counts['mp4']}")
+
+        rows: list[tuple[str, int, dict]] = []
+        for section in KNOWN_RESOURCE_SECTIONS:
+            for index, entry in enumerate(self._session.section_entries(section)):
+                if isinstance(entry, dict):
+                    rows.append((section, index, entry))
+
+        self._simple_row_map = [(section, index) for section, index, _entry in rows]
+        with QSignalBlocker(self._simple_asset_table):
+            self._simple_asset_table.setRowCount(len(rows))
+            for row, (section, index, entry) in enumerate(rows):
+                detail = ""
+                if section == "font":
+                    detail = str(entry.get("text", "") or "")
+                elif section == "mp4":
+                    fps = str(entry.get("fps", "") or "")
+                    width = str(entry.get("width", "") or "")
+                    height = str(entry.get("height", "") or "")
+                    if fps or width or height:
+                        detail = f"{fps}fps {width}x{height}".strip()
+                self._simple_asset_table.setItem(row, 0, QTableWidgetItem(RESOURCE_SECTION_SPECS[section].label))
+                self._simple_asset_table.setItem(row, 1, QTableWidgetItem(section_entry_label(section, entry, index)))
+                self._simple_asset_table.setItem(row, 2, QTableWidgetItem(str(entry.get("file", "") or "")))
+                self._simple_asset_table.setItem(row, 3, QTableWidgetItem(detail))
+
+    def _on_mode_changed(self, _index: int):
+        self._set_ui_mode(self._mode_combo.currentData() or "simple")
+
+    def _set_ui_mode(self, mode: str):
+        normalized_mode = "professional" if mode == "professional" else "simple"
+        self._ui_mode = normalized_mode
+        target_index = 1 if normalized_mode == "professional" else 0
+        self._workspace_stack.setCurrentIndex(target_index)
+        combo_index = 1 if normalized_mode == "professional" else 0
+        if self._mode_combo.currentIndex() != combo_index:
+            with QSignalBlocker(self._mode_combo):
+                self._mode_combo.setCurrentIndex(combo_index)
+
+    def _open_simple_selection_in_professional_mode(self, item):
+        row = item.row() if item is not None else -1
+        if not (0 <= row < len(self._simple_row_map)):
+            return
+        section, index = self._simple_row_map[row]
+        self._active_section = section
+        self._active_entry_index = index
+        self._refresh_section_selection()
+        self._refresh_entry_table()
+        self._set_ui_mode("professional")
 
     # -- Browsing helpers ----------------------------------------------
 
@@ -824,6 +1132,155 @@ class ResourceGeneratorWindow(QDialog):
             return ""
         return normalize_path(os.path.join(source_dir, raw))
 
+    def _apply_source_dir_change(self, new_source_dir: str):
+        previous_paths = GenerationPaths(
+            config_path=self._session.paths.config_path,
+            source_dir=self._session.paths.source_dir,
+            workspace_dir=self._session.paths.workspace_dir,
+            bin_output_dir=self._session.paths.bin_output_dir,
+        )
+        normalized_source_dir = normalize_path(new_source_dir)
+        self._session.paths.source_dir = normalized_source_dir
+
+        previous_defaults = infer_generation_paths(
+            previous_paths.config_path,
+            source_dir=previous_paths.source_dir,
+        )
+        new_defaults = infer_generation_paths(
+            previous_paths.config_path,
+            source_dir=normalized_source_dir,
+        )
+        if previous_paths.workspace_dir in {"", previous_defaults.workspace_dir}:
+            self._session.paths.workspace_dir = new_defaults.workspace_dir
+        if previous_paths.bin_output_dir in {"", previous_defaults.bin_output_dir}:
+            self._session.paths.bin_output_dir = new_defaults.bin_output_dir
+
+    def _copy_supported_assets_into_source_dir(self, import_root: str, source_dir: str, asset_paths, text_paths):
+        copied_assets: list[tuple[str, str]] = []
+        copied_texts: list[str] = []
+        copied_files = 0
+
+        for text_path in text_paths:
+            relative_path = os.path.relpath(text_path, import_root)
+            target_path = normalize_path(os.path.join(source_dir, relative_path))
+            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+            if normalize_path(text_path) != target_path:
+                shutil.copy2(text_path, target_path)
+                copied_files += 1
+            copied_texts.append(target_path)
+
+        for section, asset_path in asset_paths:
+            relative_path = os.path.relpath(asset_path, import_root)
+            target_path = normalize_path(os.path.join(source_dir, relative_path))
+            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+            if normalize_path(asset_path) != target_path:
+                shutil.copy2(asset_path, target_path)
+                copied_files += 1
+            copied_assets.append((section, target_path))
+
+        return copied_assets, copied_texts, copied_files
+
+    def _build_entries_from_asset_paths(self, asset_paths, text_paths, source_dir: str):
+        text_lookup: dict[tuple[str, str], str] = {}
+        for text_path in text_paths:
+            relative_text = os.path.relpath(text_path, source_dir).replace("\\", "/")
+            key = (
+                os.path.dirname(relative_text).replace("\\", "/"),
+                os.path.splitext(os.path.basename(relative_text))[0].lower(),
+            )
+            text_lookup[key] = relative_text
+
+        entries_by_section = {section: [] for section in KNOWN_RESOURCE_SECTIONS}
+        for section, asset_path in sorted(asset_paths, key=lambda item: (item[0], item[1].lower())):
+            relative_file = os.path.relpath(asset_path, source_dir).replace("\\", "/")
+            entry = default_entry_for_section(section)
+            entry["file"] = relative_file
+            entry["name"] = os.path.splitext(os.path.basename(relative_file))[0]
+            if section == "font":
+                text_key = (
+                    os.path.dirname(relative_file).replace("\\", "/"),
+                    os.path.splitext(os.path.basename(relative_file))[0].lower(),
+                )
+                matched_text = text_lookup.get(text_key)
+                if matched_text:
+                    entry["text"] = matched_text
+            entries_by_section[section].append(entry)
+        return entries_by_section
+
+    def _merge_discovered_entries(self, entries_by_section):
+        added = 0
+        updated = 0
+        for section in KNOWN_RESOURCE_SECTIONS:
+            existing_entries = self._session.section_entries(section)
+            file_index: dict[str, dict] = {}
+            for entry in existing_entries:
+                if not isinstance(entry, dict):
+                    continue
+                key = str(entry.get("file", "") or "").replace("\\", "/").lower()
+                if key:
+                    file_index[key] = entry
+
+            for entry in entries_by_section.get(section, []):
+                key = str(entry.get("file", "") or "").replace("\\", "/").lower()
+                if not key:
+                    continue
+                existing = file_index.get(key)
+                if existing is None:
+                    existing_entries.append(copy.deepcopy(entry))
+                    file_index[key] = existing_entries[-1]
+                    added += 1
+                    continue
+
+                changed = False
+                for field_name in ("name", "text"):
+                    incoming = str(entry.get(field_name, "") or "").strip()
+                    if incoming and not str(existing.get(field_name, "") or "").strip():
+                        existing[field_name] = incoming
+                        changed = True
+                if changed:
+                    updated += 1
+        return added, updated
+
+    def _charset_helper_context(self):
+        entry = self._current_entry()
+        if self._active_section == "font" and entry is not None:
+            return "font", str(entry.get("file", "") or "")
+        font_entries = self._session.section_entries("font")
+        if len(font_entries) == 1 and isinstance(font_entries[0], dict):
+            return "font", str(font_entries[0].get("file", "") or "")
+        return "text", ""
+
+    def _assign_generated_text_to_font(self, filename: str) -> bool:
+        target_index = -1
+        if self._active_section == "font" and self._current_entry() is not None:
+            target_index = self._active_entry_index
+        else:
+            font_entries = self._session.section_entries("font")
+            if len(font_entries) == 1:
+                target_index = 0
+        if target_index < 0:
+            return False
+
+        font_entries = self._session.section_entries("font")
+        if not (0 <= target_index < len(font_entries)):
+            return False
+        entry = font_entries[target_index]
+        if not isinstance(entry, dict):
+            return False
+
+        existing = str(entry.get("text", "") or "").strip()
+        items = [item.strip() for item in existing.split(",") if item.strip()]
+        if filename in items:
+            return False
+        items.append(filename)
+        self._session.update_entry_value("font", target_index, "text", ",".join(items))
+        self._active_section = "font"
+        self._active_entry_index = target_index
+        self._mark_dirty()
+        self._refresh_section_selection()
+        self._refresh_entry_table()
+        return True
+
     def _mark_dirty(self):
         self._dirty = True
         self._update_title()
@@ -905,3 +1362,30 @@ def _is_subpath(path: str, root: str) -> bool:
         return os.path.commonpath([path, root]) == root
     except ValueError:
         return False
+
+
+def _discover_supported_assets(root_dir: str):
+    discovered_assets: list[tuple[str, str]] = []
+    discovered_texts: list[str] = []
+    for current_root, _dirs, files in os.walk(root_dir):
+        for filename in files:
+            full_path = normalize_path(os.path.join(current_root, filename))
+            extension = os.path.splitext(filename)[1].lower()
+            if extension in _TEXT_FILE_EXTENSIONS:
+                discovered_texts.append(full_path)
+                continue
+            section = _section_for_asset_extension(extension)
+            if section:
+                discovered_assets.append((section, full_path))
+    return discovered_assets, discovered_texts
+
+
+def _section_for_asset_extension(extension: str) -> str:
+    ext = str(extension or "").lower()
+    if ext in _IMAGE_FILE_EXTENSIONS:
+        return "img"
+    if ext in _FONT_FILE_EXTENSIONS:
+        return "font"
+    if ext in _VIDEO_FILE_EXTENSIONS:
+        return "mp4"
+    return ""
