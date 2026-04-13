@@ -5458,6 +5458,31 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_clean_all_confirmation_mentions_preview_rerun_limitation_when_clean_target_is_unavailable(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CleanAllConfirmMissingCleanTargetDemo"
+        project = _create_project(project_dir, "CleanAllConfirmMissingCleanTargetDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+        window._block_rebuild_retry("make: *** No rule to make target 'clean'.  Stop.")
+
+        text = window._clean_all_confirmation_text()
+
+        assert "Current preview rerun limitation:" in text
+        assert "make: *** No rule to make target 'clean'.  Stop." in text
+        assert "preview rerun will be skipped until this is resolved" in text
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_clean_all_and_reconstruct_stops_when_user_declines(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 

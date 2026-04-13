@@ -7498,6 +7498,14 @@ class MainWindow(QMainWindow):
     def _clean_all_confirmation_text(self):
         preserved_lines = "\n".join(f"  - {item}" for item in DESIGNER_SOURCE_PRESERVE_SUMMARY)
         deleted_lines = "\n".join(f"  - {item}" for item in DESIGNER_RECONSTRUCT_DELETE_SUMMARY)
+        rerun_limitation = str(self._effective_rebuild_unavailable_reason() or "").strip()
+        rerun_note = ""
+        if rerun_limitation:
+            rerun_note = (
+                "\n\nCurrent preview rerun limitation:\n"
+                f"  {rerun_limitation}\n"
+                "Clean All will still reconstruct project files, but preview rerun will be skipped until this is resolved."
+            )
         return (
             "This will permanently delete most project-side generated files and business/code outputs, "
             "then rebuild them from preserved Designer source state.\n\n"
@@ -7506,6 +7514,7 @@ class MainWindow(QMainWindow):
             "Deleted and reconstructed:\n"
             f"{deleted_lines}\n\n"
             "Unsaved Designer changes will be saved first.\n"
+            f"{rerun_note}\n"
             "Project directory:\n"
             f"{self._project_dir}"
         )
