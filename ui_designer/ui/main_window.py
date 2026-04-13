@@ -6487,6 +6487,33 @@ class MainWindow(QMainWindow):
             return False
         return all(current is incoming for current, incoming in zip(current_widgets, normalized_widgets))
 
+    @staticmethod
+    def _widget_log_label(widget):
+        if widget is None:
+            return "none"
+        name = str(getattr(widget, "name", "") or "").strip()
+        widget_type = str(getattr(widget, "widget_type", "") or "widget").strip()
+        if name:
+            return f"{name} ({widget_type})"
+        return widget_type
+
+    def _selection_log_summary(self, widgets=None, primary=None):
+        normalized_widgets, normalized_primary = self._normalized_selection(widgets, primary=primary)
+        if not normalized_widgets:
+            return "none"
+        labels = [self._widget_log_label(widget) for widget in normalized_widgets[:3]]
+        summary = ", ".join(labels)
+        remaining = len(normalized_widgets) - len(labels)
+        if remaining > 0:
+            summary = f"{summary}, +{remaining} more"
+        if len(normalized_widgets) > 1 and normalized_primary is not None:
+            summary = f"{summary}; primary={self._widget_log_label(normalized_primary)}"
+        return summary
+
+    def _log_selection_change(self, source, widgets=None, primary=None):
+        summary = self._selection_log_summary(widgets, primary=primary)
+        self.debug_panel.log_info(f"Selection changed ({source}): {summary}. No compile queued.")
+
     def _set_selection(self, widgets=None, primary=None, sync_tree=True, sync_preview=True):
         normalized_widgets, normalized_primary = self._normalized_selection(widgets, primary=primary)
         if self._selection_matches(normalized_widgets, primary=normalized_primary):
@@ -7208,20 +7235,24 @@ class MainWindow(QMainWindow):
 
     def _on_tree_selection_changed(self, widgets, primary):
         if self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True) is not False:
+            self._log_selection_change("tree", widgets, primary=primary)
             self._focus_properties_for_selection()
 
     def _on_preview_selection_changed(self, widgets, primary):
         if self._set_selection(widgets, primary=primary, sync_tree=True, sync_preview=False) is not False:
+            self._log_selection_change("preview", widgets, primary=primary)
             self._focus_properties_for_selection()
 
     def _on_widget_selected(self, widget):
         """Widget selected from tree panel."""
         if self._set_selection([widget] if widget is not None else [], primary=widget, sync_tree=False, sync_preview=True) is not False:
+            self._log_selection_change("tree", [widget] if widget is not None else [], primary=widget)
             self._focus_properties_for_selection()
 
     def _on_preview_widget_selected(self, widget):
         """Widget selected from preview panel overlay."""
         if self._set_selection([widget] if widget is not None else [], primary=widget, sync_tree=True, sync_preview=False) is not False:
+            self._log_selection_change("preview", [widget] if widget is not None else [], primary=widget)
             self._focus_properties_for_selection()
 
     def _focus_properties_for_selection(self):
@@ -7593,26 +7624,37 @@ class MainWindow(QMainWindow):
 
     def _trigger_compile(self, reason=""):
         """Trigger a debounced compile."""
+        normalized_reason = self._normalize_compile_reason(reason)
         if self._is_closing:
+            self.debug_panel.log_info(f"Auto compile trigger ignored during shutdown: {normalized_reason}")
             self._clear_queued_compile_reasons()
             return
         if not self.auto_compile:
+            self.debug_panel.log_info(f"Auto compile trigger ignored: {normalized_reason} (auto compile disabled)")
             self._clear_queued_compile_reasons()
             return
         if self._is_auto_compile_retry_blocked():
+            self.debug_panel.log_info(
+                f"Auto compile trigger blocked: {normalized_reason} (retry blocked: {self._auto_compile_retry_block_reason})"
+            )
             self._clear_queued_compile_reasons()
             return
         if self.compiler is None:
+            self.debug_panel.log_info(
+                f"Auto compile trigger blocked: {normalized_reason} (SDK unavailable, compile preview disabled)"
+            )
             self._clear_queued_compile_reasons()
             self._refresh_python_preview("SDK unavailable, compile preview disabled")
             return
         preview_unavailable_reason = self._effective_preview_unavailable_reason()
         if preview_unavailable_reason:
+            self.debug_panel.log_info(
+                f"Auto compile trigger blocked: {normalized_reason} (preview unavailable: {preview_unavailable_reason})"
+            )
             self._clear_queued_compile_reasons()
             self._switch_to_python_preview(preview_unavailable_reason)
             return
-        normalized_reason = str(reason or "").strip()
-        should_append_reason = bool(normalized_reason) or not self._queued_compile_reasons
+        should_append_reason = bool(str(reason or "").strip()) or not self._queued_compile_reasons
         if should_append_reason:
             added, merged_reason = self._append_compile_reason(reason)
             if added:
@@ -7880,6 +7922,8 @@ class MainWindow(QMainWindow):
         if self._is_closing:
             self._clear_queued_compile_reasons()
             return
+        compile_reason_text = self._format_compile_reasons(self._peek_compile_reasons(compile_reason_fallback))
+        self.debug_panel.log_info(f"Compile request received: {compile_reason_text}")
         if self.compiler is None or not self.compiler.can_build():
             self._clear_queued_compile_reasons()
             reason = "SDK unavailable, compile preview disabled"
@@ -7923,7 +7967,6 @@ class MainWindow(QMainWindow):
         # Always use the latest editor content
         self._flush_pending_xml()
         self._update_diagnostics_panel()
-        compile_reason_text = self._format_compile_reasons(self._peek_compile_reasons(compile_reason_fallback))
         if not self._ensure_codegen_preflight(
             "Rebuild preview" if force_rebuild else "Compile preview",
             show_dialog=False,

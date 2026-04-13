@@ -4613,8 +4613,10 @@ class TestMainWindowFileFlow:
         qapp.processEvents()
         window._run_auto_compile_cycle()
 
+        debug_output = window.debug_panel._output.toPlainText()
         assert compile_cycle_calls == []
         assert preview_reasons[-1] == "Preview build unavailable"
+        assert "Auto compile trigger blocked: unspecified change (retry blocked: Preview build unavailable)" in debug_output
         assert window._compile_timer.isActive() is False
         window._undo_manager.mark_all_saved()
         _close_window(window)
@@ -4730,6 +4732,7 @@ class TestMainWindowFileFlow:
         debug_output = window.debug_panel._output.toPlainText()
         assert "Auto compile trigger queued: property edit" in debug_output
         assert "Auto compile trigger merged: page fields edit" in debug_output
+        assert "Compile request received: property edit; page fields edit" in debug_output
         assert "Compile trigger: property edit; page fields edit" in debug_output
         assert window._queued_compile_reasons == []
         assert compiler.compile_calls == 1
@@ -4759,6 +4762,8 @@ class TestMainWindowFileFlow:
         window._on_widget_selected(window._current_page.root_widget)
 
         debug_output = window.debug_panel._output.toPlainText()
+        assert "Selection changed (tree):" in debug_output
+        assert "No compile queued." in debug_output
         assert "Auto compile trigger" not in debug_output
         assert "Compile trigger:" not in debug_output
         assert window._compile_timer.isActive() is False
