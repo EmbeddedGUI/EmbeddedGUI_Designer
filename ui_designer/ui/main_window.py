@@ -5209,7 +5209,11 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Precompile failed", 5000)
             self.debug_panel.log_error("Background precompile failed")
             self.debug_panel.log_compile_output(False, message)
-            _, guidance_message = self._compile_failure_feedback(message, force_rebuild=False)
+            _, guidance_message = self._compile_failure_feedback(
+                message,
+                force_rebuild=False,
+                rebuild_unavailable_reason=self._rebuild_retry_blocked_reason(),
+            )
             if guidance_message:
                 self.debug_panel.log_info(guidance_message)
             self._show_bottom_panel("Debug Output")
@@ -7579,9 +7583,10 @@ class MainWindow(QMainWindow):
         return match.group(1).rstrip("'.:;!, ")
 
     @classmethod
-    def _compile_failure_feedback(cls, message, *, force_rebuild=False):
+    def _compile_failure_feedback(cls, message, *, force_rebuild=False, rebuild_unavailable_reason=""):
         lowered = str(message or "").lower()
         missing_target = cls._missing_make_target_name(message).lower()
+        rebuild_missing_target = cls._missing_make_target_name(rebuild_unavailable_reason).lower()
 
         if missing_target in {"main.exe", "main"}:
             return (
@@ -7627,6 +7632,13 @@ class MainWindow(QMainWindow):
                 "EGUI clean rebuild failed, switched to Python fallback (see Debug Output)",
                 "Clean rebuild did not recover the preview. If project-side generated files are corrupted, "
                 "try Build > Clean All && Reconstruct.",
+            )
+        if rebuild_missing_target == "clean":
+            return (
+                "EXE build failed, switched to Python fallback. Rebuild-based recovery is unavailable until the build environment changes.",
+                "Build failed. The build system does not define the 'clean' target required by Rebuild EGUI Project "
+                "and Clean All && Reconstruct. Verify the SDK/designer Makefile setup before relying on rebuild-based "
+                "recovery.",
             )
         return (
             "EXE build failed, switched to Python fallback. Use Build > Rebuild EGUI Project first, "
@@ -7833,7 +7845,11 @@ class MainWindow(QMainWindow):
             else:
                 self._block_auto_compile_retry(failure_summary)
             self._last_runtime_error_text = failure_summary
-            status_message, guidance_message = self._compile_failure_feedback(message, force_rebuild=force_rebuild)
+            status_message, guidance_message = self._compile_failure_feedback(
+                message,
+                force_rebuild=force_rebuild,
+                rebuild_unavailable_reason=self._rebuild_retry_blocked_reason(),
+            )
             self.statusBar().showMessage(status_message)
             if guidance_message:
                 self.debug_panel.log_info(guidance_message)

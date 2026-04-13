@@ -4278,6 +4278,51 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_compile_failure_after_missing_clean_target_avoids_rebuild_recovery_guidance(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MissingCleanTargetGuidanceDemo"
+        project = _create_project(project_dir, "MissingCleanTargetGuidanceDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": None)
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window._on_compile_finished(
+            None,
+            window._async_generation,
+            True,
+            False,
+            "Rebuild failed:\nmake: *** No rule to make target 'clean'.  Stop.",
+            None,
+        )
+
+        window.debug_panel._output.clear()
+        window._on_compile_finished(
+            None,
+            window._async_generation,
+            False,
+            False,
+            "Compilation failed:\nboom",
+            None,
+        )
+
+        assert "Rebuild-based recovery is unavailable" in window.statusBar().currentMessage()
+        debug_output = window.debug_panel._output.toPlainText()
+        assert "required by Rebuild EGUI Project and Clean All && Reconstruct" in debug_output
+        assert "Use Build > Rebuild EGUI Project first" not in debug_output
+        assert window._compile_action.isEnabled() is True
+        assert window._rebuild_action.isEnabled() is False
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_debug_rebuild_button_hides_after_environmental_preview_block(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -4334,6 +4379,17 @@ class TestMainWindowFileFlow:
 
         assert status == "Clean rebuild target 'clean' is unavailable, switched to Python fallback."
         assert "Regular Compile remains available" in guidance
+
+    def test_compile_failure_feedback_handles_generic_compile_failure_when_clean_target_is_unavailable(self):
+        from ui_designer.ui.main_window import MainWindow
+
+        status, guidance = MainWindow._compile_failure_feedback(
+            "Compilation failed:\nboom",
+            rebuild_unavailable_reason="make: *** No rule to make target 'clean'.  Stop.",
+        )
+
+        assert "Rebuild-based recovery is unavailable" in status
+        assert "required by Rebuild EGUI Project and Clean All && Reconstruct" in guidance
 
     def test_compile_failure_feedback_handles_preview_probe_timeout(self):
         from ui_designer.ui.main_window import MainWindow
