@@ -906,6 +906,78 @@ class TestWidgetOverlaySelection:
         assert captured[0][1] == QPoint(320, 420)
         _dispose_widget(overlay)
 
+    def test_click_selection_does_not_start_drag_or_show_coords(self, qapp):
+        overlay, _root, first, second, _third = self._make_overlay()
+        overlay.set_selection([first], primary=first)
+        drag_events = []
+
+        overlay.drag_started.connect(lambda: drag_events.append("start"))
+        overlay.drag_finished.connect(lambda: drag_events.append("finish"))
+
+        overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(20, 70)))
+        qapp.processEvents()
+
+        assert overlay.selected_widgets() == [second]
+        assert overlay._dragging is False
+        assert overlay._show_coords is False
+        assert drag_events == []
+
+        overlay.mouseReleaseEvent(_mouse_event(QEvent.MouseButtonRelease, QPoint(20, 70), buttons=Qt.NoButton))
+        qapp.processEvents()
+
+        assert overlay._dragging is False
+        assert overlay._show_coords is False
+        assert drag_events == []
+        _dispose_widget(overlay)
+
+    def test_widget_drag_starts_only_after_move_threshold(self, qapp):
+        overlay, _root, _first, second, _third = self._make_overlay()
+        drag_events = []
+        threshold = overlay._drag_start_distance()
+
+        overlay.drag_started.connect(lambda: drag_events.append("start"))
+        overlay.drag_finished.connect(lambda: drag_events.append("finish"))
+
+        overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(20, 70)))
+        overlay.mouseMoveEvent(
+            _mouse_event(
+                QEvent.MouseMove,
+                QPoint(20 + max(threshold - 1, 0), 70),
+                button=Qt.NoButton,
+                buttons=Qt.LeftButton,
+            )
+        )
+        qapp.processEvents()
+
+        assert overlay.selected_widgets() == [second]
+        assert overlay._dragging is False
+        assert overlay._show_coords is False
+        assert drag_events == []
+
+        overlay.mouseMoveEvent(
+            _mouse_event(
+                QEvent.MouseMove,
+                QPoint(20 + threshold + 4, 70),
+                button=Qt.NoButton,
+                buttons=Qt.LeftButton,
+            )
+        )
+        qapp.processEvents()
+
+        assert overlay._dragging is True
+        assert overlay._show_coords is True
+        assert drag_events == ["start"]
+
+        overlay.mouseReleaseEvent(
+            _mouse_event(QEvent.MouseButtonRelease, QPoint(20 + threshold + 4, 70), buttons=Qt.NoButton)
+        )
+        qapp.processEvents()
+
+        assert overlay._dragging is False
+        assert overlay._show_coords is False
+        assert drag_events == ["start", "finish"]
+        _dispose_widget(overlay)
+
     def test_rubber_band_replace_excludes_root_widget(self, qapp):
         overlay, root, first, second, third = self._make_overlay()
 

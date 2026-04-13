@@ -160,6 +160,9 @@ class WidgetOverlay(QWidget):
 
         # Drag state
         self._dragging = False
+        self._pressed_widget = None
+        self._press_pos = QPoint()
+        self._press_drag_offset = QPoint()
         self._drag_offset = QPoint()
         self._reorder_mode = False
         self._insert_index = -1
@@ -243,6 +246,38 @@ class WidgetOverlay(QWidget):
         self._last_geometry_signal_ts = -1.0
         self._pending_move_signal = None
         self._pending_resize_signal = None
+
+    def _drag_start_distance(self):
+        app = QApplication.instance()
+        if app is None:
+            return 8
+        try:
+            return max(int(app.startDragDistance() or 0), 1)
+        except Exception:
+            return 8
+
+    def _clear_pending_drag_state(self):
+        self._pressed_widget = None
+        self._press_pos = QPoint()
+        self._press_drag_offset = QPoint()
+
+    def _begin_widget_drag(self, widget):
+        if widget is None:
+            return False
+        self._dragging = True
+        self._drag_offset = QPoint(self._press_drag_offset)
+        self._reorder_mode = _parent_has_layout(widget)
+        self._insert_index = -1
+        self._insert_line_rect = None
+        self._show_coords = not self._reorder_mode
+        self._reset_geometry_signal_state()
+        if self._reorder_mode:
+            self.setCursor(Qt.ClosedHandCursor)
+        else:
+            self.setCursor(Qt.SizeAllCursor)
+        self._clear_pending_drag_state()
+        self.drag_started.emit()
+        return True
 
     def _flush_pending_geometry_signals(self):
         if self._pending_move_signal is not None:
@@ -1374,6 +1409,7 @@ class WidgetOverlay(QWidget):
         pos = self._to_logical(event.pos())
         ctrl = bool(event.modifiers() & Qt.ControlModifier)
         shift = bool(event.modifiers() & Qt.ShiftModifier)
+        self._clear_pending_drag_state()
 
         # Check for resize handle first
         handle = self._handle_at(pos)
@@ -1419,18 +1455,10 @@ class WidgetOverlay(QWidget):
             self._multi_selected.clear()
             self._refresh_paint_widget_cache()
             self._invalidate_passive_bounds_cache()
-            self._dragging = True
-            self._drag_offset = pos - QPoint(w.display_x, w.display_y)
-            self._reorder_mode = _parent_has_layout(w)
-            self._insert_index = -1
-            self._insert_line_rect = None
-            self._show_coords = not self._reorder_mode
-            self._reset_geometry_signal_state()
-            if self._reorder_mode:
-                self.setCursor(Qt.ClosedHandCursor)
-            else:
-                self.setCursor(Qt.SizeAllCursor)
-            self.drag_started.emit()
+            # Plain press should select immediately, but drag visuals wait for a real move threshold.
+            self._pressed_widget = w
+            self._press_pos = QPoint(pos)
+            self._press_drag_offset = pos - QPoint(w.display_x, w.display_y)
             self._emit_selection_changed()
             self.update()
             return
@@ -1474,6 +1502,16 @@ class WidgetOverlay(QWidget):
         if self._resizing and self._selected:
             self._do_resize(pos)
             return
+
+        if (
+            not self._dragging
+            and self._pressed_widget is not None
+            and (event.buttons() & Qt.LeftButton)
+        ):
+            if (pos - self._press_pos).manhattanLength() >= self._drag_start_distance():
+                self._begin_widget_drag(self._pressed_widget)
+            else:
+                return
 
         if self._dragging and self._selected:
             if self._reorder_mode:
@@ -1754,6 +1792,10 @@ class WidgetOverlay(QWidget):
                 self._screen_rect_for_logical_rect(old_rect),
             )
             self._update_regions_for_guide_rects(old_guide_rects)
+            return
+
+        if self._pressed_widget is not None:
+            self._clear_pending_drag_state()
 
     def leaveEvent(self, event):
         old_hover = self._hovered
