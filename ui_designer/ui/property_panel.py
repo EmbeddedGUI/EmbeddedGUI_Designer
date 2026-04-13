@@ -314,6 +314,8 @@ class PropertyPanel(QWidget):
         self._header_size_chip = None
         self._property_tree_name_column_width = 176
         self._debug_logger = None
+        self._merged_fonts_cache_key = None
+        self._merged_fonts_cache = None
         self.setAcceptDrops(True)
         self._init_ui()
 
@@ -322,6 +324,7 @@ class PropertyPanel(QWidget):
     def set_resource_dir(self, path):
         """Store the resource directory (resource/) for generated font scanning."""
         self._resource_dir = path or ""
+        self._invalidate_merged_fonts_cache()
 
     def set_source_resource_dir(self, path):
         """Store the source resource directory (.eguiproject/resources/)
@@ -353,6 +356,7 @@ class PropertyPanel(QWidget):
         The font QComboBox will show FONTS + these custom entries.
         """
         self._custom_fonts = list(font_exprs) if font_exprs else []
+        self._invalidate_merged_fonts_cache()
         # Rebuild form if currently displaying a widget (to update font combos)
         if self._primary_widget is not None:
             self._updating = True
@@ -507,6 +511,20 @@ class PropertyPanel(QWidget):
         group.apply_expanded_state(expanded)
         group.toggled.connect(lambda checked, k=key: self._on_inspector_collapsible_toggled(k, checked))
 
+    def _invalidate_merged_fonts_cache(self):
+        self._merged_fonts_cache_key = None
+        self._merged_fonts_cache = None
+
+    def _merged_fonts_cache_signature(self):
+        font_dir = generated_resource_font_dir(self._resource_dir) if self._resource_dir else ""
+        dir_mtime_ns = None
+        if font_dir and os.path.isdir(font_dir):
+            try:
+                dir_mtime_ns = os.stat(font_dir).st_mtime_ns
+            except OSError:
+                dir_mtime_ns = None
+        return (font_dir, dir_mtime_ns, tuple(self._custom_fonts))
+
     def _on_inspector_collapsible_toggled(self, key: str, checked: bool):
         if self._updating:
             return
@@ -514,24 +532,27 @@ class PropertyPanel(QWidget):
 
     def _merged_fonts(self):
         """Return built-in FONTS merged with generated font resources (no dups)."""
+        cache_key = self._merged_fonts_cache_signature()
+        if self._merged_fonts_cache_key == cache_key and self._merged_fonts_cache is not None:
+            return list(self._merged_fonts_cache)
+
         seen = set(FONTS)
         merged = list(FONTS)
 
         # Scan generated font resources from resource/font/
-        if self._resource_dir:
-            font_dir = generated_resource_font_dir(self._resource_dir)
-            if os.path.isdir(font_dir):
-                pattern = re.compile(r'^(egui_res_font_\w+)\.c$')
-                for fname in sorted(os.listdir(font_dir)):
-                    m = pattern.match(fname)
-                    if m:
-                        res_name = m.group(1)
-                        # Skip _bin variants (external storage)
-                        if not res_name.endswith("_bin"):
-                            expr = f"&{res_name}"
-                            if expr not in seen:
-                                merged.append(expr)
-                                seen.add(expr)
+        font_dir = cache_key[0]
+        if font_dir and os.path.isdir(font_dir):
+            pattern = re.compile(r'^(egui_res_font_\w+)\.c$')
+            for fname in sorted(os.listdir(font_dir)):
+                m = pattern.match(fname)
+                if m:
+                    res_name = m.group(1)
+                    # Skip _bin variants (external storage)
+                    if not res_name.endswith("_bin"):
+                        expr = f"&{res_name}"
+                        if expr not in seen:
+                            merged.append(expr)
+                            seen.add(expr)
 
         # Also include custom fonts from config (for backward compatibility)
         for f in self._custom_fonts:
@@ -539,7 +560,9 @@ class PropertyPanel(QWidget):
                 merged.append(f)
                 seen.add(f)
 
-        return merged
+        self._merged_fonts_cache_key = cache_key
+        self._merged_fonts_cache = tuple(merged)
+        return list(merged)
 
     def _catalog_images(self):
         """Return list of image filenames from catalog."""

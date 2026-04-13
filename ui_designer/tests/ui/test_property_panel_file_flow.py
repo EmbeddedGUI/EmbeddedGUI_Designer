@@ -1045,6 +1045,36 @@ class TestPropertyPanelFileFlow:
         assert "&egui_res_font_demo_bin" not in merged
         panel.deleteLater()
 
+    def test_merged_fonts_reuses_cached_directory_scan_when_inputs_unchanged(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.ui.property_panel import PropertyPanel
+        from ui_designer.utils.scaffold import generated_resource_font_dir
+
+        resource_dir = tmp_path / "project" / "resource"
+        font_dir = generated_resource_font_dir(str(resource_dir))
+        os.makedirs(font_dir, exist_ok=True)
+        (Path(font_dir) / "egui_res_font_demo_16_4.c").write_text("// font\n", encoding="utf-8")
+
+        listdir_calls = 0
+        original_listdir = os.listdir
+
+        def counted_listdir(path):
+            nonlocal listdir_calls
+            listdir_calls += 1
+            return original_listdir(path)
+
+        monkeypatch.setattr("ui_designer.ui.property_panel.os.listdir", counted_listdir)
+
+        panel = PropertyPanel()
+        panel.set_resource_dir(str(resource_dir))
+
+        first = panel._merged_fonts()
+        second = panel._merged_fonts()
+
+        assert "&egui_res_font_demo_16_4" in first
+        assert first == second
+        assert listdir_calls == 1
+        panel.deleteLater()
+
     def test_multi_selection_form_toggles_designer_flags_for_all_widgets(self, qapp):
         from qfluentwidgets import CheckBox
         from ui_designer.model.widget_model import WidgetModel
