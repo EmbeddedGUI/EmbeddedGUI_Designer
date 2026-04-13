@@ -157,6 +157,96 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_normalize_selected_image_requires_source_dir(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        image_path = tmp_path / "hero.png"
+        image_path.write_bytes(b"png")
+
+        warnings = []
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+
+        result = window._normalize_selected_resource_path(RESOURCE_SECTION_SPECS["img"].fields[0], str(image_path))
+
+        assert result is None
+        assert warnings == [
+            (
+                "Source Directory Missing",
+                "Set Source Dir before importing files that must be stored relative to it.",
+            )
+        ]
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_normalize_selected_image_copies_external_file_into_source_dir(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        external_file = tmp_path / "imports" / "hero.png"
+        external_file.parent.mkdir(parents=True)
+        external_file.write_bytes(b"image-data")
+
+        prompts = []
+        monkeypatch.setattr(
+            QMessageBox,
+            "question",
+            lambda *args, **kwargs: prompts.append((args[1], args[2])) or QMessageBox.Yes,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._session.paths.source_dir = str(source_dir)
+
+        result = window._normalize_selected_resource_path(RESOURCE_SECTION_SPECS["img"].fields[0], str(external_file))
+
+        copied_file = source_dir / external_file.name
+        assert result == external_file.name
+        assert copied_file.read_bytes() == b"image-data"
+        assert prompts == [
+            (
+                "Copy Into Source Dir",
+                f"{external_file}\n\nCopy this file into:\n{source_dir}\n\nRequired for generation.",
+            )
+        ]
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_normalize_selected_font_file_keeps_absolute_path_outside_source_dir(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+        from ui_designer.model.workspace import normalize_path
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        external_font = tmp_path / "fonts" / "display.ttf"
+        external_font.parent.mkdir(parents=True)
+        external_font.write_bytes(b"font-data")
+
+        prompts = []
+        monkeypatch.setattr(
+            QMessageBox,
+            "question",
+            lambda *args, **kwargs: prompts.append((args[1], args[2])) or QMessageBox.Yes,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._active_section = "font"
+        window._session.paths.source_dir = str(source_dir)
+
+        result = window._normalize_selected_resource_path(RESOURCE_SECTION_SPECS["font"].fields[0], str(external_font))
+
+        assert result == normalize_path(str(external_font))
+        assert prompts == []
+        _close_window(window)
+
+    @_skip_no_qt
     def test_main_window_close_is_blocked_when_resource_generator_cancelled(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QCloseEvent
 
