@@ -834,7 +834,7 @@ QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QAbstractSpinBox:focus, 
     background-color: {t['panel_raised']};
 }}
 
-QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
+QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled {{
     color: {t['text_soft']};
     background-color: {t['panel_alt']};
 }}
@@ -1003,6 +1003,16 @@ QMenu::item {{
 
 QMenu::item:selected {{
     background-color: {t['selection']};
+}}
+
+QMenu::item:disabled {{
+    color: {t['text_soft']};
+    background-color: {t['panel_alt']};
+}}
+
+QMenu::item:selected:disabled {{
+    color: {t['text_soft']};
+    background-color: {t['panel_alt']};
 }}
 
 QMenu::separator {{
@@ -2185,6 +2195,7 @@ QPushButton#project_dock_add_page_button:hover {{
 
 QPushButton#project_dock_add_page_button:disabled {{
     color: {t['text_soft']};
+    background-color: {t['panel_alt']};
     border-color: {t['border']};
 }}
 
@@ -2285,6 +2296,7 @@ QTreeWidget#project_dock_tree {{
 #structure_selection_strip QToolButton:disabled,
 #structure_filter_bar QPushButton:disabled {{
     color: {t['text_soft']};
+    background-color: {t['panel_alt']};
     border-color: {t['border']};
 }}
 
@@ -2341,6 +2353,7 @@ QTreeWidget#project_dock_tree {{
 #diagnostics_controls_strip QPushButton:disabled,
 #diagnostics_export_strip QPushButton:disabled {{
     color: {t['text_soft']};
+    background-color: {t['panel_alt']};
     border-color: {t['border']};
 }}
 
@@ -2397,6 +2410,7 @@ QListWidget#diagnostics_list {{
 
 #debug_panel_controls_strip QPushButton:disabled {{
     color: {t['text_soft']};
+    background-color: {t['panel_alt']};
     border-color: {t['border']};
 }}
 
@@ -2485,6 +2499,7 @@ QListWidget#history_panel_list {{
 
 #animations_panel_actions_strip QPushButton:disabled {{
     color: {t['text_soft']};
+    background-color: {t['panel_alt']};
     border-color: {t['border']};
 }}
 
@@ -2641,6 +2656,7 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_editor_section QPushButton:disabled,
 #page_editor_table_shell QPushButton:disabled {{
     color: {t['text_soft']};
+    background-color: {t['panel_alt']};
     border-color: {t['border']};
 }}
 

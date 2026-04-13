@@ -103,6 +103,25 @@ def test_scrollbars_follow_theme_surface_tokens():
         assert "border-radius: 0px;" in table_corner
 
 
+def test_disabled_menu_items_and_combo_boxes_use_panel_alt_backgrounds():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        combo_disabled = css.split(
+            "QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled {",
+            1,
+        )[1].split("}", 1)[0]
+        menu_item_disabled = css.split("QMenu::item:disabled {", 1)[1].split("}", 1)[0]
+        menu_item_selected_disabled = css.split("QMenu::item:selected:disabled {", 1)[1].split("}", 1)[0]
+
+        assert f"background-color: {t['panel_alt']};" in combo_disabled
+        assert f"background-color: {t['panel_alt']};" in menu_item_disabled
+        assert f"color: {t['text_soft']};" in menu_item_disabled
+        assert f"background-color: {t['panel_alt']};" in menu_item_selected_disabled
+        assert f"color: {t['text_soft']};" in menu_item_selected_disabled
+
+
 def test_stylesheet_shell_and_dialog_hint_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)
@@ -351,6 +370,7 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         sections = css.split("#page_editor_section,", 1)[1].split("}", 1)[0]
         table = css.split("#page_editor_table {", 1)[1].split("}", 1)[0]
         buttons = css.split("#page_editor_actions QPushButton,", 1)[1].split("}", 1)[0]
+        buttons_disabled = css.split("#page_editor_actions QPushButton:disabled,", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
@@ -370,6 +390,7 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         assert "min-height: 20px;" in buttons
         assert "max-height: 20px;" in buttons
         assert f"padding: 0px {t['space_sm']}px;" in buttons
+        assert f"background-color: {t['panel_alt']};" in buttons_disabled
 
 
 def test_page_timers_panel_styles_use_engineering_surface_tokens():
@@ -383,6 +404,7 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         sections = css.split("#page_editor_section,", 1)[1].split("}", 1)[0]
         table = css.split("#page_editor_table {", 1)[1].split("}", 1)[0]
         buttons = css.split("#page_editor_actions QPushButton,", 1)[1].split("}", 1)[0]
+        buttons_disabled = css.split("#page_editor_actions QPushButton:disabled,", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
@@ -402,6 +424,7 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         assert "min-height: 20px;" in buttons
         assert "max-height: 20px;" in buttons
         assert f"padding: 0px {t['space_sm']}px;" in buttons
+        assert f"background-color: {t['panel_alt']};" in buttons_disabled
 
 
 def test_editor_tabs_styles_use_engineering_shell_tokens():
@@ -923,6 +946,7 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         drag_hint = css.split("#structure_drag_hint_strip {", 1)[1].split("}", 1)[0]
         structure_label = css.split("#structure_panel_label {", 1)[1].split("}", 1)[0]
         buttons = css.split("#structure_primary_strip QPushButton,", 1)[1].split("}", 1)[0]
+        buttons_disabled = css.split("#structure_primary_strip QPushButton:disabled,", 1)[1].split("}", 1)[0]
         tree = css.split("QTreeWidget#widget_tree_panel_tree {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -944,6 +968,7 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in buttons
         assert "min-height: 26px;" in buttons
         assert f"padding: 2px {t['space_sm']}px;" in buttons
+        assert f"background-color: {t['panel_alt']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in tree
         _assert_default_border(tree, t)
         assert "border-radius: 0px;" in tree
@@ -960,6 +985,7 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         meta = css.split("#diagnostics_header_meta {", 1)[1].split("}", 1)[0]
         controls = css.split("#diagnostics_controls_strip,", 1)[1].split("}", 1)[0]
         buttons = css.split("#diagnostics_controls_strip QComboBox,", 1)[1].split("}", 1)[0]
+        buttons_disabled = css.split("#diagnostics_controls_strip QComboBox:disabled,", 1)[1].split("}", 1)[0]
         list_block = css.split("QListWidget#diagnostics_list {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -975,6 +1001,7 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in buttons
         assert "min-height: 24px;" in buttons
         assert f"padding: 1px {t['space_sm']}px;" in buttons
+        assert f"background-color: {t['panel_alt']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in list_block
         assert "border-radius: 0px;" in list_block
 
@@ -989,6 +1016,7 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         meta = css.split("#debug_panel_header_meta {", 1)[1].split("}", 1)[0]
         controls = css.split("#debug_panel_controls_strip {", 1)[1].split("}", 1)[0]
         button = css.split("#debug_panel_controls_strip QPushButton {", 1)[1].split("}", 1)[0]
+        button_disabled = css.split("#debug_panel_controls_strip QPushButton:disabled {", 1)[1].split("}", 1)[0]
         surface = css.split("QPlainTextEdit#debug_output_surface {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -1004,6 +1032,7 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in button
         assert "min-height: 24px;" in button
         assert f"padding: 1px {t['space_sm']}px;" in button
+        assert f"background-color: {t['panel_alt']};" in button_disabled
         assert f"background-color: {t['canvas_stage']};" in surface
         assert "border-radius: 0px;" in surface
 
@@ -1039,6 +1068,7 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         meta = css.split("#animations_panel_meta {", 1)[1].split("}", 1)[0]
         actions = css.split("#animations_panel_actions_strip {", 1)[1].split("}", 1)[0]
         buttons = css.split("#animations_panel_actions_strip QPushButton {", 1)[1].split("}", 1)[0]
+        buttons_disabled = css.split("#animations_panel_actions_strip QPushButton:disabled {", 1)[1].split("}", 1)[0]
         table = css.split("QTableWidget#animations_panel_table {", 1)[1].split("}", 1)[0]
         detail = css.split("QGroupBox#animations_panel_detail_group {", 1)[1].split("}", 1)[0]
 
@@ -1055,6 +1085,7 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         assert "min-height: 20px;" in buttons
         assert "max-height: 20px;" in buttons
         assert f"padding: 0px {t['space_sm']}px;" in buttons
+        assert f"background-color: {t['panel_alt']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in table
         assert "border-radius: 0px;" in table
         assert "background-color: transparent;" in detail
@@ -1071,6 +1102,7 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         eyebrow = css.split("#project_workspace_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#project_workspace_metrics_strip {", 1)[1].split("}", 1)[0]
         buttons = css.split("QPushButton#project_workspace_view_button {", 1)[1].split("}", 1)[0]
+        add_page_disabled = css.split("QPushButton#project_dock_add_page_button:disabled {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
@@ -1083,6 +1115,7 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         assert "padding: 0px 6px;" in buttons
         assert "min-height: 20px;" in buttons
         assert "max-height: 20px;" in buttons
+        assert f"background-color: {t['panel_alt']};" in add_page_disabled
 
 
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
