@@ -1156,6 +1156,32 @@ def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
 
 
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
+def test_fluent_engineering_style_manager_can_refresh_single_widget_tree():
+    from PyQt5.QtWidgets import QWidget, QVBoxLayout
+
+    app = _app()
+    manager = _ensure_fluent_engineering_style_manager(app)
+    assert manager is not None
+
+    root = QWidget()
+    layout = QVBoxLayout(root)
+    button = PushButton("Scoped")
+    search = SearchLineEdit()
+    layout.addWidget(button)
+    layout.addWidget(search)
+
+    try:
+        manager.refresh_widget_tree(root)
+
+        assert button.property("_designer_fluent_engineering_style") == "button"
+        assert search.property("_designer_fluent_engineering_style") == "line_edit"
+    finally:
+        root.close()
+        root.deleteLater()
+        app.processEvents()
+
+
+@pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
 def test_apply_theme_patches_new_fluent_widgets_after_theme_install():
     app = _app()
     manager = _ensure_fluent_engineering_style_manager(app)

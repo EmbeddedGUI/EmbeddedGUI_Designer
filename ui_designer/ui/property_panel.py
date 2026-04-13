@@ -1095,7 +1095,7 @@ class PropertyPanel(QWidget):
             return
         manager = _ensure_fluent_engineering_style_manager(QApplication.instance())
         if manager is not None:
-            manager.refresh_all()
+            manager.refresh_widget_tree(self)
 
     def _refresh_property_section_style(self, section, expanded):
         header_frame = section.get("header_frame")

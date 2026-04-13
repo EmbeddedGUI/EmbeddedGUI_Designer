@@ -748,6 +748,13 @@ def _apply_fluent_engineering_style(widget):
 
 
 class _FluentEngineeringStyleManager(QObject):
+    def refresh_widget_tree(self, root):
+        if not HAS_FLUENT or root is None or not isinstance(root, QWidget):
+            return
+        _apply_fluent_engineering_style(root)
+        for widget in root.findChildren(QWidget):
+            _apply_fluent_engineering_style(widget)
+
     def refresh_all(self):
         if not HAS_FLUENT:
             return
