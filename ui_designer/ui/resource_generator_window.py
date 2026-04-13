@@ -7,7 +7,8 @@ import json
 import os
 import shutil
 
-from PyQt5.QtCore import Qt, QSignalBlocker
+from PyQt5.QtCore import Qt, QSignalBlocker, QUrl
+from PyQt5.QtGui import QDesktopServices, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -192,6 +193,14 @@ class ResourceGeneratorWindow(QDialog):
         self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
         helper_row.addWidget(self._generate_font_text_button)
 
+        self._preview_asset_button = QPushButton("Preview Selected Asset")
+        self._preview_asset_button.clicked.connect(self._preview_selected_simple_asset)
+        helper_row.addWidget(self._preview_asset_button)
+
+        self._edit_asset_button = QPushButton("Edit / Open Asset...")
+        self._edit_asset_button.clicked.connect(self._open_selected_asset_in_external_editor)
+        helper_row.addWidget(self._edit_asset_button)
+
         self._open_professional_button = QPushButton("Open Professional Mode")
         self._open_professional_button.clicked.connect(lambda: self._set_ui_mode("professional"))
         helper_row.addWidget(self._open_professional_button)
@@ -218,6 +227,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_asset_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._simple_asset_table.setSelectionMode(QAbstractItemView.SingleSelection)
         self._simple_asset_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self._simple_asset_table.itemSelectionChanged.connect(self._on_simple_asset_selection_changed)
         self._simple_asset_table.itemDoubleClicked.connect(self._open_simple_selection_in_professional_mode)
         simple_header = self._simple_asset_table.horizontalHeader()
         simple_header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
@@ -226,13 +236,39 @@ class ResourceGeneratorWindow(QDialog):
         simple_header.setSectionResizeMode(3, QHeaderView.Stretch)
         layout.addWidget(self._simple_asset_table, 1)
 
+        preview_splitter = QSplitter(Qt.Horizontal)
+
+        asset_preview_group = QGroupBox("Asset Preview")
+        asset_preview_layout = QVBoxLayout(asset_preview_group)
+        asset_preview_layout.setContentsMargins(8, 8, 8, 8)
+        asset_preview_layout.setSpacing(8)
+
+        self._simple_asset_preview_title = QLabel("No asset selected.")
+        asset_preview_layout.addWidget(self._simple_asset_preview_title)
+
+        self._simple_asset_preview_label = QLabel("Select an image, font, or video entry to inspect it here.")
+        self._simple_asset_preview_label.setAlignment(Qt.AlignCenter)
+        self._simple_asset_preview_label.setMinimumHeight(180)
+        self._simple_asset_preview_label.setWordWrap(True)
+        asset_preview_layout.addWidget(self._simple_asset_preview_label, 1)
+
+        self._simple_asset_meta = QPlainTextEdit()
+        self._simple_asset_meta.setReadOnly(True)
+        self._simple_asset_meta.setMinimumHeight(140)
+        asset_preview_layout.addWidget(self._simple_asset_meta, 1)
+        preview_splitter.addWidget(asset_preview_group)
+
         preview_group = QGroupBox("Merged Preview")
         preview_layout = QVBoxLayout(preview_group)
         preview_layout.setContentsMargins(8, 8, 8, 8)
         self._simple_preview = QPlainTextEdit()
         self._simple_preview.setReadOnly(True)
         preview_layout.addWidget(self._simple_preview)
-        layout.addWidget(preview_group, 1)
+        preview_splitter.addWidget(preview_group)
+        preview_splitter.setStretchFactor(0, 1)
+        preview_splitter.setStretchFactor(1, 1)
+        preview_splitter.setSizes([460, 460])
+        layout.addWidget(preview_splitter, 1)
         return page
 
     def _build_professional_page(self):
@@ -943,6 +979,11 @@ class ResourceGeneratorWindow(QDialog):
                     rows.append((section, index, entry))
 
         self._simple_row_map = [(section, index) for section, index, _entry in rows]
+        selected_row = -1
+        for row, (section, index) in enumerate(self._simple_row_map):
+            if section == self._active_section and index == self._active_entry_index:
+                selected_row = row
+                break
         with QSignalBlocker(self._simple_asset_table):
             self._simple_asset_table.setRowCount(len(rows))
             for row, (section, index, entry) in enumerate(rows):
@@ -959,6 +1000,9 @@ class ResourceGeneratorWindow(QDialog):
                 self._simple_asset_table.setItem(row, 1, QTableWidgetItem(section_entry_label(section, entry, index)))
                 self._simple_asset_table.setItem(row, 2, QTableWidgetItem(str(entry.get("file", "") or "")))
                 self._simple_asset_table.setItem(row, 3, QTableWidgetItem(detail))
+            if 0 <= selected_row < len(rows):
+                self._simple_asset_table.selectRow(selected_row)
+        self._update_simple_asset_preview()
 
     def _on_mode_changed(self, _index: int):
         self._set_ui_mode(self._mode_combo.currentData() or "simple")
@@ -983,6 +1027,104 @@ class ResourceGeneratorWindow(QDialog):
         self._refresh_section_selection()
         self._refresh_entry_table()
         self._set_ui_mode("professional")
+
+    def _selected_simple_asset_context(self):
+        selected = self._simple_asset_table.selectionModel().selectedRows() if self._simple_asset_table.selectionModel() else []
+        row = selected[0].row() if selected else -1
+        if not (0 <= row < len(self._simple_row_map)):
+            return None, -1, None
+        section, index = self._simple_row_map[row]
+        entries = self._session.section_entries(section)
+        if not (0 <= index < len(entries)):
+            return section, index, None
+        entry = entries[index]
+        return section, index, entry if isinstance(entry, dict) else None
+
+    def _on_simple_asset_selection_changed(self):
+        self._update_simple_asset_preview()
+
+    def _preview_selected_simple_asset(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None:
+            QMessageBox.warning(self, "Preview Asset", "Select an asset in Simple mode first.")
+            return
+        self._active_section = section or self._active_section
+        self._active_entry_index = index
+        self._update_simple_asset_preview()
+
+    def _update_simple_asset_preview(self):
+        section, index, entry = self._selected_simple_asset_context()
+        self._simple_asset_preview_label.setPixmap(QPixmap())
+        if entry is None or not section:
+            self._simple_asset_preview_title.setText("No asset selected.")
+            self._simple_asset_preview_label.setText("Select an image, font, or video entry to inspect it here.")
+            self._simple_asset_meta.setPlainText("")
+            return
+
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path(section, "file", file_name)
+        exists = bool(resolved_path and os.path.exists(resolved_path))
+        label = section_entry_label(section, entry, index)
+        self._simple_asset_preview_title.setText(f"{RESOURCE_SECTION_SPECS[section].label}: {label}")
+
+        meta_lines = [
+            f"Section: {section}",
+            f"Name: {label}",
+            f"File: {file_name or '(empty)'}",
+            f"Resolved: {resolved_path or '(unresolved)'}",
+            f"Exists: {'yes' if exists else 'no'}",
+        ]
+        if section == "font":
+            meta_lines.append(f"Text: {str(entry.get('text', '') or '(none)')}")
+        if section == "mp4":
+            meta_lines.append(
+                "Video: "
+                + " ".join(
+                    part
+                    for part in (
+                        f"{entry.get('fps', '')}fps" if str(entry.get("fps", "") or "").strip() else "",
+                        f"{entry.get('width', '')}x{entry.get('height', '')}"
+                        if str(entry.get("width", "") or "").strip() or str(entry.get("height", "") or "").strip()
+                        else "",
+                    )
+                    if part
+                ).strip()
+            )
+
+        if section == "img" and exists:
+            pixmap = QPixmap(resolved_path)
+            if not pixmap.isNull():
+                scaled = pixmap.scaled(360, 220, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self._simple_asset_preview_label.setPixmap(scaled)
+                self._simple_asset_preview_label.setText("")
+                meta_lines.append(f"Image Size: {pixmap.width()} x {pixmap.height()}")
+            else:
+                self._simple_asset_preview_label.setText("Image file exists but Qt could not decode it.")
+        elif exists:
+            kind = "font" if section == "font" else "video"
+            self._simple_asset_preview_label.setText(
+                f"External preview is not embedded for this {kind}.\nUse 'Edit / Open Asset...' to inspect it in the system app."
+            )
+        else:
+            self._simple_asset_preview_label.setText("File is missing. Fix the path or re-import the asset.")
+
+        self._simple_asset_meta.setPlainText("\n".join(meta_lines).strip())
+
+    def _open_selected_asset_in_external_editor(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None:
+            QMessageBox.warning(self, "Open Asset", "Select an asset in Simple mode first.")
+            return
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path(section or "", "file", file_name)
+        if not resolved_path or not os.path.exists(resolved_path):
+            QMessageBox.warning(self, "Open Asset", f"Asset file does not exist:\n{resolved_path or file_name}")
+            return
+        self._active_section = section or self._active_section
+        self._active_entry_index = index
+        self._update_simple_asset_preview()
+        if not QDesktopServices.openUrl(QUrl.fromLocalFile(resolved_path)):
+            QMessageBox.warning(self, "Open Asset", f"Failed to open asset with the system editor:\n{resolved_path}")
 
     # -- Browsing helpers ----------------------------------------------
 

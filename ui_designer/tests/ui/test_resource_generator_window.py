@@ -222,6 +222,64 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_mode_selection_updates_image_preview(self, qapp, tmp_path):
+        from PyQt5.QtGui import QPixmap
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        assert pixmap.save(str(image_path), "PNG")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        assert window._simple_asset_preview_title.text() == "Images: hero"
+        assert window._simple_asset_preview_label.pixmap() is not None
+        assert "Image Size: 12 x 8" in window._simple_asset_meta.toPlainText()
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_open_selected_asset_in_external_editor_uses_desktop_services(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        image_path.write_bytes(b"png")
+
+        opened = []
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window.QDesktopServices.openUrl",
+            lambda url: opened.append(url.toLocalFile()) or True,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_selected_asset_in_external_editor()
+
+        assert opened == [image_path.resolve().as_posix()]
+        _close_window(window)
+
+    @_skip_no_qt
     def test_normalize_selected_image_requires_source_dir(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
