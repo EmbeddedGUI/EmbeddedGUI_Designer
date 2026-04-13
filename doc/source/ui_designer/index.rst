@@ -37,6 +37,7 @@ UI Designer ????
 
    18_preview_and_build
    19_export_c_code
+   20_resource_generator
    26_zero_to_release_workflow
 
 .. toctree::
