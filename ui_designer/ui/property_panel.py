@@ -653,7 +653,7 @@ class PropertyPanel(QWidget):
         self._layout.setSpacing(4)
         scroll.setWidget(self._container)
 
-        self._property_tree = QTreeWidget()
+        self._property_tree = QTreeWidget(self._container)
         self._property_tree.setObjectName("property_panel_tree")
         self._property_tree.setColumnCount(2)
         self._property_tree.setHeaderLabels(["Property", "Value"])
@@ -1788,7 +1788,6 @@ class PropertyPanel(QWidget):
             self._context_frame.setVisible(False)
             self._search_shell.setVisible(True)
             self._search_edit.setVisible(True)
-            self._property_tree.show()
             if len(self._selection) > 1:
                 rebuild_mode = "multi"
                 callback_entries = self._measure_debug_step(
@@ -1804,6 +1803,7 @@ class PropertyPanel(QWidget):
                 header.hide()
                 self._layout.addWidget(header)
                 self._build_multi_selection_form(callback_entries=callback_entries, timings=timings)
+                self._property_tree.show()
                 self._measure_debug_step(
                     timings,
                     "search_filter",
@@ -1945,6 +1945,7 @@ class PropertyPanel(QWidget):
             self._measure_debug_step(timings, "callbacks_group", lambda: self._build_callbacks_group(w))
             self._measure_debug_step(timings, "designer_group", self._build_designer_state_group)
             self._layout.addWidget(self._property_tree, 1)
+            self._property_tree.show()
             feedback_group = self._measure_debug_step(
                 timings,
                 "feedback_group",

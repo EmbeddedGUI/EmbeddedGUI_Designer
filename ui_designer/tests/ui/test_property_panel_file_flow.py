@@ -142,6 +142,8 @@ class TestPropertyPanelFileFlow:
         assert buttons
         assert all(button.parentWidget() is not None for button in buttons)
         assert all(button.isWindow() is False for button in buttons)
+        assert panel._property_tree.parentWidget() is panel._container
+        assert panel._property_tree.isWindow() is False
         panel.deleteLater()
 
     def test_property_metric_cards_use_compact_flat_layout(self, qapp):

@@ -6610,21 +6610,22 @@ class MainWindow(QMainWindow):
     @staticmethod
     def _top_level_widget_kind(widget):
         try:
-            flags = int(widget.windowFlags())
+            window_type = int(widget.windowType())
         except Exception:
             return "window"
-        kinds = []
-        if flags & int(Qt.Popup):
-            kinds.append("popup")
-        if flags & int(Qt.Tool):
-            kinds.append("tool")
-        if flags & int(Qt.Dialog):
-            kinds.append("dialog")
-        if flags & int(Qt.Sheet):
-            kinds.append("sheet")
-        if flags & int(Qt.ToolTip):
-            kinds.append("tooltip")
-        return "/".join(kinds) or "window"
+        names = {
+            int(Qt.Widget): "widget",
+            int(Qt.Window): "window",
+            int(Qt.Dialog): "dialog",
+            int(Qt.Sheet): "sheet",
+            int(Qt.Drawer): "drawer",
+            int(Qt.Popup): "popup",
+            int(Qt.Tool): "tool",
+            int(Qt.ToolTip): "tooltip",
+            int(Qt.SplashScreen): "splash",
+            int(Qt.SubWindow): "subwindow",
+        }
+        return names.get(window_type, f"type={window_type}")
 
     def _describe_top_level_widget(self, widget):
         object_name = ""
