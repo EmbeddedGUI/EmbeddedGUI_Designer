@@ -315,6 +315,10 @@ class ResourceGeneratorWindow(QDialog):
         helper_row.setContentsMargins(0, 0, 0, 0)
         helper_row.setSpacing(8)
 
+        self._import_assets_button = QPushButton("Import Files...")
+        self._import_assets_button.clicked.connect(self._import_asset_files_dialog)
+        helper_row.addWidget(self._import_assets_button)
+
         self._scan_assets_button = QPushButton("Scan Asset Folder...")
         self._scan_assets_button.clicked.connect(self._scan_assets_directory_dialog)
         helper_row.addWidget(self._scan_assets_button)
@@ -788,6 +792,102 @@ class ResourceGeneratorWindow(QDialog):
         if not directory:
             return
         self._scan_assets_from_directory(directory)
+
+    def _import_asset_files_dialog(self):
+        start_dir = self._session.paths.source_dir or self._default_open_dir()
+        paths, _selected_filter = QFileDialog.getOpenFileNames(
+            self,
+            "Import Asset Files",
+            start_dir,
+            _supported_asset_file_filter(),
+        )
+        if not paths:
+            return
+        self._import_assets_from_files(paths)
+
+    def _import_assets_from_files(self, file_paths):
+        asset_paths, text_paths, skipped_paths = _classify_selected_asset_files(file_paths)
+        if not asset_paths:
+            QMessageBox.warning(
+                self,
+                "Import Asset Files",
+                "Select at least one supported image, font, or video file.",
+            )
+            return
+
+        previous_paths = GenerationPaths(
+            config_path=self._session.paths.config_path,
+            source_dir=self._session.paths.source_dir,
+            workspace_dir=self._session.paths.workspace_dir,
+            bin_output_dir=self._session.paths.bin_output_dir,
+        )
+        source_changed = False
+        source_dir = normalize_path(self._session.paths.source_dir)
+        copied_files = 0
+        selected_support_files = [path for _section, path in asset_paths] + list(text_paths)
+        import_root = _common_parent_directory(selected_support_files)
+
+        all_inside_source_dir = bool(source_dir) and all(
+            _is_subpath(path, source_dir) for path in selected_support_files
+        )
+
+        if not source_dir:
+            self._apply_source_dir_change(import_root)
+            source_dir = self._session.paths.source_dir
+            source_changed = self._session.paths != previous_paths
+        elif not all_inside_source_dir:
+            answer = QMessageBox.question(
+                self,
+                "Import Asset Files",
+                (
+                    "Selected files are outside the current Source Dir.\n\n"
+                    f"Yes: copy supported files into:\n{source_dir}\n\n"
+                    f"No: switch Source Dir to:\n{import_root}\n\n"
+                    "Cancel: keep the current config unchanged."
+                ),
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Yes,
+            )
+            if answer == QMessageBox.Cancel:
+                return
+            if answer == QMessageBox.No:
+                self._apply_source_dir_change(import_root)
+                source_dir = self._session.paths.source_dir
+                source_changed = self._session.paths != previous_paths
+            else:
+                asset_paths, text_paths, copied_files = self._copy_supported_assets_into_source_dir(
+                    import_root,
+                    source_dir,
+                    asset_paths,
+                    text_paths,
+                )
+
+        entries_by_section = self._build_entries_from_asset_paths(asset_paths, text_paths, source_dir)
+        added, updated = self._merge_discovered_entries(entries_by_section)
+        if source_changed or added or updated:
+            self._mark_dirty()
+            self._refresh_path_fields()
+            self._refresh_entry_table()
+            self._update_merged_preview()
+            self._update_raw_editor()
+
+        imported_total = sum(len(items) for items in entries_by_section.values())
+        if not imported_total and not source_changed:
+            self._set_status("No supported assets were imported from the selected files.")
+            return
+
+        summary = [f"Imported {imported_total} assets"]
+        if copied_files:
+            summary.append(f"copied {copied_files} files")
+        if added:
+            summary.append(f"added {added}")
+        if updated:
+            summary.append(f"updated {updated}")
+        if source_changed:
+            summary.append("updated Source Dir")
+        if skipped_paths:
+            summary.append(f"ignored {len(skipped_paths)} unsupported files")
+        self._set_status(", ".join(summary) + ".")
 
     def _scan_assets_from_directory(self, directory: str):
         import_root = normalize_path(directory)
@@ -1731,7 +1831,7 @@ class ResourceGeneratorWindow(QDialog):
         copied_files = 0
 
         for text_path in text_paths:
-            relative_path = os.path.relpath(text_path, import_root)
+            relative_path = _relative_import_path(text_path, import_root)
             target_path = normalize_path(os.path.join(source_dir, relative_path))
             os.makedirs(os.path.dirname(target_path), exist_ok=True)
             if normalize_path(text_path) != target_path:
@@ -1740,7 +1840,7 @@ class ResourceGeneratorWindow(QDialog):
             copied_texts.append(target_path)
 
         for section, asset_path in asset_paths:
-            relative_path = os.path.relpath(asset_path, import_root)
+            relative_path = _relative_import_path(asset_path, import_root)
             target_path = normalize_path(os.path.join(source_dir, relative_path))
             os.makedirs(os.path.dirname(target_path), exist_ok=True)
             if normalize_path(asset_path) != target_path:
@@ -1948,6 +2048,86 @@ def _discover_supported_assets(root_dir: str):
             if section:
                 discovered_assets.append((section, full_path))
     return discovered_assets, discovered_texts
+
+
+def _classify_selected_asset_files(file_paths):
+    discovered_assets: list[tuple[str, str]] = []
+    discovered_texts: list[str] = []
+    skipped_paths: list[str] = []
+    seen_paths: set[str] = set()
+    seen_texts: set[str] = set()
+
+    for raw_path in file_paths:
+        full_path = normalize_path(raw_path)
+        if not full_path or full_path in seen_paths:
+            continue
+        seen_paths.add(full_path)
+
+        if not os.path.isfile(full_path):
+            skipped_paths.append(full_path)
+            continue
+
+        extension = os.path.splitext(full_path)[1].lower()
+        if extension in _TEXT_FILE_EXTENSIONS:
+            if full_path not in seen_texts:
+                discovered_texts.append(full_path)
+                seen_texts.add(full_path)
+            continue
+
+        section = _section_for_asset_extension(extension)
+        if not section:
+            skipped_paths.append(full_path)
+            continue
+
+        discovered_assets.append((section, full_path))
+        if section == "font":
+            sibling_text = normalize_path(os.path.splitext(full_path)[0] + ".txt")
+            if sibling_text and os.path.isfile(sibling_text) and sibling_text not in seen_texts:
+                discovered_texts.append(sibling_text)
+                seen_texts.add(sibling_text)
+
+    return discovered_assets, discovered_texts, skipped_paths
+
+
+def _common_parent_directory(paths) -> str:
+    normalized_paths = [normalize_path(path) for path in paths if path]
+    if not normalized_paths:
+        return ""
+    try:
+        common_path = os.path.commonpath(normalized_paths)
+    except ValueError:
+        common_path = os.path.dirname(normalized_paths[0])
+    if not os.path.isdir(common_path):
+        common_path = os.path.dirname(common_path)
+    return normalize_path(common_path)
+
+
+def _relative_import_path(path: str, import_root: str) -> str:
+    full_path = normalize_path(path)
+    root = normalize_path(import_root)
+    if root and _is_subpath(full_path, root):
+        return os.path.relpath(full_path, root).replace("\\", "/")
+    return os.path.basename(full_path)
+
+
+def _supported_asset_file_filter() -> str:
+    all_extensions = sorted(_IMAGE_FILE_EXTENSIONS | _FONT_FILE_EXTENSIONS | _VIDEO_FILE_EXTENSIONS | _TEXT_FILE_EXTENSIONS)
+    image_extensions = sorted(_IMAGE_FILE_EXTENSIONS)
+    font_extensions = sorted(_FONT_FILE_EXTENSIONS)
+    video_extensions = sorted(_VIDEO_FILE_EXTENSIONS)
+    text_extensions = sorted(_TEXT_FILE_EXTENSIONS)
+
+    def _pattern(extensions):
+        return " ".join(f"*{extension}" for extension in extensions)
+
+    return (
+        f"Supported Assets ({_pattern(all_extensions)});;"
+        f"Images ({_pattern(image_extensions)});;"
+        f"Fonts ({_pattern(font_extensions)});;"
+        f"Videos ({_pattern(video_extensions)});;"
+        f"Text Files ({_pattern(text_extensions)});;"
+        "All files (*)"
+    )
 
 
 def _section_for_asset_extension(extension: str) -> str:

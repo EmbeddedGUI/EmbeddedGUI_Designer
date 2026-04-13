@@ -222,6 +222,70 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_import_assets_from_files_sets_source_dir_and_pairs_font_text(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        import_dir = tmp_path / "imports"
+        import_dir.mkdir(parents=True)
+        (import_dir / "hero.png").write_bytes(b"png")
+        (import_dir / "display.ttf").write_bytes(b"ttf")
+        (import_dir / "display.txt").write_text("ABC", encoding="utf-8")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._import_assets_from_files(
+            [
+                str(import_dir / "hero.png"),
+                str(import_dir / "display.ttf"),
+            ]
+        )
+
+        assert window._session.paths.source_dir == str(import_dir.resolve())
+        assert [entry["file"] for entry in window._session.section_entries("img")] == ["hero.png"]
+        font_entry = window._session.section_entries("font")[0]
+        assert font_entry["file"] == "display.ttf"
+        assert font_entry["text"] == "display.txt"
+        assert window._simple_asset_table.rowCount() == 2
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Imported 2 assets, added 2, updated Source Dir."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_import_assets_from_files_can_copy_into_existing_source_dir(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        import_dir = tmp_path / "imports"
+        (import_dir / "fonts").mkdir(parents=True)
+        (import_dir / "fonts" / "display.ttf").write_bytes(b"ttf")
+        (import_dir / "fonts" / "display.txt").write_text("ABC", encoding="utf-8")
+        (import_dir / "images").mkdir(parents=True)
+        (import_dir / "images" / "hero.png").write_bytes(b"png")
+
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(GenerationPaths(source_dir=str(source_dir)), {"img": [], "font": [], "mp4": []}, dirty=False)
+
+        window._import_assets_from_files(
+            [
+                str(import_dir / "fonts" / "display.ttf"),
+                str(import_dir / "images" / "hero.png"),
+            ]
+        )
+
+        assert (source_dir / "fonts" / "display.ttf").read_bytes() == b"ttf"
+        assert (source_dir / "fonts" / "display.txt").read_text(encoding="utf-8") == "ABC"
+        assert (source_dir / "images" / "hero.png").read_bytes() == b"png"
+        font_entry = window._session.section_entries("font")[0]
+        assert font_entry["file"] == "fonts/display.ttf"
+        assert font_entry["text"] == "fonts/display.txt"
+        assert window._session.section_entries("img")[0]["file"] == "images/hero.png"
+        assert window._status_label.text() == "Imported 2 assets, copied 3 files, added 2."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_selection_updates_image_preview(self, qapp, tmp_path):
         from PyQt5.QtGui import QPixmap
 
