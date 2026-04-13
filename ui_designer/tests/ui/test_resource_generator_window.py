@@ -283,6 +283,35 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_new_config_clears_entries_but_keeps_paths(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import infer_generation_paths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+        from ui_designer.utils.resource_config_overlay import make_empty_resource_config
+
+        config_path = tmp_path / "DemoApp" / "resource" / "src" / "app_resource_config.json"
+        paths = infer_generation_paths(str(config_path))
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            paths,
+            {
+                "img": [{"file": "hero.png", "format": "rgb565"}],
+                "font": [{"file": "display.ttf", "text": "charset/basic.txt"}],
+                "mp4": [{"file": "intro.mp4"}],
+            },
+            dirty=False,
+        )
+
+        window._new_config()
+
+        assert window._session.paths == paths
+        assert window._session.user_data == make_empty_resource_config()
+        assert window.has_unsaved_changes() is False
+        assert window._status_label.text() == "New resource config ready."
+        assert window.windowTitle() == f"Resource Generator - {paths.config_path}"
+        _close_window(window)
+
+    @_skip_no_qt
     def test_main_window_close_is_blocked_when_resource_generator_cancelled(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QCloseEvent
 
