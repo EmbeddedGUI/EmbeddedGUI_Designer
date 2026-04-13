@@ -185,6 +185,35 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_close_event_prompts_for_path_only_changes(self, qapp, monkeypatch):
+        from PyQt5.QtGui import QCloseEvent
+
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        prompts = []
+        monkeypatch.setattr(
+            QMessageBox,
+            "question",
+            lambda *args, **kwargs: prompts.append(args[1:3]) or QMessageBox.No,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window.show()
+        qapp.processEvents()
+        window._config_path_edit.setText("D:/tmp/app_resource_config.json")
+        window._on_path_edited("config_path", window._config_path_edit)
+
+        event = QCloseEvent()
+        window.closeEvent(event)
+
+        assert window.has_unsaved_changes() is True
+        assert prompts == [("Discard Changes", "Discard unsaved resource config changes?")]
+        assert event.isAccepted() is False
+
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+        _close_window(window)
+
+    @_skip_no_qt
     def test_generate_resources_logs_success_result(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import ResourceGenerationResult
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
