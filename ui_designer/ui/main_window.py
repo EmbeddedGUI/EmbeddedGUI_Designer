@@ -806,6 +806,8 @@ class MainWindow(QMainWindow):
     def _maybe_show_clean_all_startup_notice(self):
         if not getattr(self._config, "show_clean_all_startup_notice", True):
             return
+        if self._clean_all_recovery_unavailable_reason():
+            return
         self._config.show_clean_all_startup_notice = False
         self._config.save()
         message = (
@@ -1681,7 +1683,27 @@ class MainWindow(QMainWindow):
             return "open a project first"
         if not self._project_dir:
             return "save the project first"
+        clean_all_recovery_reason = self._clean_all_recovery_unavailable_reason()
+        if clean_all_recovery_reason:
+            return clean_all_recovery_reason
         return "clean-all recovery is unavailable"
+
+    def _clean_all_recovery_unavailable_reason(self):
+        reason = str(self._effective_preview_unavailable_reason() or "").strip()
+        if not reason:
+            return ""
+        normalized_reason = reason.rstrip(".!? ")
+        lowered = reason.lower()
+        missing_target = self._missing_make_target_name(reason).lower()
+        if missing_target in {"main.exe", "main"} or "preview build target unavailable" in lowered:
+            return f"missing preview build targets cannot be recovered by reconstruction: {normalized_reason}"
+        if "preview build target probe timed out" in lowered:
+            return f"preview target probe failures cannot be recovered by reconstruction: {normalized_reason}"
+        if lowered.startswith("preview build unavailable"):
+            return f"preview build availability failures cannot be recovered by reconstruction: {normalized_reason}"
+        if "make not found" in lowered:
+            return f"missing build tools cannot be recovered by reconstruction: {normalized_reason}"
+        return ""
 
     def _clean_all_action_runtime_note(self):
         if not hasattr(self, "_clean_all_action") or not self._clean_all_action.isEnabled():
@@ -1696,11 +1718,12 @@ class MainWindow(QMainWindow):
         return bool(
             hasattr(self, "_clean_all_action")
             and self._clean_all_action.isEnabled()
+            and not self._clean_all_recovery_unavailable_reason()
             and self._effective_rebuild_unavailable_reason()
         )
 
     def _clean_all_action_base_text(self):
-        if self._clean_all_action_will_skip_preview_rerun():
+        if self._clean_all_recovery_unavailable_reason() or self._clean_all_action_will_skip_preview_rerun():
             return (
                 "Destructive recovery: delete project-side generated/code files outside the preserved "
                 "Designer source set and reconstruct the project (Ctrl+Shift+F5)."
@@ -2779,7 +2802,11 @@ class MainWindow(QMainWindow):
         self._compile_action.setEnabled(can_compile)
         self._rebuild_action.setEnabled(can_rebuild)
         if hasattr(self, "_clean_all_action"):
-            self._clean_all_action.setEnabled(self.project is not None and bool(self._project_dir))
+            self._clean_all_action.setEnabled(
+                self.project is not None
+                and bool(self._project_dir)
+                and not self._clean_all_recovery_unavailable_reason()
+            )
         self.auto_compile_action.setEnabled(can_compile)
         auto_compile_base = "Automatically compile and rerun the preview after changes."
         auto_compile_context = self._auto_compile_action_context_summary()
@@ -7562,6 +7589,15 @@ class MainWindow(QMainWindow):
     def _do_clean_all_and_reconstruct(self):
         """Delete reconstructible outputs, rebuild from designer state, and rerun preview when available."""
         if self.project is None:
+            return
+        clean_all_recovery_reason = self._clean_all_recovery_unavailable_reason()
+        if clean_all_recovery_reason:
+            preview_unavailable_reason = str(self._effective_preview_unavailable_reason() or "").strip()
+            _status_message, guidance_message = self._compile_failure_feedback(preview_unavailable_reason)
+            self.debug_panel.log_info(f"Clean All skipped: {clean_all_recovery_reason}")
+            if guidance_message:
+                self.debug_panel.log_info(guidance_message)
+            self.statusBar().showMessage(f"Clean All skipped: {clean_all_recovery_reason}", 5000)
             return
         if self._compile_worker is not None and self._compile_worker.isRunning():
             self.statusBar().showMessage("Wait for the current compile to finish before Clean All.", 5000)

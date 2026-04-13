@@ -4916,7 +4916,8 @@ class TestMainWindowFileFlow:
             "Destructive recovery: delete project-side generated/code files outside the preserved "
             "Designer source set and reconstruct the project (Ctrl+Shift+F5). "
             "Project: open. Saved project: saved. SDK: valid. Preview: editing only. "
-            "Preview rerun will be skipped: make: *** No rule to make target 'main.exe'.  Stop."
+            "Unavailable: missing preview build targets cannot be recovered by reconstruction: "
+            "make: *** No rule to make target 'main.exe'.  Stop."
         )
         window._undo_manager.mark_all_saved()
         _close_window(window)
@@ -5595,6 +5596,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "CleanAllFlowDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _AutoRetryCompiler(project_dir, exe_ready=True)))
         _open_project_window(window, project, project_dir, sdk_root)
 
         compiler = _BuildReadyCompiler()
@@ -5649,21 +5651,9 @@ class TestMainWindowFileFlow:
         from ui_designer.model.project_cleaner import ProjectCleanReport
         from ui_designer.ui.main_window import MainWindow
 
-        class _BuildUnavailableCompiler:
-            def can_build(self):
-                return False
-
+        class _BuildUnavailableCompiler(_DisabledCompiler):
             def get_build_error(self):
                 return "SDK unavailable, compile preview disabled"
-
-            def is_preview_running(self):
-                return False
-
-            def stop_exe(self):
-                return None
-
-            def cleanup(self):
-                return None
 
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
@@ -5672,7 +5662,10 @@ class TestMainWindowFileFlow:
 
         window = MainWindow(str(sdk_root))
         preview_reasons = []
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _BuildUnavailableCompiler()))
+        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
         _open_project_window(window, project, project_dir, sdk_root)
+        preview_reasons.clear()
 
         compiler = _BuildUnavailableCompiler()
         captured = {"resources": 0}
@@ -5692,8 +5685,6 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_update_window_title", lambda: None)
         monkeypatch.setattr(window, "_update_compile_availability", lambda: None)
         monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: pytest.fail("_start_compile_cycle should not run"))
-        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
-
         window._do_clean_all_and_reconstruct()
 
         assert preview_reasons == ["SDK unavailable, compile preview disabled"]
@@ -5702,10 +5693,9 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
-    def test_clean_all_and_reconstruct_skips_force_rebuild_when_preview_target_is_still_unavailable(
+    def test_clean_all_and_reconstruct_is_unavailable_when_preview_target_is_still_missing(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
-        from ui_designer.model.project_cleaner import ProjectCleanReport
         from ui_designer.ui.main_window import MainWindow
 
         class _PreviewIncompatibleCompiler:
@@ -5718,9 +5708,18 @@ class TestMainWindowFileFlow:
                 return ""
 
             def get_preview_build_error(self):
-                return "make: *** No rule to make target 'main.exe'.  Stop."
+                return "Preview build target unavailable: make defines neither 'main.exe' nor 'main'."
+
+            def ensure_preview_build_available(self, force=False):
+                return False
+
+            def set_screen_size(self, width, height):
+                return None
 
             def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
                 return False
 
             def stop_exe(self):
@@ -5735,46 +5734,40 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "CleanAllPreviewTargetMissingDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        preview_reasons = []
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _PreviewIncompatibleCompiler()))
         _open_project_window(window, project, project_dir, sdk_root)
 
-        monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", lambda *args: QMessageBox.Yes)
         monkeypatch.setattr(
             "ui_designer.ui.main_window.clean_project_for_reconstruct",
-            lambda project_path: ProjectCleanReport(removed_files=1, removed_dirs=0),
+            lambda *args, **kwargs: pytest.fail("clean_project_for_reconstruct should not run"),
         )
-        monkeypatch.setattr(window, "_persist_designer_state_only", lambda project_path: None)
-        monkeypatch.setattr(window, "_shutdown_async_activity", lambda wait_ms=500: None)
-        monkeypatch.setattr(window, "_cleanup_compiler", lambda stop_exe=False: None)
         monkeypatch.setattr(
             window,
             "_save_project_files",
-            lambda project_path, reset_scaffold=False: {".designer/uicode.c": "// reconstructed\n"},
+            lambda *args, **kwargs: pytest.fail("_save_project_files should not run"),
         )
-        monkeypatch.setattr(window, "_ensure_resources_generated", lambda: None)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _PreviewIncompatibleCompiler()))
-        monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: None)
-        monkeypatch.setattr(window, "_update_window_title", lambda: None)
         monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: pytest.fail("_start_compile_cycle should not run"))
-        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
 
+        assert window._clean_all_action.isEnabled() is False
         window._do_clean_all_and_reconstruct()
 
-        assert preview_reasons == ["make: *** No rule to make target 'main.exe'.  Stop."]
-        assert "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop." in window.statusBar().currentMessage()
-        assert "main.exe" in window._auto_compile_retry_block_reason
+        assert "Clean All skipped: missing preview build targets cannot be recovered by reconstruction" in (
+            window.statusBar().currentMessage()
+        )
         assert window._clean_all_action.toolTip() == (
             "Destructive recovery: delete project-side generated/code files outside the preserved "
             "Designer source set and reconstruct the project (Ctrl+Shift+F5). "
             "Project: open. Saved project: saved. SDK: valid. Preview: editing only. "
-            "Preview rerun will be skipped: make: *** No rule to make target 'main.exe'.  Stop."
+            "Unavailable: missing preview build targets cannot be recovered by reconstruction: "
+            "Preview build target unavailable: make defines neither 'main.exe' nor 'main'."
         )
         build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
-            "Project: open. SDK: valid. Compile: unavailable. Rebuild: unavailable. Reconstruct: available (preview rerun skipped). Auto compile: on. "
+            "Project: open. SDK: valid. Compile: unavailable. Rebuild: unavailable. Reconstruct: unavailable. Auto compile: on. "
             f"Preview: editing only. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}."
         )
+        assert "cannot recover missing build targets" in window.debug_panel._output.toPlainText()
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -5811,6 +5804,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "CleanAllMissingCleanTargetDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _AutoRetryCompiler(project_dir, exe_ready=True)))
         _open_project_window(window, project, project_dir, sdk_root)
         window._block_auto_compile_retry("boom")
         window._block_rebuild_retry("make: *** No rule to make target 'clean'.  Stop.")
@@ -5887,6 +5881,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "CleanAllCancelDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _AutoRetryCompiler(project_dir, exe_ready=True)))
         _open_project_window(window, project, project_dir, sdk_root)
 
         monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", lambda *args: QMessageBox.No)
@@ -5918,6 +5913,59 @@ class TestMainWindowFileFlow:
 
         assert "Build > Clean All && Reconstruct" not in second.statusBar().currentMessage()
         _close_window(second)
+
+    def test_startup_notice_skips_clean_all_tip_when_reconstruction_cannot_recover_preview_target(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _PreviewIncompatibleCompiler:
+            app_root_arg = "example"
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return "Preview build target unavailable: make defines neither 'main.exe' nor 'main'."
+
+            def ensure_preview_build_available(self, force=False):
+                return False
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "StartupNoticePreviewTargetMissingDemo"
+        project = _create_project(project_dir, "StartupNoticePreviewTargetMissingDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _PreviewIncompatibleCompiler()))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+        window.show()
+        qapp.processEvents()
+
+        assert window._clean_all_action.isEnabled() is False
+        assert "Build > Clean All && Reconstruct" not in window.statusBar().currentMessage()
+        assert window._config.show_clean_all_startup_notice is True
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
 
     @pytest.mark.skip(reason="removed SDK download workflow from Designer")
     def test_download_sdk_failure_mentions_target_dir(self, qapp, isolated_config, tmp_path, monkeypatch):
