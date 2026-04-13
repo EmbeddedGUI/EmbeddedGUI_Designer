@@ -8,7 +8,7 @@ import os
 import shutil
 
 from PyQt5.QtCore import Qt, QSignalBlocker, QUrl
-from PyQt5.QtGui import QDesktopServices, QPixmap
+from PyQt5.QtGui import QDesktopServices, QImage, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -60,6 +60,13 @@ _IMAGE_FILE_EXTENSIONS = {".png", ".bmp", ".jpg", ".jpeg", ".gif", ".webp"}
 _FONT_FILE_EXTENSIONS = {".ttf", ".otf"}
 _VIDEO_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv"}
 _TEXT_FILE_EXTENSIONS = {".txt"}
+
+
+def _pil_image_to_qpixmap(image) -> QPixmap:
+    rgba = image.convert("RGBA")
+    data = rgba.tobytes("raw", "RGBA")
+    qimage = QImage(data, rgba.width, rgba.height, QImage.Format_RGBA8888)
+    return QPixmap.fromImage(qimage.copy())
 
 
 class _QuickImageResizeDialog(QDialog):
@@ -1180,6 +1187,17 @@ class ResourceGeneratorWindow(QDialog):
                 meta_lines.append(f"Image Size: {pixmap.width()} x {pixmap.height()}")
             else:
                 self._simple_asset_preview_label.setText("Image file exists but Qt could not decode it.")
+        elif section == "font" and exists:
+            preview_text, preview_source = self._font_preview_sample(entry)
+            meta_lines.append(f"Preview Text: {preview_text}")
+            meta_lines.append(f"Preview Source: {preview_source}")
+            pixmap = self._build_font_preview_pixmap(resolved_path, preview_text)
+            if pixmap is not None and not pixmap.isNull():
+                scaled = pixmap.scaled(360, 220, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self._simple_asset_preview_label.setPixmap(scaled)
+                self._simple_asset_preview_label.setText("")
+            else:
+                self._simple_asset_preview_label.setText("Font file exists but quick preview could not render it.")
         elif exists:
             kind = "font" if section == "font" else "video"
             self._simple_asset_preview_label.setText(
@@ -1189,6 +1207,91 @@ class ResourceGeneratorWindow(QDialog):
             self._simple_asset_preview_label.setText("File is missing. Fix the path or re-import the asset.")
 
         self._simple_asset_meta.setPlainText("\n".join(meta_lines).strip())
+
+    def _font_preview_sample(self, entry: dict) -> tuple[str, str]:
+        text_value = str(entry.get("text", "") or "").strip()
+        for item in [candidate.strip() for candidate in text_value.split(",") if candidate.strip()]:
+            resolved = self._resolve_entry_path("font", "text", item)
+            if not resolved or not os.path.isfile(resolved):
+                continue
+            try:
+                with open(resolved, "r", encoding="utf-8") as handle:
+                    raw_text = handle.read()
+            except OSError:
+                continue
+            lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
+            if lines and all(len(line) == 1 for line in lines[: min(len(lines), 24)]):
+                sample = "".join(lines[:24])
+            else:
+                sample = " ".join(raw_text.split())
+            sample = sample.strip()
+            if len(sample) > 48:
+                sample = sample[:45].rstrip() + "..."
+            if sample:
+                return sample, item
+        return "AaBb 123", "built-in sample"
+
+    def _build_font_preview_pixmap(self, font_path: str, sample_text: str) -> QPixmap | None:
+        try:
+            from PIL import Image, ImageDraw, ImageFont
+        except Exception:
+            return None
+
+        try:
+            font = ImageFont.truetype(font_path, size=34)
+        except Exception:
+            return None
+
+        width = 480
+        height = 220
+        padding = 18
+        image = Image.new("RGBA", (width, height), (247, 246, 241, 255))
+        draw = ImageDraw.Draw(image)
+        draw.rounded_rectangle((0, 0, width - 1, height - 1), radius=14, outline=(205, 201, 191, 255), width=2)
+
+        lines = self._wrap_font_preview_text(draw, sample_text, font, width - (padding * 2), max_lines=3)
+        y = padding
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            draw.text((padding, y), line, font=font, fill=(35, 35, 35, 255))
+            y += max(bbox[3] - bbox[1], 28) + 10
+
+        return _pil_image_to_qpixmap(image)
+
+    def _wrap_font_preview_text(self, draw, text: str, font, max_width: int, *, max_lines: int) -> list[str]:
+        compact = " ".join(str(text or "").split()).strip() or "AaBb 123"
+        lines = []
+        position = 0
+        while position < len(compact) and len(lines) < max_lines:
+            end = position + 1
+            while end <= len(compact):
+                candidate = compact[position:end]
+                bbox = draw.textbbox((0, 0), candidate, font=font)
+                if bbox[2] - bbox[0] > max_width and end > position + 1:
+                    end -= 1
+                    break
+                if bbox[2] - bbox[0] > max_width:
+                    break
+                end += 1
+            if end <= position:
+                end = position + 1
+
+            if len(lines) == max_lines - 1 and end < len(compact):
+                line = compact[position:]
+                while line and draw.textbbox((0, 0), line + "...", font=font)[2] > max_width:
+                    line = line[:-1]
+                lines.append((line.rstrip() + "...") if line else "...")
+                return lines
+
+            line = compact[position:end].rstrip()
+            if not line:
+                break
+            lines.append(line)
+            position = end
+            while position < len(compact) and compact[position] == " ":
+                position += 1
+
+        return lines or [compact]
 
     def _open_selected_asset_in_external_editor(self):
         section, index, entry = self._selected_simple_asset_context()

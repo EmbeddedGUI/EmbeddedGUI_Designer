@@ -250,6 +250,48 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_mode_selection_renders_font_preview(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        (source_dir / "charset").mkdir(parents=True)
+        font_path = source_dir / "display.ttf"
+        font_path.write_bytes(b"ttf")
+        (source_dir / "charset" / "basic.txt").write_text("A\nB\n", encoding="utf-8")
+
+        captured = {}
+
+        def _fake_render(self, font_file, sample_text):
+            captured["font_file"] = font_file
+            captured["sample_text"] = sample_text
+            pixmap = QPixmap(96, 36)
+            pixmap.fill()
+            return pixmap
+
+        monkeypatch.setattr(ResourceGeneratorWindow, "_build_font_preview_pixmap", _fake_render)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "name": "display", "text": "charset/basic.txt"}], "mp4": []},
+            dirty=False,
+        )
+
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        assert captured["font_file"] == str(font_path.resolve())
+        assert captured["sample_text"] == "AB"
+        assert window._simple_asset_preview_title.text() == "Fonts: display"
+        assert window._simple_asset_preview_label.pixmap() is not None
+        assert "Preview Text: AB" in window._simple_asset_meta.toPlainText()
+        assert "Preview Source: charset/basic.txt" in window._simple_asset_meta.toPlainText()
+        _close_window(window)
+
+    @_skip_no_qt
     def test_open_selected_asset_in_external_editor_uses_desktop_services(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
