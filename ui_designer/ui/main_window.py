@@ -1147,7 +1147,10 @@ class MainWindow(QMainWindow):
             return
         compile_state = "available" if getattr(getattr(self, "_compile_action", None), "isEnabled", lambda: False)() else "unavailable"
         rebuild_state = "available" if getattr(getattr(self, "_rebuild_action", None), "isEnabled", lambda: False)() else "unavailable"
-        reconstruct_state = "available" if getattr(getattr(self, "_clean_all_action", None), "isEnabled", lambda: False)() else "unavailable"
+        clean_all_enabled = getattr(getattr(self, "_clean_all_action", None), "isEnabled", lambda: False)()
+        reconstruct_state = "available" if clean_all_enabled else "unavailable"
+        if clean_all_enabled and self._effective_rebuild_unavailable_reason():
+            reconstruct_state = "available (preview rerun skipped)"
         auto_compile_state = "on" if getattr(getattr(self, "auto_compile_action", None), "isChecked", lambda: False)() else "off"
         preview_state = self._build_preview_state_text()
         project_state = "open" if getattr(self, "project", None) is not None else "none"

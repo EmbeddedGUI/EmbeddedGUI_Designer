@@ -4277,7 +4277,7 @@ class TestMainWindowFileFlow:
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
-            "Project: open. SDK: valid. Compile: available. Rebuild: unavailable. Reconstruct: available. Auto compile: on. "
+            "Project: open. SDK: valid. Compile: available. Rebuild: unavailable. Reconstruct: available (preview rerun skipped). Auto compile: on. "
             f"Preview: python preview. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}."
         )
         assert window.debug_panel._rebuild_btn.isHidden() is True
@@ -5380,6 +5380,12 @@ class TestMainWindowFileFlow:
         assert preview_reasons == ["make: *** No rule to make target 'main.exe'.  Stop."]
         assert "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop." in window.statusBar().currentMessage()
         assert "main.exe" in window._auto_compile_retry_block_reason
+        build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
+        assert build_action.toolTip() == (
+            "Compile previews, generate resources, or reconstruct a project from Designer sources. "
+            "Project: open. SDK: valid. Compile: unavailable. Rebuild: unavailable. Reconstruct: available (preview rerun skipped). Auto compile: on. "
+            f"Preview: editing only. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}."
+        )
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
