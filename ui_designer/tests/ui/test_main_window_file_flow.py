@@ -5206,6 +5206,54 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_compile_success_resumes_pending_external_reload_without_waiting_for_watch_tick(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CompileSuccessReloadResumeDemo"
+        project = _create_project(project_dir, "CompileSuccessReloadResumeDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+        reload_calls = []
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window.preview_panel, "start_rendering", lambda _compiler: None)
+
+        def _capture_reload(*args, **kwargs):
+            reload_calls.append(kwargs)
+            window._bump_async_generation()
+            window._clear_external_reload_pending()
+            return True
+
+        monkeypatch.setattr(window, "_reload_project_from_disk", _capture_reload)
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        window._set_external_reload_pending([os.path.normpath(os.path.abspath(layout_file))])
+        monkeypatch.setattr(
+            window,
+            "_pending_external_reload_changed_paths",
+            lambda: [os.path.normpath(os.path.abspath(layout_file))],
+        )
+        current_generation = window._async_generation
+        window._on_compile_finished(None, current_generation, False, True, "ok", None)
+
+        assert reload_calls == [
+            {
+                "auto": True,
+                "changed_paths": [os.path.normpath(os.path.abspath(layout_file))],
+            }
+        ]
+        assert window._pending_compile is False
+        assert window._pending_rebuild is False
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_manual_rebuild_clears_auto_retry_block(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 

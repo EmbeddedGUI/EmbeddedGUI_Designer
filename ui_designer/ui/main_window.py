@@ -7886,7 +7886,7 @@ class MainWindow(QMainWindow):
 
         if success:
             self._last_runtime_error_text = ""
-            if (pending_rebuild or pending_compile) and self._external_reload_pending and not self._has_unsaved_changes():
+            if self._external_reload_pending and not self._has_unsaved_changes():
                 self._poll_project_files()
                 if self._is_closing or generation != self._async_generation or self._external_reload_pending:
                     return
