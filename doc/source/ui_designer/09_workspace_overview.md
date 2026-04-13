@@ -35,6 +35,7 @@
 - `Auto Compile`
 - `Stop Exe`
 - `Generate Resources`
+- `Resource Generator...`
 
 ### View
 - ??????

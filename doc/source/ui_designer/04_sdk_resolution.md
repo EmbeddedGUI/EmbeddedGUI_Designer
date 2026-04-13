@@ -26,5 +26,6 @@ python ui_designer/main.py --sdk-root sdk/EmbeddedGUI
 - EXE Preview
 - Rebuild
 - Generate Resources
+- Resource Generator...
 - ?? SDK ????
 - CI ???????
