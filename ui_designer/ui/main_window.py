@@ -7541,13 +7541,13 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"Clean all failed: {exc}", 5000)
             return
 
-        self._clear_rebuild_retry_block()
         self._recreate_compiler()
         preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
             preload_preview_error=True,
             probe_environmental_recovery=True,
         )
         preview_unavailable_reason = preview_unavailable_reason or self._effective_preview_unavailable_reason()
+        rebuild_unavailable_reason = self._effective_rebuild_unavailable_reason()
         self._undo_manager.mark_all_saved()
         self._refresh_project_watch_snapshot()
         self._update_window_title()
@@ -7557,12 +7557,18 @@ class MainWindow(QMainWindow):
             f"Cleaned {report.removed_files} file(s) and {report.removed_dirs} director"
             f"{'y' if report.removed_dirs == 1 else 'ies'}; reconstructed {len(files)} code file(s)."
         )
-        status_message = self._status_message_with_editing_only_mode(summary, preview_unavailable_reason)
         self.debug_panel.log_action("Running destructive project cleanup and reconstruction...")
         self.debug_panel.log_info(summary)
+        if preview_unavailable_reason:
+            status_message = self._status_message_with_editing_only_mode(summary, preview_unavailable_reason)
+        elif rebuild_unavailable_reason:
+            status_message = f"{summary} | Preview rerun skipped: {rebuild_unavailable_reason}"
+            self.debug_panel.log_info(f"Preview rerun skipped after reconstruction: {rebuild_unavailable_reason}")
+        else:
+            status_message = summary
         self.statusBar().showMessage(status_message, 5000)
 
-        if self.compiler is not None and self.compiler.can_build() and not preview_unavailable_reason:
+        if self.compiler is not None and self.compiler.can_build() and not rebuild_unavailable_reason:
             self._clear_auto_compile_retry_block()
             self._start_compile_cycle(force_rebuild=True)
 

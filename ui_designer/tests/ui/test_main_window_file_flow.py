@@ -5377,6 +5377,74 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_clean_all_and_reconstruct_skips_force_rebuild_when_clean_target_is_unavailable(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.model.project_cleaner import ProjectCleanReport
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BuildReadyCompiler:
+            app_root_arg = "example"
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return ""
+
+            def is_preview_running(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CleanAllMissingCleanTargetDemo"
+        project = _create_project(project_dir, "CleanAllMissingCleanTargetDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        _open_project_window(window, project, project_dir, sdk_root)
+        window._block_rebuild_retry("make: *** No rule to make target 'clean'.  Stop.")
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", lambda *args: QMessageBox.Yes)
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.clean_project_for_reconstruct",
+            lambda project_path: ProjectCleanReport(removed_files=1, removed_dirs=0),
+        )
+        monkeypatch.setattr(window, "_persist_designer_state_only", lambda project_path: None)
+        monkeypatch.setattr(window, "_shutdown_async_activity", lambda wait_ms=500: None)
+        monkeypatch.setattr(window, "_cleanup_compiler", lambda stop_exe=False: None)
+        monkeypatch.setattr(
+            window,
+            "_save_project_files",
+            lambda project_path, reset_scaffold=False: {".designer/uicode.c": "// reconstructed\n"},
+        )
+        monkeypatch.setattr(window, "_ensure_resources_generated", lambda: None)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _BuildReadyCompiler()))
+        monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: None)
+        monkeypatch.setattr(window, "_update_window_title", lambda: None)
+        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": None)
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: pytest.fail("_start_compile_cycle should not run"))
+
+        window._do_clean_all_and_reconstruct()
+
+        assert "Preview rerun skipped: make: *** No rule to make target 'clean'.  Stop." in window.statusBar().currentMessage()
+        assert "Preview rerun skipped after reconstruction: make: *** No rule to make target 'clean'.  Stop." in (
+            window.debug_panel._output.toPlainText()
+        )
+        assert window._compile_action.isEnabled() is True
+        assert window._rebuild_action.isEnabled() is False
+        assert window._rebuild_retry_block_reason == "make: *** No rule to make target 'clean'.  Stop."
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_clean_all_and_reconstruct_stops_when_user_declines(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
