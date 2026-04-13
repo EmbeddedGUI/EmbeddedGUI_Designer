@@ -7948,6 +7948,7 @@ class MainWindow(QMainWindow):
         self._switch_to_python_preview(reason)
         self._renderer_manager.switch("v1", fallback="v1")
         self._update_compile_availability()
+        self._resume_pending_external_reload_if_ready(self._async_generation)
 
     def _try_embed_exe(self):
         """Legacy - headless rendering replaces window embedding."""

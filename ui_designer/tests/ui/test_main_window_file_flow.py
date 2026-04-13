@@ -16824,15 +16824,12 @@ class TestMainWindowCanvasActions:
     def test_preview_failure_switches_back_to_v1_renderer(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
-        class CompilerWithStopCount:
+        class CompilerWithStopCount(_DisabledCompiler):
             def __init__(self):
                 self.stop_calls = 0
 
             def stop_exe(self):
                 self.stop_calls += 1
-
-            def cleanup(self):
-                return None
 
         window = MainWindow("")
         compiler = CompilerWithStopCount()
@@ -16849,6 +16846,60 @@ class TestMainWindowCanvasActions:
         assert switch_calls == [("v1", "v1")]
         assert window._last_runtime_error_text == "forced failure"
 
+        _close_window(window)
+
+    def test_preview_failure_resumes_pending_external_reload_without_waiting_for_watch_tick(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class CompilerWithStopCount(_DisabledCompiler):
+            def __init__(self):
+                self.stop_calls = 0
+
+            def stop_exe(self):
+                self.stop_calls += 1
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewFailureReloadResumeDemo"
+        project = _create_project(project_dir, "PreviewFailureReloadResumeDemo", sdk_root)
+        reload_calls = []
+        compiler = CompilerWithStopCount()
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        def _capture_reload(*args, **kwargs):
+            reload_calls.append(kwargs)
+            window._bump_async_generation()
+            window._clear_external_reload_pending()
+            return True
+
+        monkeypatch.setattr(window, "_reload_project_from_disk", _capture_reload)
+        monkeypatch.setattr(window, "_show_bottom_panel", lambda *_args, **_kwargs: None)
+        monkeypatch.setattr(window._renderer_manager, "switch", lambda engine, fallback="v1": "v1")
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        window._set_external_reload_pending([os.path.normpath(os.path.abspath(layout_file))])
+        monkeypatch.setattr(
+            window,
+            "_pending_external_reload_changed_paths",
+            lambda: [os.path.normpath(os.path.abspath(layout_file))],
+        )
+
+        window._handle_preview_failure("forced failure")
+
+        assert reload_calls == [
+            {
+                "auto": True,
+                "changed_paths": [os.path.normpath(os.path.abspath(layout_file))],
+            }
+        ]
+        assert compiler.stop_calls == 1
+        assert window._last_runtime_error_text == "forced failure"
         _close_window(window)
 
     @pytest.mark.skip(reason="removed preview-engine selection feature")
