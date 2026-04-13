@@ -106,7 +106,9 @@ The `Build -> Resource Generator...` entry opens a standalone editor for `app_re
 
 - It can be used without opening an `.egui` project first.
 - It supports `New`, `Open`, `Save`, `Save As`, merged preview, and direct resource generation.
+- It now provides `Simple` and `Professional` modes so quick asset setup and detailed config editing can coexist in the same window.
 - Known sections currently have structured editors for `img`, `font`, and `mp4`.
+- `Simple` mode adds quick helpers for scanning an asset folder, importing images/fonts/videos, and generating font text files.
 - Generation uses an explicit path model: `Config`, `Source Dir`, `Workspace`, and `Bin Output`.
 - When `resource/src/.designer/app_resource_config_designer.json` exists next to the config, the window shows the merged effective view without modifying the designer-owned overlay.
 
