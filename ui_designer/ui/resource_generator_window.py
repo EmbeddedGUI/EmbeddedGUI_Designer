@@ -6,6 +6,7 @@ import copy
 import json
 import os
 import shutil
+import subprocess
 
 from PyQt5.QtCore import Qt, QSignalBlocker, QUrl
 from PyQt5.QtGui import QDesktopServices, QImage, QPixmap
@@ -330,6 +331,10 @@ class ResourceGeneratorWindow(QDialog):
         self._preview_asset_button = QPushButton("Preview Selected Asset")
         self._preview_asset_button.clicked.connect(self._preview_selected_simple_asset)
         helper_row.addWidget(self._preview_asset_button)
+
+        self._detect_video_info_button = QPushButton("Detect Video Info")
+        self._detect_video_info_button.clicked.connect(self._detect_selected_video_metadata)
+        helper_row.addWidget(self._detect_video_info_button)
 
         self._edit_asset_button = QPushButton("Edit / Open Asset...")
         self._edit_asset_button.clicked.connect(self._open_selected_asset_in_external_editor)
@@ -1494,6 +1499,53 @@ class ResourceGeneratorWindow(QDialog):
         self._active_entry_index = index
         self._remove_entry()
 
+    def _detect_selected_video_metadata(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None or section != "mp4":
+            QMessageBox.warning(self, "Detect Video Info", "Select a video asset in Simple mode first.")
+            return
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path("mp4", "file", file_name)
+        if not resolved_path or not os.path.isfile(resolved_path):
+            QMessageBox.warning(self, "Detect Video Info", f"Video file does not exist:\n{resolved_path or file_name}")
+            return
+
+        metadata = _detect_video_metadata(resolved_path)
+        if not metadata:
+            QMessageBox.warning(
+                self,
+                "Detect Video Info",
+                "Could not read video width, height, and fps. Make sure ffprobe is available in PATH.",
+            )
+            return
+
+        changed = False
+        for field_name in ("fps", "width", "height"):
+            incoming = metadata.get(field_name)
+            if incoming in (None, "", 0):
+                continue
+            existing = entry.get(field_name, "")
+            if str(existing or "").strip() == str(incoming).strip():
+                continue
+            self._session.update_entry_value("mp4", index, field_name, incoming)
+            changed = True
+
+        self._active_section = "mp4"
+        self._active_entry_index = index
+        if changed:
+            self._mark_dirty()
+            self._refresh_entry_table()
+            self._update_merged_preview()
+            self._update_raw_editor()
+            self._set_status(
+                f"Updated video metadata for '{section_entry_label('mp4', self._current_entry() or entry, index)}' "
+                f"({metadata.get('fps', 0)}fps {metadata.get('width', 0)}x{metadata.get('height', 0)})."
+            )
+            return
+
+        self._refresh_simple_page()
+        self._set_status(f"Video metadata already up to date for '{section_entry_label('mp4', entry, index)}'.")
+
     def _open_resize_image_helper(self):
         section, index, entry = self._selected_simple_asset_context()
         if entry is None or section != "img":
@@ -1908,6 +1960,10 @@ class ResourceGeneratorWindow(QDialog):
                 matched_text = text_lookup.get(text_key)
                 if matched_text:
                     entry["text"] = matched_text
+            elif section == "mp4":
+                for field_name, value in _detect_video_metadata(asset_path).items():
+                    if value not in (None, "", 0):
+                        entry[field_name] = value
             entries_by_section[section].append(entry)
         return entries_by_section
 
@@ -1939,6 +1995,14 @@ class ResourceGeneratorWindow(QDialog):
                 for field_name in ("name", "text"):
                     incoming = str(entry.get(field_name, "") or "").strip()
                     if incoming and not str(existing.get(field_name, "") or "").strip():
+                        existing[field_name] = incoming
+                        changed = True
+                if section == "mp4":
+                    for field_name in ("fps", "width", "height"):
+                        incoming = entry.get(field_name, "")
+                        current = existing.get(field_name, "")
+                        if incoming in (None, "", 0) or current not in (None, "", 0):
+                            continue
                         existing[field_name] = incoming
                         changed = True
                 if changed:
@@ -2170,6 +2234,100 @@ def _resource_kind_label(section: str) -> str:
         "font": "font",
         "mp4": "video",
     }.get(str(section or ""), str(section or "asset"))
+
+
+def _detect_video_metadata(video_path: str) -> dict:
+    ffprobe = _ffprobe_command()
+    if not ffprobe:
+        return {}
+
+    try:
+        result = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=width,height,avg_frame_rate,r_frame_rate",
+                "-of",
+                "json",
+                video_path,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except Exception:
+        return {}
+
+    if result.returncode != 0:
+        return {}
+
+    try:
+        payload = json.loads(result.stdout or "{}")
+    except Exception:
+        return {}
+
+    streams = payload.get("streams") if isinstance(payload, dict) else None
+    if not isinstance(streams, list) or not streams:
+        return {}
+
+    stream = streams[0] if isinstance(streams[0], dict) else {}
+    width = _safe_positive_int(stream.get("width"))
+    height = _safe_positive_int(stream.get("height"))
+    fps = _parse_video_fps(stream.get("avg_frame_rate")) or _parse_video_fps(stream.get("r_frame_rate"))
+
+    metadata = {}
+    if fps:
+        metadata["fps"] = fps
+    if width:
+        metadata["width"] = width
+    if height:
+        metadata["height"] = height
+    return metadata
+
+
+def _ffprobe_command() -> str:
+    command = shutil.which("ffprobe")
+    if command:
+        return normalize_path(command)
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        return ""
+    suffix = os.path.splitext(ffmpeg)[1]
+    sibling = os.path.join(os.path.dirname(ffmpeg), f"ffprobe{suffix}")
+    return normalize_path(sibling) if os.path.isfile(sibling) else ""
+
+
+def _safe_positive_int(value) -> int:
+    try:
+        parsed = int(str(value).strip())
+    except Exception:
+        return 0
+    return parsed if parsed > 0 else 0
+
+
+def _parse_video_fps(value) -> int:
+    raw = str(value or "").strip()
+    if not raw or raw in {"0/0", "N/A"}:
+        return 0
+    try:
+        if "/" in raw:
+            numerator, denominator = raw.split("/", 1)
+            denominator_value = float(denominator)
+            if denominator_value == 0:
+                return 0
+            fps = float(numerator) / denominator_value
+        else:
+            fps = float(raw)
+    except Exception:
+        return 0
+    if fps <= 0:
+        return 0
+    return max(int(round(fps)), 1)
 
 
 def _section_for_asset_extension(extension: str) -> str:

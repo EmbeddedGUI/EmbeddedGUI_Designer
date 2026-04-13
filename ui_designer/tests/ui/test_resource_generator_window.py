@@ -286,6 +286,31 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_import_assets_from_files_populates_video_metadata(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        import_dir = tmp_path / "imports"
+        import_dir.mkdir(parents=True)
+        (import_dir / "intro.mp4").write_bytes(b"mp4")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window._detect_video_metadata",
+            lambda path: {"fps": 24, "width": 320, "height": 180},
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._import_assets_from_files([str(import_dir / "intro.mp4")])
+
+        entry = window._session.section_entries("mp4")[0]
+        assert entry["file"] == "intro.mp4"
+        assert entry["fps"] == 24
+        assert entry["width"] == 320
+        assert entry["height"] == 180
+        assert window._simple_asset_table.rowCount() == 1
+        assert window._simple_asset_table.item(0, 3).text() == "24fps 320x180"
+        _close_window(window)
+
+    @_skip_no_qt
     def test_remove_selected_simple_asset_updates_session_and_preview(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -311,6 +336,40 @@ class TestResourceGeneratorWindow:
         assert "hero.png" not in window._simple_preview.toPlainText()
         assert "hero.png" not in window._merged_preview.toPlainText()
         assert window._status_label.text() == "Removed image 'hero'."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_detect_selected_video_metadata_updates_entry(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window._detect_video_metadata",
+            lambda path: {"fps": 24, "width": 320, "height": 180},
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [], "mp4": [{"file": "intro.mp4", "name": "intro"}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._detect_selected_video_metadata()
+
+        entry = window._session.section_entries("mp4")[0]
+        assert entry["fps"] == 24
+        assert entry["width"] == 320
+        assert entry["height"] == 180
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Updated video metadata for 'intro' (24fps 320x180)."
+        assert "Video: 24fps 320x180" in window._simple_asset_meta.toPlainText()
         _close_window(window)
 
     @_skip_no_qt
