@@ -7,6 +7,7 @@ import filecmp
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 
@@ -53,6 +54,7 @@ from ..model.resource_generation_session import (
 )
 from ..services.font_charset_presets import build_charset, serialize_charset_chars
 from ..model.workspace import normalize_path
+from ..utils.font_preview_renderer import render_font_preview_image
 from ..utils.resource_config_overlay import APP_RESOURCE_CONFIG_FILENAME, make_empty_resource_config
 from .resource_panel import (
     _GenerateCharsetDialog,
@@ -958,105 +960,7 @@ class ResourceGeneratorWindow(QDialog):
         self._remove_simple_asset_button.clicked.connect(self._remove_selected_simple_asset)
 
         self._open_professional_button = QPushButton("Open Professional Mode")
-        self._open_professional_button.clicked.connect(lambda: self._set_ui_mode("professional"))
-
-        helper_grid = QGridLayout()
-        helper_grid.setContentsMargins(0, 0, 0, 0)
-        helper_grid.setHorizontalSpacing(10)
-        helper_grid.setVerticalSpacing(10)
-        helper_grid.addWidget(
-            self._build_simple_action_group(
-                "Import & Setup",
-                [
-                    self._import_assets_button,
-                    self._scan_assets_button,
-                    self._pack_assets_button,
-                    self._organize_folders_button,
-                    self._generate_sample_texts_button,
-                    self._generate_font_text_button,
-                    self._auto_create_font_texts_button,
-                    self._refresh_font_texts_button,
-                ],
-                columns=3,
-            ),
-            0,
-            0,
-        )
-        helper_grid.addWidget(
-            self._build_simple_action_group(
-                "Batch Fixes",
-                [
-                    self._auto_fill_button,
-                    self._rename_assets_button,
-                    self._refresh_videos_button,
-                    self._sort_assets_button,
-                    self._dedupe_assets_button,
-                    self._remove_missing_assets_button,
-                    self._clean_helper_outputs_button,
-                ],
-                columns=3,
-            ),
-            0,
-            1,
-        )
-        helper_grid.addWidget(
-            self._build_simple_action_group(
-                "Preview & Open",
-                [
-                    self._preview_asset_button,
-                    self._preview_board_button,
-                    self._export_preview_board_button,
-                    self._open_font_text_button,
-                    self._detect_video_info_button,
-                    self._edit_asset_button,
-                    self._open_asset_folder_button,
-                ],
-                columns=3,
-            ),
-            1,
-            0,
-        )
-        helper_grid.addWidget(
-            self._build_simple_action_group(
-                "Image Tools",
-                [
-                    self._resize_image_button,
-                    self._add_border_image_button,
-                    self._add_background_image_button,
-                    self._round_corners_image_button,
-                    self._adjust_opacity_image_button,
-                    self._generate_thumbnails_button,
-                    self._generate_placeholders_button,
-                    self._normalize_images_button,
-                    self._compress_images_button,
-                    self._prerender_fonts_button,
-                    self._rotate_image_button,
-                    self._flip_image_button,
-                    self._crop_image_button,
-                ],
-                columns=2,
-            ),
-            1,
-            1,
-        )
-        helper_grid.addWidget(
-            self._build_simple_action_group(
-                "Selection",
-                [
-                    self._duplicate_simple_asset_button,
-                    self._remove_simple_asset_button,
-                    self._open_professional_button,
-                ],
-                columns=3,
-            ),
-            2,
-            0,
-            1,
-            2,
-        )
-        helper_grid.setColumnStretch(0, 1)
-        helper_grid.setColumnStretch(1, 1)
-        intro_layout.addLayout(helper_grid)
+        self._open_professional_button.clicked.connect(self._open_current_simple_selection_in_professional_mode)
 
         counts_row = QHBoxLayout()
         counts_row.setContentsMargins(0, 0, 0, 0)
@@ -1069,22 +973,172 @@ class ResourceGeneratorWindow(QDialog):
         counts_row.addWidget(self._simple_mp4_count)
         counts_row.addStretch(1)
         intro_layout.addLayout(counts_row)
-        layout.addWidget(intro_group)
+
+        self._simple_action_tabs = QTabWidget()
+        self._simple_action_tabs.setDocumentMode(True)
+        self._simple_action_tabs.setStyleSheet("QTabBar::tab { min-height: 22px; padding: 2px 10px; }")
+        tab_bar = self._simple_action_tabs.tabBar()
+        tab_font = QFont(tab_bar.font())
+        tab_point_size = tab_font.pointSize()
+        if tab_point_size <= 0:
+            tab_point_size = 10
+        tab_font.setPointSize(max(9, min(tab_point_size - 1, 10)))
+        tab_bar.setFont(tab_font)
+        tab_bar.setExpanding(False)
+        tab_bar.setUsesScrollButtons(False)
+        tab_bar.setFixedHeight(28)
+        self._simple_action_tabs.addTab(
+            self._build_simple_action_tab(
+                "Start",
+                "Import or normalize incoming resources before generation.",
+                [
+                    self._build_simple_action_group(
+                        "Import & Setup",
+                        [
+                            self._import_assets_button,
+                            self._scan_assets_button,
+                            self._pack_assets_button,
+                            self._organize_folders_button,
+                            self._generate_sample_texts_button,
+                            self._generate_font_text_button,
+                            self._auto_create_font_texts_button,
+                            self._refresh_font_texts_button,
+                        ],
+                        columns=3,
+                    )
+                ],
+            ),
+            "Start",
+        )
+        self._simple_action_tabs.addTab(
+            self._build_simple_action_tab(
+                "Clean",
+                "Fill missing metadata and keep the asset set tidy.",
+                [
+                    self._build_simple_action_group(
+                        "Batch Fixes",
+                        [
+                            self._auto_fill_button,
+                            self._rename_assets_button,
+                            self._refresh_videos_button,
+                            self._sort_assets_button,
+                            self._dedupe_assets_button,
+                            self._remove_missing_assets_button,
+                            self._clean_helper_outputs_button,
+                        ],
+                        columns=3,
+                    )
+                ],
+            ),
+            "Clean",
+        )
+        self._simple_action_tabs.addTab(
+            self._build_simple_action_tab(
+                "Inspect",
+                "Preview assets, inspect generated helper output, and open source files.",
+                [
+                    self._build_simple_action_group(
+                        "Preview & Open",
+                        [
+                            self._preview_asset_button,
+                            self._preview_board_button,
+                            self._export_preview_board_button,
+                            self._open_font_text_button,
+                            self._detect_video_info_button,
+                            self._edit_asset_button,
+                            self._open_asset_folder_button,
+                        ],
+                        columns=3,
+                    )
+                ],
+            ),
+            "Inspect",
+        )
+        self._simple_action_tabs.addTab(
+            self._build_simple_action_tab(
+                "Transforms",
+                "Generate helper outputs or batch image/font derivatives.",
+                [
+                    self._build_simple_action_group(
+                        "Image Tools",
+                        [
+                            self._resize_image_button,
+                            self._add_border_image_button,
+                            self._add_background_image_button,
+                            self._round_corners_image_button,
+                            self._adjust_opacity_image_button,
+                            self._generate_thumbnails_button,
+                            self._generate_placeholders_button,
+                            self._normalize_images_button,
+                            self._compress_images_button,
+                            self._prerender_fonts_button,
+                            self._rotate_image_button,
+                            self._flip_image_button,
+                            self._crop_image_button,
+                        ],
+                        columns=2,
+                    )
+                ],
+            ),
+            "Transforms",
+        )
+        self._simple_action_tabs.addTab(
+            self._build_simple_action_tab(
+                "Selection",
+                "Operate on the currently selected asset or jump into professional mode.",
+                [
+                    self._build_simple_action_group(
+                        "Selection",
+                        [
+                            self._duplicate_simple_asset_button,
+                            self._remove_simple_asset_button,
+                            self._open_professional_button,
+                        ],
+                        columns=3,
+                    )
+                ],
+            ),
+            "Selection",
+        )
+        intro_layout.addWidget(self._simple_action_tabs)
+
+        assets_group = QGroupBox("Assets")
+        assets_layout = QVBoxLayout(assets_group)
+        assets_layout.setContentsMargins(10, 10, 10, 10)
+        assets_layout.setSpacing(8)
+
+        asset_toolbar = QHBoxLayout()
+        asset_toolbar.setContentsMargins(0, 0, 0, 0)
+        asset_toolbar.setSpacing(8)
+        asset_toolbar.addWidget(QLabel("Show"))
+        self._simple_asset_type_filter = QComboBox()
+        self._simple_asset_type_filter.addItem("All Assets", "all")
+        self._simple_asset_type_filter.addItem("Images", "img")
+        self._simple_asset_type_filter.addItem("Fonts", "font")
+        self._simple_asset_type_filter.addItem("MP4", "mp4")
+        self._simple_asset_type_filter.currentIndexChanged.connect(lambda _index: self._refresh_simple_page())
+        asset_toolbar.addWidget(self._simple_asset_type_filter)
+
+        asset_toolbar.addWidget(QLabel("Search"))
+        self._simple_asset_search_edit = QLineEdit()
+        self._simple_asset_search_edit.setPlaceholderText("Filter by name, file, text file, format, size...")
+        self._simple_asset_search_edit.textChanged.connect(lambda _text: self._refresh_simple_page())
+        asset_toolbar.addWidget(self._simple_asset_search_edit, 1)
+
+        self._simple_asset_clear_filters_button = QPushButton("Clear Filters")
+        self._simple_asset_clear_filters_button.clicked.connect(self._clear_simple_asset_filters)
+        asset_toolbar.addWidget(self._simple_asset_clear_filters_button)
+
+        self._simple_asset_result_label = QLabel("Showing 0 of 0 assets")
+        asset_toolbar.addWidget(self._simple_asset_result_label)
+        assets_layout.addLayout(asset_toolbar)
 
         self._simple_asset_table = QTableWidget(0, 4)
         self._simple_asset_table.setHorizontalHeaderLabels(["Type", "Name", "File", "Details"])
-        self._simple_asset_table.verticalHeader().setVisible(False)
-        self._simple_asset_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self._simple_asset_table.setSelectionMode(QAbstractItemView.SingleSelection)
-        self._simple_asset_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self._simple_asset_table.itemSelectionChanged.connect(self._on_simple_asset_selection_changed)
         self._simple_asset_table.itemDoubleClicked.connect(self._open_simple_selection_in_professional_mode)
-        simple_header = self._simple_asset_table.horizontalHeader()
-        simple_header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        simple_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        simple_header.setSectionResizeMode(2, QHeaderView.Stretch)
-        simple_header.setSectionResizeMode(3, QHeaderView.Stretch)
-        layout.addWidget(self._simple_asset_table, 1)
+        self._configure_simple_asset_table()
+        assets_layout.addWidget(self._simple_asset_table, 1)
 
         preview_splitter = QSplitter(Qt.Horizontal)
 
@@ -1118,7 +1172,16 @@ class ResourceGeneratorWindow(QDialog):
         preview_splitter.setStretchFactor(0, 1)
         preview_splitter.setStretchFactor(1, 1)
         preview_splitter.setSizes([460, 460])
-        layout.addWidget(preview_splitter, 1)
+        self._simple_workspace_splitter = QSplitter(Qt.Vertical)
+        self._simple_workspace_splitter.setChildrenCollapsible(False)
+        self._simple_workspace_splitter.addWidget(intro_group)
+        self._simple_workspace_splitter.addWidget(assets_group)
+        self._simple_workspace_splitter.addWidget(preview_splitter)
+        self._simple_workspace_splitter.setStretchFactor(0, 0)
+        self._simple_workspace_splitter.setStretchFactor(1, 1)
+        self._simple_workspace_splitter.setStretchFactor(2, 1)
+        self._simple_workspace_splitter.setSizes([280, 320, 260])
+        layout.addWidget(self._simple_workspace_splitter, 1)
         return page
 
     def _build_simple_action_group(self, title: str, buttons, *, columns: int) -> QGroupBox:
@@ -1133,6 +1196,53 @@ class ResourceGeneratorWindow(QDialog):
         for column in range(columns):
             layout.setColumnStretch(column, 1)
         return group
+
+    def _build_simple_action_tab(self, title: str, description: str, groups) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
+
+        summary = QLabel(description)
+        summary.setWordWrap(True)
+        layout.addWidget(summary)
+
+        for group in groups:
+            layout.addWidget(group)
+        layout.addStretch(1)
+        return page
+
+    def _configure_simple_asset_table(self):
+        self._simple_asset_table.verticalHeader().setVisible(False)
+        self._simple_asset_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self._simple_asset_table.setSelectionMode(QAbstractItemView.SingleSelection)
+        self._simple_asset_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self._simple_asset_table.setAlternatingRowColors(True)
+        self._simple_asset_table.setShowGrid(False)
+        self._simple_asset_table.setWordWrap(False)
+        self._simple_asset_table.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self._simple_asset_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self._simple_asset_table.setTextElideMode(Qt.ElideMiddle)
+        row_height = max(30, self.fontMetrics().height() + 12)
+        vertical_header = self._simple_asset_table.verticalHeader()
+        vertical_header.setDefaultSectionSize(row_height)
+        vertical_header.setMinimumSectionSize(row_height)
+
+        simple_header = self._simple_asset_table.horizontalHeader()
+        simple_header.setStretchLastSection(False)
+        for column in range(self._simple_asset_table.columnCount()):
+            simple_header.setSectionResizeMode(column, QHeaderView.Interactive)
+        simple_header.resizeSection(0, 88)
+        simple_header.resizeSection(1, 220)
+        simple_header.resizeSection(2, 360)
+        simple_header.resizeSection(3, 280)
+
+    def _clear_simple_asset_filters(self):
+        with QSignalBlocker(self._simple_asset_type_filter):
+            self._simple_asset_type_filter.setCurrentIndex(0)
+        with QSignalBlocker(self._simple_asset_search_edit):
+            self._simple_asset_search_edit.clear()
+        self._refresh_simple_page()
 
     def _build_professional_page(self):
         page = QWidget()
@@ -1942,13 +2052,33 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_font_count.setText(f"Fonts: {counts['font']}")
         self._simple_mp4_count.setText(f"MP4: {counts['mp4']}")
 
+        section_filter = str(self._simple_asset_type_filter.currentData() or "all")
+        search_text = str(self._simple_asset_search_edit.text() or "").strip().lower()
+        total_assets = sum(counts.values())
         rows: list[tuple[str, int, dict]] = []
         for section in KNOWN_RESOURCE_SECTIONS:
+            if section_filter != "all" and section != section_filter:
+                continue
             for index, entry in enumerate(self._session.section_entries(section)):
-                if isinstance(entry, dict):
-                    rows.append((section, index, entry))
+                if not isinstance(entry, dict):
+                    continue
+                detail = self._simple_asset_detail_text(section, entry)
+                search_blob = " ".join(
+                    part
+                    for part in (
+                        RESOURCE_SECTION_SPECS[section].label,
+                        section_entry_label(section, entry, index),
+                        str(entry.get("file", "") or ""),
+                        detail,
+                    )
+                    if part
+                ).lower()
+                if search_text and search_text not in search_blob:
+                    continue
+                rows.append((section, index, entry))
 
         self._simple_row_map = [(section, index) for section, index, _entry in rows]
+        self._simple_asset_result_label.setText(f"Showing {len(rows)} of {total_assets} assets")
         selected_row = -1
         for row, (section, index) in enumerate(self._simple_row_map):
             if section == self._active_section and index == self._active_entry_index:
@@ -1957,22 +2087,68 @@ class ResourceGeneratorWindow(QDialog):
         with QSignalBlocker(self._simple_asset_table):
             self._simple_asset_table.setRowCount(len(rows))
             for row, (section, index, entry) in enumerate(rows):
-                detail = ""
-                if section == "font":
-                    detail = str(entry.get("text", "") or "")
-                elif section == "mp4":
-                    fps = str(entry.get("fps", "") or "")
-                    width = str(entry.get("width", "") or "")
-                    height = str(entry.get("height", "") or "")
-                    if fps or width or height:
-                        detail = f"{fps}fps {width}x{height}".strip()
+                detail = self._simple_asset_detail_text(section, entry)
                 self._simple_asset_table.setItem(row, 0, QTableWidgetItem(RESOURCE_SECTION_SPECS[section].label))
                 self._simple_asset_table.setItem(row, 1, QTableWidgetItem(section_entry_label(section, entry, index)))
                 self._simple_asset_table.setItem(row, 2, QTableWidgetItem(str(entry.get("file", "") or "")))
                 self._simple_asset_table.setItem(row, 3, QTableWidgetItem(detail))
             if 0 <= selected_row < len(rows):
                 self._simple_asset_table.selectRow(selected_row)
+            else:
+                self._simple_asset_table.clearSelection()
         self._update_simple_asset_preview()
+
+    def _simple_asset_detail_text(self, section: str, entry: dict) -> str:
+        if section == "font":
+            parts = []
+            pixel_size = str(entry.get("pixelsize", "") or "").strip()
+            font_bit_size = str(entry.get("fontbitsize", "") or "").strip()
+            weight = str(entry.get("weight", "") or "").strip()
+            text_path = str(entry.get("text", "") or "").strip()
+            if pixel_size:
+                parts.append(f"{pixel_size}px")
+            if font_bit_size:
+                parts.append(f"{font_bit_size}-bit")
+            if weight:
+                parts.append(f"w{weight}")
+            if text_path:
+                parts.append(text_path)
+            return " | ".join(parts)
+
+        if section == "mp4":
+            parts = []
+            fps = str(entry.get("fps", "") or "").strip()
+            width = str(entry.get("width", "") or "").strip()
+            height = str(entry.get("height", "") or "").strip()
+            format_name = str(entry.get("format", "") or "").strip()
+            alpha = str(entry.get("alpha", "") or "").strip()
+            if fps:
+                parts.append(f"{fps}fps")
+            if width or height:
+                parts.append(f"{width or '?'}x{height or '?'}")
+            if format_name:
+                parts.append(format_name)
+            if alpha:
+                parts.append(f"a{alpha}")
+            return " | ".join(parts)
+
+        if section == "img":
+            parts = []
+            format_name = str(entry.get("format", "") or "").strip()
+            alpha = str(entry.get("alpha", "") or "").strip()
+            dim = str(entry.get("dim", "") or "").strip()
+            compress = str(entry.get("compress", "") or "").strip()
+            if format_name:
+                parts.append(format_name)
+            if alpha:
+                parts.append(f"a{alpha}")
+            if dim:
+                parts.append(dim)
+            if compress and compress != "none":
+                parts.append(compress)
+            return " | ".join(parts)
+
+        return ""
 
     def _on_mode_changed(self, _index: int):
         self._set_ui_mode(self._mode_combo.currentData() or "simple")
@@ -1998,6 +2174,15 @@ class ResourceGeneratorWindow(QDialog):
         self._refresh_entry_table()
         self._set_ui_mode("professional")
 
+    def _open_current_simple_selection_in_professional_mode(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if section and entry is not None:
+            self._active_section = section
+            self._active_entry_index = index
+            self._refresh_section_selection()
+            self._refresh_entry_table()
+        self._set_ui_mode("professional")
+
     def _selected_simple_asset_context(self):
         selected = self._simple_asset_table.selectionModel().selectedRows() if self._simple_asset_table.selectionModel() else []
         row = selected[0].row() if selected else -1
@@ -2011,6 +2196,10 @@ class ResourceGeneratorWindow(QDialog):
         return section, index, entry if isinstance(entry, dict) else None
 
     def _on_simple_asset_selection_changed(self):
+        section, index, _entry = self._selected_simple_asset_context()
+        if section:
+            self._active_section = section
+            self._active_entry_index = index
         self._update_simple_asset_preview()
 
     def _preview_selected_simple_asset(self):
@@ -2250,6 +2439,10 @@ class ResourceGeneratorWindow(QDialog):
         ]
         if section == "font":
             meta_lines.append(f"Text: {str(entry.get('text', '') or '(none)')}")
+            meta_lines.append(f"Pixel Size: {self._font_preview_pixel_size(entry)}")
+            meta_lines.append(f"Bit Size: {self._font_preview_bit_size(entry)}")
+            if self._font_preview_weight(entry) is not None:
+                meta_lines.append(f"Weight: {self._font_preview_weight(entry)}")
         if section == "mp4":
             meta_lines.append(
                 "Video: "
@@ -2278,7 +2471,7 @@ class ResourceGeneratorWindow(QDialog):
             sample_text, preview_source = self._font_preview_sample(entry)
             meta_lines.append(f"Preview Text: {sample_text}")
             meta_lines.append(f"Preview Source: {preview_source}")
-            pixmap = self._build_font_preview_pixmap(resolved_path, sample_text)
+            pixmap = self._build_font_preview_pixmap(resolved_path, sample_text, entry=entry)
             if pixmap is not None and not pixmap.isNull():
                 preview_pixmap = pixmap
             else:
@@ -2317,7 +2510,7 @@ class ResourceGeneratorWindow(QDialog):
                 continue
             try:
                 with open(resolved, "r", encoding="utf-8") as handle:
-                    raw_text = handle.read()
+                    raw_text = self._decode_font_preview_entities(handle.read())
             except OSError:
                 continue
             lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
@@ -2332,67 +2525,46 @@ class ResourceGeneratorWindow(QDialog):
                 return sample, item
         return "AaBb 123", "built-in sample"
 
-    def _build_font_preview_pixmap(self, font_path: str, sample_text: str) -> QPixmap | None:
+    def _decode_font_preview_entities(self, raw_text: str) -> str:
+        return re.sub(r"&#x([0-9A-Fa-f]+);", lambda match: chr(int(match.group(1), 16)), str(raw_text or ""))
+
+    def _font_preview_pixel_size(self, entry: dict | None) -> int:
+        raw_value = str((entry or {}).get("pixelsize", "") or "").strip()
         try:
-            from PIL import Image, ImageDraw, ImageFont
+            parsed = int(raw_value)
+        except Exception:
+            parsed = 16
+        return max(parsed, 4)
+
+    def _font_preview_bit_size(self, entry: dict | None) -> int:
+        raw_value = str((entry or {}).get("fontbitsize", "") or "").strip()
+        try:
+            parsed = int(raw_value)
+        except Exception:
+            parsed = 4
+        return parsed if parsed in {1, 2, 4, 8} else 4
+
+    def _font_preview_weight(self, entry: dict | None) -> int | None:
+        raw_value = str((entry or {}).get("weight", "") or "").strip()
+        if not raw_value:
+            return None
+        try:
+            return int(raw_value)
         except Exception:
             return None
 
-        try:
-            font = ImageFont.truetype(font_path, size=34)
-        except Exception:
+    def _build_font_preview_pixmap(self, font_path: str, sample_text: str, *, entry: dict | None = None) -> QPixmap | None:
+        image = render_font_preview_image(
+            sdk_root=self._session.sdk_root,
+            font_path=font_path,
+            sample_text=sample_text,
+            pixel_size=self._font_preview_pixel_size(entry),
+            font_bit_size=self._font_preview_bit_size(entry),
+            weight=self._font_preview_weight(entry),
+        )
+        if image is None:
             return None
-
-        width = 480
-        height = 220
-        padding = 18
-        image = Image.new("RGBA", (width, height), (247, 246, 241, 255))
-        draw = ImageDraw.Draw(image)
-        draw.rounded_rectangle((0, 0, width - 1, height - 1), radius=14, outline=(205, 201, 191, 255), width=2)
-
-        lines = self._wrap_font_preview_text(draw, sample_text, font, width - (padding * 2), max_lines=3)
-        y = padding
-        for line in lines:
-            bbox = draw.textbbox((0, 0), line, font=font)
-            draw.text((padding, y), line, font=font, fill=(35, 35, 35, 255))
-            y += max(bbox[3] - bbox[1], 28) + 10
-
         return _pil_image_to_qpixmap(image)
-
-    def _wrap_font_preview_text(self, draw, text: str, font, max_width: int, *, max_lines: int) -> list[str]:
-        compact = " ".join(str(text or "").split()).strip() or "AaBb 123"
-        lines = []
-        position = 0
-        while position < len(compact) and len(lines) < max_lines:
-            end = position + 1
-            while end <= len(compact):
-                candidate = compact[position:end]
-                bbox = draw.textbbox((0, 0), candidate, font=font)
-                if bbox[2] - bbox[0] > max_width and end > position + 1:
-                    end -= 1
-                    break
-                if bbox[2] - bbox[0] > max_width:
-                    break
-                end += 1
-            if end <= position:
-                end = position + 1
-
-            if len(lines) == max_lines - 1 and end < len(compact):
-                line = compact[position:]
-                while line and draw.textbbox((0, 0), line + "...", font=font)[2] > max_width:
-                    line = line[:-1]
-                lines.append((line.rstrip() + "...") if line else "...")
-                return lines
-
-            line = compact[position:end].rstrip()
-            if not line:
-                break
-            lines.append(line)
-            position = end
-            while position < len(compact) and compact[position] == " ":
-                position += 1
-
-        return lines or [compact]
 
     def _open_selected_asset_in_external_editor(self):
         section, index, entry = self._selected_simple_asset_context()
@@ -3893,12 +4065,12 @@ class ResourceGeneratorWindow(QDialog):
                 continue
 
             sample_text = shared_sample or self._font_preview_sample(entry)[0]
-            preview_pixmap = self._build_font_preview_pixmap(resolved_path, sample_text)
+            preview_pixmap = self._build_font_preview_pixmap(resolved_path, sample_text, entry=entry)
             if preview_pixmap is None or preview_pixmap.isNull():
                 QMessageBox.warning(
                     self,
                     "Pre-Render Fonts",
-                    f"Failed to render a font preview for:\n{resolved_path}\n\nCheck that Pillow is installed and the font file is valid.",
+                    f"Failed to render a font preview for:\n{resolved_path}\n\nCheck that the font file is valid and the SDK preview pipeline is available.",
                 )
                 return
 

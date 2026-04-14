@@ -13476,6 +13476,23 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.accessibleName() == "Insert component unavailable."
         _close_window(window)
 
+    def test_welcome_page_resource_button_opens_resource_generator(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        triggered = []
+        monkeypatch.setattr(
+            MainWindow,
+            "_open_resource_generator_window",
+            lambda self: triggered.append("resource"),
+        )
+
+        window = MainWindow("")
+
+        window._welcome_page._resource_generator_btn.click()
+
+        assert triggered == ["resource"]
+        _close_window(window)
+
     def test_sdk_status_label_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 

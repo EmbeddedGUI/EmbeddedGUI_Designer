@@ -454,6 +454,7 @@ class MainWindow(QMainWindow):
         self._welcome_page.new_project.connect(self._new_project)
         self._welcome_page.open_project.connect(self._open_project)
         self._welcome_page.open_app.connect(self._open_app_dialog)
+        self._welcome_page.open_resource_generator.connect(self._open_resource_generator_window)
         self._welcome_page.set_sdk_root.connect(self._set_sdk_root)
         self._central_stack.addWidget(self._welcome_page)
 

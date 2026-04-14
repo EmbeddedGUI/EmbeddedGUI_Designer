@@ -9,7 +9,8 @@ from ui_designer.tests.sdk_builders import build_test_sdk_root
 from ui_designer.tests.ui.window_test_helpers import close_test_window as _close_window
 
 if HAS_PYQT5:
-    from PyQt5.QtWidgets import QGroupBox, QLabel, QMessageBox
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import QGroupBox, QHeaderView, QLabel, QMessageBox
 
 
 _skip_no_qt = skip_if_no_qt
@@ -40,6 +41,72 @@ class TestResourceGeneratorWindow:
 
         group_titles = {group.title() for group in window._simple_page.findChildren(QGroupBox)}
         assert {"Import & Setup", "Batch Fixes", "Preview & Open", "Image Tools", "Selection"} <= group_titles
+        assert [window._simple_action_tabs.tabText(index) for index in range(window._simple_action_tabs.count())] == [
+            "Start",
+            "Clean",
+            "Inspect",
+            "Transforms",
+            "Selection",
+        ]
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_uses_resizable_vertical_panels_and_compact_category_headers(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        tab_bar = window._simple_action_tabs.tabBar()
+
+        assert window._simple_workspace_splitter.orientation() == Qt.Vertical
+        assert window._simple_workspace_splitter.count() == 3
+        assert window._simple_workspace_splitter.childrenCollapsible() is False
+        assert window._simple_action_tabs.documentMode() is True
+        assert tab_bar.minimumHeight() == 28
+        assert tab_bar.maximumHeight() == 28
+        assert 9 <= tab_bar.font().pointSize() <= 10
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_asset_table_allows_interactive_column_resize(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        header = window._simple_asset_table.horizontalHeader()
+
+        assert header.sectionResizeMode(0) == QHeaderView.Interactive
+        assert header.sectionResizeMode(1) == QHeaderView.Interactive
+        assert header.sectionResizeMode(2) == QHeaderView.Interactive
+        assert header.sectionResizeMode(3) == QHeaderView.Interactive
+        assert window._simple_asset_table.verticalHeader().defaultSectionSize() >= window.fontMetrics().height() + 12
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_asset_filters_reduce_visible_rows(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero", "format": "rgb565", "alpha": "4"}],
+                "font": [{"file": "display.ttf", "name": "display", "pixelsize": "18", "fontbitsize": "4", "text": "charset/display.txt"}],
+                "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 320, "height": 180}],
+            },
+            dirty=False,
+        )
+
+        window._simple_asset_type_filter.setCurrentIndex(window._simple_asset_type_filter.findData("font"))
+        window._simple_asset_search_edit.setText("display")
+        qapp.processEvents()
+
+        assert window._simple_asset_table.rowCount() == 1
+        assert window._simple_asset_table.item(0, 1).text() == "display"
+        assert window._simple_asset_table.item(0, 3).text() == "18px | 4-bit | charset/display.txt"
+        assert window._simple_asset_result_label.text() == "Showing 1 of 3 assets"
         _close_window(window)
 
     @_skip_no_qt
@@ -59,7 +126,7 @@ class TestResourceGeneratorWindow:
         (source_dir / "intro.mp4").write_bytes(b"mp4")
         monkeypatch.setattr(
             "ui_designer.ui.resource_generator_window.ResourceGeneratorWindow._build_font_preview_pixmap",
-            lambda self, font_path, sample_text: QPixmap(32, 20),
+            lambda self, font_path, sample_text, entry=None: QPixmap(32, 20),
         )
 
         window = ResourceGeneratorWindow("")
@@ -104,7 +171,7 @@ class TestResourceGeneratorWindow:
         (source_dir / "intro.mp4").write_bytes(b"mp4")
         monkeypatch.setattr(
             "ui_designer.ui.resource_generator_window.ResourceGeneratorWindow._build_font_preview_pixmap",
-            lambda self, font_path, sample_text: QPixmap(40, 24),
+            lambda self, font_path, sample_text, entry=None: QPixmap(40, 24),
         )
 
         window = ResourceGeneratorWindow("")
@@ -1111,9 +1178,10 @@ class TestResourceGeneratorWindow:
 
         captured = {}
 
-        def _fake_render(self, font_file, sample_text):
+        def _fake_render(self, font_file, sample_text, entry=None):
             captured["font_file"] = font_file
             captured["sample_text"] = sample_text
+            captured["entry"] = entry
             pixmap = QPixmap(96, 36)
             pixmap.fill()
             return pixmap
@@ -1132,6 +1200,7 @@ class TestResourceGeneratorWindow:
 
         assert captured["font_file"] == str(font_path.resolve())
         assert captured["sample_text"] == "AB"
+        assert captured["entry"]["text"] == "charset/basic.txt"
         assert window._simple_asset_preview_title.text() == "Fonts: display"
         assert window._simple_asset_preview_label.pixmap() is not None
         assert "Preview Text: AB" in window._simple_asset_meta.toPlainText()
@@ -1473,8 +1542,8 @@ class TestResourceGeneratorWindow:
 
         rendered = []
 
-        def _fake_build_font_preview(self, font_path, sample_text):
-            rendered.append((font_path.replace("\\", "/"), sample_text))
+        def _fake_build_font_preview(self, font_path, sample_text, entry=None):
+            rendered.append((font_path.replace("\\", "/"), sample_text, entry["name"]))
             pixmap = QPixmap(72, 30)
             pixmap.fill()
             return pixmap
@@ -1507,8 +1576,8 @@ class TestResourceGeneratorWindow:
         assert display_preview.isNull() is False
         assert title_preview.isNull() is False
         assert rendered == [
-            ((fonts_dir / "display.ttf").resolve().as_posix(), "Hello Designer"),
-            ((fonts_dir / "title.ttf").resolve().as_posix(), "Hello Designer"),
+            ((fonts_dir / "display.ttf").resolve().as_posix(), "Hello Designer", "display"),
+            ((fonts_dir / "title.ttf").resolve().as_posix(), "Hello Designer", "title"),
         ]
         files = [entry["file"] for entry in window._session.section_entries("img")]
         assert files == ["font_previews/display_preview.png", "font_previews/title_preview.png"]

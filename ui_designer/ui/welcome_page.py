@@ -124,6 +124,7 @@ class WelcomePage(QWidget):
     new_project = pyqtSignal()
     open_project = pyqtSignal()
     open_app = pyqtSignal()
+    open_resource_generator = pyqtSignal()
     set_sdk_root = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -243,6 +244,10 @@ class WelcomePage(QWidget):
         self._open_app_btn.clicked.connect(self.open_app.emit)
         left_col.addWidget(self._open_app_btn)
 
+        self._resource_generator_btn = PushButton("Resource Generator...")
+        self._resource_generator_btn.clicked.connect(self.open_resource_generator.emit)
+        left_col.addWidget(self._resource_generator_btn)
+
         self._set_sdk_root_btn = PushButton("Set SDK...")
         self._set_sdk_root_btn.clicked.connect(self.set_sdk_root.emit)
         left_col.addWidget(self._set_sdk_root_btn)
@@ -315,6 +320,7 @@ class WelcomePage(QWidget):
         self._new_project_btn.setAccessibleName("Create new project action")
         self._open_project_btn.setAccessibleName("Open project file action")
         self._open_app_btn.setAccessibleName("Open example")
+        self._resource_generator_btn.setAccessibleName("Open resource generator")
         self._set_sdk_root_btn.setAccessibleName("Set SDK root")
         _set_widget_metadata(
             self._new_project_btn,
@@ -330,6 +336,11 @@ class WelcomePage(QWidget):
             self._open_app_btn,
             tooltip="Open a bundled example, SDK example project, or initialize a Designer project for an unmanaged SDK example.",
             accessible_name="Open example",
+        )
+        _set_widget_metadata(
+            self._resource_generator_btn,
+            tooltip="Open the standalone Resource Generator window to import, inspect, and prepare assets.",
+            accessible_name="Open resource generator action. Open the standalone Resource Generator window to import, inspect, and prepare assets.",
         )
         _set_widget_metadata(self._set_sdk_root_btn, tooltip="Choose the EmbeddedGUI SDK root used for compile preview.", accessible_name="Set SDK root")
 
@@ -554,6 +565,14 @@ class WelcomePage(QWidget):
             self._open_app_btn,
             tooltip=open_app_hint,
             accessible_name=f"Open example action. {open_app_hint}",
+        )
+        resource_generator_hint = (
+            "Open the standalone Resource Generator window to import, inspect, and prepare assets."
+        )
+        _set_widget_metadata(
+            self._resource_generator_btn,
+            tooltip=resource_generator_hint,
+            accessible_name=f"Open resource generator action. {resource_generator_hint}",
         )
         _set_widget_metadata(
             self._set_sdk_root_btn,

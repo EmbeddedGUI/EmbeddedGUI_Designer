@@ -993,12 +993,32 @@ class TestWelcomePage:
             "Open example action. Open a bundled example, SDK example project, or initialize a Designer project "
             "for an unmanaged SDK example."
         )
+        assert page._resource_generator_btn.text() == "Resource Generator..."
+        assert page._resource_generator_btn.toolTip() == (
+            "Open the standalone Resource Generator window to import, inspect, and prepare assets."
+        )
+        assert page._resource_generator_btn.statusTip() == page._resource_generator_btn.toolTip()
+        assert page._resource_generator_btn.accessibleName() == (
+            "Open resource generator action. Open the standalone Resource Generator window to import, inspect, and prepare assets."
+        )
         assert page._set_sdk_root_btn.text() == "Set SDK..."
         assert page._set_sdk_root_btn.toolTip() == "Change the EmbeddedGUI SDK root used for compile preview."
         assert page._set_sdk_root_btn.accessibleName() == (
             "Set SDK root action. Change the EmbeddedGUI SDK root used for compile preview."
         )
         assert page._recent_label.text() == "Recent"
+        page.deleteLater()
+
+    def test_resource_generator_button_emits_signal(self, qapp, isolated_config):
+        from ui_designer.ui.welcome_page import WelcomePage
+
+        page = WelcomePage()
+        triggered = []
+        page.open_resource_generator.connect(lambda: triggered.append("resource"))
+
+        page._resource_generator_btn.click()
+
+        assert triggered == ["resource"]
         page.deleteLater()
 
     def test_hero_hint_skips_no_op_rewrites(self, qapp, isolated_config, tmp_path, monkeypatch):
