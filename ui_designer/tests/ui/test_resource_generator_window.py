@@ -180,6 +180,57 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_mode_asset_filter_includes_missing_and_generated_views(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        generated_dir = source_dir / "thumbnails"
+        source_dir.mkdir(parents=True)
+        generated_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        (generated_dir / "hero_thumb.png").write_bytes(b"png")
+
+        window = ResourceGeneratorWindow("")
+        assert [window._simple_asset_type_filter.itemData(index) for index in range(window._simple_asset_type_filter.count())] == [
+            "all",
+            "img",
+            "font",
+            "mp4",
+            "missing",
+            "generated",
+        ]
+
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [
+                    {"file": "hero.png", "name": "hero"},
+                    {"file": "missing.png", "name": "missing"},
+                    {"file": "thumbnails/hero_thumb.png", "name": "hero_thumb"},
+                ],
+                "font": [{"file": "display.ttf", "name": "display"}],
+            },
+            dirty=False,
+        )
+
+        window._simple_asset_type_filter.setCurrentIndex(window._simple_asset_type_filter.findData("missing"))
+        qapp.processEvents()
+        assert [window._simple_asset_table.item(row, 1).text() for row in range(window._simple_asset_table.rowCount())] == [
+            "missing",
+            "display",
+        ]
+        assert window._simple_asset_result_label.text() == "Showing 2 of 4 assets"
+
+        window._simple_asset_type_filter.setCurrentIndex(window._simple_asset_type_filter.findData("generated"))
+        qapp.processEvents()
+        assert [window._simple_asset_table.item(row, 1).text() for row in range(window._simple_asset_table.rowCount())] == [
+            "hero_thumb",
+        ]
+        assert window._simple_asset_result_label.text() == "Showing 1 of 4 assets"
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_asset_header_click_cycles_view_sort(self, qapp, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow

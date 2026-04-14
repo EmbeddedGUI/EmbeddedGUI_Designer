@@ -1205,6 +1205,8 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_asset_type_filter.addItem("Images", "img")
         self._simple_asset_type_filter.addItem("Fonts", "font")
         self._simple_asset_type_filter.addItem("MP4", "mp4")
+        self._simple_asset_type_filter.addItem("Missing Files", "missing")
+        self._simple_asset_type_filter.addItem("Generated Helpers", "generated")
         self._simple_asset_type_filter.currentIndexChanged.connect(self._on_simple_asset_filter_changed)
         asset_toolbar.addWidget(self._simple_asset_type_filter)
 
@@ -1573,6 +1575,19 @@ class ResourceGeneratorWindow(QDialog):
             values[0],
             int(row_payload["index"]),
         )
+
+    def _simple_asset_matches_filter(self, section_filter: str, section: str, entry: dict, *, file_label: str) -> bool:
+        normalized_filter = str(section_filter or "all")
+        if normalized_filter in {"all", ""}:
+            return True
+        if normalized_filter in KNOWN_RESOURCE_SECTIONS:
+            return section == normalized_filter
+        if normalized_filter == "missing":
+            resolved_path = self._resolve_entry_path(section, "file", file_label)
+            return not file_label or not resolved_path or not os.path.exists(resolved_path)
+        if normalized_filter == "generated":
+            return section == "img" and _is_quick_generated_helper_path(file_label)
+        return True
 
     def _build_simple_asset_context_menu(self, *, row: int | None = None) -> QMenu | None:
         if row is not None and row >= 0:
@@ -2458,14 +2473,14 @@ class ResourceGeneratorWindow(QDialog):
         total_assets = sum(counts.values())
         rows = []
         for section in KNOWN_RESOURCE_SECTIONS:
-            if section_filter != "all" and section != section_filter:
-                continue
             for index, entry in enumerate(self._session.section_entries(section)):
                 if not isinstance(entry, dict):
                     continue
                 type_label = RESOURCE_SECTION_SPECS[section].label
                 name_label = section_entry_label(section, entry, index)
                 file_label = str(entry.get("file", "") or "")
+                if not self._simple_asset_matches_filter(section_filter, section, entry, file_label=file_label):
+                    continue
                 detail = self._simple_asset_detail_text(section, entry)
                 search_blob = " ".join(
                     part
