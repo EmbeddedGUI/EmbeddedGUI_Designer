@@ -197,6 +197,7 @@ class TestResourceGeneratorWindow:
             "img",
             "font",
             "mp4",
+            "attention",
             "missing",
             "generated",
         ]
@@ -228,6 +229,77 @@ class TestResourceGeneratorWindow:
             "hero_thumb",
         ]
         assert window._simple_asset_result_label.text() == "Showing 1 of 4 assets"
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_attention_filter_highlights_incomplete_resources(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        (source_dir / "charset").mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        (source_dir / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero"}],
+                "font": [{"file": "display.ttf", "name": "display", "text": ""}],
+                "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 0, "height": 180}],
+            },
+            dirty=False,
+        )
+
+        window._simple_asset_type_filter.setCurrentIndex(window._simple_asset_type_filter.findData("attention"))
+        qapp.processEvents()
+
+        assert [window._simple_asset_table.item(row, 1).text() for row in range(window._simple_asset_table.rowCount())] == [
+            "display",
+            "intro",
+        ]
+        assert window._simple_asset_result_label.text() == "Showing 2 of 3 assets"
+        assert window._simple_asset_table.item(0, 0).toolTip() == "Font text file is not linked."
+        assert window._simple_asset_table.item(1, 0).toolTip() == "Video metadata is incomplete: width"
+
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        assert "Attention: Font text file is not linked." in window._simple_asset_meta.toPlainText()
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_attention_filter_empty_state_confirms_all_assets_ready(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        (source_dir / "fonts").mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        (source_dir / "fonts" / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "fonts" / "display.txt").write_text("ABC", encoding="utf-8")
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero"}],
+                "font": [{"file": "fonts/display.ttf", "name": "display", "text": "fonts/display.txt"}],
+                "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 320, "height": 180}],
+            },
+            dirty=False,
+        )
+
+        window._simple_asset_type_filter.setCurrentIndex(window._simple_asset_type_filter.findData("attention"))
+        qapp.processEvents()
+
+        assert window._simple_asset_table.rowCount() == 0
+        assert window._simple_asset_content_stack.currentWidget() is window._simple_asset_empty_state
+        assert window._simple_asset_empty_title.text() == "No assets need attention right now."
+        assert "no missing files" in window._simple_asset_empty_description.text().lower()
         _close_window(window)
 
     @_skip_no_qt

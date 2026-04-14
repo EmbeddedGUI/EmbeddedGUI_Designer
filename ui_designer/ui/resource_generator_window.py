@@ -1205,6 +1205,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_asset_type_filter.addItem("Images", "img")
         self._simple_asset_type_filter.addItem("Fonts", "font")
         self._simple_asset_type_filter.addItem("MP4", "mp4")
+        self._simple_asset_type_filter.addItem("Needs Attention", "attention")
         self._simple_asset_type_filter.addItem("Missing Files", "missing")
         self._simple_asset_type_filter.addItem("Generated Helpers", "generated")
         self._simple_asset_type_filter.currentIndexChanged.connect(self._on_simple_asset_filter_changed)
@@ -1499,6 +1500,7 @@ class ResourceGeneratorWindow(QDialog):
             return
 
         self._simple_asset_content_stack.setCurrentWidget(self._simple_asset_empty_state)
+        active_filter = str(self._simple_asset_type_filter.currentData() or "all")
         if total_assets <= 0:
             self._simple_asset_empty_title.setText("No assets imported yet.")
             self._simple_asset_empty_description.setText(
@@ -1510,10 +1512,16 @@ class ResourceGeneratorWindow(QDialog):
             return
 
         if has_filters:
-            self._simple_asset_empty_title.setText("No assets match the current filters.")
-            self._simple_asset_empty_description.setText(
-                "Clear the search or asset type filter to bring matching resources back into view."
-            )
+            if active_filter == "attention":
+                self._simple_asset_empty_title.setText("No assets need attention right now.")
+                self._simple_asset_empty_description.setText(
+                    "The current resource list has no missing files, missing font text, or incomplete video metadata."
+                )
+            else:
+                self._simple_asset_empty_title.setText("No assets match the current filters.")
+                self._simple_asset_empty_description.setText(
+                    "Clear the search or asset type filter to bring matching resources back into view."
+                )
             self._simple_asset_empty_import_button.setVisible(False)
             self._simple_asset_empty_scan_button.setVisible(False)
             self._simple_asset_empty_clear_button.setVisible(True)
@@ -1576,12 +1584,57 @@ class ResourceGeneratorWindow(QDialog):
             int(row_payload["index"]),
         )
 
+    def _simple_asset_attention_messages(self, section: str, entry: dict, *, file_label: str = "") -> tuple[str, ...]:
+        messages: list[str] = []
+        normalized_file = str(file_label or entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path(section, "file", normalized_file)
+        if not normalized_file:
+            messages.append("Asset file is empty.")
+        elif not resolved_path:
+            messages.append("Asset file path could not be resolved.")
+        elif not os.path.exists(resolved_path):
+            messages.append("Asset file is missing.")
+
+        if section == "font":
+            text_value = str(entry.get("text", "") or "").strip()
+            text_items = [item.strip() for item in text_value.split(",") if item.strip()]
+            if not text_items:
+                messages.append("Font text file is not linked.")
+            else:
+                missing_text_items = []
+                for item in text_items:
+                    resolved_text = self._resolve_entry_path("font", "text", item)
+                    if not resolved_text or not os.path.exists(resolved_text):
+                        missing_text_items.append(item)
+                if missing_text_items:
+                    if len(missing_text_items) == 1:
+                        messages.append(f"Font text file is missing: {missing_text_items[0]}")
+                    else:
+                        messages.append(f"{len(missing_text_items)} font text files are missing.")
+
+        if section == "mp4":
+            missing_fields = []
+            for field_name in ("fps", "width", "height"):
+                raw_value = str(entry.get(field_name, "") or "").strip()
+                try:
+                    numeric_value = int(raw_value)
+                except Exception:
+                    numeric_value = 0
+                if numeric_value <= 0:
+                    missing_fields.append(field_name)
+            if missing_fields:
+                messages.append("Video metadata is incomplete: " + ", ".join(missing_fields))
+
+        return tuple(messages)
+
     def _simple_asset_matches_filter(self, section_filter: str, section: str, entry: dict, *, file_label: str) -> bool:
         normalized_filter = str(section_filter or "all")
         if normalized_filter in {"all", ""}:
             return True
         if normalized_filter in KNOWN_RESOURCE_SECTIONS:
             return section == normalized_filter
+        if normalized_filter == "attention":
+            return bool(self._simple_asset_attention_messages(section, entry, file_label=file_label))
         if normalized_filter == "missing":
             resolved_path = self._resolve_entry_path(section, "file", file_label)
             return not file_label or not resolved_path or not os.path.exists(resolved_path)
@@ -2479,6 +2532,7 @@ class ResourceGeneratorWindow(QDialog):
                 type_label = RESOURCE_SECTION_SPECS[section].label
                 name_label = section_entry_label(section, entry, index)
                 file_label = str(entry.get("file", "") or "")
+                attention_messages = self._simple_asset_attention_messages(section, entry, file_label=file_label)
                 if not self._simple_asset_matches_filter(section_filter, section, entry, file_label=file_label):
                     continue
                 detail = self._simple_asset_detail_text(section, entry)
@@ -2503,6 +2557,7 @@ class ResourceGeneratorWindow(QDialog):
                         "name_label": name_label,
                         "file_label": file_label,
                         "detail_label": detail,
+                        "attention_messages": attention_messages,
                     }
                 )
 
@@ -2519,10 +2574,19 @@ class ResourceGeneratorWindow(QDialog):
         with QSignalBlocker(self._simple_asset_table):
             self._simple_asset_table.setRowCount(len(rows))
             for row, payload in enumerate(rows):
-                self._simple_asset_table.setItem(row, 0, QTableWidgetItem(payload["type_label"]))
-                self._simple_asset_table.setItem(row, 1, QTableWidgetItem(payload["name_label"]))
-                self._simple_asset_table.setItem(row, 2, QTableWidgetItem(payload["file_label"]))
-                self._simple_asset_table.setItem(row, 3, QTableWidgetItem(payload["detail_label"]))
+                tooltip_text = "\n".join(payload["attention_messages"]) or payload["detail_label"] or payload["file_label"]
+                for column, value in enumerate(
+                    (
+                        payload["type_label"],
+                        payload["name_label"],
+                        payload["file_label"],
+                        payload["detail_label"],
+                    )
+                ):
+                    item = QTableWidgetItem(value)
+                    if tooltip_text:
+                        item.setToolTip(tooltip_text)
+                    self._simple_asset_table.setItem(row, column, item)
             if 0 <= selected_row < len(rows):
                 self._simple_asset_table.selectRow(selected_row)
             else:
@@ -2905,6 +2969,9 @@ class ResourceGeneratorWindow(QDialog):
             f"Resolved: {resolved_path or '(unresolved)'}",
             f"Exists: {'yes' if exists else 'no'}",
         ]
+        attention_messages = self._simple_asset_attention_messages(section, entry, file_label=file_name)
+        if attention_messages:
+            meta_lines.append("Attention: " + " | ".join(attention_messages))
         if section == "font":
             meta_lines.append(f"Text: {str(entry.get('text', '') or '(none)')}")
             meta_lines.append(f"Pixel Size: {self._font_preview_pixel_size(entry)}")
