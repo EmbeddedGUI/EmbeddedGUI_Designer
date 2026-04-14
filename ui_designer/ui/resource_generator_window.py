@@ -471,6 +471,10 @@ class ResourceGeneratorWindow(QDialog):
         self._crop_image_button.clicked.connect(self._open_crop_image_helper)
         helper_row.addWidget(self._crop_image_button)
 
+        self._duplicate_simple_asset_button = QPushButton("Duplicate Selected")
+        self._duplicate_simple_asset_button.clicked.connect(self._duplicate_selected_simple_asset)
+        helper_row.addWidget(self._duplicate_simple_asset_button)
+
         self._remove_simple_asset_button = QPushButton("Remove Selected")
         self._remove_simple_asset_button.clicked.connect(self._remove_selected_simple_asset)
         helper_row.addWidget(self._remove_simple_asset_button)
@@ -1622,6 +1626,26 @@ class ResourceGeneratorWindow(QDialog):
             return
         self._set_status(f"Opened asset folder '{target_dir}'.")
 
+    def _duplicate_selected_simple_asset(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None or not section:
+            QMessageBox.warning(self, "Duplicate Asset", "Select an asset in Simple mode first.")
+            return
+
+        entries = self._session.section_entries(section)
+        duplicate = copy.deepcopy(entry if isinstance(entry, dict) else {})
+        duplicate["name"] = _duplicated_resource_name(section, duplicate, entries)
+        insert_index = max(index + 1, 0)
+        entries.insert(insert_index, duplicate)
+
+        self._active_section = section
+        self._active_entry_index = insert_index
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(f"Duplicated {_resource_kind_label(section)} '{duplicate['name']}'.")
+
     def _remove_selected_simple_asset(self):
         section, index, entry = self._selected_simple_asset_context()
         if entry is None or not section:
@@ -2747,6 +2771,28 @@ def _resource_sort_key(section: str, entry) -> tuple[str, str]:
     file_name = str(item.get("file", "") or "").replace("\\", "/").strip().lower()
     label = section_entry_label(section, item, 0).strip().lower()
     return file_name, label
+
+
+def _duplicated_resource_name(section: str, entry, existing_entries) -> str:
+    item = entry if isinstance(entry, dict) else {}
+    base_name = str(item.get("name", "") or "").strip()
+    if not base_name:
+        file_name = str(item.get("file", "") or "").replace("\\", "/").strip()
+        base_name = os.path.splitext(os.path.basename(file_name))[0].strip()
+    if not base_name:
+        base_name = _resource_kind_label(section)
+
+    existing_names = {
+        str((candidate or {}).get("name", "") or "").strip().lower()
+        for candidate in existing_entries
+        if isinstance(candidate, dict)
+    }
+    attempt = f"{base_name}_copy"
+    suffix = 2
+    while attempt.strip().lower() in existing_names:
+        attempt = f"{base_name}_copy{suffix}"
+        suffix += 1
+    return attempt
 
 
 def _detect_video_metadata(video_path: str) -> dict:

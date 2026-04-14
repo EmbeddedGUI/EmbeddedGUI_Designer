@@ -339,6 +339,63 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_duplicate_selected_simple_asset_creates_new_entry(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._duplicate_selected_simple_asset()
+
+        entries = window._session.section_entries("img")
+        assert len(entries) == 2
+        assert entries[0]["name"] == "hero"
+        assert entries[1]["name"] == "hero_copy"
+        assert entries[1]["file"] == "hero.png"
+        assert window._simple_asset_table.item(1, 1).text() == "hero_copy"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Duplicated image 'hero_copy'."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_duplicate_selected_simple_asset_increments_copy_suffix(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}, {"file": "hero.png", "name": "hero_copy"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._duplicate_selected_simple_asset()
+
+        names = [entry["name"] for entry in window._session.section_entries("img")]
+        assert names == ["hero", "hero_copy2", "hero_copy"]
+        assert window._status_label.text() == "Duplicated image 'hero_copy2'."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_detect_selected_video_metadata_updates_entry(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
