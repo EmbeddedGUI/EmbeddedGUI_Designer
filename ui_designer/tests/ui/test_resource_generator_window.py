@@ -2053,6 +2053,8 @@ class TestResourceGeneratorWindow:
             parent=None,
         )
 
+        assert dialog._preview_splitter.orientation() == Qt.Vertical
+        assert dialog._preview_splitter.childrenCollapsible() is False
         assert dialog._edit_file_button.text() == "Edit File..."
         assert dialog._preview_info_label.text() == "Preview: 2 line(s), 15 char(s)"
         assert dialog._preview_text_edit.toPlainText() == "HELLO\nDesigner\n"

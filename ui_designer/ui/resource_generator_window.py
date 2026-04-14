@@ -883,27 +883,45 @@ class _FontTextLinksDialog(QDialog):
         self._path_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout.addWidget(self._path_label)
 
+        self._preview_splitter = QSplitter(Qt.Vertical)
+        self._preview_splitter.setChildrenCollapsible(False)
+        self._preview_splitter.setHandleWidth(8)
+
+        selected_preview_shell = QWidget()
+        selected_preview_layout = QVBoxLayout(selected_preview_shell)
+        selected_preview_layout.setContentsMargins(0, 0, 0, 0)
+        selected_preview_layout.setSpacing(6)
+
         self._preview_info_label = QLabel("")
         self._preview_info_label.setWordWrap(True)
-        layout.addWidget(self._preview_info_label)
+        selected_preview_layout.addWidget(self._preview_info_label)
 
         self._preview_text_edit = QPlainTextEdit()
         self._preview_text_edit.setReadOnly(True)
-        self._preview_text_edit.setMinimumHeight(120)
+        self._preview_text_edit.setMinimumHeight(100)
         self._preview_text_edit.setPlaceholderText("Select a linked text file to preview its UTF-8 contents.")
-        layout.addWidget(self._preview_text_edit)
+        selected_preview_layout.addWidget(self._preview_text_edit, 1)
+        self._preview_splitter.addWidget(selected_preview_shell)
+
+        combined_preview_shell = QWidget()
+        combined_preview_layout = QVBoxLayout(combined_preview_shell)
+        combined_preview_layout.setContentsMargins(0, 0, 0, 0)
+        combined_preview_layout.setSpacing(6)
 
         self._combined_preview_info_label = QLabel("")
         self._combined_preview_info_label.setWordWrap(True)
-        layout.addWidget(self._combined_preview_info_label)
+        combined_preview_layout.addWidget(self._combined_preview_info_label)
 
         self._combined_preview_text_edit = QPlainTextEdit()
         self._combined_preview_text_edit.setReadOnly(True)
-        self._combined_preview_text_edit.setMinimumHeight(160)
+        self._combined_preview_text_edit.setMinimumHeight(120)
         self._combined_preview_text_edit.setPlaceholderText(
             "The combined linked text preview will appear here in the current file order."
         )
-        layout.addWidget(self._combined_preview_text_edit)
+        combined_preview_layout.addWidget(self._combined_preview_text_edit, 1)
+        self._preview_splitter.addWidget(combined_preview_shell)
+        self._preview_splitter.setSizes([180, 240])
+        layout.addWidget(self._preview_splitter, 1)
 
         self._set_items(initial_items or [], selected_index=0)
 
