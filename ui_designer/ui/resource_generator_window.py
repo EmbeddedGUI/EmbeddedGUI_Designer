@@ -435,6 +435,10 @@ class ResourceGeneratorWindow(QDialog):
         self._sort_assets_button.clicked.connect(self._sort_assets_for_quick_mode)
         helper_row.addWidget(self._sort_assets_button)
 
+        self._dedupe_assets_button = QPushButton("Remove Duplicates")
+        self._dedupe_assets_button.clicked.connect(self._remove_duplicate_assets_for_quick_mode)
+        helper_row.addWidget(self._dedupe_assets_button)
+
         self._open_font_text_button = QPushButton("Open Font Text...")
         self._open_font_text_button.clicked.connect(self._open_selected_font_text_resource)
         helper_row.addWidget(self._open_font_text_button)
@@ -1779,6 +1783,57 @@ class ResourceGeneratorWindow(QDialog):
         self._update_raw_editor()
         self._set_status(f"Sorted {total_sorted} assets across quick mode sections.")
 
+    def _remove_duplicate_assets_for_quick_mode(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        removed = 0
+        merged_fields = 0
+        changed = False
+
+        for section in KNOWN_RESOURCE_SECTIONS:
+            entries = self._session.section_entries(section)
+            if len(entries) < 2:
+                continue
+
+            deduped = []
+            seen: dict[tuple[str, str], int] = {}
+            section_changed = False
+
+            for entry in entries:
+                key = _resource_dedupe_key(section, entry)
+                if key is None:
+                    deduped.append(entry)
+                    continue
+
+                existing_index = seen.get(key)
+                if existing_index is None:
+                    seen[key] = len(deduped)
+                    deduped.append(entry)
+                    continue
+
+                existing = deduped[existing_index]
+                merged_fields += _merge_missing_resource_fields(existing, entry)
+                removed += 1
+                section_changed = True
+
+            if section_changed:
+                entries[:] = deduped
+                changed = True
+
+        if not changed:
+            self._set_status("No duplicate assets found.")
+            return
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        summary = [f"Removed {removed} duplicate assets"]
+        if merged_fields:
+            summary.append(f"merged {merged_fields} missing fields")
+        self._set_status(", ".join(summary) + ".")
+
     def _auto_fill_entry_name(self, section: str, index: int, entry: dict) -> bool:
         if str(entry.get("name", "") or "").strip():
             return False
@@ -2793,6 +2848,41 @@ def _duplicated_resource_name(section: str, entry, existing_entries) -> str:
         attempt = f"{base_name}_copy{suffix}"
         suffix += 1
     return attempt
+
+
+def _resource_dedupe_key(section: str, entry) -> tuple[str, str] | None:
+    item = entry if isinstance(entry, dict) else {}
+    file_name = str(item.get("file", "") or "").replace("\\", "/").strip().lower()
+    if not file_name:
+        return None
+    return section, file_name
+
+
+def _merge_missing_resource_fields(target, incoming) -> int:
+    if not isinstance(target, dict) or not isinstance(incoming, dict):
+        return 0
+
+    merged = 0
+    for field_name, value in incoming.items():
+        if field_name == "file":
+            continue
+        if _resource_field_is_missing(field_name, value):
+            continue
+        if not _resource_field_is_missing(field_name, target.get(field_name)):
+            continue
+        target[field_name] = copy.deepcopy(value)
+        merged += 1
+    return merged
+
+
+def _resource_field_is_missing(field_name: str, value) -> bool:
+    if value is None:
+        return True
+    if field_name in {"fps", "width", "height"} and value == 0:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
+    return False
 
 
 def _detect_video_metadata(video_path: str) -> dict:

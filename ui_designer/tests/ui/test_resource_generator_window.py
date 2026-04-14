@@ -579,6 +579,43 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_remove_duplicate_assets_for_quick_mode_merges_missing_fields(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [
+                    {"file": "hero.png", "name": "hero"},
+                    {"file": "hero.png", "format": "argb8888"},
+                ],
+                "font": [
+                    {"file": "display.ttf", "name": "display"},
+                    {"file": "display.ttf", "text": "display.txt"},
+                ],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._remove_duplicate_assets_for_quick_mode()
+
+        assert len(window._session.section_entries("img")) == 1
+        assert window._session.section_entries("img")[0]["format"] == "argb8888"
+        assert len(window._session.section_entries("font")) == 1
+        assert window._session.section_entries("font")[0]["text"] == "display.txt"
+        assert window._simple_asset_table.rowCount() == 2
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Removed 2 duplicate assets, merged 2 missing fields."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_selection_updates_image_preview(self, qapp, tmp_path):
         from PyQt5.QtGui import QPixmap
 
