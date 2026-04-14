@@ -328,6 +328,10 @@ class ResourceGeneratorWindow(QDialog):
         self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
         helper_row.addWidget(self._generate_font_text_button)
 
+        self._open_font_text_button = QPushButton("Open Font Text...")
+        self._open_font_text_button.clicked.connect(self._open_selected_font_text_resource)
+        helper_row.addWidget(self._open_font_text_button)
+
         self._preview_asset_button = QPushButton("Preview Selected Asset")
         self._preview_asset_button.clicked.connect(self._preview_selected_simple_asset)
         helper_row.addWidget(self._preview_asset_button)
@@ -1545,6 +1549,67 @@ class ResourceGeneratorWindow(QDialog):
 
         self._refresh_simple_page()
         self._set_status(f"Video metadata already up to date for '{section_entry_label('mp4', entry, index)}'.")
+
+    def _open_selected_font_text_resource(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None or section != "font":
+            QMessageBox.warning(self, "Open Font Text", "Select a font asset in Simple mode first.")
+            return
+
+        target_filename, resolved_path = self._preferred_font_text_target(entry)
+        if not target_filename or not resolved_path:
+            QMessageBox.warning(
+                self,
+                "Open Font Text",
+                "Set Source Dir first, or generate a font text file before opening it.",
+            )
+            return
+
+        created = False
+        if not os.path.isfile(resolved_path):
+            answer = QMessageBox.question(
+                self,
+                "Create Font Text",
+                f"Create a new font text resource?\n\n{target_filename}",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes,
+            )
+            if answer != QMessageBox.Yes:
+                return
+            os.makedirs(os.path.dirname(resolved_path), exist_ok=True)
+            with open(resolved_path, "w", encoding="utf-8", newline="\n") as handle:
+                handle.write("")
+            self._active_section = "font"
+            self._active_entry_index = index
+            self._assign_generated_text_to_font(target_filename)
+            created = True
+
+        self._active_section = "font"
+        self._active_entry_index = index
+        self._update_simple_asset_preview()
+        if not QDesktopServices.openUrl(QUrl.fromLocalFile(resolved_path)):
+            QMessageBox.warning(self, "Open Font Text", f"Failed to open text file with the system editor:\n{resolved_path}")
+            return
+        action = "Created and opened" if created else "Opened"
+        self._set_status(f"{action} font text '{target_filename}'.")
+
+    def _preferred_font_text_target(self, entry: dict) -> tuple[str, str]:
+        text_value = str(entry.get("text", "") or "").strip()
+        candidates = [item.strip() for item in text_value.split(",") if item.strip()]
+        for item in candidates:
+            resolved = self._resolve_entry_path("font", "text", item)
+            if resolved and os.path.isfile(resolved):
+                return item, resolved
+
+        if candidates:
+            first = candidates[0]
+            return first, self._resolve_entry_path("font", "text", first)
+
+        source_dir = self._session.paths.source_dir
+        if not source_dir:
+            return "", ""
+        suggested = _suggest_charset_filename_for_resource("font", str(entry.get("file", "") or ""))
+        return suggested, normalize_path(os.path.join(source_dir, suggested))
 
     def _open_resize_image_helper(self):
         section, index, entry = self._selected_simple_asset_context()

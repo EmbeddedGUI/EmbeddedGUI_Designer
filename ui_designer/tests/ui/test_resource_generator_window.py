@@ -373,6 +373,73 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_open_selected_font_text_resource_opens_existing_file(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        (source_dir / "charset").mkdir(parents=True)
+        (source_dir / "display.ttf").write_bytes(b"ttf")
+        text_path = source_dir / "charset" / "basic.txt"
+        text_path.write_text("ABC", encoding="utf-8")
+
+        opened = []
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window.QDesktopServices.openUrl",
+            lambda url: opened.append(url.toLocalFile()) or True,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "name": "display", "text": "charset/basic.txt"}], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_selected_font_text_resource()
+
+        assert opened == [text_path.resolve().as_posix()]
+        assert window._status_label.text() == "Opened font text 'charset/basic.txt'."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_open_selected_font_text_resource_can_create_missing_file(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "display.ttf").write_bytes(b"ttf")
+
+        opened = []
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window.QDesktopServices.openUrl",
+            lambda url: opened.append(url.toLocalFile()) or True,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "name": "display"}], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_selected_font_text_resource()
+
+        text_path = source_dir / "display_charset.txt"
+        assert text_path.is_file()
+        assert opened == [text_path.resolve().as_posix()]
+        assert window._session.section_entries("font")[0]["text"] == "display_charset.txt"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Created and opened font text 'display_charset.txt'."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_selection_updates_image_preview(self, qapp, tmp_path):
         from PyQt5.QtGui import QPixmap
 
