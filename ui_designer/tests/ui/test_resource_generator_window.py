@@ -657,6 +657,49 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_pack_assets_into_source_dir_copies_external_files_and_updates_links(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        external_dir = tmp_path / "imports"
+        external_dir.mkdir(parents=True)
+        external_image = external_dir / "hero.png"
+        external_image.write_bytes(b"png")
+        external_font = external_dir / "display.ttf"
+        external_font.write_bytes(b"ttf")
+        external_text = external_dir / "display.txt"
+        external_text.write_text("ABC", encoding="utf-8")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": str(external_image), "name": "hero"}],
+                "font": [{"file": str(external_font), "name": "display", "text": str(external_text)}],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._pack_assets_into_source_dir()
+
+        assert (source_dir / "hero.png").read_bytes() == b"png"
+        assert (source_dir / "display.ttf").read_bytes() == b"ttf"
+        assert (source_dir / "display.txt").read_text(encoding="utf-8") == "ABC"
+        assert window._session.section_entries("img")[0]["file"] == "hero.png"
+        assert window._session.section_entries("font")[0]["file"] == "display.ttf"
+        assert window._session.section_entries("font")[0]["text"] == "display.txt"
+        assert window._simple_asset_table.item(0, 2).text() == "hero.png"
+        assert window._simple_asset_table.item(1, 2).text() == "display.ttf"
+        assert window._simple_asset_table.item(1, 3).text() == "display.txt"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Packed 3 files into Source Dir, updated 3 links."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_open_selected_font_text_resource_opens_existing_file(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import filecmp
 import json
 import math
 import os
@@ -457,6 +458,9 @@ class ResourceGeneratorWindow(QDialog):
         self._scan_assets_button = QPushButton("Scan Asset Folder...")
         self._scan_assets_button.clicked.connect(self._scan_assets_directory_dialog)
 
+        self._pack_assets_button = QPushButton("Pack Into Source Dir")
+        self._pack_assets_button.clicked.connect(self._pack_assets_into_source_dir)
+
         self._generate_font_text_button = QPushButton("Generate Font Text...")
         self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
 
@@ -536,6 +540,7 @@ class ResourceGeneratorWindow(QDialog):
                 [
                     self._import_assets_button,
                     self._scan_assets_button,
+                    self._pack_assets_button,
                     self._generate_font_text_button,
                     self._auto_create_font_texts_button,
                     self._refresh_font_texts_button,
@@ -2179,6 +2184,74 @@ class ResourceGeneratorWindow(QDialog):
             summary.append(f"updated {updated_links} links")
         self._set_status(", ".join(summary) + ".")
 
+    def _pack_assets_into_source_dir(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if not source_dir:
+            QMessageBox.warning(
+                self,
+                "Pack Into Source Dir",
+                "Set Source Dir first so Designer knows where to copy external assets.",
+            )
+            return
+
+        copied_files = 0
+        updated_links = 0
+
+        for section in KNOWN_RESOURCE_SECTIONS:
+            for index, entry in enumerate(self._session.section_entries(section)):
+                if not isinstance(entry, dict):
+                    continue
+
+                file_value = str(entry.get("file", "") or "").strip()
+                if file_value:
+                    resolved_file = self._resolve_entry_path(section, "file", file_value)
+                    if resolved_file and os.path.isfile(resolved_file) and not _is_subpath(resolved_file, source_dir):
+                        stored_file, copied = _copy_file_into_source_dir(resolved_file, source_dir)
+                        if stored_file and stored_file != file_value:
+                            self._session.update_entry_value(section, index, "file", stored_file)
+                            updated_links += 1
+                        if copied:
+                            copied_files += 1
+
+                if section != "font":
+                    continue
+
+                text_items = [candidate.strip() for candidate in str(entry.get("text", "") or "").split(",") if candidate.strip()]
+                if not text_items:
+                    continue
+
+                rewritten_items = []
+                field_changed = False
+                for item in text_items:
+                    resolved_text = self._resolve_entry_path("font", "text", item)
+                    if not resolved_text or not os.path.isfile(resolved_text) or _is_subpath(resolved_text, source_dir):
+                        rewritten_items.append(item)
+                        continue
+
+                    stored_text, copied = _copy_file_into_source_dir(resolved_text, source_dir)
+                    rewritten_items.append(stored_text or item)
+                    if copied:
+                        copied_files += 1
+                    if stored_text and stored_text != item:
+                        field_changed = True
+
+                if field_changed:
+                    self._session.update_entry_value("font", index, "text", ", ".join(rewritten_items))
+                    updated_links += 1
+
+        if not copied_files and not updated_links:
+            self._set_status("All asset files already live inside Source Dir.")
+            return
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(f"Packed {copied_files} files into Source Dir, updated {updated_links} links.")
+
     def _auto_fill_missing_resource_info(self):
         if not self._commit_raw_json_if_needed():
             return
@@ -3404,6 +3477,42 @@ def _resource_name_from_file(file_name) -> str:
 
 def _default_quick_font_charset_text() -> str:
     return serialize_charset_chars(build_charset(("ascii_printable",)).chars)
+
+
+def _copy_file_into_source_dir(source_path: str, source_dir: str) -> tuple[str, bool]:
+    normalized_source = normalize_path(source_path)
+    normalized_dir = normalize_path(source_dir)
+    if not normalized_source or not normalized_dir:
+        return "", False
+
+    basename = os.path.basename(normalized_source)
+    target_path = normalize_path(os.path.join(normalized_dir, basename))
+    if normalize_path(target_path) == normalized_source:
+        return os.path.relpath(target_path, normalized_dir).replace("\\", "/"), False
+
+    if os.path.isfile(target_path):
+        try:
+            if filecmp.cmp(normalized_source, target_path, shallow=False):
+                return os.path.relpath(target_path, normalized_dir).replace("\\", "/"), False
+        except OSError:
+            pass
+        target_path = _next_available_copy_path(target_path)
+
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    shutil.copy2(normalized_source, target_path)
+    return os.path.relpath(target_path, normalized_dir).replace("\\", "/"), True
+
+
+def _next_available_copy_path(path: str) -> str:
+    directory = os.path.dirname(path)
+    filename = os.path.basename(path)
+    stem, extension = os.path.splitext(filename)
+    counter = 2
+    candidate = path
+    while os.path.exists(candidate):
+        candidate = normalize_path(os.path.join(directory, f"{stem}_{counter}{extension}"))
+        counter += 1
+    return candidate
 
 
 def _resource_dedupe_key(section: str, entry) -> tuple[str, str] | None:
