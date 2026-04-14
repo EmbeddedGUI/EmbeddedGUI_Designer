@@ -411,100 +411,153 @@ class ResourceGeneratorWindow(QDialog):
         intro.setWordWrap(True)
         intro_layout.addWidget(intro)
 
-        helper_row = QHBoxLayout()
-        helper_row.setContentsMargins(0, 0, 0, 0)
-        helper_row.setSpacing(8)
-
         self._import_assets_button = QPushButton("Import Files...")
         self._import_assets_button.clicked.connect(self._import_asset_files_dialog)
-        helper_row.addWidget(self._import_assets_button)
 
         self._scan_assets_button = QPushButton("Scan Asset Folder...")
         self._scan_assets_button.clicked.connect(self._scan_assets_directory_dialog)
-        helper_row.addWidget(self._scan_assets_button)
 
         self._generate_font_text_button = QPushButton("Generate Font Text...")
         self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
-        helper_row.addWidget(self._generate_font_text_button)
 
         self._refresh_font_texts_button = QPushButton("Refresh Font Texts")
         self._refresh_font_texts_button.clicked.connect(self._refresh_font_text_links)
-        helper_row.addWidget(self._refresh_font_texts_button)
 
         self._auto_fill_button = QPushButton("Auto Fill Missing Info")
         self._auto_fill_button.clicked.connect(self._auto_fill_missing_resource_info)
-        helper_row.addWidget(self._auto_fill_button)
 
         self._rename_assets_button = QPushButton("Rename Names From Files")
         self._rename_assets_button.clicked.connect(self._rename_asset_names_from_files)
-        helper_row.addWidget(self._rename_assets_button)
 
         self._sort_assets_button = QPushButton("Sort Assets")
         self._sort_assets_button.clicked.connect(self._sort_assets_for_quick_mode)
-        helper_row.addWidget(self._sort_assets_button)
 
         self._dedupe_assets_button = QPushButton("Remove Duplicates")
         self._dedupe_assets_button.clicked.connect(self._remove_duplicate_assets_for_quick_mode)
-        helper_row.addWidget(self._dedupe_assets_button)
 
         self._remove_missing_assets_button = QPushButton("Remove Missing")
         self._remove_missing_assets_button.clicked.connect(self._remove_missing_assets_for_quick_mode)
-        helper_row.addWidget(self._remove_missing_assets_button)
 
         self._open_font_text_button = QPushButton("Open Font Text...")
         self._open_font_text_button.clicked.connect(self._open_selected_font_text_resource)
-        helper_row.addWidget(self._open_font_text_button)
 
         self._preview_asset_button = QPushButton("Preview Selected Asset")
         self._preview_asset_button.clicked.connect(self._preview_selected_simple_asset)
-        helper_row.addWidget(self._preview_asset_button)
 
         self._detect_video_info_button = QPushButton("Detect Video Info")
         self._detect_video_info_button.clicked.connect(self._detect_selected_video_metadata)
-        helper_row.addWidget(self._detect_video_info_button)
 
         self._refresh_videos_button = QPushButton("Refresh Videos")
         self._refresh_videos_button.clicked.connect(self._refresh_all_video_metadata)
-        helper_row.addWidget(self._refresh_videos_button)
 
         self._edit_asset_button = QPushButton("Edit / Open Asset...")
         self._edit_asset_button.clicked.connect(self._open_selected_asset_in_external_editor)
-        helper_row.addWidget(self._edit_asset_button)
 
         self._open_asset_folder_button = QPushButton("Open Asset Folder...")
         self._open_asset_folder_button.clicked.connect(self._open_selected_asset_folder)
-        helper_row.addWidget(self._open_asset_folder_button)
 
         self._resize_image_button = QPushButton("Resize Image...")
         self._resize_image_button.clicked.connect(self._open_resize_image_helper)
-        helper_row.addWidget(self._resize_image_button)
 
         self._rotate_image_button = QPushButton("Rotate Image...")
         self._rotate_image_button.clicked.connect(self._open_rotate_image_helper)
-        helper_row.addWidget(self._rotate_image_button)
 
         self._flip_image_button = QPushButton("Flip Image...")
         self._flip_image_button.clicked.connect(self._open_flip_image_helper)
-        helper_row.addWidget(self._flip_image_button)
 
         self._crop_image_button = QPushButton("Crop Image...")
         self._crop_image_button.clicked.connect(self._open_crop_image_helper)
-        helper_row.addWidget(self._crop_image_button)
 
         self._duplicate_simple_asset_button = QPushButton("Duplicate Selected")
         self._duplicate_simple_asset_button.clicked.connect(self._duplicate_selected_simple_asset)
-        helper_row.addWidget(self._duplicate_simple_asset_button)
 
         self._remove_simple_asset_button = QPushButton("Remove Selected")
         self._remove_simple_asset_button.clicked.connect(self._remove_selected_simple_asset)
-        helper_row.addWidget(self._remove_simple_asset_button)
 
         self._open_professional_button = QPushButton("Open Professional Mode")
         self._open_professional_button.clicked.connect(lambda: self._set_ui_mode("professional"))
-        helper_row.addWidget(self._open_professional_button)
 
-        helper_row.addStretch(1)
-        intro_layout.addLayout(helper_row)
+        helper_grid = QGridLayout()
+        helper_grid.setContentsMargins(0, 0, 0, 0)
+        helper_grid.setHorizontalSpacing(10)
+        helper_grid.setVerticalSpacing(10)
+        helper_grid.addWidget(
+            self._build_simple_action_group(
+                "Import & Setup",
+                [
+                    self._import_assets_button,
+                    self._scan_assets_button,
+                    self._generate_font_text_button,
+                    self._refresh_font_texts_button,
+                ],
+                columns=2,
+            ),
+            0,
+            0,
+        )
+        helper_grid.addWidget(
+            self._build_simple_action_group(
+                "Batch Fixes",
+                [
+                    self._auto_fill_button,
+                    self._rename_assets_button,
+                    self._refresh_videos_button,
+                    self._sort_assets_button,
+                    self._dedupe_assets_button,
+                    self._remove_missing_assets_button,
+                ],
+                columns=3,
+            ),
+            0,
+            1,
+        )
+        helper_grid.addWidget(
+            self._build_simple_action_group(
+                "Preview & Open",
+                [
+                    self._preview_asset_button,
+                    self._open_font_text_button,
+                    self._detect_video_info_button,
+                    self._edit_asset_button,
+                    self._open_asset_folder_button,
+                ],
+                columns=3,
+            ),
+            1,
+            0,
+        )
+        helper_grid.addWidget(
+            self._build_simple_action_group(
+                "Image Tools",
+                [
+                    self._resize_image_button,
+                    self._rotate_image_button,
+                    self._flip_image_button,
+                    self._crop_image_button,
+                ],
+                columns=2,
+            ),
+            1,
+            1,
+        )
+        helper_grid.addWidget(
+            self._build_simple_action_group(
+                "Selection",
+                [
+                    self._duplicate_simple_asset_button,
+                    self._remove_simple_asset_button,
+                    self._open_professional_button,
+                ],
+                columns=3,
+            ),
+            2,
+            0,
+            1,
+            2,
+        )
+        helper_grid.setColumnStretch(0, 1)
+        helper_grid.setColumnStretch(1, 1)
+        intro_layout.addLayout(helper_grid)
 
         counts_row = QHBoxLayout()
         counts_row.setContentsMargins(0, 0, 0, 0)
@@ -568,6 +621,19 @@ class ResourceGeneratorWindow(QDialog):
         preview_splitter.setSizes([460, 460])
         layout.addWidget(preview_splitter, 1)
         return page
+
+    def _build_simple_action_group(self, title: str, buttons, *, columns: int) -> QGroupBox:
+        group = QGroupBox(title)
+        layout = QGridLayout(group)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setHorizontalSpacing(8)
+        layout.setVerticalSpacing(8)
+        for index, button in enumerate(buttons):
+            button.setMinimumHeight(30)
+            layout.addWidget(button, index // columns, index % columns)
+        for column in range(columns):
+            layout.setColumnStretch(column, 1)
+        return group
 
     def _build_professional_page(self):
         page = QWidget()

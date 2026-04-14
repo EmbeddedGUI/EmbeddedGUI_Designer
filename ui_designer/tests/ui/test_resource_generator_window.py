@@ -9,7 +9,7 @@ from ui_designer.tests.sdk_builders import build_test_sdk_root
 from ui_designer.tests.ui.window_test_helpers import close_test_window as _close_window
 
 if HAS_PYQT5:
-    from PyQt5.QtWidgets import QMessageBox
+    from PyQt5.QtWidgets import QGroupBox, QMessageBox
 
 
 _skip_no_qt = skip_if_no_qt
@@ -30,6 +30,16 @@ class TestResourceGeneratorWindow:
 
         assert window._mode_combo.currentData() == "professional"
         assert window._workspace_stack.currentWidget() is window._professional_page
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_groups_actions_for_guided_flow(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+
+        group_titles = {group.title() for group in window._simple_page.findChildren(QGroupBox)}
+        assert {"Import & Setup", "Batch Fixes", "Preview & Open", "Image Tools", "Selection"} <= group_titles
         _close_window(window)
 
     @_skip_no_qt
