@@ -274,8 +274,14 @@ class TestResourceGeneratorWindow:
         assert window._simple_attention_count.text() == "Needs Attention: 2"
         assert "Show > Needs Attention" in window._simple_attention_count.toolTip()
         assert window._simple_asset_result_label.text() == "Showing 2 of 3 assets"
-        assert window._simple_asset_table.item(0, 0).toolTip() == "Font text file is not linked."
-        assert window._simple_asset_table.item(1, 0).toolTip() == "Video metadata is incomplete: width"
+        assert window._simple_asset_table.item(0, 0).toolTip() == (
+            "Font text file is not linked.\n"
+            "Fix: Use Open Font Text... or Auto Create Font Texts."
+        )
+        assert window._simple_asset_table.item(1, 0).toolTip() == (
+            "Video metadata is incomplete: width\n"
+            "Fix: Use Detect Video Info to fill fps, width, and height."
+        )
 
         window._simple_asset_table.selectRow(0)
         qapp.processEvents()
@@ -720,6 +726,10 @@ class TestResourceGeneratorWindow:
         assert action_map["Open Asset Folder"].isEnabled() is False
         assert action_map["Copy Asset Path"].isEnabled() is True
         assert action_map["Copy Full Path"].isEnabled() is False
+        assert window._simple_asset_table.item(0, 0).toolTip() == (
+            "Asset file is missing.\n"
+            "Fix: Restore the missing file or remove the asset from the config."
+        )
         _close_window(window)
 
     @_skip_no_qt

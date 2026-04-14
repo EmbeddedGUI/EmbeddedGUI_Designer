@@ -2670,6 +2670,7 @@ class ResourceGeneratorWindow(QDialog):
                 name_label = section_entry_label(section, entry, index)
                 file_label = str(entry.get("file", "") or "")
                 attention_messages = self._simple_asset_attention_messages(section, entry, file_label=file_label)
+                recommended_fixes = self._simple_asset_recommended_fixes(section, entry, file_label=file_label)
                 type_display_label = f"! {type_label}" if attention_messages else type_label
                 if attention_messages:
                     attention_count += 1
@@ -2699,6 +2700,7 @@ class ResourceGeneratorWindow(QDialog):
                         "file_label": file_label,
                         "detail_label": detail,
                         "attention_messages": attention_messages,
+                        "recommended_fixes": recommended_fixes,
                     }
                 )
 
@@ -2718,7 +2720,12 @@ class ResourceGeneratorWindow(QDialog):
         with QSignalBlocker(self._simple_asset_table):
             self._simple_asset_table.setRowCount(len(rows))
             for row, payload in enumerate(rows):
-                tooltip_text = "\n".join(payload["attention_messages"]) or payload["detail_label"] or payload["file_label"]
+                if payload["attention_messages"]:
+                    tooltip_lines = list(payload["attention_messages"])
+                    tooltip_lines.extend(f"Fix: {item}" for item in payload["recommended_fixes"])
+                    tooltip_text = "\n".join(item for item in tooltip_lines if item)
+                else:
+                    tooltip_text = payload["detail_label"] or payload["file_label"]
                 for column, value in enumerate(
                     (
                         payload["type_display_label"],
