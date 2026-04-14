@@ -10,6 +10,8 @@ python samples/font_preview_demo/render_font_preview_demo.py --sdk-root sdk/Embe
 
 The command writes `samples/font_preview_demo/output/font_preview_demo.png`.
 
+The bundled `sample_text.txt` matches the default English sample used by Resource Quick Mode when a font has no linked text file yet.
+
 ## Useful options
 
 ```bash

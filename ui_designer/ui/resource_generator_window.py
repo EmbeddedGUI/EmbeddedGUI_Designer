@@ -3358,7 +3358,7 @@ class ResourceGeneratorWindow(QDialog):
                 sample = sample[:45].rstrip() + "..."
             if sample:
                 return sample, item
-        return "AaBb 123", "built-in sample"
+        return _default_quick_font_preview_text(), "built-in sample"
 
     def _decode_font_preview_entities(self, raw_text: str) -> str:
         return re.sub(r"&#x([0-9A-Fa-f]+);", lambda match: chr(int(match.group(1), 16)), str(raw_text or ""))
@@ -3619,7 +3619,7 @@ class ResourceGeneratorWindow(QDialog):
             QMessageBox.information(self, "Auto Generate Texts", "Import or create some font assets first.")
             return
 
-        sample_lines = _quick_font_text_sample_lines(self._session.user_data)
+        sample_lines = _quick_font_text_sample_lines()
         written_fonts = 0
         created_files = 0
         added_lines = 0
@@ -6376,25 +6376,17 @@ def _default_quick_font_charset_text() -> str:
     return serialize_charset_chars(build_charset(("ascii_printable",)).chars)
 
 
-def _quick_font_text_sample_lines(resource_data) -> list[str]:
-    payload = resource_data if isinstance(resource_data, dict) else {}
-    collected = ["AaBb 123"]
-    seen = {collected[0]}
+def _quick_font_text_sample_lines() -> list[str]:
+    return [
+        "HELLO",
+        "Designer",
+        "Quick Brown Fox",
+        "1234",
+    ]
 
-    for section in KNOWN_RESOURCE_SECTIONS:
-        for entry in payload.get(section, []) or []:
-            if not isinstance(entry, dict):
-                continue
-            candidate = str(entry.get("name", "") or "").strip()
-            if not candidate:
-                candidate = _resource_name_from_file(entry.get("file", ""))
-            candidate = str(candidate or "").strip()
-            if not candidate or candidate in seen:
-                continue
-            collected.append(candidate)
-            seen.add(candidate)
 
-    return collected
+def _default_quick_font_preview_text() -> str:
+    return "HELLO Designer 1234"
 
 
 def _safe_quick_placeholder_stem(value: str, *, fallback: str) -> str:

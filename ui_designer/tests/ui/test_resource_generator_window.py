@@ -1717,7 +1717,7 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
-    def test_auto_generate_font_text_samples_writes_current_resource_names(self, qapp, monkeypatch, tmp_path):
+    def test_auto_generate_font_text_samples_writes_default_english_samples(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
 
@@ -1744,10 +1744,13 @@ class TestResourceGeneratorWindow:
         text_path = source_dir / "fonts" / "display_charset.txt"
         content = text_path.read_text(encoding="utf-8")
         assert text_path.is_file()
-        assert "AaBb 123\n" in content
-        assert "Hero Banner\n" in content
-        assert "Display Font\n" in content
-        assert "Intro Clip\n" in content
+        assert "HELLO\n" in content
+        assert "Designer\n" in content
+        assert "Quick Brown Fox\n" in content
+        assert "1234\n" in content
+        assert "Hero Banner\n" not in content
+        assert "Display Font\n" not in content
+        assert "Intro Clip\n" not in content
         assert window._session.section_entries("font")[0]["text"] == "fonts/display_charset.txt"
         assert window._simple_asset_table.item(1, 3).text() == "fonts/display_charset.txt"
         assert window.has_unsaved_changes() is True
@@ -2198,6 +2201,45 @@ class TestResourceGeneratorWindow:
         assert window._simple_asset_preview_label.pixmap() is not None
         assert "Preview Text: AB" in window._simple_asset_meta.toPlainText()
         assert "Preview Source: charset/basic.txt" in window._simple_asset_meta.toPlainText()
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_selection_uses_english_builtin_font_preview_sample_when_text_is_missing(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        font_path = source_dir / "display.ttf"
+        font_path.write_bytes(b"ttf")
+
+        captured = {}
+
+        def _fake_render(self, font_file, sample_text, entry=None):
+            captured["font_file"] = font_file
+            captured["sample_text"] = sample_text
+            pixmap = QPixmap(96, 36)
+            pixmap.fill()
+            return pixmap
+
+        monkeypatch.setattr(ResourceGeneratorWindow, "_build_font_preview_pixmap", _fake_render)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "name": "display", "text": ""}], "mp4": []},
+            dirty=False,
+        )
+
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        assert captured["font_file"] == str(font_path.resolve())
+        assert captured["sample_text"] == "HELLO Designer 1234"
+        assert "Preview Text: HELLO Designer 1234" in window._simple_asset_meta.toPlainText()
+        assert "Preview Source: built-in sample" in window._simple_asset_meta.toPlainText()
         _close_window(window)
 
     @_skip_no_qt
