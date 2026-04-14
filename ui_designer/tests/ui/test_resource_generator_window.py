@@ -1949,6 +1949,47 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_font_text_links_dialog_supports_add_edit_remove_and_reorder(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QInputDialog
+
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("abc", encoding="utf-8")
+
+        prompts = iter(
+            [
+                ("extra.txt", True),
+                ("renamed.txt", True),
+            ]
+        )
+        monkeypatch.setattr(QInputDialog, "getText", lambda *args, **kwargs: next(prompts))
+
+        dialog = _FontTextLinksDialog(initial_items=["ui_text.txt", "missing.txt"], source_dir=str(source_dir), parent=None)
+
+        assert dialog._count_label.text() == "Linked text files: 2 | Missing: 1"
+        assert dialog.text_value() == "ui_text.txt\nmissing.txt"
+
+        dialog._add_path()
+        assert dialog.text_value() == "ui_text.txt\nmissing.txt\nextra.txt"
+        assert dialog._count_label.text() == "Linked text files: 3 | Missing: 2"
+
+        dialog._list_widget.setCurrentRow(2)
+        dialog._edit_selected_path()
+        assert dialog.text_value() == "ui_text.txt\nmissing.txt\nrenamed.txt"
+
+        dialog._list_widget.setCurrentRow(2)
+        dialog._move_selected_path(-1)
+        assert dialog.text_value() == "ui_text.txt\nrenamed.txt\nmissing.txt"
+
+        dialog._list_widget.setCurrentRow(2)
+        dialog._remove_selected_path()
+        assert dialog.text_value() == "ui_text.txt\nrenamed.txt"
+        assert dialog._count_label.text() == "Linked text files: 2 | Missing: 1"
+        dialog.close()
+
+    @_skip_no_qt
     def test_rename_asset_names_from_files_updates_session_and_simple_table(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow

@@ -787,7 +787,7 @@ class _FontTextLinksDialog(QDialog):
     def __init__(self, *, initial_items: list[str], source_dir: str = "", normalize_file_callback=None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Font Text Files")
-        self.setMinimumSize(520, 360)
+        self.setMinimumSize(640, 400)
         self._normalize_file_callback = normalize_file_callback
         self._source_dir = str(source_dir or "").strip()
 
@@ -807,22 +807,55 @@ class _FontTextLinksDialog(QDialog):
         self._count_label = QLabel("")
         layout.addWidget(self._count_label)
 
-        self._editor = QPlainTextEdit()
-        self._editor.setPlainText("\n".join(initial_items or []))
-        self._editor.textChanged.connect(self._update_count_label)
-        layout.addWidget(self._editor, 1)
-        self._update_count_label()
+        content_row = QHBoxLayout()
+        content_row.setContentsMargins(0, 0, 0, 0)
+        content_row.setSpacing(10)
+        layout.addLayout(content_row, 1)
 
-        actions_row = QHBoxLayout()
-        actions_row.setContentsMargins(0, 0, 0, 0)
-        actions_row.setSpacing(8)
+        self._list_widget = QListWidget()
+        self._list_widget.setSelectionMode(QAbstractItemView.SingleSelection)
+        self._list_widget.itemSelectionChanged.connect(self._refresh_action_state)
+        self._list_widget.itemDoubleClicked.connect(lambda _item: self._edit_selected_path())
+        content_row.addWidget(self._list_widget, 1)
 
-        add_button = QPushButton("Add Files...")
-        add_button.setEnabled(callable(normalize_file_callback))
-        add_button.clicked.connect(self._add_files)
-        actions_row.addWidget(add_button)
-        actions_row.addStretch(1)
-        layout.addLayout(actions_row)
+        actions_col = QVBoxLayout()
+        actions_col.setContentsMargins(0, 0, 0, 0)
+        actions_col.setSpacing(8)
+        content_row.addLayout(actions_col)
+
+        self._add_files_button = QPushButton("Add Files...")
+        self._add_files_button.setEnabled(callable(normalize_file_callback))
+        self._add_files_button.clicked.connect(self._add_files)
+        actions_col.addWidget(self._add_files_button)
+
+        self._add_path_button = QPushButton("Add Path...")
+        self._add_path_button.clicked.connect(self._add_path)
+        actions_col.addWidget(self._add_path_button)
+
+        self._edit_path_button = QPushButton("Edit Path...")
+        self._edit_path_button.clicked.connect(self._edit_selected_path)
+        actions_col.addWidget(self._edit_path_button)
+
+        self._remove_path_button = QPushButton("Remove")
+        self._remove_path_button.clicked.connect(self._remove_selected_path)
+        actions_col.addWidget(self._remove_path_button)
+
+        self._move_up_button = QPushButton("Move Up")
+        self._move_up_button.clicked.connect(lambda: self._move_selected_path(-1))
+        actions_col.addWidget(self._move_up_button)
+
+        self._move_down_button = QPushButton("Move Down")
+        self._move_down_button.clicked.connect(lambda: self._move_selected_path(1))
+        actions_col.addWidget(self._move_down_button)
+
+        actions_col.addStretch(1)
+
+        self._path_label = QLabel("")
+        self._path_label.setWordWrap(True)
+        self._path_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        layout.addWidget(self._path_label)
+
+        self._set_items(initial_items or [], selected_index=0)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
@@ -837,9 +870,98 @@ class _FontTextLinksDialog(QDialog):
                 items.append(normalized)
         return items
 
+    def _normalize_manual_item(self, value: str) -> str:
+        items = self._split_items(value)
+        if not items:
+            return ""
+        return str(items[0]).replace("\\", "/")
+
+    def _current_values(self) -> list[str]:
+        values = []
+        for row in range(self._list_widget.count()):
+            item = self._list_widget.item(row)
+            raw_value = str(item.data(Qt.UserRole) or "").strip()
+            if raw_value and raw_value not in values:
+                values.append(raw_value)
+        return values
+
+    def _resolved_item_path(self, raw_value: str) -> str:
+        raw = str(raw_value or "").strip()
+        if not raw:
+            return ""
+        if os.path.isabs(raw):
+            return normalize_path(raw)
+        if self._source_dir:
+            return normalize_path(os.path.join(self._source_dir, raw))
+        return raw
+
+    def _item_label(self, raw_value: str) -> str:
+        raw = str(raw_value or "").strip()
+        resolved = self._resolved_item_path(raw)
+        if resolved and os.path.exists(resolved):
+            return raw
+        return f"{raw} (missing)"
+
+    def _set_items(self, values: list[str], *, selected_index: int = -1):
+        items = []
+        for value in values:
+            normalized = self._normalize_manual_item(value)
+            if normalized and normalized not in items:
+                items.append(normalized)
+
+        with QSignalBlocker(self._list_widget):
+            self._list_widget.clear()
+            for raw_value in items:
+                item = QListWidgetItem(self._item_label(raw_value))
+                item.setData(Qt.UserRole, raw_value)
+                item.setToolTip(self._resolved_item_path(raw_value))
+                self._list_widget.addItem(item)
+            if self._list_widget.count() > 0:
+                target_row = selected_index if 0 <= selected_index < self._list_widget.count() else 0
+                self._list_widget.setCurrentRow(target_row)
+        self._update_count_label()
+        self._refresh_action_state()
+
+    def _selected_row(self) -> int:
+        return int(self._list_widget.currentRow())
+
+    def _selected_value(self) -> str:
+        row = self._selected_row()
+        if row < 0:
+            return ""
+        item = self._list_widget.item(row)
+        return str(item.data(Qt.UserRole) or "").strip() if item is not None else ""
+
     def _update_count_label(self):
-        count = len(self._split_items(self._editor.toPlainText()))
-        self._count_label.setText(f"Linked text files: {count}")
+        values = self._current_values()
+        missing = 0
+        for value in values:
+            resolved = self._resolved_item_path(value)
+            if not resolved or not os.path.exists(resolved):
+                missing += 1
+        summary = f"Linked text files: {len(values)}"
+        if missing:
+            summary += f" | Missing: {missing}"
+        self._count_label.setText(summary)
+
+    def _refresh_action_state(self):
+        row = self._selected_row()
+        has_selection = row >= 0
+        count = self._list_widget.count()
+        self._edit_path_button.setEnabled(has_selection)
+        self._remove_path_button.setEnabled(has_selection)
+        self._move_up_button.setEnabled(has_selection and row > 0)
+        self._move_down_button.setEnabled(has_selection and 0 <= row < count - 1)
+
+        raw_value = self._selected_value()
+        resolved = self._resolved_item_path(raw_value)
+        if raw_value:
+            if resolved and resolved != raw_value:
+                self._path_label.setText(f"Resolved: {resolved}")
+            else:
+                self._path_label.setText(f"Path: {raw_value}")
+        else:
+            self._path_label.setText("Select a linked text file to inspect or reorder it.")
 
     def _add_files(self):
         if not callable(self._normalize_file_callback):
@@ -848,15 +970,73 @@ class _FontTextLinksDialog(QDialog):
         paths, _ = QFileDialog.getOpenFileNames(self, "Add Font Text Files", start_dir, "Text files (*.txt);;All files (*)")
         if not paths:
             return
-        items = self._split_items(self._editor.toPlainText())
+        items = self._current_values()
         for path in paths:
             normalized = self._normalize_file_callback(normalize_path(path))
             if normalized and normalized not in items:
                 items.append(normalized)
-        self._editor.setPlainText("\n".join(items))
+        self._set_items(items, selected_index=len(items) - 1)
+
+    def _prompt_path(self, *, title: str, initial_value: str = "") -> str:
+        text, accepted = QInputDialog.getText(
+            self,
+            title,
+            "Text file path relative to Source Dir:",
+            QLineEdit.Normal,
+            str(initial_value or ""),
+        )
+        if not accepted:
+            return ""
+        return self._normalize_manual_item(text)
+
+    def _add_path(self):
+        value = self._prompt_path(title="Add Font Text Path")
+        if not value:
+            return
+        items = self._current_values()
+        if value in items:
+            return
+        items.append(value)
+        self._set_items(items, selected_index=len(items) - 1)
+
+    def _edit_selected_path(self):
+        row = self._selected_row()
+        if row < 0:
+            return
+        items = self._current_values()
+        current_value = items[row]
+        updated_value = self._prompt_path(title="Edit Font Text Path", initial_value=current_value)
+        if not updated_value:
+            return
+        if updated_value in items and updated_value != current_value:
+            items = [value for index, value in enumerate(items) if index != row]
+            target_index = items.index(updated_value)
+            self._set_items(items, selected_index=target_index)
+            return
+        items[row] = updated_value
+        self._set_items(items, selected_index=row)
+
+    def _remove_selected_path(self):
+        row = self._selected_row()
+        if row < 0:
+            return
+        items = self._current_values()
+        items.pop(row)
+        self._set_items(items, selected_index=min(row, len(items) - 1))
+
+    def _move_selected_path(self, delta: int):
+        row = self._selected_row()
+        if row < 0:
+            return
+        target = row + int(delta)
+        items = self._current_values()
+        if not (0 <= target < len(items)):
+            return
+        items[row], items[target] = items[target], items[row]
+        self._set_items(items, selected_index=target)
 
     def text_value(self) -> str:
-        return self._editor.toPlainText()
+        return "\n".join(self._current_values())
 
 
 class ResourceGeneratorWindow(QDialog):
