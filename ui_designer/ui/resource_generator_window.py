@@ -841,6 +841,12 @@ class _FontTextLinksDialog(QDialog):
         self._move_down_shortcut.activated.connect(lambda: self._move_selected_path(1))
         self._remove_selected_shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self._list_widget)
         self._remove_selected_shortcut.activated.connect(self._remove_selected_path)
+        self._activate_shortcut = QShortcut(QKeySequence(Qt.Key_Return), self._list_widget)
+        self._activate_shortcut.activated.connect(self._activate_selected_item)
+        self._activate_keypad_shortcut = QShortcut(QKeySequence(Qt.Key_Enter), self._list_widget)
+        self._activate_keypad_shortcut.activated.connect(self._activate_selected_item)
+        self._rename_shortcut = QShortcut(QKeySequence(Qt.Key_F2), self._list_widget)
+        self._rename_shortcut.activated.connect(self._edit_selected_path)
 
         actions_col = QVBoxLayout()
         actions_col.setContentsMargins(0, 0, 0, 0)

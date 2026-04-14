@@ -2291,6 +2291,41 @@ class TestResourceGeneratorWindow:
         dialog.close()
 
     @_skip_no_qt
+    def test_font_text_links_dialog_shortcuts_activate_and_rename_selected_item(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QInputDialog
+
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("abc", encoding="utf-8")
+        captured = []
+
+        def _edit_file(value):
+            captured.append(value)
+            return True
+
+        monkeypatch.setattr(QInputDialog, "getText", lambda *args, **kwargs: ("renamed.txt", True))
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt"],
+            source_dir=str(source_dir),
+            edit_file_callback=_edit_file,
+            parent=None,
+        )
+        dialog.show()
+        qapp.processEvents()
+
+        dialog._list_widget.setCurrentRow(0)
+        dialog._list_widget.setFocus()
+        QTest.keyClick(dialog._list_widget, Qt.Key_Return)
+        QTest.keyClick(dialog._list_widget, Qt.Key_F2)
+
+        assert captured == ["ui_text.txt"]
+        assert dialog.text_value() == "renamed.txt"
+        dialog.close()
+
+    @_skip_no_qt
     def test_font_text_links_dialog_can_copy_full_path_and_open_folder(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtWidgets import QApplication
 
