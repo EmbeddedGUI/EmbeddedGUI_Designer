@@ -383,6 +383,51 @@ class _QuickImageNormalizeDialog(QDialog):
         return str(self._suffix_edit.text() or "").strip()
 
 
+class _QuickImageCompressDialog(QDialog):
+    def __init__(self, *, output_folder: str, suffix: str, colors: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Compress Images")
+        self.setMinimumWidth(380)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        summary = QLabel("Create compressed PNG copies for every image asset in quick mode.")
+        summary.setWordWrap(True)
+        layout.addWidget(summary)
+
+        form = QFormLayout()
+        form.setSpacing(8)
+
+        self._folder_edit = QLineEdit(str(output_folder or "").strip())
+        form.addRow("Output Folder", self._folder_edit)
+
+        self._suffix_edit = QLineEdit(str(suffix or "").strip())
+        form.addRow("Filename Suffix", self._suffix_edit)
+
+        self._color_spin = QSpinBox()
+        self._color_spin.setRange(2, 256)
+        self._color_spin.setValue(max(min(int(colors or 64), 256), 2))
+        form.addRow("Max Colors", self._color_spin)
+
+        layout.addLayout(form)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def output_folder(self) -> str:
+        return str(self._folder_edit.text() or "").strip()
+
+    def filename_suffix(self) -> str:
+        return str(self._suffix_edit.text() or "").strip()
+
+    def color_limit(self) -> int:
+        return int(self._color_spin.value())
+
+
 class _QuickPreviewBoardDialog(QDialog):
     def __init__(self, cards, *, total_assets: int, parent=None):
         super().__init__(parent)
@@ -608,6 +653,9 @@ class ResourceGeneratorWindow(QDialog):
         self._normalize_images_button = QPushButton("Normalize Images...")
         self._normalize_images_button.clicked.connect(self._open_normalize_images_helper)
 
+        self._compress_images_button = QPushButton("Compress Images...")
+        self._compress_images_button.clicked.connect(self._open_compress_images_helper)
+
         self._rotate_image_button = QPushButton("Rotate Image...")
         self._rotate_image_button.clicked.connect(self._open_rotate_image_helper)
 
@@ -686,6 +734,7 @@ class ResourceGeneratorWindow(QDialog):
                     self._resize_image_button,
                     self._generate_thumbnails_button,
                     self._normalize_images_button,
+                    self._compress_images_button,
                     self._rotate_image_button,
                     self._flip_image_button,
                     self._crop_image_button,
@@ -2790,6 +2839,46 @@ class ResourceGeneratorWindow(QDialog):
             filename_suffix=suffix,
         )
 
+    def _open_compress_images_helper(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        image_entries = [
+            entry
+            for entry in self._session.section_entries("img")
+            if isinstance(entry, dict) and str(entry.get("file", "") or "").strip()
+        ]
+        if not image_entries:
+            QMessageBox.information(self, "Compress Images", "Import or create some image assets first.")
+            return
+
+        dialog = _QuickImageCompressDialog(
+            output_folder="compressed",
+            suffix="_cmp",
+            colors=64,
+            parent=self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        output_folder = dialog.output_folder().replace("\\", "/").strip().strip("/")
+        suffix = dialog.filename_suffix().strip()
+        if not output_folder:
+            QMessageBox.warning(self, "Compress Images", "Enter an output folder inside Source Dir.")
+            return
+        if output_folder.startswith("..") or os.path.isabs(output_folder):
+            QMessageBox.warning(self, "Compress Images", "Output folder must stay inside Source Dir.")
+            return
+        if not suffix:
+            QMessageBox.warning(self, "Compress Images", "Enter a filename suffix for compressed images.")
+            return
+
+        self._compress_images_for_quick_mode(
+            output_folder=output_folder,
+            filename_suffix=suffix,
+            color_limit=dialog.color_limit(),
+        )
+
     def _generate_thumbnail_images_for_quick_mode(self, *, max_width: int, max_height: int, output_folder: str, filename_suffix: str):
         try:
             from PIL import Image, ImageOps
@@ -2855,6 +2944,80 @@ class ResourceGeneratorWindow(QDialog):
         self._update_raw_editor()
 
         summary = [f"Generated {generated_files} thumbnails"]
+        if added:
+            summary.append(f"added {added} assets")
+        if updated:
+            summary.append(f"updated {updated} assets")
+        self._set_status(", ".join(summary) + ".")
+
+    def _compress_images_for_quick_mode(self, *, output_folder: str, filename_suffix: str, color_limit: int):
+        try:
+            from PIL import Image, ImageOps
+        except Exception as exc:
+            QMessageBox.warning(self, "Compress Images", f"Pillow is required for image compression:\n{exc}")
+            return
+
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if not source_dir:
+            QMessageBox.warning(self, "Compress Images", "Set Source Dir before compressing images.")
+            return
+
+        generated_assets: list[tuple[str, str]] = []
+        compressed_files = 0
+        normalized_folder = output_folder.replace("\\", "/").strip().strip("/")
+
+        for entry in self._session.section_entries("img"):
+            if not isinstance(entry, dict):
+                continue
+
+            file_name = str(entry.get("file", "") or "").strip()
+            resolved_path = self._resolve_entry_path("img", "file", file_name)
+            if not resolved_path or not os.path.isfile(resolved_path):
+                continue
+
+            base_name = str(entry.get("name", "") or "").strip()
+            if not base_name:
+                normalized_name = os.path.splitext(str(file_name or "").replace("\\", "/").strip().lstrip("/"))[0]
+                base_name = normalized_name.replace("/", "_").strip() or _resource_name_from_file(resolved_path)
+            if not base_name:
+                continue
+
+            relative_output = f"{normalized_folder}/{base_name}{filename_suffix}.png"
+            relative_output = relative_output.replace("//", "/")
+            target_path = normalize_path(os.path.join(source_dir, relative_output.replace("/", os.sep)))
+            if normalize_path(resolved_path) == target_path:
+                continue
+
+            try:
+                with Image.open(resolved_path) as image:
+                    compressed = ImageOps.exif_transpose(image)
+                    if compressed.mode not in {"RGB", "RGBA"}:
+                        compressed = compressed.convert("RGBA")
+                    if "A" in compressed.getbands():
+                        flattened = compressed.convert("RGBA").quantize(colors=max(min(int(color_limit), 256), 2))
+                    else:
+                        flattened = compressed.convert("RGB").quantize(colors=max(min(int(color_limit), 256), 2))
+                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                    flattened.save(target_path, "PNG", optimize=True, compress_level=9)
+            except Exception as exc:
+                QMessageBox.warning(self, "Compress Images", f"Failed to compress image:\n{resolved_path}\n\n{exc}")
+                return
+
+            compressed_files += 1
+            generated_assets.append(("img", target_path))
+
+        if not generated_assets:
+            self._set_status("No image assets were available for compression.")
+            return
+
+        entries_by_section = self._build_entries_from_asset_paths(generated_assets, [], source_dir)
+        added, updated = self._merge_discovered_entries(entries_by_section)
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+
+        summary = [f"Compressed {compressed_files} images"]
         if added:
             summary.append(f"added {added} assets")
         if updated:
