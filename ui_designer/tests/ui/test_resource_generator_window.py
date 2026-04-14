@@ -10,7 +10,7 @@ from ui_designer.tests.ui.window_test_helpers import close_test_window as _close
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QEvent, Qt, QUrl
-    from PyQt5.QtWidgets import QGroupBox, QHeaderView, QLabel, QMessageBox
+    from PyQt5.QtWidgets import QApplication, QGroupBox, QHeaderView, QLabel, QMessageBox
 
 
 _skip_no_qt = skip_if_no_qt
@@ -350,6 +350,72 @@ class TestResourceGeneratorWindow:
         assert set(imported[0][1:]) == {str(image_path), str(font_path), str(text_path)}
         assert event.accepted is True
         assert event.ignored is False
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_asset_context_menu_exposes_copy_and_open_actions(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        fonts_dir = source_dir / "fonts"
+        fonts_dir.mkdir(parents=True)
+        font_path = fonts_dir / "display.ttf"
+        text_path = fonts_dir / "display.txt"
+        font_path.write_bytes(b"ttf")
+        text_path.write_text("ABCD", encoding="utf-8")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"font": [{"file": "fonts/display.ttf", "name": "display", "text": "fonts/display.txt"}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        menu = window._build_simple_asset_context_menu()
+        action_map = {action.text(): action for action in menu.actions() if action.text()}
+
+        assert {"Preview Asset", "Open Asset", "Open Asset Folder", "Open Font Text", "Copy Resource Name", "Copy Asset Path", "Copy Full Path", "Duplicate", "Remove", "Open Professional Mode"} <= set(action_map)
+        assert action_map["Open Asset"].isEnabled() is True
+        assert action_map["Copy Full Path"].isEnabled() is True
+
+        QApplication.clipboard().clear()
+        action_map["Copy Resource Name"].trigger()
+        assert QApplication.clipboard().text() == "display"
+
+        action_map["Copy Asset Path"].trigger()
+        assert QApplication.clipboard().text() == "fonts/display.ttf"
+
+        action_map["Copy Full Path"].trigger()
+        assert QApplication.clipboard().text() == str(font_path)
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_asset_context_menu_disables_file_actions_for_missing_asset(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "images/missing.png", "name": "missing"}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        menu = window._build_simple_asset_context_menu()
+        action_map = {action.text(): action for action in menu.actions() if action.text()}
+
+        assert action_map["Open Asset"].isEnabled() is False
+        assert action_map["Open Asset Folder"].isEnabled() is False
+        assert action_map["Copy Asset Path"].isEnabled() is True
+        assert action_map["Copy Full Path"].isEnabled() is False
         _close_window(window)
 
     @_skip_no_qt

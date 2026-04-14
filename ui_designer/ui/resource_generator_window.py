@@ -15,6 +15,7 @@ from PyQt5.QtCore import QEvent, QTimer, Qt, QSignalBlocker, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QKeySequence, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
+    QApplication,
     QCheckBox,
     QComboBox,
     QDialog,
@@ -30,6 +31,7 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
+    QMenu,
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
@@ -1222,6 +1224,8 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_asset_table.setHorizontalHeaderLabels(["Type", "Name", "File", "Details"])
         self._simple_asset_table.itemSelectionChanged.connect(self._on_simple_asset_selection_changed)
         self._simple_asset_table.itemDoubleClicked.connect(self._open_simple_selection_in_professional_mode)
+        self._simple_asset_table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self._simple_asset_table.customContextMenuRequested.connect(self._show_simple_asset_context_menu)
         self._configure_simple_asset_table()
         assets_layout.addWidget(self._simple_asset_table, 1)
 
@@ -1433,6 +1437,67 @@ class ResourceGeneratorWindow(QDialog):
         simple_header.sectionResized.connect(lambda _index, _old_size, _new_size: self._remember_view_state())
         for column, width in enumerate(_DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS):
             simple_header.resizeSection(column, width)
+
+    def _show_simple_asset_context_menu(self, pos):
+        menu = self._build_simple_asset_context_menu(row=self._simple_asset_table.rowAt(pos.y()))
+        if menu is None:
+            return
+        menu.exec_(self._simple_asset_table.viewport().mapToGlobal(pos))
+
+    def _build_simple_asset_context_menu(self, *, row: int | None = None) -> QMenu | None:
+        if row is not None and row >= 0:
+            self._simple_asset_table.selectRow(row)
+        section, _index, entry = self._selected_simple_asset_context()
+        if entry is None or not section:
+            return None
+
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path(section, "file", file_name)
+        has_file_value = bool(file_name)
+        has_resolved_file = bool(resolved_path and os.path.exists(resolved_path))
+
+        menu = QMenu(self)
+
+        preview_action = menu.addAction("Preview Asset")
+        preview_action.triggered.connect(self._preview_selected_simple_asset)
+
+        open_asset_action = menu.addAction("Open Asset")
+        open_asset_action.setEnabled(has_resolved_file)
+        open_asset_action.triggered.connect(self._open_selected_asset_in_external_editor)
+
+        open_folder_action = menu.addAction("Open Asset Folder")
+        open_folder_action.setEnabled(has_resolved_file)
+        open_folder_action.triggered.connect(self._open_selected_asset_folder)
+
+        if section == "font":
+            open_text_action = menu.addAction("Open Font Text")
+            open_text_action.triggered.connect(self._open_selected_font_text_resource)
+
+        menu.addSeparator()
+
+        copy_name_action = menu.addAction("Copy Resource Name")
+        copy_name_action.triggered.connect(self._copy_selected_simple_asset_name)
+
+        copy_asset_path_action = menu.addAction("Copy Asset Path")
+        copy_asset_path_action.setEnabled(has_file_value)
+        copy_asset_path_action.triggered.connect(self._copy_selected_simple_asset_relative_path)
+
+        copy_full_path_action = menu.addAction("Copy Full Path")
+        copy_full_path_action.setEnabled(has_resolved_file)
+        copy_full_path_action.triggered.connect(self._copy_selected_simple_asset_absolute_path)
+
+        menu.addSeparator()
+
+        duplicate_action = menu.addAction("Duplicate")
+        duplicate_action.triggered.connect(self._duplicate_selected_simple_asset)
+
+        remove_action = menu.addAction("Remove")
+        remove_action.triggered.connect(self._remove_selected_simple_asset)
+
+        open_professional_action = menu.addAction("Open Professional Mode")
+        open_professional_action.triggered.connect(self._open_current_simple_selection_in_professional_mode)
+
+        return menu
 
     def _on_simple_asset_filter_changed(self, _index: int):
         self._refresh_simple_page()
@@ -2841,6 +2906,40 @@ class ResourceGeneratorWindow(QDialog):
             QMessageBox.warning(self, "Open Asset Folder", f"Failed to open asset folder:\n{target_dir}")
             return
         self._set_status(f"Opened asset folder '{target_dir}'.")
+
+    def _copy_selected_simple_asset_name(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None or not section:
+            QMessageBox.warning(self, "Copy Resource Name", "Select an asset in Simple mode first.")
+            return
+        name = section_entry_label(section, entry, index)
+        QApplication.clipboard().setText(name)
+        self._set_status(f"Copied resource name '{name}'.")
+
+    def _copy_selected_simple_asset_relative_path(self):
+        section, _index, entry = self._selected_simple_asset_context()
+        if entry is None or not section:
+            QMessageBox.warning(self, "Copy Asset Path", "Select an asset in Simple mode first.")
+            return
+        file_name = str(entry.get("file", "") or "").strip()
+        if not file_name:
+            QMessageBox.warning(self, "Copy Asset Path", "The selected asset does not have a file path.")
+            return
+        QApplication.clipboard().setText(file_name)
+        self._set_status(f"Copied asset path '{file_name}'.")
+
+    def _copy_selected_simple_asset_absolute_path(self):
+        section, _index, entry = self._selected_simple_asset_context()
+        if entry is None or not section:
+            QMessageBox.warning(self, "Copy Full Path", "Select an asset in Simple mode first.")
+            return
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path(section, "file", file_name)
+        if not resolved_path or not os.path.exists(resolved_path):
+            QMessageBox.warning(self, "Copy Full Path", f"Asset file does not exist:\n{resolved_path or file_name}")
+            return
+        QApplication.clipboard().setText(resolved_path)
+        self._set_status(f"Copied full asset path '{resolved_path}'.")
 
     def _duplicate_selected_simple_asset(self):
         section, index, entry = self._selected_simple_asset_context()
