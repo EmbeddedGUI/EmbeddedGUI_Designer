@@ -459,6 +459,10 @@ class ResourceGeneratorWindow(QDialog):
         self._detect_video_info_button.clicked.connect(self._detect_selected_video_metadata)
         helper_row.addWidget(self._detect_video_info_button)
 
+        self._refresh_videos_button = QPushButton("Refresh Videos")
+        self._refresh_videos_button.clicked.connect(self._refresh_all_video_metadata)
+        helper_row.addWidget(self._refresh_videos_button)
+
         self._edit_asset_button = QPushButton("Edit / Open Asset...")
         self._edit_asset_button.clicked.connect(self._open_selected_asset_in_external_editor)
         helper_row.addWidget(self._edit_asset_button)
@@ -1688,7 +1692,7 @@ class ResourceGeneratorWindow(QDialog):
             QMessageBox.warning(self, "Detect Video Info", f"Video file does not exist:\n{resolved_path or file_name}")
             return
 
-        metadata = _detect_video_metadata(resolved_path)
+        changed, metadata = self._sync_video_metadata(index, entry, overwrite_existing=True)
         if not metadata:
             QMessageBox.warning(
                 self,
@@ -1696,17 +1700,6 @@ class ResourceGeneratorWindow(QDialog):
                 "Could not read video width, height, and fps. Make sure ffprobe is available in PATH.",
             )
             return
-
-        changed = False
-        for field_name in ("fps", "width", "height"):
-            incoming = metadata.get(field_name)
-            if incoming in (None, "", 0):
-                continue
-            existing = entry.get(field_name, "")
-            if str(existing or "").strip() == str(incoming).strip():
-                continue
-            self._session.update_entry_value("mp4", index, field_name, incoming)
-            changed = True
 
         self._active_section = "mp4"
         self._active_entry_index = index
@@ -1723,6 +1716,28 @@ class ResourceGeneratorWindow(QDialog):
 
         self._refresh_simple_page()
         self._set_status(f"Video metadata already up to date for '{section_entry_label('mp4', entry, index)}'.")
+
+    def _refresh_all_video_metadata(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        refreshed = 0
+        for index, entry in enumerate(self._session.section_entries("mp4")):
+            if not isinstance(entry, dict):
+                continue
+            changed, _metadata = self._sync_video_metadata(index, entry, overwrite_existing=True)
+            if changed:
+                refreshed += 1
+
+        if not refreshed:
+            self._set_status("Video metadata already matches current files.")
+            return
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(f"Refreshed video metadata for {refreshed} videos.")
 
     def _auto_fill_missing_resource_info(self):
         if not self._commit_raw_json_if_needed():
@@ -1949,24 +1964,32 @@ class ResourceGeneratorWindow(QDialog):
         return False
 
     def _auto_fill_video_metadata(self, index: int, entry: dict) -> bool:
-        missing_fields = [field for field in ("fps", "width", "height") if entry.get(field, "") in ("", None, 0)]
-        if not missing_fields:
-            return False
+        changed, _metadata = self._sync_video_metadata(index, entry, overwrite_existing=False)
+        return changed
 
+    def _sync_video_metadata(self, index: int, entry: dict, *, overwrite_existing: bool) -> tuple[bool, dict]:
         file_name = str(entry.get("file", "") or "").strip()
         resolved_path = self._resolve_entry_path("mp4", "file", file_name)
         if not resolved_path or not os.path.isfile(resolved_path):
-            return False
+            return False, {}
 
         metadata = _detect_video_metadata(resolved_path)
+        if not metadata:
+            return False, {}
+
         changed = False
-        for field_name in missing_fields:
+        for field_name in ("fps", "width", "height"):
             incoming = metadata.get(field_name)
             if incoming in (None, "", 0):
                 continue
+            existing = entry.get(field_name, "")
+            if not overwrite_existing and existing not in ("", None, 0):
+                continue
+            if str(existing or "").strip() == str(incoming).strip():
+                continue
             self._session.update_entry_value("mp4", index, field_name, incoming)
             changed = True
-        return changed
+        return changed, metadata
 
     def _open_selected_font_text_resource(self):
         section, index, entry = self._selected_simple_asset_context()

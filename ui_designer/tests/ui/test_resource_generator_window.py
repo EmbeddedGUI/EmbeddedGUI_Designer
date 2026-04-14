@@ -430,6 +430,55 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_refresh_all_video_metadata_updates_entries_and_simple_table(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+        (source_dir / "loop.mp4").write_bytes(b"mp4")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window._detect_video_metadata",
+            lambda path: (
+                {"fps": 24, "width": 320, "height": 180}
+                if path.endswith("intro.mp4")
+                else {"fps": 12, "width": 160, "height": 90}
+            ),
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [],
+                "font": [],
+                "mp4": [
+                    {"file": "intro.mp4", "name": "intro", "fps": 1, "width": 2, "height": 3},
+                    {"file": "loop.mp4", "name": "loop"},
+                ],
+            },
+            dirty=False,
+        )
+
+        window._refresh_all_video_metadata()
+
+        intro = window._session.section_entries("mp4")[0]
+        loop = window._session.section_entries("mp4")[1]
+        assert intro["fps"] == 24
+        assert intro["width"] == 320
+        assert intro["height"] == 180
+        assert loop["fps"] == 12
+        assert loop["width"] == 160
+        assert loop["height"] == 90
+        assert window._simple_asset_table.item(0, 3).text() == "24fps 320x180"
+        assert window._simple_asset_table.item(1, 3).text() == "12fps 160x90"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Refreshed video metadata for 2 videos."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_open_selected_font_text_resource_opens_existing_file(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
