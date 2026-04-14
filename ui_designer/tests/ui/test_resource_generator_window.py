@@ -953,6 +953,46 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_clean_helper_outputs_removes_generated_folders_and_img_entries(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        (source_dir / "thumbnails").mkdir(parents=True)
+        (source_dir / "font_previews").mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        (source_dir / "thumbnails" / "hero_thumb.png").write_bytes(b"png")
+        (source_dir / "font_previews" / "display_preview.png").write_bytes(b"png")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [
+                    {"file": "hero.png", "name": "hero"},
+                    {"file": "thumbnails/hero_thumb.png", "name": "hero_thumb"},
+                    {"file": "font_previews/display_preview.png", "name": "display_preview"},
+                ],
+                "font": [{"file": "display.ttf", "name": "display"}],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._remove_generated_helper_outputs_for_quick_mode()
+
+        assert (source_dir / "hero.png").is_file()
+        assert (source_dir / "thumbnails").exists() is False
+        assert (source_dir / "font_previews").exists() is False
+        assert [entry["file"] for entry in window._session.section_entries("img")] == ["hero.png"]
+        assert [entry["file"] for entry in window._session.section_entries("font")] == ["display.ttf"]
+        assert window._simple_asset_table.rowCount() == 2
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Cleaned 2 generated helper assets, deleted 2 files in 2 folders."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_selection_updates_image_preview(self, qapp, tmp_path):
         from PyQt5.QtGui import QPixmap
 

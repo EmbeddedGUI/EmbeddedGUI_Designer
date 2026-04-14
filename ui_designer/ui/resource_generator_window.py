@@ -65,6 +65,8 @@ _IMAGE_FILE_EXTENSIONS = {".png", ".bmp", ".jpg", ".jpeg", ".gif", ".webp"}
 _FONT_FILE_EXTENSIONS = {".ttf", ".otf"}
 _VIDEO_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv"}
 _TEXT_FILE_EXTENSIONS = {".txt"}
+_QUICK_GENERATED_ASSET_FOLDERS = ("thumbnails", "normalized", "compressed", "font_previews")
+_QUICK_GENERATED_ASSET_FOLDER_SET = {folder.lower() for folder in _QUICK_GENERATED_ASSET_FOLDERS}
 
 
 def _pil_image_to_qpixmap(image) -> QPixmap:
@@ -664,6 +666,9 @@ class ResourceGeneratorWindow(QDialog):
         self._remove_missing_assets_button = QPushButton("Remove Missing")
         self._remove_missing_assets_button.clicked.connect(self._remove_missing_assets_for_quick_mode)
 
+        self._clean_helper_outputs_button = QPushButton("Clean Helper Outputs")
+        self._clean_helper_outputs_button.clicked.connect(self._remove_generated_helper_outputs_for_quick_mode)
+
         self._open_font_text_button = QPushButton("Open Font Text...")
         self._open_font_text_button.clicked.connect(self._open_selected_font_text_resource)
 
@@ -751,6 +756,7 @@ class ResourceGeneratorWindow(QDialog):
                     self._sort_assets_button,
                     self._dedupe_assets_button,
                     self._remove_missing_assets_button,
+                    self._clean_helper_outputs_button,
                 ],
                 columns=3,
             ),
@@ -2638,6 +2644,69 @@ class ResourceGeneratorWindow(QDialog):
         self._update_raw_editor()
         self._set_status(f"Removed {total_missing} missing asset entries.")
 
+    def _remove_generated_helper_outputs_for_quick_mode(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if not source_dir:
+            QMessageBox.warning(self, "Clean Helper Outputs", "Set Source Dir before cleaning generated helper outputs.")
+            return
+
+        removable_indices: list[int] = []
+        for index, entry in enumerate(self._session.section_entries("img")):
+            if not isinstance(entry, dict):
+                continue
+            file_name = str(entry.get("file", "") or "").replace("\\", "/").strip().lstrip("/")
+            if _is_quick_generated_helper_path(file_name):
+                removable_indices.append(index)
+
+        removable_dirs = []
+        for folder_name in _QUICK_GENERATED_ASSET_FOLDERS:
+            folder_path = normalize_path(os.path.join(source_dir, folder_name))
+            if os.path.isdir(folder_path):
+                removable_dirs.append(folder_path)
+
+        if not removable_indices and not removable_dirs:
+            self._set_status("No generated helper outputs found.")
+            return
+
+        folder_list = "\n".join(f"- {os.path.basename(path)}" for path in removable_dirs) if removable_dirs else "- none on disk"
+        answer = QMessageBox.question(
+            self,
+            "Clean Helper Outputs",
+            f"Remove {len(removable_indices)} generated asset entries and delete {len(removable_dirs)} helper folders?\n\n{folder_list}",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if answer != QMessageBox.Yes:
+            return
+
+        deleted_files = 0
+        deleted_dirs = 0
+        for folder_path in removable_dirs:
+            for _root, _dirs, files in os.walk(folder_path):
+                deleted_files += len(files)
+            try:
+                shutil.rmtree(folder_path, ignore_errors=False)
+            except OSError as exc:
+                QMessageBox.warning(self, "Clean Helper Outputs", f"Failed to delete helper folder:\n{folder_path}\n\n{exc}")
+                return
+            deleted_dirs += 1
+
+        image_entries = self._session.section_entries("img")
+        for index in reversed(removable_indices):
+            if 0 <= index < len(image_entries):
+                image_entries.pop(index)
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(
+            f"Cleaned {len(removable_indices)} generated helper assets, deleted {deleted_files} files in {deleted_dirs} folders."
+        )
+
     def _auto_fill_entry_name(self, section: str, index: int, entry: dict) -> bool:
         if str(entry.get("name", "") or "").strip():
             return False
@@ -4114,6 +4183,14 @@ def _resource_name_from_file(file_name) -> str:
 
 def _default_quick_font_charset_text() -> str:
     return serialize_charset_chars(build_charset(("ascii_printable",)).chars)
+
+
+def _is_quick_generated_helper_path(file_name) -> bool:
+    normalized = str(file_name or "").replace("\\", "/").strip().lstrip("/")
+    if not normalized:
+        return False
+    first_segment = normalized.split("/", 1)[0].strip().lower()
+    return first_segment in _QUICK_GENERATED_ASSET_FOLDER_SET
 
 
 def _copy_file_into_source_dir(source_path: str, source_dir: str) -> tuple[str, bool]:
