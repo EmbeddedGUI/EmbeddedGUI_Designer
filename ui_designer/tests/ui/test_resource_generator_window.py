@@ -1719,6 +1719,114 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_round_corners_image_helper_overwrites_selected_image(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QColor, QImage, QPixmap
+        from PyQt5.QtWidgets import QDialog
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        pixmap.fill(QColor("#FF8844"))
+        assert pixmap.save(str(image_path), "PNG")
+
+        class _FakeDialog:
+            def __init__(self, *, width, height, output_filename, parent=None):
+                assert width == 12
+                assert height == 8
+                assert output_filename == "hero.png"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def output_filename(self):
+                return "hero.png"
+
+            def radius_value(self):
+                return 3
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickImageRoundCornersDialog", _FakeDialog)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_round_corners_image_helper()
+
+        rounded = QImage(str(image_path))
+        assert rounded.width() == 12
+        assert rounded.height() == 8
+        assert rounded.pixelColor(0, 0).alpha() == 0
+        assert rounded.pixelColor(6, 4).alpha() == 255
+        assert len(window._session.section_entries("img")) == 1
+        assert window._status_label.text() == "Updated rounded image 'hero.png' (12 x 8)."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_round_corners_image_helper_can_create_new_image_entry(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QColor, QImage, QPixmap
+        from PyQt5.QtWidgets import QDialog, QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        pixmap.fill(QColor("#88CC22"))
+        assert pixmap.save(str(image_path), "PNG")
+
+        class _FakeDialog:
+            def __init__(self, *, width, height, output_filename, parent=None):
+                assert width == 12
+                assert height == 8
+                assert output_filename == "hero.png"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def output_filename(self):
+                return "variants/hero_round.png"
+
+            def radius_value(self):
+                return 2
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickImageRoundCornersDialog", _FakeDialog)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_round_corners_image_helper()
+
+        rounded_path = source_dir / "variants" / "hero_round.png"
+        rounded = QImage(str(rounded_path))
+        assert rounded.width() == 12
+        assert rounded.height() == 8
+        assert rounded.pixelColor(0, 0).alpha() == 0
+        assert rounded.pixelColor(6, 4).alpha() == 255
+        files = [entry["file"] for entry in window._session.section_entries("img")]
+        assert files == ["hero.png", "variants/hero_round.png"]
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Created rounded image 'variants/hero_round.png' (12 x 8)."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_resize_image_helper_overwrites_selected_image(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QPixmap
         from PyQt5.QtWidgets import QDialog

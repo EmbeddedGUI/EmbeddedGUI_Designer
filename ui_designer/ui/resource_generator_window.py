@@ -382,6 +382,45 @@ class _QuickImageBackgroundDialog(QDialog):
         return str(self._filename_edit.text() or "").strip()
 
 
+class _QuickImageRoundCornersDialog(QDialog):
+    def __init__(self, *, width: int, height: int, output_filename: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Round Corners")
+        self.setMinimumWidth(380)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        summary = QLabel(f"Make the outer corners transparent while keeping the image size unchanged ({width} x {height}).")
+        summary.setWordWrap(True)
+        layout.addWidget(summary)
+
+        form = QFormLayout()
+        form.setSpacing(8)
+
+        max_radius = max(1, int(math.ceil(min(max(int(width or 1), 1), max(int(height or 1), 1)) / 2.0)))
+        self._radius_spin = QSpinBox()
+        self._radius_spin.setRange(1, max_radius)
+        self._radius_spin.setValue(min(max_radius, max(1, min(max(int(width or 1), 1), max(int(height or 1), 1)) // 4)))
+        form.addRow("Corner Radius", self._radius_spin)
+
+        self._filename_edit = QLineEdit(str(output_filename or "").strip())
+        form.addRow("Output File", self._filename_edit)
+        layout.addLayout(form)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def radius_value(self) -> int:
+        return int(self._radius_spin.value())
+
+    def output_filename(self) -> str:
+        return str(self._filename_edit.text() or "").strip()
+
+
 class _QuickThumbnailBatchDialog(QDialog):
     def __init__(self, *, width: int, height: int, output_folder: str, suffix: str, parent=None):
         super().__init__(parent)
@@ -843,6 +882,9 @@ class ResourceGeneratorWindow(QDialog):
         self._add_background_image_button = QPushButton("Add Background...")
         self._add_background_image_button.clicked.connect(self._open_background_image_helper)
 
+        self._round_corners_image_button = QPushButton("Round Corners...")
+        self._round_corners_image_button.clicked.connect(self._open_round_corners_image_helper)
+
         self._generate_thumbnails_button = QPushButton("Generate Thumbnails...")
         self._generate_thumbnails_button.clicked.connect(self._open_generate_thumbnails_helper)
 
@@ -939,6 +981,7 @@ class ResourceGeneratorWindow(QDialog):
                     self._resize_image_button,
                     self._add_border_image_button,
                     self._add_background_image_button,
+                    self._round_corners_image_button,
                     self._generate_thumbnails_button,
                     self._generate_placeholders_button,
                     self._normalize_images_button,
@@ -3345,6 +3388,52 @@ class ResourceGeneratorWindow(QDialog):
             color,
         )
 
+    def _open_round_corners_image_helper(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None or section != "img":
+            QMessageBox.warning(self, "Round Corners", "Select an image asset in Simple mode first.")
+            return
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path("img", "file", file_name)
+        if not resolved_path or not os.path.isfile(resolved_path):
+            QMessageBox.warning(self, "Round Corners", f"Image file does not exist:\n{resolved_path or file_name}")
+            return
+
+        pixmap = QPixmap(resolved_path)
+        if pixmap.isNull():
+            QMessageBox.warning(self, "Round Corners", f"Qt could not decode the selected image:\n{resolved_path}")
+            return
+
+        dialog = _QuickImageRoundCornersDialog(
+            width=pixmap.width(),
+            height=pixmap.height(),
+            output_filename=file_name,
+            parent=self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        output_filename = dialog.output_filename()
+        if not output_filename:
+            QMessageBox.warning(self, "Round Corners", "Enter an output filename.")
+            return
+        if os.path.isabs(output_filename):
+            QMessageBox.warning(self, "Round Corners", "Output filename must stay inside Source Dir.")
+            return
+
+        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
+        if not normalized_output or normalized_output.startswith(".."):
+            QMessageBox.warning(self, "Round Corners", "Output filename must stay inside Source Dir.")
+            return
+
+        self._apply_image_round_corners(
+            entry,
+            index,
+            resolved_path,
+            normalized_output,
+            dialog.radius_value(),
+        )
+
     def _open_generate_thumbnails_helper(self):
         if not self._commit_raw_json_if_needed():
             return
@@ -4045,6 +4134,59 @@ class ResourceGeneratorWindow(QDialog):
             index,
             output_filename,
             f"{action} background image '{output_filename}' ({width} x {height}).",
+        )
+
+    def _apply_image_round_corners(self, entry: dict, index: int, source_path: str, output_filename: str, radius: int):
+        try:
+            from PIL import Image, ImageChops, ImageDraw
+        except Exception as exc:
+            QMessageBox.warning(self, "Round Corners", f"Pillow is required for corner rounding:\n{exc}")
+            return
+
+        source_dir = self._session.paths.source_dir
+        if not source_dir:
+            QMessageBox.warning(self, "Round Corners", "Set Source Dir before editing images.")
+            return
+
+        target_path = normalize_path(os.path.join(source_dir, output_filename))
+        if not _is_subpath(target_path, source_dir) and normalize_path(target_path) != normalize_path(source_path):
+            QMessageBox.warning(self, "Round Corners", "Output filename must stay inside Source Dir.")
+            return
+
+        existed_before = os.path.isfile(target_path)
+        if normalize_path(target_path) != normalize_path(source_path) and existed_before:
+            answer = QMessageBox.question(
+                self,
+                "Overwrite Image",
+                f"Overwrite existing image?\n\n{output_filename}",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if answer != QMessageBox.Yes:
+                return
+
+        try:
+            with Image.open(source_path) as image:
+                rounded = image.convert("RGBA")
+                width, height = rounded.size
+                max_radius = max(1, int(math.ceil(min(max(width, 1), max(height, 1)) / 2.0)))
+                clamped_radius = min(max(int(radius or 1), 1), max_radius)
+                mask = Image.new("L", rounded.size, 0)
+                draw = ImageDraw.Draw(mask)
+                draw.rounded_rectangle((0, 0, max(width - 1, 0), max(height - 1, 0)), radius=clamped_radius, fill=255)
+                rounded.putalpha(ImageChops.multiply(rounded.getchannel("A"), mask))
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                rounded.save(target_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Round Corners", f"Failed to round image corners:\n{exc}")
+            return
+
+        action = "Created" if output_filename != str(entry.get("file", "") or "").replace("\\", "/") else "Updated"
+        self._finalize_saved_image_output(
+            entry,
+            index,
+            output_filename,
+            f"{action} rounded image '{output_filename}' ({width} x {height}).",
         )
 
     def _open_rotate_image_helper(self):
