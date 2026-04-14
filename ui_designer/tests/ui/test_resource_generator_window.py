@@ -1798,6 +1798,57 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_open_selected_font_text_resource_prompts_for_multi_text_target(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QDialog, QInputDialog
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "display.ttf").write_bytes(b"ttf")
+        first_text = source_dir / "ui_text.txt"
+        second_text = source_dir / "charset.txt"
+        first_text.write_text("ABC", encoding="utf-8")
+        second_text.write_text("XYZ", encoding="utf-8")
+
+        captured = {}
+
+        class _FakeDialog:
+            def __init__(self, *, filename, initial_text, is_new_file, parent=None):
+                captured["filename"] = filename
+                captured["initial_text"] = initial_text
+                captured["is_new_file"] = is_new_file
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def text_value(self):
+                return "XYZ+\n"
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._FontTextEditorDialog", _FakeDialog)
+        monkeypatch.setattr(QInputDialog, "getItem", lambda *args, **kwargs: ("charset.txt", True))
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "name": "display", "text": "ui_text.txt,charset.txt"}], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_selected_font_text_resource()
+
+        assert captured["filename"] == "charset.txt"
+        assert captured["initial_text"] == "XYZ"
+        assert captured["is_new_file"] is False
+        assert first_text.read_text(encoding="utf-8") == "ABC"
+        assert second_text.read_text(encoding="utf-8") == "XYZ+\n"
+        assert window._status_label.text() == "Saved font text 'charset.txt'."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_rename_asset_names_from_files_updates_session_and_simple_table(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -2088,6 +2139,47 @@ class TestResourceGeneratorWindow:
         assert captured["sample_text"] == "HELLO Designer 1234"
         assert "Preview Text: HELLO Designer 1234" in window._simple_asset_meta.toPlainText()
         assert "Preview Source: built-in sample" in window._simple_asset_meta.toPlainText()
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_selection_combines_multiple_font_text_files_for_preview(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        font_path = source_dir / "display.ttf"
+        font_path.write_bytes(b"ttf")
+        (source_dir / "ui_text.txt").write_text("A\nB\n", encoding="utf-8")
+        (source_dir / "charset.txt").write_text("1\n2\n", encoding="utf-8")
+
+        captured = {}
+
+        def _fake_render(self, font_file, sample_text, entry=None):
+            captured["font_file"] = font_file
+            captured["sample_text"] = sample_text
+            pixmap = QPixmap(96, 36)
+            pixmap.fill()
+            return pixmap
+
+        monkeypatch.setattr(ResourceGeneratorWindow, "_build_font_preview_pixmap", _fake_render)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "name": "display", "text": "ui_text.txt,charset.txt"}], "mp4": []},
+            dirty=False,
+        )
+
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        assert captured["font_file"] == str(font_path.resolve())
+        assert captured["sample_text"] == "AB12"
+        assert "Preview Text: AB12" in window._simple_asset_meta.toPlainText()
+        assert "Preview Source: ui_text.txt, charset.txt" in window._simple_asset_meta.toPlainText()
         _close_window(window)
 
     @_skip_no_qt

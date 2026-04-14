@@ -1,0 +1,42 @@
+{
+    "img": [
+        {
+            "file": "star.png",
+            "name": "star_icon",
+            "format": "rgb565",
+            "alpha": "4",
+            "external": "0",
+            "swap": "0",
+            "compress": "none"
+        },
+        {
+            "file": "test.png",
+            "name": "hero_banner",
+            "format": "rgb565",
+            "alpha": "4",
+            "external": "0",
+            "swap": "0",
+            "compress": "qoi"
+        }
+    ],
+    "font": [
+        {
+            "file": "Montserrat-Medium.ttf",
+            "name": "ui_text",
+            "pixelsize": "16",
+            "fontbitsize": "4",
+            "external": "0",
+            "text": "ui_text.txt,charset.txt",
+            "weight": "500"
+        },
+        {
+            "file": "DejaVuSans.ttf",
+            "name": "headline_text",
+            "pixelsize": "24",
+            "fontbitsize": "4",
+            "external": "0",
+            "text": "headline_text.txt"
+        }
+    ],
+    "mp4": []
+}

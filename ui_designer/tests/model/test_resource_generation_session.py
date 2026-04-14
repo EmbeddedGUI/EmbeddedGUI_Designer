@@ -119,6 +119,91 @@ def test_stage_workspace_copies_source_tree_and_writes_current_user_config(tmp_p
     assert json.loads((workspace_dir / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == session.user_data
 
 
+def test_stage_generation_config_expands_multi_text_font_entries_from_merged_config(tmp_path):
+    source_dir = tmp_path / "source"
+    workspace_dir = tmp_path / "workspace"
+    designer_dir = source_dir / ".designer"
+    designer_dir.mkdir(parents=True)
+    (designer_dir / "app_resource_config_designer.json").write_text(
+        json.dumps(
+            {
+                "img": [],
+                "font": [
+                    {
+                        "file": "demo.ttf",
+                        "name": "demo",
+                        "pixelsize": "16",
+                        "fontbitsize": "4",
+                        "external": "0",
+                        "text": ".designer/generated.txt",
+                    }
+                ],
+                "mp4": [],
+            },
+            ensure_ascii=False,
+            indent=4,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    session = ResourceGenerationSession()
+    session.reset(
+        GenerationPaths(
+            config_path=str(source_dir / "app_resource_config.json"),
+            source_dir=str(source_dir),
+            workspace_dir=str(workspace_dir),
+            bin_output_dir=str(workspace_dir / "bin"),
+        ),
+        {
+            "img": [],
+            "font": [
+                {
+                    "file": "demo.ttf",
+                    "name": "demo",
+                    "pixelsize": "16",
+                    "fontbitsize": "4",
+                    "external": "0",
+                    "text": "ui_text.txt,charset.txt",
+                }
+            ],
+            "mp4": [],
+        },
+    )
+
+    session.stage_workspace()
+    staged_config_path = session.stage_generation_config()
+    staged_config = json.loads(Path(staged_config_path).read_text(encoding="utf-8"))
+
+    assert Path(staged_config_path).is_file()
+    assert staged_config["font"] == [
+        {
+            "file": "demo.ttf",
+            "name": "demo",
+            "pixelsize": "16",
+            "fontbitsize": "4",
+            "external": "0",
+            "text": ".designer/generated.txt",
+        },
+        {
+            "file": "demo.ttf",
+            "name": "demo",
+            "pixelsize": "16",
+            "fontbitsize": "4",
+            "external": "0",
+            "text": "ui_text.txt",
+        },
+        {
+            "file": "demo.ttf",
+            "name": "demo",
+            "pixelsize": "16",
+            "fontbitsize": "4",
+            "external": "0",
+            "text": "charset.txt",
+        },
+    ]
+
+
 def test_run_generation_uses_sdk_script_and_workspace_paths(tmp_path, monkeypatch):
     sdk_root = _build_sdk_with_generator(tmp_path / "sdk")
     source_dir = tmp_path / "source"
@@ -152,6 +237,7 @@ def test_run_generation_uses_sdk_script_and_workspace_paths(tmp_path, monkeypatc
 
     result = session.run_generation()
 
+    staged_generation_config = workspace_dir / "src" / ".designer" / ".app_resource_config_merged.json"
     assert result.success is True
     assert captured["command"][0] == sys.executable
     assert captured["command"][1] == str((sdk_root / "scripts" / "tools" / "app_resource_generate.py").resolve())
@@ -162,9 +248,12 @@ def test_run_generation_uses_sdk_script_and_workspace_paths(tmp_path, monkeypatc
         str(bin_output_dir.resolve()),
         "-f",
         "true",
+        "--config",
+        str(staged_generation_config.resolve()),
     ]
     assert captured["kwargs"]["cwd"] == str(sdk_root.resolve())
     assert (workspace_dir / "src" / "app_resource_config.json").is_file()
+    assert staged_generation_config.is_file()
 
 
 def test_run_generation_retries_without_cwd_when_process_launch_cwd_is_unsupported(tmp_path, monkeypatch):

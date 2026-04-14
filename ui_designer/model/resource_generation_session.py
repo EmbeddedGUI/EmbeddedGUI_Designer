@@ -22,6 +22,7 @@ from ..utils.resource_config_overlay import (
     load_resource_config,
     make_empty_resource_config,
     merge_resource_configs,
+    merged_resource_config_path,
     parse_resource_config_content,
 )
 
@@ -328,7 +329,7 @@ class ResourceGenerationSession:
 
     def validation_issues(self, *, for_generation: bool = False) -> list[ResourceGenerationValidationIssue]:
         issues: list[ResourceGenerationValidationIssue] = []
-        data = _ordered_user_config(self.user_data)
+        data = self.merged_config() if for_generation else _ordered_user_config(self.user_data)
         generator_script = sdk_resource_generator_path(self.sdk_root) if self.sdk_root else ""
 
         if for_generation:
@@ -415,6 +416,21 @@ class ResourceGenerationSession:
             f.write(self.to_user_json_text())
         return staged_config_path
 
+    def stage_generation_config(self) -> str:
+        workspace_dir = self.paths.workspace_dir
+        if not workspace_dir:
+            raise ValueError("Workspace directory is empty.")
+
+        target_src_dir = normalize_path(os.path.join(workspace_dir, "src"))
+        os.makedirs(target_src_dir, exist_ok=True)
+        staged_config_path = merged_resource_config_path(target_src_dir)
+        os.makedirs(os.path.dirname(staged_config_path), exist_ok=True)
+        staged_config = _expand_font_text_entries_for_generation(self.merged_config())
+        with open(staged_config_path, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(staged_config, f, indent=4, ensure_ascii=False)
+            f.write("\n")
+        return staged_config_path
+
     def run_generation(self, *, timeout_seconds: int = 300) -> ResourceGenerationResult:
         issues = self.validation_issues(for_generation=True)
         blocking = [issue for issue in issues if issue.severity == "error"]
@@ -425,7 +441,8 @@ class ResourceGenerationSession:
                 issues=issues,
             )
 
-        staged_config_path = self.stage_workspace()
+        self.stage_workspace()
+        staged_config_path = self.stage_generation_config()
         generator_script = _resolved_existing_path(sdk_resource_generator_path(self.sdk_root))
         command = [
             sys.executable,
@@ -436,6 +453,8 @@ class ResourceGenerationSession:
             self.paths.bin_output_dir,
             "-f",
             "true",
+            "--config",
+            staged_config_path,
         ]
         try:
             completed = self._run_generator_subprocess(command, timeout_seconds=timeout_seconds)
@@ -518,6 +537,35 @@ def _ordered_user_config(data: dict | None) -> dict:
             continue
         ordered[key] = copy.deepcopy(value)
     return ordered
+
+
+def _split_text_items(value) -> list[str]:
+    values = []
+    for item in str(value or "").split(","):
+        normalized = item.strip()
+        if normalized and normalized not in values:
+            values.append(normalized)
+    return values
+
+
+def _expand_font_text_entries_for_generation(data: dict | None) -> dict:
+    expanded = copy.deepcopy(data if isinstance(data, dict) else {})
+    font_entries = []
+    for entry in expanded.get("font", []) or []:
+        if not isinstance(entry, dict):
+            font_entries.append(copy.deepcopy(entry))
+            continue
+        text_items = _split_text_items(entry.get("text"))
+        if len(text_items) <= 1:
+            font_entries.append(copy.deepcopy(entry))
+            continue
+        for text_item in text_items:
+            cloned_entry = dict(entry)
+            cloned_entry["text"] = text_item
+            font_entries.append(cloned_entry)
+    if "font" in expanded:
+        expanded["font"] = font_entries
+    return expanded
 
 
 def _normalize_entry_value(field_name: str, value):

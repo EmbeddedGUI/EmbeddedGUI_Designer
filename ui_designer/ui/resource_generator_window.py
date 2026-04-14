@@ -29,6 +29,7 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QLabel,
     QLineEdit,
+    QInputDialog,
     QListWidget,
     QListWidgetItem,
     QMenu,
@@ -3378,27 +3379,33 @@ class ResourceGeneratorWindow(QDialog):
         label.setText(str(payload.get("preview_text", "") or ""))
 
     def _font_preview_sample(self, entry: dict) -> tuple[str, str]:
-        text_value = str(entry.get("text", "") or "").strip()
-        for item in [candidate.strip() for candidate in text_value.split(",") if candidate.strip()]:
-            resolved = self._resolve_entry_path("font", "text", item)
+        preview_sources = []
+        preview_chunks = []
+        for item, resolved in self._font_text_targets(entry):
             if not resolved or not os.path.isfile(resolved):
                 continue
             try:
                 with open(resolved, "r", encoding="utf-8") as handle:
-                    raw_text = self._decode_font_preview_entities(handle.read())
+                    preview_chunks.append(self._decode_font_preview_entities(handle.read()))
             except OSError:
                 continue
-            lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
-            if lines and all(len(line) == 1 for line in lines[: min(len(lines), 24)]):
-                sample = "".join(lines[:24])
-            else:
-                sample = " ".join(raw_text.split())
-            sample = sample.strip()
-            if len(sample) > 48:
-                sample = sample[:45].rstrip() + "..."
+            preview_sources.append(item)
+        if preview_chunks:
+            sample = self._build_font_preview_sample_text("\n".join(preview_chunks))
             if sample:
-                return sample, item
+                return sample, ", ".join(preview_sources)
         return _default_quick_font_preview_text(), "built-in sample"
+
+    def _build_font_preview_sample_text(self, raw_text: str) -> str:
+        lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
+        if lines and all(len(line) == 1 for line in lines[: min(len(lines), 24)]):
+            sample = "".join(lines[:24])
+        else:
+            sample = " ".join(raw_text.split())
+        sample = sample.strip()
+        if len(sample) > 48:
+            sample = sample[:45].rstrip() + "..."
+        return sample
 
     def _decode_font_preview_entities(self, raw_text: str) -> str:
         return re.sub(r"&#x([0-9A-Fa-f]+);", lambda match: chr(int(match.group(1), 16)), str(raw_text or ""))
@@ -4037,7 +4044,9 @@ class ResourceGeneratorWindow(QDialog):
             QMessageBox.warning(self, "Edit Font Text", "Select a font asset first.")
             return
 
-        target_filename, resolved_path = self._preferred_font_text_target(entry)
+        target_filename, resolved_path = self._choose_font_text_target(entry)
+        if target_filename is None:
+            return
         if not target_filename or not resolved_path:
             QMessageBox.warning(
                 self,
@@ -4087,24 +4096,58 @@ class ResourceGeneratorWindow(QDialog):
 
         self._active_section = "font"
         self._active_entry_index = index
-        linked = self._assign_generated_text_to_font(target_filename)
+        self._assign_generated_text_to_font(target_filename)
         self._refresh_simple_page()
         self._update_form()
         self._update_simple_asset_preview()
         action = "Created and saved" if is_new_file else "Saved"
         self._set_status(f"{action} font text '{target_filename}'.")
 
-    def _preferred_font_text_target(self, entry: dict) -> tuple[str, str]:
+    def _font_text_targets(self, entry: dict) -> list[tuple[str, str]]:
         text_value = str(entry.get("text", "") or "").strip()
-        candidates = [item.strip() for item in text_value.split(",") if item.strip()]
-        for item in candidates:
-            resolved = self._resolve_entry_path("font", "text", item)
+        targets = []
+        seen = set()
+        for item in [candidate.strip() for candidate in text_value.split(",") if candidate.strip()]:
+            if item in seen:
+                continue
+            seen.add(item)
+            targets.append((item, self._resolve_entry_path("font", "text", item)))
+        return targets
+
+    def _choose_font_text_target(self, entry: dict) -> tuple[str | None, str]:
+        targets = self._font_text_targets(entry)
+        if len(targets) <= 1:
+            return self._preferred_font_text_target(entry)
+
+        labels = []
+        labeled_targets = {}
+        for item, resolved in targets:
+            label = item if resolved and os.path.isfile(resolved) else f"{item} (missing)"
+            if label in labeled_targets:
+                label = f"{label} [{len(labels) + 1}]"
+            labels.append(label)
+            labeled_targets[label] = (item, resolved)
+
+        selected_label, accepted = QInputDialog.getItem(
+            self,
+            "Edit Font Text",
+            "Choose which linked text file to edit:",
+            labels,
+            0,
+            False,
+        )
+        if not accepted:
+            return None, ""
+        return labeled_targets.get(selected_label, (None, ""))
+
+    def _preferred_font_text_target(self, entry: dict) -> tuple[str, str]:
+        candidates = self._font_text_targets(entry)
+        for item, resolved in candidates:
             if resolved and os.path.isfile(resolved):
                 return item, resolved
 
         if candidates:
-            first = candidates[0]
-            return first, self._resolve_entry_path("font", "text", first)
+            return candidates[0]
 
         matched_text = self._matched_font_text_path("font", entry)
         if matched_text:
