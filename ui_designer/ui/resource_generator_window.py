@@ -49,6 +49,7 @@ from ..model.resource_generation_session import (
     infer_generation_paths,
     section_entry_label,
 )
+from ..services.font_charset_presets import build_charset, serialize_charset_chars
 from ..model.workspace import normalize_path
 from ..utils.resource_config_overlay import APP_RESOURCE_CONFIG_FILENAME, make_empty_resource_config
 from .resource_panel import (
@@ -458,6 +459,9 @@ class ResourceGeneratorWindow(QDialog):
         self._generate_font_text_button = QPushButton("Generate Font Text...")
         self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
 
+        self._auto_create_font_texts_button = QPushButton("Auto Create Font Texts")
+        self._auto_create_font_texts_button.clicked.connect(self._auto_create_font_text_resources)
+
         self._refresh_font_texts_button = QPushButton("Refresh Font Texts")
         self._refresh_font_texts_button.clicked.connect(self._refresh_font_text_links)
 
@@ -529,9 +533,10 @@ class ResourceGeneratorWindow(QDialog):
                     self._import_assets_button,
                     self._scan_assets_button,
                     self._generate_font_text_button,
+                    self._auto_create_font_texts_button,
                     self._refresh_font_texts_button,
                 ],
-                columns=2,
+                columns=3,
             ),
             0,
             0,
@@ -1941,6 +1946,79 @@ class ResourceGeneratorWindow(QDialog):
         self._update_raw_editor()
         self._set_status(f"Refreshed font text links for {refreshed} fonts.")
 
+    def _auto_create_font_text_resources(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        source_dir = self._session.paths.source_dir
+        if not source_dir:
+            QMessageBox.warning(
+                self,
+                "Auto Create Font Texts",
+                "Set Source Dir first so Designer knows where to save generated font text files.",
+            )
+            return
+
+        prepared = 0
+        created = 0
+        updated_links = 0
+
+        for index, entry in enumerate(self._session.section_entries("font")):
+            if not isinstance(entry, dict):
+                continue
+
+            current_text = str(entry.get("text", "") or "").strip()
+            if current_text:
+                has_existing_text = False
+                for item in [candidate.strip() for candidate in current_text.split(",") if candidate.strip()]:
+                    resolved = self._resolve_entry_path("font", "text", item)
+                    if resolved and os.path.isfile(resolved):
+                        has_existing_text = True
+                        break
+                if has_existing_text:
+                    continue
+
+            touched = False
+            matched_text = self._matched_font_text_path("font", entry)
+            if matched_text:
+                if current_text != matched_text:
+                    self._session.update_entry_value("font", index, "text", matched_text)
+                    updated_links += 1
+                    touched = True
+            else:
+                target_filename, resolved_path = self._preferred_font_text_target(entry)
+                if not target_filename or not resolved_path:
+                    continue
+                os.makedirs(os.path.dirname(resolved_path), exist_ok=True)
+                if not os.path.isfile(resolved_path):
+                    with open(resolved_path, "w", encoding="utf-8") as handle:
+                        handle.write(_default_quick_font_charset_text())
+                    created += 1
+                    touched = True
+                if current_text != target_filename:
+                    self._session.update_entry_value("font", index, "text", target_filename)
+                    updated_links += 1
+                    touched = True
+
+            if touched:
+                prepared += 1
+
+        if not prepared:
+            self._set_status("Font text files already exist for all fonts.")
+            return
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+
+        summary = [f"Prepared font text for {prepared} fonts"]
+        if created:
+            summary.append(f"created {created} files")
+        if updated_links:
+            summary.append(f"updated {updated_links} links")
+        self._set_status(", ".join(summary) + ".")
+
     def _auto_fill_missing_resource_info(self):
         if not self._commit_raw_json_if_needed():
             return
@@ -3162,6 +3240,10 @@ def _resource_name_from_file(file_name) -> str:
     if not normalized:
         return ""
     return os.path.splitext(os.path.basename(normalized))[0].strip()
+
+
+def _default_quick_font_charset_text() -> str:
+    return serialize_charset_chars(build_charset(("ascii_printable",)).chars)
 
 
 def _resource_dedupe_key(section: str, entry) -> tuple[str, str] | None:

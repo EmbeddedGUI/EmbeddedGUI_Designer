@@ -572,6 +572,48 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_auto_create_font_text_resources_creates_missing_files_and_updates_links(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.services.font_charset_presets import build_charset, serialize_charset_chars
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "title.ttf").write_bytes(b"ttf")
+        (source_dir / "title.txt").write_text("XYZ", encoding="utf-8")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [],
+                "font": [
+                    {"file": "display.ttf", "name": "display"},
+                    {"file": "title.ttf", "name": "title"},
+                ],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._auto_create_font_text_resources()
+
+        expected_charset = serialize_charset_chars(build_charset(("ascii_printable",)).chars)
+        display_entry = window._session.section_entries("font")[0]
+        title_entry = window._session.section_entries("font")[1]
+        assert display_entry["text"] == "display_charset.txt"
+        assert title_entry["text"] == "title.txt"
+        assert (source_dir / "display_charset.txt").read_text(encoding="utf-8") == expected_charset
+        assert (source_dir / "title.txt").read_text(encoding="utf-8") == "XYZ"
+        assert window._simple_asset_table.item(0, 3).text() == "display_charset.txt"
+        assert window._simple_asset_table.item(1, 3).text() == "title.txt"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Prepared font text for 2 fonts, created 1 files, updated 2 links."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_open_selected_font_text_resource_opens_existing_file(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
