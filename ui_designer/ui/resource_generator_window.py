@@ -1330,6 +1330,9 @@ class ResourceGeneratorWindow(QDialog):
         self._register_window_shortcut("Delete", self._shortcut_remove_selected_simple_asset)
         self._register_window_shortcut("Ctrl+D", self._shortcut_duplicate_simple_asset)
         self._register_window_shortcut("Ctrl+E", self._shortcut_open_simple_selection_in_professional_mode)
+        self._register_simple_asset_shortcut("Return", self._trigger_selected_simple_asset_primary_action)
+        self._register_simple_asset_shortcut("Enter", self._trigger_selected_simple_asset_primary_action)
+        self._register_simple_asset_shortcut("Shift+F10", self._show_selected_simple_asset_actions_menu)
 
     def _configure_drop_targets(self):
         for widget in self._drop_target_widgets():
@@ -1403,6 +1406,12 @@ class ResourceGeneratorWindow(QDialog):
     def _register_window_shortcut(self, sequence: str, callback):
         shortcut = QShortcut(QKeySequence(sequence), self)
         shortcut.setContext(Qt.WidgetWithChildrenShortcut)
+        shortcut.activated.connect(callback)
+        self._window_shortcuts[str(sequence)] = shortcut
+
+    def _register_simple_asset_shortcut(self, sequence: str, callback):
+        shortcut = QShortcut(QKeySequence(sequence), self._simple_asset_table)
+        shortcut.setContext(Qt.WidgetShortcut)
         shortcut.activated.connect(callback)
         self._window_shortcuts[str(sequence)] = shortcut
 

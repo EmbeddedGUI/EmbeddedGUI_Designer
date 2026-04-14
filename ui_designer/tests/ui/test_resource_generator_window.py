@@ -679,7 +679,7 @@ class TestResourceGeneratorWindow:
         assert window._save_button.shortcut().toString() == "Ctrl+S"
         assert window._save_as_button.shortcut().toString() == "Ctrl+Shift+S"
         assert window._generate_button.shortcut().toString() == "Ctrl+Return"
-        assert set(window._window_shortcuts) >= {"Ctrl+F", "Delete", "Ctrl+D", "Ctrl+E"}
+        assert set(window._window_shortcuts) >= {"Ctrl+F", "Delete", "Ctrl+D", "Ctrl+E", "Return", "Enter", "Shift+F10"}
 
         activated = []
         monkeypatch.setattr(window, "_remove_selected_simple_asset", lambda: activated.append("delete"))
@@ -694,6 +694,44 @@ class TestResourceGeneratorWindow:
 
         assert activated == ["delete", "duplicate"]
         assert window._simple_asset_search_edit.hasFocus() is True
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_asset_table_shortcuts_trigger_primary_and_more_actions(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+
+        window = ResourceGeneratorWindow("")
+        window.show()
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        window._simple_asset_table.setFocus()
+        qapp.processEvents()
+
+        activated = []
+        monkeypatch.setattr(window, "_open_selected_asset_in_external_editor", lambda: activated.append("open"))
+
+        menus = []
+
+        class _FakeMenu:
+            def exec_(self, pos):
+                menus.append((pos.x(), pos.y()))
+
+        monkeypatch.setattr(window, "_build_simple_asset_context_menu", lambda row=None: _FakeMenu())
+
+        window._window_shortcuts["Return"].activated.emit()
+        window._window_shortcuts["Shift+F10"].activated.emit()
+
+        assert activated == ["open"]
+        assert len(menus) == 1
         _close_window(window)
 
     @_skip_no_qt
