@@ -1240,7 +1240,8 @@ class ResourceGeneratorWindow(QDialog):
         header_font = QFont(simple_header.font())
         header_font.setPointSize(10)
         simple_header.setFont(header_font)
-        simple_header.setFixedHeight(19)
+        simple_header.setMinimumHeight(max(24, simple_header.fontMetrics().height() + 10))
+        simple_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         simple_header.setStretchLastSection(False)
         for column in range(self._simple_asset_table.columnCount()):
             simple_header.setSectionResizeMode(column, QHeaderView.Interactive)

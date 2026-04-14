@@ -79,7 +79,7 @@ class TestResourceGeneratorWindow:
         assert header.sectionResizeMode(1) == QHeaderView.Interactive
         assert header.sectionResizeMode(2) == QHeaderView.Interactive
         assert header.sectionResizeMode(3) == QHeaderView.Interactive
-        assert header.height() == 19
+        assert header.height() >= 24
         assert header.font().pointSize() == 10
         assert window._simple_asset_table.verticalHeader().defaultSectionSize() >= window.fontMetrics().height() + 12
         _close_window(window)
