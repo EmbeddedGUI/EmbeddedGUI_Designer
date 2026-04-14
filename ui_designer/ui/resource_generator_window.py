@@ -29,6 +29,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
+    QScrollArea,
     QSplitter,
     QStackedWidget,
     QSpinBox,
@@ -289,6 +290,43 @@ class _QuickImageCropDialog(QDialog):
         return str(self._filename_edit.text() or "").strip()
 
 
+class _QuickPreviewBoardDialog(QDialog):
+    def __init__(self, cards, *, total_assets: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Quick Preview Board")
+        self.resize(1080, 760)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(10)
+
+        self._summary_label = QLabel(f"Previewing {total_assets} assets from quick mode.")
+        self._summary_label.setWordWrap(True)
+        layout.addWidget(self._summary_label)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        layout.addWidget(scroll, 1)
+
+        container = QWidget()
+        self._cards_layout = QGridLayout(container)
+        self._cards_layout.setContentsMargins(0, 0, 0, 0)
+        self._cards_layout.setHorizontalSpacing(10)
+        self._cards_layout.setVerticalSpacing(10)
+
+        columns = 3
+        for index, card in enumerate(cards):
+            self._cards_layout.addWidget(card, index // columns, index % columns)
+        for column in range(columns):
+            self._cards_layout.setColumnStretch(column, 1)
+        self._cards_layout.setRowStretch((len(cards) + columns - 1) // columns, 1)
+        scroll.setWidget(container)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+
 class ResourceGeneratorWindow(QDialog):
     """Modeless standalone window for editing and generating resources."""
 
@@ -444,6 +482,9 @@ class ResourceGeneratorWindow(QDialog):
         self._preview_asset_button = QPushButton("Preview Selected Asset")
         self._preview_asset_button.clicked.connect(self._preview_selected_simple_asset)
 
+        self._preview_board_button = QPushButton("Preview Board...")
+        self._preview_board_button.clicked.connect(self._open_quick_preview_board)
+
         self._detect_video_info_button = QPushButton("Detect Video Info")
         self._detect_video_info_button.clicked.connect(self._detect_selected_video_metadata)
 
@@ -516,6 +557,7 @@ class ResourceGeneratorWindow(QDialog):
                 "Preview & Open",
                 [
                     self._preview_asset_button,
+                    self._preview_board_button,
                     self._open_font_text_button,
                     self._detect_video_info_button,
                     self._edit_asset_button,
@@ -1523,6 +1565,49 @@ class ResourceGeneratorWindow(QDialog):
         self._active_entry_index = index
         self._update_simple_asset_preview()
 
+    def _open_quick_preview_board(self):
+        if not self._commit_raw_json_if_needed():
+            return
+        dialog = self._build_quick_preview_board_dialog()
+        if dialog is None:
+            QMessageBox.information(self, "Quick Preview Board", "Import or create some assets first.")
+            return
+        self._set_status(f"Opened preview board for {dialog._cards_layout.count()} assets.")
+        dialog.exec_()
+
+    def _build_quick_preview_board_dialog(self):
+        cards = []
+        for section in KNOWN_RESOURCE_SECTIONS:
+            for index, entry in enumerate(self._session.section_entries(section)):
+                if not isinstance(entry, dict):
+                    continue
+                cards.append(self._build_quick_preview_card(section, index, entry))
+        if not cards:
+            return None
+        return _QuickPreviewBoardDialog(cards, total_assets=len(cards), parent=self)
+
+    def _build_quick_preview_card(self, section: str, index: int, entry: dict) -> QGroupBox:
+        payload = self._asset_preview_payload(section, index, entry)
+        card = QGroupBox(payload["title"])
+        card.setObjectName("quick_preview_card")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(8)
+
+        preview_label = QLabel("")
+        preview_label.setAlignment(Qt.AlignCenter)
+        preview_label.setMinimumHeight(150)
+        preview_label.setWordWrap(True)
+        self._apply_preview_payload(preview_label, payload, max_width=260, max_height=150)
+        layout.addWidget(preview_label)
+
+        meta_label = QLabel(payload["meta_text"])
+        meta_label.setObjectName("quick_preview_meta")
+        meta_label.setWordWrap(True)
+        meta_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        layout.addWidget(meta_label)
+        return card
+
     def _update_simple_asset_preview(self):
         section, index, entry = self._selected_simple_asset_context()
         self._simple_asset_preview_label.setPixmap(QPixmap())
@@ -1532,11 +1617,17 @@ class ResourceGeneratorWindow(QDialog):
             self._simple_asset_meta.setPlainText("")
             return
 
+        payload = self._asset_preview_payload(section, index, entry)
+        self._simple_asset_preview_title.setText(payload["title"])
+        self._apply_preview_payload(self._simple_asset_preview_label, payload, max_width=360, max_height=220)
+        self._simple_asset_meta.setPlainText(payload["meta_text"])
+
+    def _asset_preview_payload(self, section: str, index: int, entry: dict) -> dict:
         file_name = str(entry.get("file", "") or "").strip()
         resolved_path = self._resolve_entry_path(section, "file", file_name)
         exists = bool(resolved_path and os.path.exists(resolved_path))
         label = section_entry_label(section, entry, index)
-        self._simple_asset_preview_title.setText(f"{RESOURCE_SECTION_SPECS[section].label}: {label}")
+        title = f"{RESOURCE_SECTION_SPECS[section].label}: {label}"
 
         meta_lines = [
             f"Section: {section}",
@@ -1562,35 +1653,49 @@ class ResourceGeneratorWindow(QDialog):
                 ).strip()
             )
 
+        preview_pixmap = None
+        preview_text = ""
         if section == "img" and exists:
             pixmap = QPixmap(resolved_path)
             if not pixmap.isNull():
-                scaled = pixmap.scaled(360, 220, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self._simple_asset_preview_label.setPixmap(scaled)
-                self._simple_asset_preview_label.setText("")
+                preview_pixmap = pixmap
                 meta_lines.append(f"Image Size: {pixmap.width()} x {pixmap.height()}")
             else:
-                self._simple_asset_preview_label.setText("Image file exists but Qt could not decode it.")
+                preview_text = "Image file exists but Qt could not decode it."
         elif section == "font" and exists:
-            preview_text, preview_source = self._font_preview_sample(entry)
-            meta_lines.append(f"Preview Text: {preview_text}")
+            sample_text, preview_source = self._font_preview_sample(entry)
+            meta_lines.append(f"Preview Text: {sample_text}")
             meta_lines.append(f"Preview Source: {preview_source}")
-            pixmap = self._build_font_preview_pixmap(resolved_path, preview_text)
+            pixmap = self._build_font_preview_pixmap(resolved_path, sample_text)
             if pixmap is not None and not pixmap.isNull():
-                scaled = pixmap.scaled(360, 220, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self._simple_asset_preview_label.setPixmap(scaled)
-                self._simple_asset_preview_label.setText("")
+                preview_pixmap = pixmap
             else:
-                self._simple_asset_preview_label.setText("Font file exists but quick preview could not render it.")
+                preview_text = "Font file exists but quick preview could not render it."
         elif exists:
             kind = "font" if section == "font" else "video"
-            self._simple_asset_preview_label.setText(
-                f"External preview is not embedded for this {kind}.\nUse 'Edit / Open Asset...' to inspect it in the system app."
+            preview_text = (
+                f"External preview is not embedded for this {kind}.\n"
+                "Use 'Edit / Open Asset...' to inspect it in the system app."
             )
         else:
-            self._simple_asset_preview_label.setText("File is missing. Fix the path or re-import the asset.")
+            preview_text = "File is missing. Fix the path or re-import the asset."
 
-        self._simple_asset_meta.setPlainText("\n".join(meta_lines).strip())
+        return {
+            "title": title,
+            "meta_text": "\n".join(meta_lines).strip(),
+            "pixmap": preview_pixmap,
+            "preview_text": preview_text,
+        }
+
+    def _apply_preview_payload(self, label: QLabel, payload: dict, *, max_width: int, max_height: int):
+        label.setPixmap(QPixmap())
+        pixmap = payload.get("pixmap")
+        if pixmap is not None and not pixmap.isNull():
+            scaled = pixmap.scaled(max_width, max_height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            label.setPixmap(scaled)
+            label.setText("")
+            return
+        label.setText(str(payload.get("preview_text", "") or ""))
 
     def _font_preview_sample(self, entry: dict) -> tuple[str, str]:
         text_value = str(entry.get("text", "") or "").strip()

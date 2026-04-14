@@ -9,7 +9,7 @@ from ui_designer.tests.sdk_builders import build_test_sdk_root
 from ui_designer.tests.ui.window_test_helpers import close_test_window as _close_window
 
 if HAS_PYQT5:
-    from PyQt5.QtWidgets import QGroupBox, QMessageBox
+    from PyQt5.QtWidgets import QGroupBox, QLabel, QMessageBox
 
 
 _skip_no_qt = skip_if_no_qt
@@ -40,6 +40,50 @@ class TestResourceGeneratorWindow:
 
         group_titles = {group.title() for group in window._simple_page.findChildren(QGroupBox)}
         assert {"Import & Setup", "Batch Fixes", "Preview & Open", "Image Tools", "Selection"} <= group_titles
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_build_quick_preview_board_dialog_includes_all_assets(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        (source_dir / "fonts").mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        assert pixmap.save(str(image_path), "PNG")
+        (source_dir / "fonts" / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "fonts" / "display.txt").write_text("ABCD", encoding="utf-8")
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window.ResourceGeneratorWindow._build_font_preview_pixmap",
+            lambda self, font_path, sample_text: QPixmap(32, 20),
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero"}],
+                "font": [{"file": "fonts/display.ttf", "name": "display", "text": "fonts/display.txt"}],
+                "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 320, "height": 180}],
+            },
+            dirty=False,
+        )
+
+        dialog = window._build_quick_preview_board_dialog()
+
+        assert dialog is not None
+        assert dialog._summary_label.text() == "Previewing 3 assets from quick mode."
+        cards = dialog.findChildren(QGroupBox, "quick_preview_card")
+        assert {card.title() for card in cards} == {"Images: hero", "Fonts: display", "MP4: intro"}
+        meta_labels = dialog.findChildren(QLabel, "quick_preview_meta")
+        assert any("Image Size: 12 x 8" in label.text() for label in meta_labels)
+        assert any("Preview Source: fonts/display.txt" in label.text() for label in meta_labels)
+        assert any("Video: 24fps 320x180" in label.text() for label in meta_labels)
+        dialog.close()
         _close_window(window)
 
     @_skip_no_qt
