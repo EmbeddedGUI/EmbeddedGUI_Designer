@@ -1143,20 +1143,15 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_action_tabs.addTab(
             self._build_simple_action_tab(
                 "Inspect",
-                "Preview assets, inspect generated helper output, and open source files.",
+                "Selection preview updates automatically. Use the preview panel for asset actions, or export a board for the whole set.",
                 [
                     self._build_simple_action_group(
-                        "Preview & Open",
+                        "Preview & Export",
                         [
-                            self._preview_asset_button,
                             self._preview_board_button,
                             self._export_preview_board_button,
-                            self._open_font_text_button,
-                            self._detect_video_info_button,
-                            self._edit_asset_button,
-                            self._open_asset_folder_button,
                         ],
-                        columns=3,
+                        columns=2,
                     )
                 ],
             ),
@@ -1282,6 +1277,11 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_asset_primary_action_button.clicked.connect(self._trigger_selected_simple_asset_primary_action)
         self._simple_asset_primary_action_button.hide()
         preview_header.addWidget(self._simple_asset_primary_action_button, 0, Qt.AlignRight)
+
+        self._simple_asset_more_actions_button = QPushButton("More...")
+        self._simple_asset_more_actions_button.clicked.connect(self._show_selected_simple_asset_actions_menu)
+        self._simple_asset_more_actions_button.hide()
+        preview_header.addWidget(self._simple_asset_more_actions_button, 0, Qt.AlignRight)
         asset_preview_layout.addLayout(preview_header)
 
         self._simple_asset_preview_label = QLabel("Select an image, font, or video entry to inspect it here.")
@@ -1873,9 +1873,6 @@ class ResourceGeneratorWindow(QDialog):
             fix_action.triggered.connect(callback)
             menu.addSeparator()
 
-        preview_action = menu.addAction("Preview Asset")
-        preview_action.triggered.connect(self._preview_selected_simple_asset)
-
         open_asset_action = menu.addAction("Open Asset")
         open_asset_action.setEnabled(has_resolved_file)
         open_asset_action.triggered.connect(self._open_selected_asset_in_external_editor)
@@ -1913,6 +1910,13 @@ class ResourceGeneratorWindow(QDialog):
         open_professional_action.triggered.connect(self._open_current_simple_selection_in_professional_mode)
 
         return menu
+
+    def _show_selected_simple_asset_actions_menu(self):
+        menu = self._build_simple_asset_context_menu()
+        if menu is None:
+            return
+        anchor = self._simple_asset_more_actions_button
+        menu.exec_(anchor.mapToGlobal(anchor.rect().bottomLeft()))
 
     def _on_simple_asset_filter_changed(self, _index: int):
         self._refresh_simple_page()
@@ -3215,6 +3219,8 @@ class ResourceGeneratorWindow(QDialog):
             self._simple_asset_meta.setPlainText("")
             self._simple_asset_primary_action_button.hide()
             self._simple_asset_primary_action_button.setEnabled(False)
+            self._simple_asset_more_actions_button.hide()
+            self._simple_asset_more_actions_button.setEnabled(False)
             return
 
         payload = self._asset_preview_payload(section, index, entry)
@@ -3232,6 +3238,9 @@ class ResourceGeneratorWindow(QDialog):
             self._simple_asset_primary_action_button.setToolTip(action_text)
             self._simple_asset_primary_action_button.setEnabled(True)
             self._simple_asset_primary_action_button.show()
+        self._simple_asset_more_actions_button.setToolTip("Open more actions for the selected asset.")
+        self._simple_asset_more_actions_button.setEnabled(True)
+        self._simple_asset_more_actions_button.show()
 
     def _asset_preview_payload(self, section: str, index: int, entry: dict) -> dict:
         file_name = str(entry.get("file", "") or "").strip()

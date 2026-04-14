@@ -94,7 +94,7 @@ class TestResourceGeneratorWindow:
         window = ResourceGeneratorWindow("")
 
         group_titles = {group.title() for group in window._simple_page.findChildren(QGroupBox)}
-        assert {"Import & Setup", "Batch Fixes", "Preview & Open", "Image Tools", "Selection"} <= group_titles
+        assert {"Import & Setup", "Batch Fixes", "Preview & Export", "Image Tools", "Selection"} <= group_titles
         assert [window._simple_action_tabs.tabText(index) for index in range(window._simple_action_tabs.count())] == [
             "Start",
             "Clean",
@@ -590,10 +590,12 @@ class TestResourceGeneratorWindow:
         window._simple_asset_table.clearSelection()
         qapp.processEvents()
         assert window._simple_asset_primary_action_button.isHidden() is True
+        assert window._simple_asset_more_actions_button.isHidden() is True
 
         window._simple_asset_table.selectRow(0)
         qapp.processEvents()
         assert window._simple_asset_primary_action_button.isHidden() is False
+        assert window._simple_asset_more_actions_button.isHidden() is False
         assert window._simple_asset_primary_action_button.text() == "Open Asset"
 
         window._simple_asset_table.selectRow(1)
@@ -629,6 +631,39 @@ class TestResourceGeneratorWindow:
         window._simple_asset_primary_action_button.click()
 
         assert triggered == ["folder"]
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_preview_more_actions_button_opens_context_menu(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QMenu
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        executed = []
+
+        class _FakeMenu(QMenu):
+            def exec_(self, pos):
+                executed.append((pos.x(), pos.y()))
+
+        monkeypatch.setattr(window, "_build_simple_asset_context_menu", lambda row=None: _FakeMenu(window))
+
+        window._simple_asset_more_actions_button.click()
+
+        assert len(executed) == 1
         _close_window(window)
 
     @_skip_no_qt
@@ -796,7 +831,7 @@ class TestResourceGeneratorWindow:
         menu = window._build_simple_asset_context_menu()
         action_map = {action.text(): action for action in menu.actions() if action.text()}
 
-        assert {"Preview Asset", "Open Asset", "Open Asset Folder", "Open Font Text", "Copy Resource Name", "Copy Asset Path", "Copy Full Path", "Duplicate", "Remove", "Open Professional Mode"} <= set(action_map)
+        assert {"Open Asset", "Open Asset Folder", "Open Font Text", "Copy Resource Name", "Copy Asset Path", "Copy Full Path", "Duplicate", "Remove", "Open Professional Mode"} <= set(action_map)
         assert not any(action.text().startswith("Suggested Fix:") for action in menu.actions() if action.text())
         assert action_map["Open Asset"].isEnabled() is True
         assert action_map["Copy Full Path"].isEnabled() is True
