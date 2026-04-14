@@ -2056,6 +2056,8 @@ class TestResourceGeneratorWindow:
         assert dialog._edit_file_button.text() == "Edit File..."
         assert dialog._preview_info_label.text() == "Preview: 2 line(s), 15 char(s)"
         assert dialog._preview_text_edit.toPlainText() == "HELLO\nDesigner\n"
+        assert dialog._combined_preview_info_label.text() == "Combined Preview: 1 file(s), 1 missing"
+        assert dialog._combined_preview_text_edit.toPlainText() == "[ui_text.txt]\nHELLO\nDesigner\n\n[missing.txt]\n(missing)"
 
         dialog._list_widget.setCurrentRow(1)
 
@@ -2212,6 +2214,33 @@ class TestResourceGeneratorWindow:
         assert dialog._edit_file_button.text() == "Edit File..."
         assert dialog._preview_info_label.text() == "Preview: 1 line(s), 3 char(s)"
         assert dialog._preview_text_edit.toPlainText() == "abc"
+        assert dialog._combined_preview_info_label.text() == "Combined Preview: 1 file(s)"
+        assert dialog._combined_preview_text_edit.toPlainText() == "[missing.txt]\nabc"
+        dialog.close()
+
+    @_skip_no_qt
+    def test_font_text_links_dialog_combined_preview_respects_current_order(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("A\nB\n", encoding="utf-8")
+        (source_dir / "charset.txt").write_text("1\n2\n", encoding="utf-8")
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt", "charset.txt"],
+            source_dir=str(source_dir),
+            parent=None,
+        )
+
+        assert dialog._combined_preview_info_label.text() == "Combined Preview: 2 file(s)"
+        assert dialog._combined_preview_text_edit.toPlainText() == "[ui_text.txt]\nA\nB\n\n[charset.txt]\n1\n2"
+
+        dialog._list_widget.setCurrentRow(1)
+        dialog._move_selected_path(-1)
+
+        assert dialog.text_value() == "charset.txt\nui_text.txt"
+        assert dialog._combined_preview_text_edit.toPlainText() == "[charset.txt]\n1\n2\n\n[ui_text.txt]\nA\nB"
         dialog.close()
 
     @_skip_no_qt

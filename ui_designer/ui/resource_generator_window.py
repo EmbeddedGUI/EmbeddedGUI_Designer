@@ -85,6 +85,7 @@ _DEFAULT_SIMPLE_WORKSPACE_SPLITTER_SIZES = [220, 320, 220]
 _DEFAULT_SIMPLE_PREVIEW_SPLITTER_SIZES = [460, 460]
 _DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS = [88, 220, 360, 280]
 _FONT_TEXT_PREVIEW_CHAR_LIMIT = 4096
+_FONT_TEXT_COMBINED_PREVIEW_CHAR_LIMIT = 8192
 
 
 class _ClickableLabel(QLabel):
@@ -796,7 +797,7 @@ class _FontTextLinksDialog(QDialog):
     ):
         super().__init__(parent)
         self.setWindowTitle("Font Text Files")
-        self.setMinimumSize(640, 400)
+        self.setMinimumSize(720, 520)
         self._normalize_file_callback = normalize_file_callback
         self._edit_file_callback = edit_file_callback
         self._source_dir = str(source_dir or "").strip()
@@ -888,9 +889,21 @@ class _FontTextLinksDialog(QDialog):
 
         self._preview_text_edit = QPlainTextEdit()
         self._preview_text_edit.setReadOnly(True)
-        self._preview_text_edit.setMinimumHeight(140)
+        self._preview_text_edit.setMinimumHeight(120)
         self._preview_text_edit.setPlaceholderText("Select a linked text file to preview its UTF-8 contents.")
         layout.addWidget(self._preview_text_edit)
+
+        self._combined_preview_info_label = QLabel("")
+        self._combined_preview_info_label.setWordWrap(True)
+        layout.addWidget(self._combined_preview_info_label)
+
+        self._combined_preview_text_edit = QPlainTextEdit()
+        self._combined_preview_text_edit.setReadOnly(True)
+        self._combined_preview_text_edit.setMinimumHeight(160)
+        self._combined_preview_text_edit.setPlaceholderText(
+            "The combined linked text preview will appear here in the current file order."
+        )
+        layout.addWidget(self._combined_preview_text_edit)
 
         self._set_items(initial_items or [], selected_index=0)
 
@@ -1058,6 +1071,7 @@ class _FontTextLinksDialog(QDialog):
         else:
             self._path_label.setText("Select a linked text file to inspect or reorder it.")
         self._update_preview(raw_value, resolved)
+        self._update_combined_preview()
 
     def _update_preview(self, raw_value: str, resolved_path: str):
         raw = str(raw_value or "").strip()
@@ -1093,6 +1107,54 @@ class _FontTextLinksDialog(QDialog):
             content = content.rstrip("\n") + "\n..."
         self._preview_info_label.setText(summary)
         self._preview_text_edit.setPlainText(content)
+
+    def _update_combined_preview(self):
+        values = self._current_values()
+        if not values:
+            self._combined_preview_info_label.setText("Combined Preview: No linked text files.")
+            self._combined_preview_text_edit.clear()
+            return
+
+        blocks = []
+        available = 0
+        missing = 0
+        used_chars = 0
+        truncated = False
+
+        for value in values:
+            resolved = self._resolved_item_path(value)
+            header = f"[{value}]"
+            if not resolved or not os.path.isfile(resolved):
+                missing += 1
+                blocks.append(f"{header}\n(missing)")
+                continue
+
+            available += 1
+            remaining = max(0, _FONT_TEXT_COMBINED_PREVIEW_CHAR_LIMIT - used_chars)
+            if remaining <= 0:
+                truncated = True
+                break
+            try:
+                with open(resolved, "r", encoding="utf-8", errors="replace") as handle:
+                    content = handle.read(remaining + 1)
+            except OSError as exc:
+                blocks.append(f"{header}\n(read failed: {exc})")
+                continue
+
+            if len(content) > remaining:
+                truncated = True
+                content = content[:remaining]
+            used_chars += len(content)
+            blocks.append(f"{header}\n{content.rstrip()}" if content.strip() else f"{header}\n(empty)")
+
+        summary = f"Combined Preview: {available} file(s)"
+        if missing:
+            summary += f", {missing} missing"
+        if truncated:
+            summary += " (truncated)"
+            blocks.append("...")
+        self._combined_preview_info_label.setText(summary)
+        self._combined_preview_text_edit.setPlainText("\n\n".join(blocks).strip())
 
     def _add_files(self):
         if not callable(self._normalize_file_callback):
