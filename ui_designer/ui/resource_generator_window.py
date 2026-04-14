@@ -84,6 +84,7 @@ _RESOURCE_GENERATOR_VIEW_STATE_KEY = "resource_generator_view"
 _DEFAULT_SIMPLE_WORKSPACE_SPLITTER_SIZES = [220, 320, 220]
 _DEFAULT_SIMPLE_PREVIEW_SPLITTER_SIZES = [460, 460]
 _DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS = [88, 220, 360, 280]
+_FONT_TEXT_PREVIEW_CHAR_LIMIT = 4096
 
 
 class _ClickableLabel(QLabel):
@@ -881,6 +882,16 @@ class _FontTextLinksDialog(QDialog):
         self._path_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout.addWidget(self._path_label)
 
+        self._preview_info_label = QLabel("")
+        self._preview_info_label.setWordWrap(True)
+        layout.addWidget(self._preview_info_label)
+
+        self._preview_text_edit = QPlainTextEdit()
+        self._preview_text_edit.setReadOnly(True)
+        self._preview_text_edit.setMinimumHeight(140)
+        self._preview_text_edit.setPlaceholderText("Select a linked text file to preview its UTF-8 contents.")
+        layout.addWidget(self._preview_text_edit)
+
         self._set_items(initial_items or [], selected_index=0)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
@@ -1042,6 +1053,42 @@ class _FontTextLinksDialog(QDialog):
                 self._path_label.setText(f"Path: {raw_value}")
         else:
             self._path_label.setText("Select a linked text file to inspect or reorder it.")
+        self._update_preview(raw_value, resolved)
+
+    def _update_preview(self, raw_value: str, resolved_path: str):
+        raw = str(raw_value or "").strip()
+        resolved = str(resolved_path or "").strip()
+        if not raw:
+            self._preview_info_label.setText("Preview: Select a linked text file.")
+            self._preview_text_edit.clear()
+            return
+        if not resolved or not os.path.exists(resolved):
+            self._preview_info_label.setText("Preview: File is missing.")
+            self._preview_text_edit.setPlainText("")
+            return
+        if os.path.isdir(resolved):
+            self._preview_info_label.setText("Preview: Selected path is a folder.")
+            self._preview_text_edit.setPlainText("")
+            return
+
+        try:
+            with open(resolved, "r", encoding="utf-8", errors="replace") as handle:
+                content = handle.read(_FONT_TEXT_PREVIEW_CHAR_LIMIT + 1)
+        except OSError as exc:
+            self._preview_info_label.setText("Preview: Failed to read file.")
+            self._preview_text_edit.setPlainText(str(exc))
+            return
+
+        truncated = len(content) > _FONT_TEXT_PREVIEW_CHAR_LIMIT
+        if truncated:
+            content = content[:_FONT_TEXT_PREVIEW_CHAR_LIMIT]
+        line_count = len(content.splitlines()) or (1 if content else 0)
+        summary = f"Preview: {line_count} line(s), {len(content)} char(s)"
+        if truncated:
+            summary += " shown (truncated)"
+            content = content.rstrip("\n") + "\n..."
+        self._preview_info_label.setText(summary)
+        self._preview_text_edit.setPlainText(content)
 
     def _add_files(self):
         if not callable(self._normalize_file_callback):

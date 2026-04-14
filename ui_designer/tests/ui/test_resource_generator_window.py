@@ -2040,6 +2040,29 @@ class TestResourceGeneratorWindow:
         dialog.close()
 
     @_skip_no_qt
+    def test_font_text_links_dialog_updates_preview_for_selected_item(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("HELLO\nDesigner\n", encoding="utf-8")
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt", "missing.txt"],
+            source_dir=str(source_dir),
+            parent=None,
+        )
+
+        assert dialog._preview_info_label.text() == "Preview: 2 line(s), 15 char(s)"
+        assert dialog._preview_text_edit.toPlainText() == "HELLO\nDesigner\n"
+
+        dialog._list_widget.setCurrentRow(1)
+
+        assert dialog._preview_info_label.text() == "Preview: File is missing."
+        assert dialog._preview_text_edit.toPlainText() == ""
+        dialog.close()
+
+    @_skip_no_qt
     def test_font_text_links_dialog_can_create_new_file_via_callback(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtWidgets import QInputDialog
 
@@ -2183,6 +2206,8 @@ class TestResourceGeneratorWindow:
         assert captured == ["missing.txt"]
         assert dialog._count_label.text() == "Linked text files: 1"
         assert dialog._list_widget.item(0).text() == "missing.txt"
+        assert dialog._preview_info_label.text() == "Preview: 1 line(s), 3 char(s)"
+        assert dialog._preview_text_edit.toPlainText() == "abc"
         dialog.close()
 
     @_skip_no_qt
