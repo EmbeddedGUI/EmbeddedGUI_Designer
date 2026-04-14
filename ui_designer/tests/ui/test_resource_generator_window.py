@@ -2053,11 +2053,13 @@ class TestResourceGeneratorWindow:
             parent=None,
         )
 
+        assert dialog._edit_file_button.text() == "Edit File..."
         assert dialog._preview_info_label.text() == "Preview: 2 line(s), 15 char(s)"
         assert dialog._preview_text_edit.toPlainText() == "HELLO\nDesigner\n"
 
         dialog._list_widget.setCurrentRow(1)
 
+        assert dialog._edit_file_button.text() == "Edit File..."
         assert dialog._preview_info_label.text() == "Preview: File is missing."
         assert dialog._preview_text_edit.toPlainText() == ""
         dialog.close()
@@ -2201,11 +2203,13 @@ class TestResourceGeneratorWindow:
         dialog._list_widget.setCurrentRow(0)
 
         assert dialog._count_label.text() == "Linked text files: 1 | Missing: 1"
+        assert dialog._edit_file_button.text() == "Create File..."
         dialog._edit_selected_file()
 
         assert captured == ["missing.txt"]
         assert dialog._count_label.text() == "Linked text files: 1"
         assert dialog._list_widget.item(0).text() == "missing.txt"
+        assert dialog._edit_file_button.text() == "Edit File..."
         assert dialog._preview_info_label.text() == "Preview: 1 line(s), 3 char(s)"
         assert dialog._preview_text_edit.toPlainText() == "abc"
         dialog.close()

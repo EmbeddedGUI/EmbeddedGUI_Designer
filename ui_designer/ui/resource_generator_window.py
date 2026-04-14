@@ -1046,6 +1046,10 @@ class _FontTextLinksDialog(QDialog):
 
         raw_value = self._selected_value()
         resolved = self._resolved_item_path(raw_value)
+        if callable(self._edit_file_callback) and has_selection:
+            self._edit_file_button.setText("Edit File..." if resolved and os.path.isfile(resolved) else "Create File...")
+        else:
+            self._edit_file_button.setText("Edit File...")
         if raw_value:
             if resolved and resolved != raw_value:
                 self._path_label.setText(f"Resolved: {resolved}")
