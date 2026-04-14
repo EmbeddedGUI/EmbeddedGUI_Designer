@@ -799,6 +799,8 @@ class ResourceGeneratorWindow(QDialog):
         super().changeEvent(event)
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange}:
             self._sync_window_chrome_theme()
+            if getattr(self, "_simple_asset_table", None) is not None:
+                self._refresh_simple_page()
 
     def dragEnterEvent(self, event):
         if self._accepts_external_asset_drop(event.mimeData()):
@@ -1755,6 +1757,37 @@ class ResourceGeneratorWindow(QDialog):
 
         return None
 
+    def _simple_asset_search_blob(
+        self,
+        section_filter: str,
+        *,
+        type_label: str,
+        name_label: str,
+        file_label: str,
+        detail_label: str,
+        attention_messages: tuple[str, ...] = (),
+        recommended_fixes: tuple[str, ...] = (),
+    ) -> str:
+        parts = [type_label, name_label, file_label, detail_label]
+        if str(section_filter or "") == "attention":
+            parts.extend(attention_messages)
+            parts.extend(recommended_fixes)
+        return " ".join(part for part in parts if part).lower()
+
+    def _style_simple_asset_table_item(self, item: QTableWidgetItem, *, has_attention: bool, column: int):
+        if not has_attention:
+            return
+        tokens = app_theme_tokens()
+        warning_color = QColor(tokens["warning"])
+        background_color = QColor(warning_color)
+        background_color.setAlpha(42 if QColor(tokens["bg"]).lightness() < 128 else 24)
+        item.setBackground(background_color)
+        if column == 0:
+            item.setForeground(warning_color)
+            font = QFont(item.font())
+            font.setBold(True)
+            item.setFont(font)
+
     def _update_simple_attention_count(self, attention_count: int):
         count = max(0, int(attention_count))
         self._simple_attention_count.setText(f"Needs Attention: {count}")
@@ -2707,16 +2740,15 @@ class ResourceGeneratorWindow(QDialog):
                 if not self._simple_asset_matches_filter(section_filter, section, entry, file_label=file_label):
                     continue
                 detail = self._simple_asset_detail_text(section, entry)
-                search_blob = " ".join(
-                    part
-                    for part in (
-                        type_label,
-                        name_label,
-                        file_label,
-                        detail,
-                    )
-                    if part
-                ).lower()
+                search_blob = self._simple_asset_search_blob(
+                    section_filter,
+                    type_label=type_label,
+                    name_label=name_label,
+                    file_label=file_label,
+                    detail_label=detail,
+                    attention_messages=attention_messages,
+                    recommended_fixes=recommended_fixes,
+                )
                 if search_text and search_text not in search_blob:
                     continue
                 rows.append(
@@ -2767,6 +2799,11 @@ class ResourceGeneratorWindow(QDialog):
                     item = QTableWidgetItem(value)
                     if tooltip_text:
                         item.setToolTip(tooltip_text)
+                    self._style_simple_asset_table_item(
+                        item,
+                        has_attention=bool(payload["attention_messages"]),
+                        column=column,
+                    )
                     self._simple_asset_table.setItem(row, column, item)
             if 0 <= selected_row < len(rows):
                 self._simple_asset_table.selectRow(selected_row)

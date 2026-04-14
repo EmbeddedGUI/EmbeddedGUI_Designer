@@ -237,6 +237,7 @@ class TestResourceGeneratorWindow:
     def test_simple_mode_attention_filter_highlights_incomplete_resources(self, qapp, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+        from ui_designer.ui.theme import app_theme_tokens
 
         source_dir = tmp_path / "resource" / "src"
         (source_dir / "charset").mkdir(parents=True)
@@ -282,12 +283,52 @@ class TestResourceGeneratorWindow:
             "Video metadata is incomplete: width\n"
             "Fix: Use Detect Video Info to fill fps, width, and height."
         )
+        tokens = app_theme_tokens()
+        assert window._simple_asset_table.item(0, 0).font().bold() is True
+        assert window._simple_asset_table.item(0, 0).foreground().color().name().lower() == tokens["warning"].lower()
+        assert window._simple_asset_table.item(0, 1).background().color().alpha() > 0
+        assert window._simple_asset_table.item(0, 3).background().color().alpha() > 0
 
         window._simple_asset_table.selectRow(0)
         qapp.processEvents()
 
         assert "Attention: Font text file is not linked." in window._simple_asset_meta.toPlainText()
         assert "Suggested Fix: Use Open Font Text... or Auto Create Font Texts." in window._simple_asset_meta.toPlainText()
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_attention_search_matches_issue_and_fix_text(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "font": [{"file": "display.ttf", "name": "display", "text": ""}],
+                "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 0, "height": 180}],
+            },
+            dirty=False,
+        )
+
+        window._simple_asset_search_edit.setText("font text")
+        qapp.processEvents()
+        assert window._simple_asset_table.rowCount() == 0
+
+        window._simple_asset_type_filter.setCurrentIndex(window._simple_asset_type_filter.findData("attention"))
+        qapp.processEvents()
+        assert window._simple_asset_table.rowCount() == 1
+        assert window._simple_asset_table.item(0, 1).text() == "display"
+
+        window._simple_asset_search_edit.setText("detect video info")
+        qapp.processEvents()
+        assert window._simple_asset_table.rowCount() == 1
+        assert window._simple_asset_table.item(0, 1).text() == "intro"
         _close_window(window)
 
     @_skip_no_qt
@@ -871,7 +912,7 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
-    def test_activate_selected_simple_asset_opens_professional_mode_for_missing_file(self, qapp, monkeypatch, tmp_path):
+    def test_activate_selected_simple_asset_opens_asset_folder_for_missing_file(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
 
