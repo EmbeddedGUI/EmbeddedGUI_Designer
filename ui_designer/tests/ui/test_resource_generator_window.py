@@ -616,6 +616,36 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_remove_missing_assets_for_quick_mode_removes_broken_entries(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero"}, {"file": "ghost.png", "name": "ghost"}],
+                "font": [{"file": "display.ttf", "name": "display"}],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._remove_missing_assets_for_quick_mode()
+
+        assert [entry["file"] for entry in window._session.section_entries("img")] == ["hero.png"]
+        assert window._session.section_entries("font") == []
+        assert window._simple_asset_table.rowCount() == 1
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Removed 2 missing asset entries."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_selection_updates_image_preview(self, qapp, tmp_path):
         from PyQt5.QtGui import QPixmap
 

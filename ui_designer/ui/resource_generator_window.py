@@ -439,6 +439,10 @@ class ResourceGeneratorWindow(QDialog):
         self._dedupe_assets_button.clicked.connect(self._remove_duplicate_assets_for_quick_mode)
         helper_row.addWidget(self._dedupe_assets_button)
 
+        self._remove_missing_assets_button = QPushButton("Remove Missing")
+        self._remove_missing_assets_button.clicked.connect(self._remove_missing_assets_for_quick_mode)
+        helper_row.addWidget(self._remove_missing_assets_button)
+
         self._open_font_text_button = QPushButton("Open Font Text...")
         self._open_font_text_button.clicked.connect(self._open_selected_font_text_resource)
         helper_row.addWidget(self._open_font_text_button)
@@ -1833,6 +1837,51 @@ class ResourceGeneratorWindow(QDialog):
         if merged_fields:
             summary.append(f"merged {merged_fields} missing fields")
         self._set_status(", ".join(summary) + ".")
+
+    def _remove_missing_assets_for_quick_mode(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        missing_by_section: dict[str, list[int]] = {}
+        total_missing = 0
+        for section in KNOWN_RESOURCE_SECTIONS:
+            missing_indices: list[int] = []
+            for index, entry in enumerate(self._session.section_entries(section)):
+                if not isinstance(entry, dict):
+                    continue
+                file_name = str(entry.get("file", "") or "").strip()
+                resolved = self._resolve_entry_path(section, "file", file_name)
+                if not file_name or not resolved or not os.path.exists(resolved):
+                    missing_indices.append(index)
+            if missing_indices:
+                missing_by_section[section] = missing_indices
+                total_missing += len(missing_indices)
+
+        if not total_missing:
+            self._set_status("No missing asset entries found.")
+            return
+
+        answer = QMessageBox.question(
+            self,
+            "Remove Missing Assets",
+            f"Remove {total_missing} entries whose asset files are missing?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if answer != QMessageBox.Yes:
+            return
+
+        for section, indices in missing_by_section.items():
+            entries = self._session.section_entries(section)
+            for index in reversed(indices):
+                if 0 <= index < len(entries):
+                    entries.pop(index)
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(f"Removed {total_missing} missing asset entries.")
 
     def _auto_fill_entry_name(self, section: str, index: int, entry: dict) -> bool:
         if str(entry.get("name", "") or "").strip():
