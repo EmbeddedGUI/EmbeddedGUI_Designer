@@ -148,6 +148,7 @@ class TestResourceGeneratorWindow:
         assert window._simple_asset_empty_import_button.isHidden() is False
         assert window._simple_asset_empty_scan_button.isHidden() is False
         assert window._simple_asset_empty_clear_button.isHidden() is True
+        assert window._simple_attention_count.text() == "Needs Attention: 0"
         _close_window(window)
 
     @_skip_no_qt
@@ -260,6 +261,8 @@ class TestResourceGeneratorWindow:
             "display",
             "intro",
         ]
+        assert window._simple_attention_count.text() == "Needs Attention: 2"
+        assert "Show > Needs Attention" in window._simple_attention_count.toolTip()
         assert window._simple_asset_result_label.text() == "Showing 2 of 3 assets"
         assert window._simple_asset_table.item(0, 0).toolTip() == "Font text file is not linked."
         assert window._simple_asset_table.item(1, 0).toolTip() == "Video metadata is incomplete: width"
@@ -300,6 +303,8 @@ class TestResourceGeneratorWindow:
         assert window._simple_asset_content_stack.currentWidget() is window._simple_asset_empty_state
         assert window._simple_asset_empty_title.text() == "No assets need attention right now."
         assert "no missing files" in window._simple_asset_empty_description.text().lower()
+        assert window._simple_attention_count.text() == "Needs Attention: 0"
+        assert window._simple_attention_count.toolTip() == "No assets currently need attention."
         _close_window(window)
 
     @_skip_no_qt

@@ -66,7 +66,7 @@ from .resource_panel import (
     _suggest_charset_filename_for_resource,
     _suggest_charset_presets_for_resource,
 )
-from .theme import sync_window_chrome_theme
+from .theme import app_theme_tokens, sync_window_chrome_theme
 
 
 _IMAGE_FILE_EXTENSIONS = {".png", ".bmp", ".jpg", ".jpeg", ".gif", ".webp"}
@@ -1057,6 +1057,9 @@ class ResourceGeneratorWindow(QDialog):
         counts_row.addWidget(self._simple_font_count)
         self._simple_mp4_count = QLabel("MP4: 0")
         counts_row.addWidget(self._simple_mp4_count)
+        self._simple_attention_count = QLabel("Needs Attention: 0")
+        self._simple_attention_count.setToolTip("No assets currently need attention.")
+        counts_row.addWidget(self._simple_attention_count)
         counts_row.addStretch(1)
         intro_layout.addLayout(counts_row)
 
@@ -1626,6 +1629,24 @@ class ResourceGeneratorWindow(QDialog):
                 messages.append("Video metadata is incomplete: " + ", ".join(missing_fields))
 
         return tuple(messages)
+
+    def _update_simple_attention_count(self, attention_count: int):
+        count = max(0, int(attention_count))
+        self._simple_attention_count.setText(f"Needs Attention: {count}")
+        tooltip = (
+            "Use Show > Needs Attention to review missing files, missing font text, and incomplete video metadata."
+            if count > 0
+            else "No assets currently need attention."
+        )
+        self._simple_attention_count.setToolTip(tooltip)
+        font = QFont(self._simple_attention_count.font())
+        font.setBold(count > 0)
+        self._simple_attention_count.setFont(font)
+        if count > 0:
+            tokens = app_theme_tokens()
+            self._simple_attention_count.setStyleSheet(f"color: {tokens['warning']};")
+        else:
+            self._simple_attention_count.setStyleSheet("")
 
     def _simple_asset_matches_filter(self, section_filter: str, section: str, entry: dict, *, file_label: str) -> bool:
         normalized_filter = str(section_filter or "all")
@@ -2524,6 +2545,7 @@ class ResourceGeneratorWindow(QDialog):
         search_text = str(self._simple_asset_search_edit.text() or "").strip().lower()
         has_filters = section_filter != "all" or bool(search_text)
         total_assets = sum(counts.values())
+        attention_count = 0
         rows = []
         for section in KNOWN_RESOURCE_SECTIONS:
             for index, entry in enumerate(self._session.section_entries(section)):
@@ -2533,6 +2555,8 @@ class ResourceGeneratorWindow(QDialog):
                 name_label = section_entry_label(section, entry, index)
                 file_label = str(entry.get("file", "") or "")
                 attention_messages = self._simple_asset_attention_messages(section, entry, file_label=file_label)
+                if attention_messages:
+                    attention_count += 1
                 if not self._simple_asset_matches_filter(section_filter, section, entry, file_label=file_label):
                     continue
                 detail = self._simple_asset_detail_text(section, entry)
@@ -2564,6 +2588,7 @@ class ResourceGeneratorWindow(QDialog):
         if self._simple_asset_sort_column >= 0:
             rows.sort(key=self._simple_asset_row_sort_key, reverse=self._simple_asset_sort_descending)
 
+        self._update_simple_attention_count(attention_count)
         self._simple_row_map = [(row["section"], row["index"]) for row in rows]
         self._simple_asset_result_label.setText(f"Showing {len(rows)} of {total_assets} assets")
         selected_row = -1
