@@ -427,6 +427,10 @@ class ResourceGeneratorWindow(QDialog):
         self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
         helper_row.addWidget(self._generate_font_text_button)
 
+        self._refresh_font_texts_button = QPushButton("Refresh Font Texts")
+        self._refresh_font_texts_button.clicked.connect(self._refresh_font_text_links)
+        helper_row.addWidget(self._refresh_font_texts_button)
+
         self._auto_fill_button = QPushButton("Auto Fill Missing Info")
         self._auto_fill_button.clicked.connect(self._auto_fill_missing_resource_info)
         helper_row.addWidget(self._auto_fill_button)
@@ -1739,6 +1743,33 @@ class ResourceGeneratorWindow(QDialog):
         self._update_raw_editor()
         self._set_status(f"Refreshed video metadata for {refreshed} videos.")
 
+    def _refresh_font_text_links(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        refreshed = 0
+        for index, entry in enumerate(self._session.section_entries("font")):
+            if not isinstance(entry, dict):
+                continue
+            matched_text = self._matched_font_text_path("font", entry)
+            if not matched_text:
+                continue
+            existing = str(entry.get("text", "") or "").strip()
+            if existing == matched_text:
+                continue
+            self._session.update_entry_value("font", index, "text", matched_text)
+            refreshed += 1
+
+        if not refreshed:
+            self._set_status("Font text links already match current files.")
+            return
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(f"Refreshed font text links for {refreshed} fonts.")
+
     def _auto_fill_missing_resource_info(self):
         if not self._commit_raw_json_if_needed():
             return
@@ -1942,26 +1973,11 @@ class ResourceGeneratorWindow(QDialog):
     def _auto_fill_font_text(self, section: str, index: int, entry: dict) -> bool:
         if str(entry.get("text", "") or "").strip():
             return False
-        file_name = str(entry.get("file", "") or "").strip()
-        resolved_font = self._resolve_entry_path(section, "file", file_name)
-        if not resolved_font or not os.path.isfile(resolved_font):
+        matched_text = self._matched_font_text_path(section, entry)
+        if not matched_text:
             return False
-
-        source_dir = self._session.paths.source_dir
-        candidates = [normalize_path(os.path.splitext(resolved_font)[0] + ".txt")]
-        if source_dir:
-            basename = os.path.splitext(os.path.basename(file_name.replace("\\", "/")))[0]
-            candidates.append(normalize_path(os.path.join(source_dir, f"{basename}.txt")))
-
-        for candidate in candidates:
-            if not candidate or not os.path.isfile(candidate):
-                continue
-            stored = candidate
-            if source_dir and _is_subpath(candidate, source_dir):
-                stored = os.path.relpath(candidate, source_dir).replace("\\", "/")
-            self._session.update_entry_value(section, index, "text", stored)
-            return True
-        return False
+        self._session.update_entry_value(section, index, "text", matched_text)
+        return True
 
     def _auto_fill_video_metadata(self, index: int, entry: dict) -> bool:
         changed, _metadata = self._sync_video_metadata(index, entry, overwrite_existing=False)
@@ -1990,6 +2006,26 @@ class ResourceGeneratorWindow(QDialog):
             self._session.update_entry_value("mp4", index, field_name, incoming)
             changed = True
         return changed, metadata
+
+    def _matched_font_text_path(self, section: str, entry: dict) -> str:
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_font = self._resolve_entry_path(section, "file", file_name)
+        if not resolved_font or not os.path.isfile(resolved_font):
+            return ""
+
+        source_dir = self._session.paths.source_dir
+        candidates = [normalize_path(os.path.splitext(resolved_font)[0] + ".txt")]
+        if source_dir:
+            basename = _resource_name_from_file(file_name)
+            candidates.append(normalize_path(os.path.join(source_dir, f"{basename}.txt")))
+
+        for candidate in candidates:
+            if not candidate or not os.path.isfile(candidate):
+                continue
+            if source_dir and _is_subpath(candidate, source_dir):
+                return os.path.relpath(candidate, source_dir).replace("\\", "/")
+            return candidate
+        return ""
 
     def _open_selected_font_text_resource(self):
         section, index, entry = self._selected_simple_asset_context()
