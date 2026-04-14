@@ -783,6 +783,82 @@ class _FontTextEditorDialog(QDialog):
         return self._editor.toPlainText()
 
 
+class _FontTextLinksDialog(QDialog):
+    def __init__(self, *, initial_items: list[str], source_dir: str = "", normalize_file_callback=None, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Font Text Files")
+        self.setMinimumSize(520, 360)
+        self._normalize_file_callback = normalize_file_callback
+        self._source_dir = str(source_dir or "").strip()
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        summary = QLabel("Manage linked UTF-8 text files. Enter one path per line. Duplicates are removed when you save.")
+        summary.setWordWrap(True)
+        layout.addWidget(summary)
+
+        if source_dir:
+            source_label = QLabel(f"Source Dir: {source_dir}")
+            source_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            layout.addWidget(source_label)
+
+        self._count_label = QLabel("")
+        layout.addWidget(self._count_label)
+
+        self._editor = QPlainTextEdit()
+        self._editor.setPlainText("\n".join(initial_items or []))
+        self._editor.textChanged.connect(self._update_count_label)
+        layout.addWidget(self._editor, 1)
+        self._update_count_label()
+
+        actions_row = QHBoxLayout()
+        actions_row.setContentsMargins(0, 0, 0, 0)
+        actions_row.setSpacing(8)
+
+        add_button = QPushButton("Add Files...")
+        add_button.setEnabled(callable(normalize_file_callback))
+        add_button.clicked.connect(self._add_files)
+        actions_row.addWidget(add_button)
+        actions_row.addStretch(1)
+        layout.addLayout(actions_row)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def _split_items(self, value: str) -> list[str]:
+        items = []
+        for item in re.split(r"[,;\r\n\uFF0C\uFF1B]+", str(value or "")):
+            normalized = item.strip()
+            if normalized and normalized not in items:
+                items.append(normalized)
+        return items
+
+    def _update_count_label(self):
+        count = len(self._split_items(self._editor.toPlainText()))
+        self._count_label.setText(f"Linked text files: {count}")
+
+    def _add_files(self):
+        if not callable(self._normalize_file_callback):
+            return
+        start_dir = self._source_dir or os.getcwd()
+        paths, _ = QFileDialog.getOpenFileNames(self, "Add Font Text Files", start_dir, "Text files (*.txt);;All files (*)")
+        if not paths:
+            return
+        items = self._split_items(self._editor.toPlainText())
+        for path in paths:
+            normalized = self._normalize_file_callback(normalize_path(path))
+            if normalized and normalized not in items:
+                items.append(normalized)
+        self._editor.setPlainText("\n".join(items))
+
+    def text_value(self) -> str:
+        return self._editor.toPlainText()
+
+
 class ResourceGeneratorWindow(QDialog):
     """Modeless standalone window for editing and generating resources."""
 
@@ -1938,6 +2014,9 @@ class ResourceGeneratorWindow(QDialog):
         if section == "font" and primary_fix_text != "Suggested Fix: Edit Font Text...":
             open_text_action = menu.addAction("Edit Font Text")
             open_text_action.triggered.connect(self._open_selected_font_text_resource)
+        if section == "font":
+            manage_text_action = menu.addAction("Manage Text Files")
+            manage_text_action.triggered.connect(self._open_selected_font_text_links_editor)
 
         menu.addSeparator()
 
@@ -2304,6 +2383,9 @@ class ResourceGeneratorWindow(QDialog):
             button.clicked.connect(lambda _checked=False, spec=field_spec: self._browse_entry_field(spec))
             layout.addWidget(button)
         if self._active_section == "font" and field_spec.name == "text":
+            links_button = QPushButton("Links...")
+            links_button.clicked.connect(self._open_selected_font_text_links_editor)
+            layout.addWidget(links_button)
             edit_button = QPushButton("Edit...")
             edit_button.clicked.connect(self._open_selected_font_text_resource)
             layout.addWidget(edit_button)
@@ -2769,6 +2851,9 @@ class ResourceGeneratorWindow(QDialog):
         if before == after:
             return
         self._mark_dirty()
+        current_entry = self._current_entry()
+        if current_entry is not None:
+            self._entry_summary.setPlainText(self._entry_summary_text(current_entry))
         self._refresh_current_table_row()
         self._update_merged_preview()
         self._update_raw_editor()
@@ -4067,6 +4152,40 @@ class ResourceGeneratorWindow(QDialog):
         if self._active_section == "font":
             return self._active_entry_index, self._current_entry()
         return -1, None
+
+    def _font_text_field_spec(self):
+        return next((field for field in RESOURCE_SECTION_SPECS["font"].fields if field.name == "text"), None)
+
+    def _normalize_selected_font_text_path(self, selected_path: str) -> str | None:
+        field_spec = self._font_text_field_spec()
+        if field_spec is None:
+            return None
+        return self._normalize_selected_resource_path(field_spec, selected_path)
+
+    def _open_selected_font_text_links_editor(self):
+        index, entry = self._selected_font_text_context()
+        if entry is None:
+            QMessageBox.warning(self, "Font Text Files", "Select a font asset first.")
+            return
+
+        previous_value = self._normalize_font_text_value(entry.get("text", ""))
+        dialog = _FontTextLinksDialog(
+            initial_items=self._font_text_items_from_value(previous_value),
+            source_dir=self._session.paths.source_dir,
+            normalize_file_callback=self._normalize_selected_font_text_path,
+            parent=self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        self._active_section = "font"
+        self._active_entry_index = index
+        self._update_current_entry_field("text", dialog.text_value(), normalize_font_text=True, sync_widget_text=True)
+        current_entry = self._current_entry() or {}
+        current_value = self._normalize_font_text_value(current_entry.get("text", ""))
+        if current_value != previous_value:
+            font_label = section_entry_label("font", current_entry, index)
+            self._set_status(f"Updated font text links for '{font_label}'.")
 
     def _open_selected_font_text_resource(self):
         index, entry = self._selected_font_text_context()

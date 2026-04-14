@@ -891,7 +891,18 @@ class TestResourceGeneratorWindow:
         menu = window._build_simple_asset_context_menu()
         action_map = {action.text(): action for action in menu.actions() if action.text()}
 
-        assert {"Open Asset", "Open Asset Folder", "Edit Font Text", "Copy Resource Name", "Copy Asset Path", "Copy Full Path", "Duplicate", "Remove", "Open Professional Mode"} <= set(action_map)
+        assert {
+            "Open Asset",
+            "Open Asset Folder",
+            "Edit Font Text",
+            "Manage Text Files",
+            "Copy Resource Name",
+            "Copy Asset Path",
+            "Copy Full Path",
+            "Duplicate",
+            "Remove",
+            "Open Professional Mode",
+        } <= set(action_map)
         assert not any(action.text().startswith("Suggested Fix:") for action in menu.actions() if action.text())
         assert action_map["Open Asset"].isEnabled() is True
         assert action_map["Copy Full Path"].isEnabled() is True
@@ -1846,6 +1857,95 @@ class TestResourceGeneratorWindow:
         assert first_text.read_text(encoding="utf-8") == "ABC"
         assert second_text.read_text(encoding="utf-8") == "XYZ+\n"
         assert window._status_label.text() == "Saved font text 'charset.txt'."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_open_selected_font_text_links_editor_updates_entry_and_status(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QDialog, QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        source_dir_text = str(source_dir)
+
+        class _FakeDialog:
+            def __init__(self, *, initial_items, source_dir, normalize_file_callback=None, parent=None):
+                assert initial_items == ["ui_text.txt"]
+                assert source_dir == source_dir_text
+                assert callable(normalize_file_callback)
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def text_value(self):
+                return "ui_text.txt\ncharset.txt\n"
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._FontTextLinksDialog", _FakeDialog)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "name": "display", "text": "ui_text.txt"}], "mp4": []},
+            dirty=False,
+        )
+        window._active_section = "font"
+        window._active_entry_index = 0
+        window._set_ui_mode("professional")
+        window._refresh_entry_table()
+        window._update_form()
+
+        window._open_selected_font_text_links_editor()
+
+        entry = window._session.section_entries("font")[0]
+        assert entry["text"] == "ui_text.txt,charset.txt"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Updated font text links for 'display'."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_open_selected_font_text_links_editor_keeps_clean_state_when_value_is_unchanged(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QDialog
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+
+        class _FakeDialog:
+            def __init__(self, *, initial_items, source_dir, normalize_file_callback=None, parent=None):
+                assert initial_items == ["ui_text.txt", "charset.txt"]
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def text_value(self):
+                return " ui_text.txt ;\ncharset.txt "
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._FontTextLinksDialog", _FakeDialog)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "name": "display", "text": "ui_text.txt,charset.txt"}], "mp4": []},
+            dirty=False,
+        )
+        window._active_section = "font"
+        window._active_entry_index = 0
+        window._set_ui_mode("professional")
+        window._refresh_entry_table()
+        window._update_form()
+        previous_status = window._status_label.text()
+
+        window._open_selected_font_text_links_editor()
+
+        entry = window._session.section_entries("font")[0]
+        assert entry["text"] == "ui_text.txt,charset.txt"
+        assert window.has_unsaved_changes() is False
+        assert window._status_label.text() == previous_status
         _close_window(window)
 
     @_skip_no_qt
