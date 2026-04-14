@@ -650,6 +650,9 @@ class ResourceGeneratorWindow(QDialog):
         self._organize_folders_button = QPushButton("Organize Folders")
         self._organize_folders_button.clicked.connect(self._organize_assets_into_standard_folders)
 
+        self._generate_sample_texts_button = QPushButton("Auto Generate Texts")
+        self._generate_sample_texts_button.clicked.connect(self._auto_generate_font_text_samples)
+
         self._generate_font_text_button = QPushButton("Generate Font Text...")
         self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
 
@@ -746,6 +749,7 @@ class ResourceGeneratorWindow(QDialog):
                     self._scan_assets_button,
                     self._pack_assets_button,
                     self._organize_folders_button,
+                    self._generate_sample_texts_button,
                     self._generate_font_text_button,
                     self._auto_create_font_texts_button,
                     self._refresh_font_texts_button,
@@ -2321,6 +2325,93 @@ class ResourceGeneratorWindow(QDialog):
         self._update_raw_editor()
         self._set_status(f"Refreshed font text links for {refreshed} fonts.")
 
+    def _auto_generate_font_text_samples(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if not source_dir:
+            QMessageBox.warning(
+                self,
+                "Auto Generate Texts",
+                "Set Source Dir first so Designer knows where to save generated font text files.",
+            )
+            return
+
+        font_entries = [
+            (index, entry)
+            for index, entry in enumerate(self._session.section_entries("font"))
+            if isinstance(entry, dict) and str(entry.get("file", "") or "").strip()
+        ]
+        if not font_entries:
+            QMessageBox.information(self, "Auto Generate Texts", "Import or create some font assets first.")
+            return
+
+        sample_lines = _quick_font_text_sample_lines(self._session.user_data)
+        written_fonts = 0
+        created_files = 0
+        added_lines = 0
+        updated_links = 0
+
+        for index, entry in font_entries:
+            target_filename, resolved_path = self._preferred_quick_font_text_target(entry)
+            if not target_filename or not resolved_path:
+                continue
+
+            existing_lines: list[str] = []
+            if os.path.isfile(resolved_path):
+                try:
+                    with open(resolved_path, "r", encoding="utf-8") as handle:
+                        existing_lines = [line.strip() for line in handle.read().splitlines() if line.strip()]
+                except OSError as exc:
+                    QMessageBox.warning(self, "Auto Generate Texts", f"Failed to read text file:\n{resolved_path}\n\n{exc}")
+                    return
+            else:
+                created_files += 1
+
+            existing_set = set(existing_lines)
+            appended_lines = [line for line in sample_lines if line not in existing_set]
+
+            touched = False
+            if appended_lines or not os.path.isfile(resolved_path):
+                os.makedirs(os.path.dirname(resolved_path), exist_ok=True)
+                merged_lines = existing_lines + appended_lines
+                try:
+                    with open(resolved_path, "w", encoding="utf-8", newline="\n") as handle:
+                        handle.write("\n".join(merged_lines) + ("\n" if merged_lines else ""))
+                except OSError as exc:
+                    QMessageBox.warning(self, "Auto Generate Texts", f"Failed to write text file:\n{resolved_path}\n\n{exc}")
+                    return
+                added_lines += len(appended_lines)
+                touched = True
+
+            current_text = str(entry.get("text", "") or "").strip()
+            if current_text != target_filename:
+                self._session.update_entry_value("font", index, "text", target_filename)
+                updated_links += 1
+                touched = True
+
+            if touched:
+                written_fonts += 1
+
+        if not written_fonts:
+            self._set_status("Font text files already contain the current sample lines.")
+            return
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+
+        summary = [f"Generated sample text for {written_fonts} fonts"]
+        if created_files:
+            summary.append(f"created {created_files} files")
+        if added_lines:
+            summary.append(f"added {added_lines} lines")
+        if updated_links:
+            summary.append(f"updated {updated_links} links")
+        self._set_status(", ".join(summary) + ".")
+
     def _auto_create_font_text_resources(self):
         if not self._commit_raw_json_if_needed():
             return
@@ -2952,6 +3043,30 @@ class ResourceGeneratorWindow(QDialog):
             return "", ""
         suggested = _suggest_charset_filename_for_resource("font", str(entry.get("file", "") or ""))
         return suggested, normalize_path(os.path.join(source_dir, suggested))
+
+    def _preferred_quick_font_text_target(self, entry: dict) -> tuple[str, str]:
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if not source_dir:
+            return "", ""
+
+        text_value = str(entry.get("text", "") or "").strip()
+        candidates = [item.strip() for item in text_value.split(",") if item.strip()]
+        for item in candidates:
+            resolved = self._resolve_entry_path("font", "text", item)
+            if resolved and _is_subpath(resolved, source_dir):
+                stored = os.path.relpath(resolved, source_dir).replace("\\", "/")
+                return stored, resolved
+
+        if candidates and not os.path.isabs(candidates[0]):
+            first = candidates[0].replace("\\", "/").strip().lstrip("/")
+            return first, normalize_path(os.path.join(source_dir, first))
+
+        font_file = str(entry.get("file", "") or "").replace("\\", "/").strip().lstrip("/")
+        font_dir = os.path.dirname(font_file)
+        suggested_name = _suggest_charset_filename_for_resource("font", font_file)
+        relative_target = f"{font_dir}/{suggested_name}" if font_dir else suggested_name
+        relative_target = relative_target.replace("//", "/")
+        return relative_target, normalize_path(os.path.join(source_dir, relative_target.replace("/", os.sep)))
 
     def _open_resize_image_helper(self):
         section, index, entry = self._selected_simple_asset_context()
@@ -4302,6 +4417,27 @@ def _resource_name_from_file(file_name) -> str:
 
 def _default_quick_font_charset_text() -> str:
     return serialize_charset_chars(build_charset(("ascii_printable",)).chars)
+
+
+def _quick_font_text_sample_lines(resource_data) -> list[str]:
+    payload = resource_data if isinstance(resource_data, dict) else {}
+    collected = ["AaBb 123"]
+    seen = {collected[0]}
+
+    for section in KNOWN_RESOURCE_SECTIONS:
+        for entry in payload.get(section, []) or []:
+            if not isinstance(entry, dict):
+                continue
+            candidate = str(entry.get("name", "") or "").strip()
+            if not candidate:
+                candidate = _resource_name_from_file(entry.get("file", ""))
+            candidate = str(candidate or "").strip()
+            if not candidate or candidate in seen:
+                continue
+            collected.append(candidate)
+            seen.add(candidate)
+
+    return collected
 
 
 def _is_quick_generated_helper_path(file_name) -> bool:

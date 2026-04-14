@@ -657,6 +657,44 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_auto_generate_font_text_samples_writes_current_resource_names(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        (source_dir / "fonts").mkdir(parents=True)
+        (source_dir / "fonts" / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "hero.png").write_bytes(b"png")
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "Hero Banner"}],
+                "font": [{"file": "fonts/display.ttf", "name": "Display Font", "text": ""}],
+                "mp4": [{"file": "intro.mp4", "name": "Intro Clip"}],
+            },
+            dirty=False,
+        )
+
+        window._auto_generate_font_text_samples()
+
+        text_path = source_dir / "fonts" / "display_charset.txt"
+        content = text_path.read_text(encoding="utf-8")
+        assert text_path.is_file()
+        assert "AaBb 123\n" in content
+        assert "Hero Banner\n" in content
+        assert "Display Font\n" in content
+        assert "Intro Clip\n" in content
+        assert window._session.section_entries("font")[0]["text"] == "fonts/display_charset.txt"
+        assert window._simple_asset_table.item(1, 3).text() == "fonts/display_charset.txt"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Generated sample text for 1 fonts, created 1 files, added 4 lines, updated 1 links."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_pack_assets_into_source_dir_copies_external_files_and_updates_links(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
