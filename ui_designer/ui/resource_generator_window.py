@@ -1251,7 +1251,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_asset_table = QTableWidget(0, 4)
         self._simple_asset_table.setHorizontalHeaderLabels(["Type", "Name", "File", "Details"])
         self._simple_asset_table.itemSelectionChanged.connect(self._on_simple_asset_selection_changed)
-        self._simple_asset_table.itemDoubleClicked.connect(self._open_simple_selection_in_professional_mode)
+        self._simple_asset_table.itemDoubleClicked.connect(self._activate_selected_simple_asset)
         self._simple_asset_table.setContextMenuPolicy(Qt.CustomContextMenu)
         self._simple_asset_table.customContextMenuRequested.connect(self._show_simple_asset_context_menu)
         self._configure_simple_asset_table()
@@ -1697,6 +1697,11 @@ class ResourceGeneratorWindow(QDialog):
 
     def _simple_asset_primary_fix_action(self, section: str, entry: dict, *, file_label: str = "") -> tuple[str, callable] | None:
         normalized_file = str(file_label or entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path(section, "file", normalized_file)
+        file_exists = bool(resolved_path and os.path.exists(resolved_path))
+        if not normalized_file or not resolved_path or not file_exists:
+            return "Suggested Fix: Open Professional Mode", self._open_current_simple_selection_in_professional_mode
+
         if section == "font":
             text_value = str(entry.get("text", "") or "").strip()
             text_items = [item.strip() for item in text_value.split(",") if item.strip()]
@@ -1721,8 +1726,6 @@ class ResourceGeneratorWindow(QDialog):
                 if numeric_value <= 0:
                     return "Suggested Fix: Detect Video Info", self._detect_selected_video_metadata
 
-        if not normalized_file:
-            return None
         return None
 
     def _update_simple_attention_count(self, attention_count: int):
@@ -2824,6 +2827,27 @@ class ResourceGeneratorWindow(QDialog):
             self._refresh_section_selection()
             self._refresh_entry_table()
         self._set_ui_mode("professional")
+
+    def _activate_selected_simple_asset(self, _item=None):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None or not section:
+            return
+        self._active_section = section
+        self._active_entry_index = index
+
+        file_name = str(entry.get("file", "") or "").strip()
+        primary_fix = self._simple_asset_primary_fix_action(section, entry, file_label=file_name)
+        if primary_fix is not None:
+            _action_text, callback = primary_fix
+            callback()
+            return
+
+        resolved_path = self._resolve_entry_path(section, "file", file_name)
+        if resolved_path and os.path.exists(resolved_path):
+            self._open_selected_asset_in_external_editor()
+            return
+
+        self._open_current_simple_selection_in_professional_mode()
 
     def _selected_simple_asset_context(self):
         selected = self._simple_asset_table.selectionModel().selectedRows() if self._simple_asset_table.selectionModel() else []

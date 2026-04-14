@@ -715,6 +715,7 @@ class TestResourceGeneratorWindow:
         menu = window._build_simple_asset_context_menu()
         action_map = {action.text(): action for action in menu.actions() if action.text()}
 
+        assert "Suggested Fix: Open Professional Mode" in action_map
         assert action_map["Open Asset"].isEnabled() is False
         assert action_map["Open Asset Folder"].isEnabled() is False
         assert action_map["Copy Asset Path"].isEnabled() is True
@@ -780,6 +781,84 @@ class TestResourceGeneratorWindow:
         assert entry["width"] == 320
         assert entry["height"] == 180
         assert window._status_label.text() == "Updated video metadata for 'intro' (24fps 320x180)."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_activate_selected_simple_asset_uses_font_fix_action(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        fonts_dir = source_dir / "fonts"
+        fonts_dir.mkdir(parents=True)
+        (fonts_dir / "display.ttf").write_bytes(b"ttf")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"font": [{"file": "fonts/display.ttf", "name": "display", "text": ""}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        activated = []
+        monkeypatch.setattr(window, "_open_selected_font_text_resource", lambda: activated.append("font_text"))
+
+        window._activate_selected_simple_asset()
+
+        assert activated == ["font_text"]
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_activate_selected_simple_asset_opens_existing_asset(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        opened = []
+        monkeypatch.setattr(window, "_open_selected_asset_in_external_editor", lambda: opened.append("asset"))
+
+        window._activate_selected_simple_asset()
+
+        assert opened == ["asset"]
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_activate_selected_simple_asset_opens_professional_mode_for_missing_file(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "missing.png", "name": "missing"}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        opened = []
+        monkeypatch.setattr(window, "_open_current_simple_selection_in_professional_mode", lambda: opened.append("professional"))
+
+        window._activate_selected_simple_asset()
+
+        assert opened == ["professional"]
         _close_window(window)
 
     @_skip_no_qt
