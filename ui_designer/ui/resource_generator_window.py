@@ -228,6 +228,67 @@ class _QuickImageFlipDialog(QDialog):
         return str(self._filename_edit.text() or "").strip()
 
 
+class _QuickImageCropDialog(QDialog):
+    def __init__(self, *, width: int, height: int, output_filename: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Crop Image")
+        self.setMinimumWidth(380)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        summary = QLabel(f"Current size: {width} x {height}")
+        layout.addWidget(summary)
+
+        form = QFormLayout()
+        form.setSpacing(8)
+
+        self._x_spin = QSpinBox()
+        self._x_spin.setRange(0, max(int(width) - 1, 0))
+        self._x_spin.setValue(0)
+        form.addRow("Left", self._x_spin)
+
+        self._y_spin = QSpinBox()
+        self._y_spin.setRange(0, max(int(height) - 1, 0))
+        self._y_spin.setValue(0)
+        form.addRow("Top", self._y_spin)
+
+        self._width_spin = QSpinBox()
+        self._width_spin.setRange(1, max(int(width), 1))
+        self._width_spin.setValue(max(int(width), 1))
+        form.addRow("Width", self._width_spin)
+
+        self._height_spin = QSpinBox()
+        self._height_spin.setRange(1, max(int(height), 1))
+        self._height_spin.setValue(max(int(height), 1))
+        form.addRow("Height", self._height_spin)
+
+        self._filename_edit = QLineEdit(str(output_filename or "").strip())
+        form.addRow("Output File", self._filename_edit)
+        layout.addLayout(form)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def x_value(self) -> int:
+        return int(self._x_spin.value())
+
+    def y_value(self) -> int:
+        return int(self._y_spin.value())
+
+    def width_value(self) -> int:
+        return int(self._width_spin.value())
+
+    def height_value(self) -> int:
+        return int(self._height_spin.value())
+
+    def output_filename(self) -> str:
+        return str(self._filename_edit.text() or "").strip()
+
+
 class ResourceGeneratorWindow(QDialog):
     """Modeless standalone window for editing and generating resources."""
 
@@ -397,6 +458,10 @@ class ResourceGeneratorWindow(QDialog):
         self._flip_image_button = QPushButton("Flip Image...")
         self._flip_image_button.clicked.connect(self._open_flip_image_helper)
         helper_row.addWidget(self._flip_image_button)
+
+        self._crop_image_button = QPushButton("Crop Image...")
+        self._crop_image_button.clicked.connect(self._open_crop_image_helper)
+        helper_row.addWidget(self._crop_image_button)
 
         self._remove_simple_asset_button = QPushButton("Remove Selected")
         self._remove_simple_asset_button.clicked.connect(self._remove_selected_simple_asset)
@@ -2013,6 +2078,100 @@ class ResourceGeneratorWindow(QDialog):
             index,
             output_filename,
             f"{action} {direction}-flipped image '{output_filename}' ({width} x {height}).",
+        )
+
+    def _open_crop_image_helper(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None or section != "img":
+            QMessageBox.warning(self, "Crop Image", "Select an image asset in Simple mode first.")
+            return
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path("img", "file", file_name)
+        if not resolved_path or not os.path.isfile(resolved_path):
+            QMessageBox.warning(self, "Crop Image", f"Image file does not exist:\n{resolved_path or file_name}")
+            return
+
+        pixmap = QPixmap(resolved_path)
+        if pixmap.isNull():
+            QMessageBox.warning(self, "Crop Image", f"Qt could not decode the selected image:\n{resolved_path}")
+            return
+
+        dialog = _QuickImageCropDialog(
+            width=pixmap.width(),
+            height=pixmap.height(),
+            output_filename=file_name,
+            parent=self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        output_filename = dialog.output_filename()
+        if not output_filename:
+            QMessageBox.warning(self, "Crop Image", "Enter an output filename.")
+            return
+        if os.path.isabs(output_filename):
+            QMessageBox.warning(self, "Crop Image", "Output filename must stay inside Source Dir.")
+            return
+
+        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
+        if not normalized_output or normalized_output.startswith(".."):
+            QMessageBox.warning(self, "Crop Image", "Output filename must stay inside Source Dir.")
+            return
+
+        x = dialog.x_value()
+        y = dialog.y_value()
+        width = dialog.width_value()
+        height = dialog.height_value()
+        if x < 0 or y < 0 or width <= 0 or height <= 0 or x + width > pixmap.width() or y + height > pixmap.height():
+            QMessageBox.warning(self, "Crop Image", "Crop rectangle must stay inside the image bounds.")
+            return
+
+        self._apply_image_crop(entry, index, resolved_path, normalized_output, x, y, width, height)
+
+    def _apply_image_crop(self, entry: dict, index: int, source_path: str, output_filename: str, x: int, y: int, width: int, height: int):
+        try:
+            from PIL import Image
+        except Exception as exc:
+            QMessageBox.warning(self, "Crop Image", f"Pillow is required for image cropping:\n{exc}")
+            return
+
+        source_dir = self._session.paths.source_dir
+        if not source_dir:
+            QMessageBox.warning(self, "Crop Image", "Set Source Dir before cropping images.")
+            return
+
+        target_path = normalize_path(os.path.join(source_dir, output_filename))
+        if not _is_subpath(target_path, source_dir) and normalize_path(target_path) != normalize_path(source_path):
+            QMessageBox.warning(self, "Crop Image", "Output filename must stay inside Source Dir.")
+            return
+
+        existed_before = os.path.isfile(target_path)
+        if normalize_path(target_path) != normalize_path(source_path) and existed_before:
+            answer = QMessageBox.question(
+                self,
+                "Overwrite Image",
+                f"Overwrite existing image?\n\n{output_filename}",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if answer != QMessageBox.Yes:
+                return
+
+        try:
+            with Image.open(source_path) as image:
+                cropped = image.crop((int(x), int(y), int(x + width), int(y + height)))
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                cropped.save(target_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Crop Image", f"Failed to crop image:\n{exc}")
+            return
+
+        action = "Created" if output_filename != str(entry.get("file", "") or "").replace("\\", "/") else "Updated"
+        self._finalize_saved_image_output(
+            entry,
+            index,
+            output_filename,
+            f"{action} cropped image '{output_filename}' ({width} x {height}).",
         )
 
     def _finalize_saved_image_output(self, entry: dict, index: int, output_filename: str, status_message: str):
