@@ -484,6 +484,44 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_sort_assets_for_quick_mode_reorders_entries_and_table(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [
+                    {"file": "zeta.png", "name": "zeta"},
+                    {"file": "alpha.png", "name": "alpha"},
+                ],
+                "font": [
+                    {"file": "display_b.ttf", "name": "display_b"},
+                    {"file": "display_a.ttf", "name": "display_a"},
+                ],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._sort_assets_for_quick_mode()
+
+        assert [entry["file"] for entry in window._session.section_entries("img")] == ["alpha.png", "zeta.png"]
+        assert [entry["file"] for entry in window._session.section_entries("font")] == ["display_a.ttf", "display_b.ttf"]
+        assert window._simple_asset_table.item(0, 2).text() == "alpha.png"
+        assert window._simple_asset_table.item(1, 2).text() == "zeta.png"
+        assert window._simple_asset_table.item(2, 2).text() == "display_a.ttf"
+        assert window._simple_asset_table.item(3, 2).text() == "display_b.ttf"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Sorted 4 assets across quick mode sections."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_selection_updates_image_preview(self, qapp, tmp_path):
         from PyQt5.QtGui import QPixmap
 

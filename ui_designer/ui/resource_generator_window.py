@@ -431,6 +431,10 @@ class ResourceGeneratorWindow(QDialog):
         self._auto_fill_button.clicked.connect(self._auto_fill_missing_resource_info)
         helper_row.addWidget(self._auto_fill_button)
 
+        self._sort_assets_button = QPushButton("Sort Assets")
+        self._sort_assets_button.clicked.connect(self._sort_assets_for_quick_mode)
+        helper_row.addWidget(self._sort_assets_button)
+
         self._open_font_text_button = QPushButton("Open Font Text...")
         self._open_font_text_button.clicked.connect(self._open_selected_font_text_resource)
         helper_row.addWidget(self._open_font_text_button)
@@ -1725,6 +1729,32 @@ class ResourceGeneratorWindow(QDialog):
             summary.append(f"video metadata {updates['video_meta']}")
         self._set_status(", ".join(summary) + ".")
 
+    def _sort_assets_for_quick_mode(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        total_sorted = 0
+        changed = False
+        for section in KNOWN_RESOURCE_SECTIONS:
+            entries = self._session.section_entries(section)
+            if len(entries) < 2:
+                continue
+            before = [copy.deepcopy(entry) for entry in entries]
+            entries.sort(key=lambda entry: _resource_sort_key(section, entry))
+            if entries != before:
+                changed = True
+                total_sorted += len(entries)
+
+        if not changed:
+            self._set_status("Assets are already sorted.")
+            return
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(f"Sorted {total_sorted} assets across quick mode sections.")
+
     def _auto_fill_entry_name(self, section: str, index: int, entry: dict) -> bool:
         if str(entry.get("name", "") or "").strip():
             return False
@@ -2710,6 +2740,13 @@ def _resource_kind_label(section: str) -> str:
         "font": "font",
         "mp4": "video",
     }.get(str(section or ""), str(section or "asset"))
+
+
+def _resource_sort_key(section: str, entry) -> tuple[str, str]:
+    item = entry if isinstance(entry, dict) else {}
+    file_name = str(item.get("file", "") or "").replace("\\", "/").strip().lower()
+    label = section_entry_label(section, item, 0).strip().lower()
+    return file_name, label
 
 
 def _detect_video_metadata(video_path: str) -> dict:
