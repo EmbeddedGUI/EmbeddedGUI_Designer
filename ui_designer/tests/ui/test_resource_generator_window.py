@@ -2056,6 +2056,7 @@ class TestResourceGeneratorWindow:
         assert dialog._preview_splitter.orientation() == Qt.Vertical
         assert dialog._preview_splitter.childrenCollapsible() is False
         assert dialog._edit_file_button.text() == "Edit File..."
+        assert dialog._preview_sample_label.text() == "Preview Sample: HELLO Designer\nPreview Source: ui_text.txt"
         assert dialog._preview_info_label.text() == "Preview: 2 line(s), 15 char(s)"
         assert dialog._preview_text_edit.toPlainText() == "HELLO\nDesigner\n"
         assert dialog._combined_preview_info_label.text() == "Combined Preview: 1 file(s), 1 missing"
@@ -2064,6 +2065,7 @@ class TestResourceGeneratorWindow:
         dialog._list_widget.setCurrentRow(1)
 
         assert dialog._edit_file_button.text() == "Edit File..."
+        assert dialog._preview_sample_label.text() == "Preview Sample: HELLO Designer\nPreview Source: ui_text.txt"
         assert dialog._preview_info_label.text() == "Preview: File is missing."
         assert dialog._preview_text_edit.toPlainText() == ""
         dialog.close()
@@ -2214,6 +2216,7 @@ class TestResourceGeneratorWindow:
         assert dialog._count_label.text() == "Linked text files: 1"
         assert dialog._list_widget.item(0).text() == "missing.txt"
         assert dialog._edit_file_button.text() == "Edit File..."
+        assert dialog._preview_sample_label.text() == "Preview Sample: abc\nPreview Source: missing.txt"
         assert dialog._preview_info_label.text() == "Preview: 1 line(s), 3 char(s)"
         assert dialog._preview_text_edit.toPlainText() == "abc"
         assert dialog._combined_preview_info_label.text() == "Combined Preview: 1 file(s)"
@@ -2235,6 +2238,7 @@ class TestResourceGeneratorWindow:
             parent=None,
         )
 
+        assert dialog._preview_sample_label.text() == "Preview Sample: AB12\nPreview Source: ui_text.txt, charset.txt"
         assert dialog._combined_preview_info_label.text() == "Combined Preview: 2 file(s)"
         assert dialog._combined_preview_text_edit.toPlainText() == "[ui_text.txt]\nA\nB\n\n[charset.txt]\n1\n2"
 
@@ -2242,6 +2246,7 @@ class TestResourceGeneratorWindow:
         dialog._move_selected_path(-1)
 
         assert dialog.text_value() == "charset.txt\nui_text.txt"
+        assert dialog._preview_sample_label.text() == "Preview Sample: 12AB\nPreview Source: charset.txt, ui_text.txt"
         assert dialog._combined_preview_text_edit.toPlainText() == "[charset.txt]\n1\n2\n\n[ui_text.txt]\nA\nB"
         dialog.close()
 

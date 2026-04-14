@@ -883,6 +883,11 @@ class _FontTextLinksDialog(QDialog):
         self._path_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout.addWidget(self._path_label)
 
+        self._preview_sample_label = QLabel("")
+        self._preview_sample_label.setWordWrap(True)
+        self._preview_sample_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        layout.addWidget(self._preview_sample_label)
+
         self._preview_splitter = QSplitter(Qt.Vertical)
         self._preview_splitter.setChildrenCollapsible(False)
         self._preview_splitter.setHandleWidth(8)
@@ -1129,9 +1134,17 @@ class _FontTextLinksDialog(QDialog):
     def _update_combined_preview(self):
         values = self._current_values()
         if not values:
+            self._preview_sample_label.setText(
+                f"Preview Sample: {_default_quick_font_preview_text()}\nPreview Source: built-in sample"
+            )
             self._combined_preview_info_label.setText("Combined Preview: No linked text files.")
             self._combined_preview_text_edit.clear()
             return
+
+        sample_text, sample_source = _font_preview_sample_from_targets(
+            [(value, self._resolved_item_path(value)) for value in values]
+        )
+        self._preview_sample_label.setText(f"Preview Sample: {sample_text}\nPreview Source: {sample_source}")
 
         blocks = []
         available = 0
@@ -3941,36 +3954,13 @@ class ResourceGeneratorWindow(QDialog):
         label.setText(str(payload.get("preview_text", "") or ""))
 
     def _font_preview_sample(self, entry: dict) -> tuple[str, str]:
-        preview_sources = []
-        preview_chunks = []
-        for item, resolved in self._font_text_targets(entry):
-            if not resolved or not os.path.isfile(resolved):
-                continue
-            try:
-                with open(resolved, "r", encoding="utf-8") as handle:
-                    preview_chunks.append(self._decode_font_preview_entities(handle.read()))
-            except OSError:
-                continue
-            preview_sources.append(item)
-        if preview_chunks:
-            sample = self._build_font_preview_sample_text("\n".join(preview_chunks))
-            if sample:
-                return sample, ", ".join(preview_sources)
-        return _default_quick_font_preview_text(), "built-in sample"
+        return _font_preview_sample_from_targets(self._font_text_targets(entry))
 
     def _build_font_preview_sample_text(self, raw_text: str) -> str:
-        lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
-        if lines and all(len(line) == 1 for line in lines[: min(len(lines), 24)]):
-            sample = "".join(lines[:24])
-        else:
-            sample = " ".join(raw_text.split())
-        sample = sample.strip()
-        if len(sample) > 48:
-            sample = sample[:45].rstrip() + "..."
-        return sample
+        return _build_font_preview_sample_text(raw_text)
 
     def _decode_font_preview_entities(self, raw_text: str) -> str:
-        return re.sub(r"&#x([0-9A-Fa-f]+);", lambda match: chr(int(match.group(1), 16)), str(raw_text or ""))
+        return _decode_font_preview_entities(raw_text)
 
     def _font_preview_pixel_size(self, entry: dict | None) -> int:
         raw_value = str((entry or {}).get("pixelsize", "") or "").strip()
@@ -6874,6 +6864,41 @@ def _default_new_font_text_file_body() -> str:
 
 def _default_quick_font_preview_text() -> str:
     return "HELLO Designer 1234"
+
+
+def _decode_font_preview_entities(raw_text: str) -> str:
+    return re.sub(r"&#x([0-9A-Fa-f]+);", lambda match: chr(int(match.group(1), 16)), str(raw_text or ""))
+
+
+def _build_font_preview_sample_text(raw_text: str) -> str:
+    lines = [line.strip() for line in str(raw_text or "").splitlines() if line.strip()]
+    if lines and all(len(line) == 1 for line in lines[: min(len(lines), 24)]):
+        sample = "".join(lines[:24])
+    else:
+        sample = " ".join(str(raw_text or "").split())
+    sample = sample.strip()
+    if len(sample) > 48:
+        sample = sample[:45].rstrip() + "..."
+    return sample
+
+
+def _font_preview_sample_from_targets(targets) -> tuple[str, str]:
+    preview_sources = []
+    preview_chunks = []
+    for item, resolved in list(targets or []):
+        if not resolved or not os.path.isfile(resolved):
+            continue
+        try:
+            with open(resolved, "r", encoding="utf-8") as handle:
+                preview_chunks.append(_decode_font_preview_entities(handle.read()))
+        except OSError:
+            continue
+        preview_sources.append(str(item or "").strip())
+    if preview_chunks:
+        sample = _build_font_preview_sample_text("\n".join(preview_chunks))
+        if sample:
+            return sample, ", ".join([item for item in preview_sources if item])
+    return _default_quick_font_preview_text(), "built-in sample"
 
 
 def _safe_quick_placeholder_stem(value: str, *, fallback: str) -> str:
