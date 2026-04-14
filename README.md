@@ -109,7 +109,7 @@ The `Build -> Resource Generator...` entry opens a standalone editor for `app_re
 - It now provides `Simple` and `Professional` modes so quick asset setup and detailed config editing can coexist in the same window.
 - Known sections currently have structured editors for `img`, `font`, and `mp4`.
 - `Simple` mode adds quick helpers for importing individual images/fonts/videos, scanning an asset folder, auto-filling missing names and metadata, generating font text files, and opening or creating linked font text resources.
-- `Simple` mode also previews the selected asset, renders font samples directly in the window, auto-detects video fps and size, and can remove, open, resize, rotate, flip, or crop images for quick touch-up.
+- `Simple` mode also previews the selected asset, renders font samples directly in the window, auto-detects video fps and size, and can open asset folders plus remove, open, resize, rotate, flip, or crop images for quick touch-up.
 - Generation uses an explicit path model: `Config`, `Source Dir`, `Workspace`, and `Bin Output`.
 - When `resource/src/.designer/app_resource_config_designer.json` exists next to the config, the window shows the merged effective view without modifying the designer-owned overlay.
 
