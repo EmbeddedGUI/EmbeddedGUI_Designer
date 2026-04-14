@@ -1827,6 +1827,108 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_adjust_opacity_image_helper_overwrites_selected_image(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QColor, QImage, QPixmap
+        from PyQt5.QtWidgets import QDialog
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        pixmap.fill(QColor("#4477CC"))
+        assert pixmap.save(str(image_path), "PNG")
+
+        class _FakeDialog:
+            def __init__(self, *, output_filename, parent=None):
+                assert output_filename == "hero.png"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def output_filename(self):
+                return "hero.png"
+
+            def opacity_percent(self):
+                return 40
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickImageOpacityDialog", _FakeDialog)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_opacity_image_helper()
+
+        faded = QImage(str(image_path))
+        assert faded.width() == 12
+        assert faded.height() == 8
+        assert faded.pixelColor(6, 4).alpha() == 102
+        assert len(window._session.section_entries("img")) == 1
+        assert window._status_label.text() == "Updated image opacity for 'hero.png' (40% alpha, 12 x 8)."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_adjust_opacity_image_helper_can_create_new_image_entry(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QColor, QImage, QPixmap
+        from PyQt5.QtWidgets import QDialog, QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        pixmap.fill(QColor("#CC7744"))
+        assert pixmap.save(str(image_path), "PNG")
+
+        class _FakeDialog:
+            def __init__(self, *, output_filename, parent=None):
+                assert output_filename == "hero.png"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def output_filename(self):
+                return "variants/hero_faded.png"
+
+            def opacity_percent(self):
+                return 25
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickImageOpacityDialog", _FakeDialog)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_opacity_image_helper()
+
+        faded_path = source_dir / "variants" / "hero_faded.png"
+        faded = QImage(str(faded_path))
+        assert faded.width() == 12
+        assert faded.height() == 8
+        assert faded.pixelColor(6, 4).alpha() == 64
+        files = [entry["file"] for entry in window._session.section_entries("img")]
+        assert files == ["hero.png", "variants/hero_faded.png"]
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Created image opacity for 'variants/hero_faded.png' (25% alpha, 12 x 8)."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_resize_image_helper_overwrites_selected_image(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QPixmap
         from PyQt5.QtWidgets import QDialog
