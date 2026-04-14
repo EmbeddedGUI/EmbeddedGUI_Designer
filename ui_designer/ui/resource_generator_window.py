@@ -849,6 +849,14 @@ class _FontTextLinksDialog(QDialog):
         self._edit_file_button.clicked.connect(self._edit_selected_file)
         actions_col.addWidget(self._edit_file_button)
 
+        self._copy_path_button = QPushButton("Copy Full Path")
+        self._copy_path_button.clicked.connect(self._copy_selected_path)
+        actions_col.addWidget(self._copy_path_button)
+
+        self._open_folder_button = QPushButton("Open Folder")
+        self._open_folder_button.clicked.connect(self._open_selected_folder)
+        actions_col.addWidget(self._open_folder_button)
+
         self._remove_path_button = QPushButton("Remove")
         self._remove_path_button.clicked.connect(self._remove_selected_path)
         actions_col.addWidget(self._remove_path_button)
@@ -945,6 +953,45 @@ class _FontTextLinksDialog(QDialog):
         item = self._list_widget.item(row)
         return str(item.data(Qt.UserRole) or "").strip() if item is not None else ""
 
+    def _display_path_for_value(self, raw_value: str) -> str:
+        raw = str(raw_value or "").strip()
+        if not raw:
+            return ""
+        resolved = self._resolved_item_path(raw)
+        return resolved or raw
+
+    def _folder_path_for_value(self, raw_value: str) -> str:
+        raw = str(raw_value or "").strip()
+        if not raw:
+            return ""
+        resolved = self._resolved_item_path(raw)
+        candidates = []
+        if resolved:
+            candidates.append(resolved if os.path.isdir(resolved) else os.path.dirname(resolved))
+        if not os.path.isabs(raw):
+            if self._source_dir:
+                relative_dir = os.path.dirname(raw)
+                candidates.append(normalize_path(os.path.join(self._source_dir, relative_dir)) if relative_dir else self._source_dir)
+        else:
+            candidates.append(os.path.dirname(raw))
+
+        seen = set()
+        for candidate in candidates:
+            normalized = normalize_path(candidate)
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            current = normalized
+            while current and not os.path.exists(current):
+                parent = os.path.dirname(current)
+                if not parent or parent == current:
+                    current = ""
+                    break
+                current = parent
+            if current and os.path.isdir(current):
+                return current
+        return ""
+
     def _update_count_label(self):
         values = self._current_values()
         missing = 0
@@ -963,6 +1010,8 @@ class _FontTextLinksDialog(QDialog):
         count = self._list_widget.count()
         self._edit_path_button.setEnabled(has_selection)
         self._edit_file_button.setEnabled(has_selection and callable(self._edit_file_callback))
+        self._copy_path_button.setEnabled(has_selection)
+        self._open_folder_button.setEnabled(bool(self._folder_path_for_value(self._selected_value())))
         self._remove_path_button.setEnabled(has_selection)
         self._move_up_button.setEnabled(has_selection and row > 0)
         self._move_down_button.setEnabled(has_selection and 0 <= row < count - 1)
@@ -1047,6 +1096,16 @@ class _FontTextLinksDialog(QDialog):
             return
         self._edit_file_callback(raw_value)
         self._set_items(self._current_values(), selected_index=row)
+
+    def _copy_selected_path(self):
+        path = self._display_path_for_value(self._selected_value())
+        if path:
+            QApplication.clipboard().setText(path)
+
+    def _open_selected_folder(self):
+        folder_path = self._folder_path_for_value(self._selected_value())
+        if folder_path:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(folder_path))
 
     def _move_selected_path(self, delta: int):
         row = self._selected_row()

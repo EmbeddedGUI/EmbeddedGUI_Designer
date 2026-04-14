@@ -2021,6 +2021,33 @@ class TestResourceGeneratorWindow:
         dialog.close()
 
     @_skip_no_qt
+    def test_font_text_links_dialog_can_copy_full_path_and_open_folder(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QApplication
+
+        from ui_designer.ui.resource_generator_window import QDesktopServices, _FontTextLinksDialog
+        from ui_designer.model.workspace import normalize_path
+
+        source_dir = tmp_path / "resource" / "src"
+        text_dir = source_dir / "charset"
+        text_dir.mkdir(parents=True)
+        text_path = text_dir / "basic.txt"
+        text_path.write_text("abc", encoding="utf-8")
+        opened = []
+
+        monkeypatch.setattr(QDesktopServices, "openUrl", lambda url: opened.append(url.toLocalFile()) or True)
+
+        dialog = _FontTextLinksDialog(initial_items=["charset/basic.txt"], source_dir=str(source_dir), parent=None)
+        dialog._list_widget.setCurrentRow(0)
+
+        QApplication.clipboard().clear()
+        dialog._copy_selected_path()
+        dialog._open_selected_folder()
+
+        assert QApplication.clipboard().text() == str(text_path)
+        assert [normalize_path(path) for path in opened] == [normalize_path(str(text_dir))]
+        dialog.close()
+
+    @_skip_no_qt
     def test_rename_asset_names_from_files_updates_session_and_simple_table(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
