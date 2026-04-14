@@ -60,10 +60,12 @@ class TestResourceGeneratorWindow:
         assert window._simple_workspace_splitter.orientation() == Qt.Vertical
         assert window._simple_workspace_splitter.count() == 3
         assert window._simple_workspace_splitter.childrenCollapsible() is False
+        assert window._simple_workspace_splitter.handleWidth() == 8
         assert window._simple_action_tabs.documentMode() is True
-        assert tab_bar.minimumHeight() == 28
-        assert tab_bar.maximumHeight() == 28
-        assert 9 <= tab_bar.font().pointSize() <= 10
+        assert window._simple_actions_scroll.widget() is window._simple_action_tabs
+        assert tab_bar.minimumHeight() == 24
+        assert tab_bar.maximumHeight() == 24
+        assert tab_bar.font().pointSize() == 9
         _close_window(window)
 
     @_skip_no_qt
@@ -77,6 +79,8 @@ class TestResourceGeneratorWindow:
         assert header.sectionResizeMode(1) == QHeaderView.Interactive
         assert header.sectionResizeMode(2) == QHeaderView.Interactive
         assert header.sectionResizeMode(3) == QHeaderView.Interactive
+        assert header.height() == 19
+        assert header.font().pointSize() == 10
         assert window._simple_asset_table.verticalHeader().defaultSectionSize() >= window.fontMetrics().height() + 12
         _close_window(window)
 
@@ -471,7 +475,7 @@ class TestResourceGeneratorWindow:
         assert entry["width"] == 320
         assert entry["height"] == 180
         assert window._simple_asset_table.rowCount() == 1
-        assert window._simple_asset_table.item(0, 3).text() == "24fps 320x180"
+        assert window._simple_asset_table.item(0, 3).text() == "24fps | 320x180 | rgb565 | a0"
         _close_window(window)
 
     @_skip_no_qt
@@ -636,8 +640,8 @@ class TestResourceGeneratorWindow:
         assert loop["fps"] == 12
         assert loop["width"] == 160
         assert loop["height"] == 90
-        assert window._simple_asset_table.item(0, 3).text() == "24fps 320x180"
-        assert window._simple_asset_table.item(1, 3).text() == "12fps 160x90"
+        assert window._simple_asset_table.item(0, 3).text() == "24fps | 320x180"
+        assert window._simple_asset_table.item(1, 3).text() == "12fps | 160x90"
         assert window.has_unsaved_changes() is True
         assert window._status_label.text() == "Refreshed video metadata for 2 videos."
         _close_window(window)

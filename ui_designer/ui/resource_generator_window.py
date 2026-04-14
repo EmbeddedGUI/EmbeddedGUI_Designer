@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (
     QDialogButtonBox,
     QFileDialog,
     QFormLayout,
+    QFrame,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
@@ -976,17 +977,14 @@ class ResourceGeneratorWindow(QDialog):
 
         self._simple_action_tabs = QTabWidget()
         self._simple_action_tabs.setDocumentMode(True)
-        self._simple_action_tabs.setStyleSheet("QTabBar::tab { min-height: 22px; padding: 2px 10px; }")
+        self._simple_action_tabs.setStyleSheet("QTabBar::tab { min-height: 18px; padding: 1px 8px; }")
         tab_bar = self._simple_action_tabs.tabBar()
         tab_font = QFont(tab_bar.font())
-        tab_point_size = tab_font.pointSize()
-        if tab_point_size <= 0:
-            tab_point_size = 10
-        tab_font.setPointSize(max(9, min(tab_point_size - 1, 10)))
+        tab_font.setPointSize(9)
         tab_bar.setFont(tab_font)
         tab_bar.setExpanding(False)
         tab_bar.setUsesScrollButtons(False)
-        tab_bar.setFixedHeight(28)
+        tab_bar.setFixedHeight(24)
         self._simple_action_tabs.addTab(
             self._build_simple_action_tab(
                 "Start",
@@ -1100,7 +1098,13 @@ class ResourceGeneratorWindow(QDialog):
             ),
             "Selection",
         )
-        intro_layout.addWidget(self._simple_action_tabs)
+        self._simple_actions_scroll = QScrollArea()
+        self._simple_actions_scroll.setWidgetResizable(True)
+        self._simple_actions_scroll.setFrameShape(QFrame.NoFrame)
+        self._simple_actions_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._simple_actions_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self._simple_actions_scroll.setWidget(self._simple_action_tabs)
+        intro_layout.addWidget(self._simple_actions_scroll, 1)
 
         assets_group = QGroupBox("Assets")
         assets_layout = QVBoxLayout(assets_group)
@@ -1152,13 +1156,13 @@ class ResourceGeneratorWindow(QDialog):
 
         self._simple_asset_preview_label = QLabel("Select an image, font, or video entry to inspect it here.")
         self._simple_asset_preview_label.setAlignment(Qt.AlignCenter)
-        self._simple_asset_preview_label.setMinimumHeight(180)
+        self._simple_asset_preview_label.setMinimumHeight(96)
         self._simple_asset_preview_label.setWordWrap(True)
         asset_preview_layout.addWidget(self._simple_asset_preview_label, 1)
 
         self._simple_asset_meta = QPlainTextEdit()
         self._simple_asset_meta.setReadOnly(True)
-        self._simple_asset_meta.setMinimumHeight(140)
+        self._simple_asset_meta.setMinimumHeight(72)
         asset_preview_layout.addWidget(self._simple_asset_meta, 1)
         preview_splitter.addWidget(asset_preview_group)
 
@@ -1172,15 +1176,19 @@ class ResourceGeneratorWindow(QDialog):
         preview_splitter.setStretchFactor(0, 1)
         preview_splitter.setStretchFactor(1, 1)
         preview_splitter.setSizes([460, 460])
+        preview_splitter.setMinimumHeight(120)
         self._simple_workspace_splitter = QSplitter(Qt.Vertical)
         self._simple_workspace_splitter.setChildrenCollapsible(False)
+        self._simple_workspace_splitter.setHandleWidth(8)
         self._simple_workspace_splitter.addWidget(intro_group)
         self._simple_workspace_splitter.addWidget(assets_group)
         self._simple_workspace_splitter.addWidget(preview_splitter)
+        intro_group.setMinimumHeight(120)
+        assets_group.setMinimumHeight(140)
         self._simple_workspace_splitter.setStretchFactor(0, 0)
         self._simple_workspace_splitter.setStretchFactor(1, 1)
         self._simple_workspace_splitter.setStretchFactor(2, 1)
-        self._simple_workspace_splitter.setSizes([280, 320, 260])
+        self._simple_workspace_splitter.setSizes([220, 320, 220])
         layout.addWidget(self._simple_workspace_splitter, 1)
         return page
 
@@ -1229,6 +1237,10 @@ class ResourceGeneratorWindow(QDialog):
         vertical_header.setMinimumSectionSize(row_height)
 
         simple_header = self._simple_asset_table.horizontalHeader()
+        header_font = QFont(simple_header.font())
+        header_font.setPointSize(10)
+        simple_header.setFont(header_font)
+        simple_header.setFixedHeight(19)
         simple_header.setStretchLastSection(False)
         for column in range(self._simple_asset_table.columnCount()):
             simple_header.setSectionResizeMode(column, QHeaderView.Interactive)
