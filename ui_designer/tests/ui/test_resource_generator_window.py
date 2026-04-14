@@ -281,6 +281,7 @@ class TestResourceGeneratorWindow:
         qapp.processEvents()
 
         assert "Attention: Font text file is not linked." in window._simple_asset_meta.toPlainText()
+        assert "Suggested Fix: Use Open Font Text... or Auto Create Font Texts." in window._simple_asset_meta.toPlainText()
         _close_window(window)
 
     @_skip_no_qt
@@ -1201,6 +1202,29 @@ class TestResourceGeneratorWindow:
         assert window.has_unsaved_changes() is True
         assert window._status_label.text() == "Updated video metadata for 'intro' (24fps 320x180)."
         assert "Video: 24fps 320x180" in window._simple_asset_meta.toPlainText()
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_attention_preview_suggests_detect_video_info(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [], "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 0, "height": 180}]},
+            dirty=False,
+        )
+
+        window._simple_asset_type_filter.setCurrentIndex(window._simple_asset_type_filter.findData("attention"))
+        qapp.processEvents()
+
+        assert window._simple_asset_preview_title.text() == "MP4: intro"
+        assert "Suggested Fix: Use Detect Video Info to fill fps, width, and height." in window._simple_asset_meta.toPlainText()
         _close_window(window)
 
     @_skip_no_qt

@@ -1650,6 +1650,51 @@ class ResourceGeneratorWindow(QDialog):
 
         return tuple(messages)
 
+    def _simple_asset_recommended_fixes(self, section: str, entry: dict, *, file_label: str = "") -> tuple[str, ...]:
+        suggestions: list[str] = []
+        normalized_file = str(file_label or entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path(section, "file", normalized_file)
+        file_exists = bool(resolved_path and os.path.exists(resolved_path))
+
+        if not normalized_file:
+            suggestions.append("Set the File field in Professional Mode.")
+        elif not resolved_path:
+            suggestions.append("Set Source Dir or correct the asset path in Professional Mode.")
+        elif not file_exists:
+            suggestions.append("Restore the missing file or remove the asset from the config.")
+
+        if section == "font":
+            text_value = str(entry.get("text", "") or "").strip()
+            text_items = [item.strip() for item in text_value.split(",") if item.strip()]
+            if not text_items:
+                suggestions.append("Use Open Font Text... or Auto Create Font Texts.")
+            else:
+                missing_text_items = []
+                for item in text_items:
+                    resolved_text = self._resolve_entry_path("font", "text", item)
+                    if not resolved_text or not os.path.exists(resolved_text):
+                        missing_text_items.append(item)
+                if missing_text_items:
+                    suggestions.append("Use Open Font Text... to create the missing charset file.")
+                matched_text = self._matched_font_text_path("font", entry)
+                if matched_text and matched_text != text_value:
+                    suggestions.append("Run Refresh Font Text Links to relink the detected charset file.")
+
+        if section == "mp4":
+            missing_fields = []
+            for field_name in ("fps", "width", "height"):
+                raw_value = str(entry.get(field_name, "") or "").strip()
+                try:
+                    numeric_value = int(raw_value)
+                except Exception:
+                    numeric_value = 0
+                if numeric_value <= 0:
+                    missing_fields.append(field_name)
+            if missing_fields:
+                suggestions.append("Use Detect Video Info to fill fps, width, and height.")
+
+        return tuple(dict.fromkeys(item for item in suggestions if item))
+
     def _update_simple_attention_count(self, attention_count: int):
         count = max(0, int(attention_count))
         self._simple_attention_count.setText(f"Needs Attention: {count}")
@@ -3024,16 +3069,20 @@ class ResourceGeneratorWindow(QDialog):
         label = section_entry_label(section, entry, index)
         title = f"{RESOURCE_SECTION_SPECS[section].label}: {label}"
 
-        meta_lines = [
-            f"Section: {section}",
-            f"Name: {label}",
-            f"File: {file_name or '(empty)'}",
-            f"Resolved: {resolved_path or '(unresolved)'}",
-            f"Exists: {'yes' if exists else 'no'}",
-        ]
+        meta_lines = []
         attention_messages = self._simple_asset_attention_messages(section, entry, file_label=file_name)
         if attention_messages:
             meta_lines.append("Attention: " + " | ".join(attention_messages))
+            recommended_fixes = self._simple_asset_recommended_fixes(section, entry, file_label=file_name)
+            if recommended_fixes:
+                meta_lines.append("Suggested Fix: " + " | ".join(recommended_fixes))
+        meta_lines.extend(
+            [
+                f"File: {file_name or '(empty)'}",
+                f"Resolved: {resolved_path or '(unresolved)'}",
+                f"Exists: {'yes' if exists else 'no'}",
+            ]
+        )
         if section == "font":
             meta_lines.append(f"Text: {str(entry.get('text', '') or '(none)')}")
             meta_lines.append(f"Pixel Size: {self._font_preview_pixel_size(entry)}")
