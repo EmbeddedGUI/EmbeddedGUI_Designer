@@ -1685,8 +1685,7 @@ class ResourceGeneratorWindow(QDialog):
             messages.append("Asset file is missing.")
 
         if section == "font":
-            text_value = str(entry.get("text", "") or "").strip()
-            text_items = [item.strip() for item in text_value.split(",") if item.strip()]
+            text_items = self._font_text_items_from_value(entry.get("text", ""))
             if not text_items:
                 messages.append("Font text file is not linked.")
             else:
@@ -1735,7 +1734,7 @@ class ResourceGeneratorWindow(QDialog):
 
         if section == "font":
             text_value = str(entry.get("text", "") or "").strip()
-            text_items = [item.strip() for item in text_value.split(",") if item.strip()]
+            text_items = self._font_text_items_from_value(text_value)
             if not text_items:
                 suggestions.append("Use Edit Font Text... to create the charset file.")
             else:
@@ -1797,7 +1796,7 @@ class ResourceGeneratorWindow(QDialog):
 
         if section == "font":
             text_value = str(entry.get("text", "") or "").strip()
-            text_items = [item.strip() for item in text_value.split(",") if item.strip()]
+            text_items = self._font_text_items_from_value(text_value)
             missing_text_items = []
             for item in text_items:
                 resolved_text = self._resolve_entry_path("font", "text", item)
@@ -2295,6 +2294,8 @@ class ResourceGeneratorWindow(QDialog):
         if field_spec.placeholder:
             edit.setPlaceholderText(field_spec.placeholder)
         edit.textEdited.connect(lambda text, field_name=field_spec.name: self._update_current_entry_field(field_name, text))
+        if self._active_section == "font" and field_spec.name == "text":
+            edit.editingFinished.connect(lambda field_name=field_spec.name, widget=edit: self._commit_font_text_field(field_name, widget))
         layout.addWidget(edit, 1)
         self._active_field_widgets[field_spec.name] = edit
 
@@ -2327,13 +2328,10 @@ class ResourceGeneratorWindow(QDialog):
                 ]
             )
         if self._active_section == "font":
-            text_value = str(entry.get("text", "") or "").strip()
-            if text_value:
+            text_items = self._font_text_items_from_value(entry.get("text", ""))
+            if text_items:
                 lines.extend(["", "Text Files:"])
-                for item in text_value.split(","):
-                    candidate = item.strip()
-                    if not candidate:
-                        continue
+                for candidate in text_items:
                     resolved = self._resolve_entry_path(self._active_section, "text", candidate)
                     exists = bool(resolved and os.path.exists(resolved))
                     lines.append(f"- {candidate} ({'ok' if exists else 'missing'})")
@@ -2749,12 +2747,42 @@ class ResourceGeneratorWindow(QDialog):
         self._active_entry_index = selected[0].row() if selected else -1
         self._update_form()
 
-    def _update_current_entry_field(self, field_name: str, value):
-        self._session.update_entry_value(self._active_section, self._active_entry_index, field_name, value)
+    def _update_current_entry_field(
+        self,
+        field_name: str,
+        value,
+        *,
+        normalize_font_text: bool = False,
+        sync_widget_text: bool = False,
+    ):
+        entry = self._current_entry() or {}
+        before = str(entry.get(field_name, "") or "")
+        next_value = value
+        if normalize_font_text and self._active_section == "font" and field_name == "text":
+            next_value = self._normalize_font_text_value(value)
+
+        self._session.update_entry_value(self._active_section, self._active_entry_index, field_name, next_value)
+        updated_entry = self._current_entry() or {}
+        after = str(updated_entry.get(field_name, "") or "")
+        if sync_widget_text:
+            self._sync_active_field_widget(field_name, after)
+        if before == after:
+            return
         self._mark_dirty()
         self._refresh_current_table_row()
         self._update_merged_preview()
         self._update_raw_editor()
+
+    def _commit_font_text_field(self, field_name: str, widget: QLineEdit):
+        self._update_current_entry_field(field_name, widget.text(), normalize_font_text=True, sync_widget_text=True)
+
+    def _sync_active_field_widget(self, field_name: str, value: str):
+        widget = self._active_field_widgets.get(field_name)
+        if isinstance(widget, QLineEdit):
+            if widget.text() == value:
+                return
+            with QSignalBlocker(widget):
+                widget.setText(value)
 
     def _on_raw_text_changed(self):
         if self._syncing_raw:
@@ -2914,15 +2942,17 @@ class ResourceGeneratorWindow(QDialog):
             pixel_size = str(entry.get("pixelsize", "") or "").strip()
             font_bit_size = str(entry.get("fontbitsize", "") or "").strip()
             weight = str(entry.get("weight", "") or "").strip()
-            text_path = str(entry.get("text", "") or "").strip()
+            text_items = self._font_text_items_from_value(entry.get("text", ""))
             if pixel_size:
                 parts.append(f"{pixel_size}px")
             if font_bit_size:
                 parts.append(f"{font_bit_size}-bit")
             if weight:
                 parts.append(f"w{weight}")
-            if text_path:
-                parts.append(text_path)
+            if len(text_items) == 1:
+                parts.append(text_items[0])
+            elif len(text_items) > 1:
+                parts.append(f"{len(text_items)} text files")
             return " | ".join(parts)
 
         if section == "mp4":
@@ -3630,7 +3660,7 @@ class ResourceGeneratorWindow(QDialog):
                 if section != "font":
                     continue
 
-                text_items = [candidate.strip() for candidate in str(entry.get("text", "") or "").split(",") if candidate.strip()]
+                text_items = self._font_text_items_from_value(entry.get("text", ""))
                 if not text_items:
                     continue
 
@@ -3650,7 +3680,7 @@ class ResourceGeneratorWindow(QDialog):
                         field_changed = True
 
                 if field_changed:
-                    self._session.update_entry_value("font", index, "text", ", ".join(rewritten_items))
+                    self._session.update_entry_value("font", index, "text", ",".join(rewritten_items))
                     updated_links += 1
 
         if not copied_files and not updated_links:
@@ -3740,7 +3770,7 @@ class ResourceGeneratorWindow(QDialog):
                 if section != "font":
                     continue
 
-                text_items = [candidate.strip() for candidate in str(entry.get("text", "") or "").split(",") if candidate.strip()]
+                text_items = self._font_text_items_from_value(entry.get("text", ""))
                 if not text_items:
                     continue
 
@@ -3760,7 +3790,7 @@ class ResourceGeneratorWindow(QDialog):
                         field_changed = True
 
                 if field_changed:
-                    self._session.update_entry_value("font", index, "text", ", ".join(rewritten_items))
+                    self._session.update_entry_value("font", index, "text", ",".join(rewritten_items))
                     updated_links += 1
 
         if not moved_files and not updated_links:
@@ -4103,11 +4133,21 @@ class ResourceGeneratorWindow(QDialog):
         action = "Created and saved" if is_new_file else "Saved"
         self._set_status(f"{action} font text '{target_filename}'.")
 
+    def _font_text_items_from_value(self, value) -> list[str]:
+        items = []
+        for item in re.split(r"[,;\r\n\uFF0C\uFF1B]+", str(value or "")):
+            normalized = item.strip()
+            if normalized and normalized not in items:
+                items.append(normalized)
+        return items
+
+    def _normalize_font_text_value(self, value) -> str:
+        return ",".join(self._font_text_items_from_value(value))
+
     def _font_text_targets(self, entry: dict) -> list[tuple[str, str]]:
-        text_value = str(entry.get("text", "") or "").strip()
         targets = []
         seen = set()
-        for item in [candidate.strip() for candidate in text_value.split(",") if candidate.strip()]:
+        for item in self._font_text_items_from_value(entry.get("text", "")):
             if item in seen:
                 continue
             seen.add(item)
@@ -5504,27 +5544,33 @@ class ResourceGeneratorWindow(QDialog):
         if current_entry is None:
             return
         start_dir = self._entry_browse_start_dir(field_spec, current_entry)
-        path, _ = QFileDialog.getOpenFileName(self, f"Choose {field_spec.label}", start_dir, field_spec.file_filter)
-        if not path:
-            return
-        stored_value = self._normalize_selected_resource_path(field_spec, normalize_path(path))
-        if stored_value is None:
-            return
         if field_spec.name == "text" and self._active_section == "font":
-            existing = str(current_entry.get("text", "") or "").strip()
-            if existing:
-                items = [item.strip() for item in existing.split(",") if item.strip()]
-                if stored_value not in items:
-                    items.append(stored_value)
-                stored_value = ",".join(items)
+            paths, _ = QFileDialog.getOpenFileNames(self, f"Choose {field_spec.label}", start_dir, field_spec.file_filter)
+            if not paths:
+                return
+            items = self._font_text_items_from_value(current_entry.get("text", ""))
+            for path in paths:
+                stored_item = self._normalize_selected_resource_path(field_spec, normalize_path(path))
+                if stored_item is None or stored_item in items:
+                    continue
+                items.append(stored_item)
+            stored_value = ",".join(items)
+        else:
+            path, _ = QFileDialog.getOpenFileName(self, f"Choose {field_spec.label}", start_dir, field_spec.file_filter)
+            if not path:
+                return
+            stored_value = self._normalize_selected_resource_path(field_spec, normalize_path(path))
+            if stored_value is None:
+                return
         current_value = str(current_entry.get(field_spec.name, "") or "")
         if current_value == stored_value:
             return
-        self._session.update_entry_value(self._active_section, self._active_entry_index, field_spec.name, stored_value)
-        self._mark_dirty()
-        self._refresh_entry_table()
-        self._update_merged_preview()
-        self._update_raw_editor()
+        self._update_current_entry_field(
+            field_spec.name,
+            stored_value,
+            normalize_font_text=(field_spec.name == "text" and self._active_section == "font"),
+            sync_widget_text=(field_spec.name == "text" and self._active_section == "font"),
+        )
 
     def _normalize_selected_resource_path(self, field_spec, selected_path: str):
         source_dir = self._session.paths.source_dir

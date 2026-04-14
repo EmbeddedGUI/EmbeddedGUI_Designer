@@ -3515,14 +3515,85 @@ class TestResourceGeneratorWindow:
         text_field = next(field for field in RESOURCE_SECTION_SPECS["font"].fields if field.name == "text")
         monkeypatch.setattr(
             QFileDialog,
-            "getOpenFileName",
-            lambda *args, **kwargs: (str(text_file), text_field.file_filter),
+            "getOpenFileNames",
+            lambda *args, **kwargs: ([str(text_file)], text_field.file_filter),
         )
 
         window._browse_entry_field(text_field)
 
         entry = window._session.section_entries("font")[0]
         assert entry["text"] == "charset/basic.txt"
+        assert window.has_unsaved_changes() is False
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_browse_font_text_multiple_files_appends_and_normalizes(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths, RESOURCE_SECTION_SPECS
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        first_text = source_dir / "charset" / "basic.txt"
+        second_text = source_dir / "charset" / "extra.txt"
+        first_text.parent.mkdir(parents=True)
+        first_text.write_text("abc", encoding="utf-8")
+        second_text.write_text("xyz", encoding="utf-8")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "text": "charset/basic.txt"}], "mp4": []},
+            dirty=False,
+        )
+        window._active_section = "font"
+        window._active_entry_index = 0
+        window._refresh_entry_table()
+
+        text_field = next(field for field in RESOURCE_SECTION_SPECS["font"].fields if field.name == "text")
+        monkeypatch.setattr(
+            QFileDialog,
+            "getOpenFileNames",
+            lambda *args, **kwargs: ([str(second_text), str(first_text)], text_field.file_filter),
+        )
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window._browse_entry_field(text_field)
+
+        entry = window._session.section_entries("font")[0]
+        assert entry["text"] == "charset/basic.txt,charset/extra.txt"
+        assert window.has_unsaved_changes() is True
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_commit_font_text_field_normalizes_value_without_dirty_when_effective_text_is_unchanged(self, qapp, tmp_path):
+        from PyQt5.QtWidgets import QLineEdit
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "text": "charset/basic.txt,charset/extra.txt"}], "mp4": []},
+            dirty=False,
+        )
+        window._active_section = "font"
+        window._active_entry_index = 0
+        window._refresh_entry_table()
+
+        edit = window._active_field_widgets["text"]
+        assert isinstance(edit, QLineEdit)
+        edit.setText(" charset/basic.txt ;\r\n charset/extra.txt ")
+
+        window._commit_font_text_field("text", edit)
+
+        entry = window._session.section_entries("font")[0]
+        assert entry["text"] == "charset/basic.txt,charset/extra.txt"
+        assert edit.text() == "charset/basic.txt,charset/extra.txt"
         assert window.has_unsaved_changes() is False
         _close_window(window)
 
