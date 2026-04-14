@@ -12,7 +12,7 @@ import shutil
 import subprocess
 
 from PyQt5.QtCore import QEvent, Qt, QSignalBlocker, QUrl
-from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QPainter, QPen, QPixmap
+from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QKeySequence, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -34,6 +34,7 @@ from PyQt5.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
+    QShortcut,
     QSplitter,
     QStackedWidget,
     QSpinBox,
@@ -752,8 +753,10 @@ class ResourceGeneratorWindow(QDialog):
         self._clean_user_data = make_empty_resource_config()
         self._ui_mode = "simple"
         self._simple_row_map: list[tuple[str, int]] = []
+        self._window_shortcuts: dict[str, QShortcut] = {}
 
         self._build_ui()
+        self._configure_shortcuts()
         self._apply_paths_and_data(GenerationPaths(), make_empty_resource_config(), dirty=False)
 
     def showEvent(self, event):
@@ -809,22 +812,27 @@ class ResourceGeneratorWindow(QDialog):
         layout.setSpacing(8)
 
         self._new_button = QPushButton("New")
+        self._new_button.setShortcut(QKeySequence("Ctrl+N"))
         self._new_button.clicked.connect(self._new_config)
         layout.addWidget(self._new_button)
 
         self._open_button = QPushButton("Open...")
+        self._open_button.setShortcut(QKeySequence("Ctrl+O"))
         self._open_button.clicked.connect(self._open_config_dialog)
         layout.addWidget(self._open_button)
 
         self._save_button = QPushButton("Save")
+        self._save_button.setShortcut(QKeySequence("Ctrl+S"))
         self._save_button.clicked.connect(self._save_config)
         layout.addWidget(self._save_button)
 
         self._save_as_button = QPushButton("Save As...")
+        self._save_as_button.setShortcut(QKeySequence("Ctrl+Shift+S"))
         self._save_as_button.clicked.connect(self._save_config_as)
         layout.addWidget(self._save_as_button)
 
         self._generate_button = QPushButton("Generate")
+        self._generate_button.setShortcut(QKeySequence("Ctrl+Return"))
         self._generate_button.clicked.connect(self._generate_resources)
         layout.addWidget(self._generate_button)
 
@@ -1206,7 +1214,38 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_workspace_splitter.setStretchFactor(2, 1)
         self._simple_workspace_splitter.setSizes([220, 320, 220])
         layout.addWidget(self._simple_workspace_splitter, 1)
+        self._update_simple_action_button_states()
         return page
+
+    def _configure_shortcuts(self):
+        self._register_window_shortcut("Ctrl+F", self._focus_simple_asset_search)
+        self._register_window_shortcut("Delete", self._shortcut_remove_selected_simple_asset)
+        self._register_window_shortcut("Ctrl+D", self._shortcut_duplicate_simple_asset)
+        self._register_window_shortcut("Ctrl+E", self._shortcut_open_simple_selection_in_professional_mode)
+
+    def _register_window_shortcut(self, sequence: str, callback):
+        shortcut = QShortcut(QKeySequence(sequence), self)
+        shortcut.setContext(Qt.WidgetWithChildrenShortcut)
+        shortcut.activated.connect(callback)
+        self._window_shortcuts[str(sequence)] = shortcut
+
+    def _focus_simple_asset_search(self):
+        if self._ui_mode != "simple":
+            return
+        self._simple_asset_search_edit.setFocus()
+        self._simple_asset_search_edit.selectAll()
+
+    def _shortcut_remove_selected_simple_asset(self):
+        if self._ui_mode == "simple" and self._remove_simple_asset_button.isEnabled():
+            self._remove_selected_simple_asset()
+
+    def _shortcut_duplicate_simple_asset(self):
+        if self._ui_mode == "simple" and self._duplicate_simple_asset_button.isEnabled():
+            self._duplicate_selected_simple_asset()
+
+    def _shortcut_open_simple_selection_in_professional_mode(self):
+        if self._ui_mode == "simple" and self._open_professional_button.isEnabled():
+            self._open_current_simple_selection_in_professional_mode()
 
     def _build_simple_action_group(self, title: str, buttons, *, columns: int) -> QGroupBox:
         group = QGroupBox(title)
@@ -2125,6 +2164,7 @@ class ResourceGeneratorWindow(QDialog):
                 self._simple_asset_table.selectRow(selected_row)
             else:
                 self._simple_asset_table.clearSelection()
+        self._update_simple_action_button_states()
         self._update_simple_asset_preview()
 
     def _simple_asset_detail_text(self, section: str, entry: dict) -> str:
@@ -2229,7 +2269,41 @@ class ResourceGeneratorWindow(QDialog):
         if section:
             self._active_section = section
             self._active_entry_index = index
+        self._update_simple_action_button_states()
         self._update_simple_asset_preview()
+
+    def _update_simple_action_button_states(self):
+        section, _index, entry = self._selected_simple_asset_context()
+        has_selection = bool(section and entry is not None)
+        any_selection_buttons = (
+            self._preview_asset_button,
+            self._edit_asset_button,
+            self._open_asset_folder_button,
+            self._duplicate_simple_asset_button,
+            self._remove_simple_asset_button,
+            self._open_professional_button,
+        )
+        image_buttons = (
+            self._resize_image_button,
+            self._add_border_image_button,
+            self._add_background_image_button,
+            self._round_corners_image_button,
+            self._adjust_opacity_image_button,
+            self._rotate_image_button,
+            self._flip_image_button,
+            self._crop_image_button,
+        )
+        font_buttons = (self._open_font_text_button,)
+        video_buttons = (self._detect_video_info_button,)
+
+        for button in any_selection_buttons:
+            button.setEnabled(has_selection)
+        for button in image_buttons:
+            button.setEnabled(has_selection and section == "img")
+        for button in font_buttons:
+            button.setEnabled(has_selection and section == "font")
+        for button in video_buttons:
+            button.setEnabled(has_selection and section == "mp4")
 
     def _preview_selected_simple_asset(self):
         section, index, entry = self._selected_simple_asset_context()

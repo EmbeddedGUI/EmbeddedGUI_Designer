@@ -140,6 +140,85 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_mode_selection_actions_track_selected_asset_type(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero"}],
+                "font": [{"file": "display.ttf", "name": "display", "text": "charset/display.txt"}],
+                "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 320, "height": 180}],
+            },
+            dirty=False,
+        )
+
+        window._simple_asset_table.clearSelection()
+        qapp.processEvents()
+
+        assert window._duplicate_simple_asset_button.isEnabled() is False
+        assert window._remove_simple_asset_button.isEnabled() is False
+        assert window._resize_image_button.isEnabled() is False
+        assert window._open_font_text_button.isEnabled() is False
+        assert window._detect_video_info_button.isEnabled() is False
+
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+        assert window._duplicate_simple_asset_button.isEnabled() is True
+        assert window._remove_simple_asset_button.isEnabled() is True
+        assert window._resize_image_button.isEnabled() is True
+        assert window._open_font_text_button.isEnabled() is False
+        assert window._detect_video_info_button.isEnabled() is False
+
+        window._simple_asset_table.selectRow(1)
+        qapp.processEvents()
+        assert window._resize_image_button.isEnabled() is False
+        assert window._open_font_text_button.isEnabled() is True
+        assert window._detect_video_info_button.isEnabled() is False
+
+        window._simple_asset_table.selectRow(2)
+        qapp.processEvents()
+        assert window._resize_image_button.isEnabled() is False
+        assert window._open_font_text_button.isEnabled() is False
+        assert window._detect_video_info_button.isEnabled() is True
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_resource_generator_exposes_keyboard_shortcuts_for_common_resource_actions(self, qapp, monkeypatch):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        window.show()
+        qapp.processEvents()
+
+        assert window._new_button.shortcut().toString() == "Ctrl+N"
+        assert window._open_button.shortcut().toString() == "Ctrl+O"
+        assert window._save_button.shortcut().toString() == "Ctrl+S"
+        assert window._save_as_button.shortcut().toString() == "Ctrl+Shift+S"
+        assert window._generate_button.shortcut().toString() == "Ctrl+Return"
+        assert set(window._window_shortcuts) >= {"Ctrl+F", "Delete", "Ctrl+D", "Ctrl+E"}
+
+        activated = []
+        monkeypatch.setattr(window, "_remove_selected_simple_asset", lambda: activated.append("delete"))
+        monkeypatch.setattr(window, "_duplicate_selected_simple_asset", lambda: activated.append("duplicate"))
+
+        window._remove_simple_asset_button.setEnabled(True)
+        window._duplicate_simple_asset_button.setEnabled(True)
+        window._window_shortcuts["Delete"].activated.emit()
+        window._window_shortcuts["Ctrl+D"].activated.emit()
+        window._window_shortcuts["Ctrl+F"].activated.emit()
+        qapp.processEvents()
+
+        assert activated == ["delete", "duplicate"]
+        assert window._simple_asset_search_edit.hasFocus() is True
+        _close_window(window)
+
+    @_skip_no_qt
     def test_build_quick_preview_board_dialog_includes_all_assets(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QPixmap
 
