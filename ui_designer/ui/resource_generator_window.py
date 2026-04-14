@@ -766,6 +766,7 @@ class ResourceGeneratorWindow(QDialog):
         self._pending_simple_asset_column_widths: list[int] | None = None
 
         self._build_ui()
+        self._configure_drop_targets()
         self._configure_shortcuts()
         self._restore_view_state()
         self._apply_paths_and_data(GenerationPaths(), make_empty_resource_config(), dirty=False)
@@ -781,6 +782,44 @@ class ResourceGeneratorWindow(QDialog):
         super().changeEvent(event)
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange}:
             self._sync_window_chrome_theme()
+
+    def dragEnterEvent(self, event):
+        if self._accepts_external_asset_drop(event.mimeData()):
+            event.acceptProposedAction()
+            return
+        event.ignore()
+
+    def dragMoveEvent(self, event):
+        if self._accepts_external_asset_drop(event.mimeData()):
+            event.acceptProposedAction()
+            return
+        event.ignore()
+
+    def dropEvent(self, event):
+        if not self._accepts_external_asset_drop(event.mimeData()):
+            event.ignore()
+            return
+        self._handle_external_asset_drop(event.mimeData())
+        event.acceptProposedAction()
+
+    def eventFilter(self, watched, event):
+        if event.type() == QEvent.DragEnter:
+            if self._accepts_external_asset_drop(event.mimeData()):
+                event.acceptProposedAction()
+                return True
+            return False
+        if event.type() == QEvent.DragMove:
+            if self._accepts_external_asset_drop(event.mimeData()):
+                event.acceptProposedAction()
+                return True
+            return False
+        if event.type() == QEvent.Drop:
+            if not self._accepts_external_asset_drop(event.mimeData()):
+                return False
+            self._handle_external_asset_drop(event.mimeData())
+            event.acceptProposedAction()
+            return True
+        return super().eventFilter(watched, event)
 
     def _sync_window_chrome_theme(self):
         sync_window_chrome_theme(self)
@@ -886,6 +925,10 @@ class ResourceGeneratorWindow(QDialog):
         )
         intro.setWordWrap(True)
         intro_layout.addWidget(intro)
+
+        self._simple_drop_hint_label = QLabel("Tip: drag files or asset folders into this window to import them directly.")
+        self._simple_drop_hint_label.setWordWrap(True)
+        intro_layout.addWidget(self._simple_drop_hint_label)
 
         self._import_assets_button = QPushButton("Import Files...")
         self._import_assets_button.clicked.connect(self._import_asset_files_dialog)
@@ -1240,6 +1283,75 @@ class ResourceGeneratorWindow(QDialog):
         self._register_window_shortcut("Delete", self._shortcut_remove_selected_simple_asset)
         self._register_window_shortcut("Ctrl+D", self._shortcut_duplicate_simple_asset)
         self._register_window_shortcut("Ctrl+E", self._shortcut_open_simple_selection_in_professional_mode)
+
+    def _configure_drop_targets(self):
+        for widget in self._drop_target_widgets():
+            widget.setAcceptDrops(True)
+            if widget is not self:
+                widget.installEventFilter(self)
+
+    def _drop_target_widgets(self):
+        widgets = [
+            self,
+            getattr(self, "_workspace_stack", None),
+            getattr(self, "_simple_page", None),
+            getattr(self, "_professional_page", None),
+            getattr(self, "_simple_workspace_splitter", None),
+            getattr(self, "_simple_preview_splitter", None),
+            getattr(self, "_simple_asset_table", None),
+            getattr(self, "_entry_table", None),
+            getattr(self, "_section_list", None),
+            getattr(self, "_simple_actions_scroll", None),
+            getattr(self, "_simple_preview", None),
+            getattr(self, "_simple_asset_meta", None),
+            getattr(self, "_simple_asset_preview_label", None),
+        ]
+        for widget in (getattr(self, "_simple_asset_table", None), getattr(self, "_entry_table", None), getattr(self, "_section_list", None)):
+            viewport = widget.viewport() if widget is not None and hasattr(widget, "viewport") else None
+            widgets.append(viewport)
+        seen: set[int] = set()
+        ordered_widgets = []
+        for widget in widgets:
+            if widget is None:
+                continue
+            marker = id(widget)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            ordered_widgets.append(widget)
+        return ordered_widgets
+
+    def _accepts_external_asset_drop(self, mime_data) -> bool:
+        local_paths = _local_paths_from_mime_data(mime_data)
+        if not local_paths:
+            return False
+        for path in local_paths:
+            if os.path.isdir(path):
+                return True
+            if not os.path.isfile(path):
+                continue
+            extension = os.path.splitext(path)[1].lower()
+            if extension in _TEXT_FILE_EXTENSIONS or extension in _IMAGE_FILE_EXTENSIONS or extension in _FONT_FILE_EXTENSIONS or extension in _VIDEO_FILE_EXTENSIONS:
+                return True
+        return False
+
+    def _handle_external_asset_drop(self, mime_data):
+        local_paths = _local_paths_from_mime_data(mime_data)
+        if not local_paths:
+            return
+
+        directories, import_files = _collect_importable_drop_files(local_paths)
+        direct_files = [path for path in local_paths if os.path.isfile(path)]
+        if len(directories) == 1 and not direct_files:
+            self._scan_assets_from_directory(directories[0])
+            return
+        if import_files:
+            self._import_assets_from_files(import_files)
+            return
+        if len(directories) == 1:
+            self._scan_assets_from_directory(directories[0])
+            return
+        self._set_status("Dropped items did not include supported image, font, video, or text files.")
 
     def _register_window_shortcut(self, sequence: str, callback):
         shortcut = QShortcut(QKeySequence(sequence), self)
@@ -5424,6 +5536,59 @@ def _coerce_int_list(values, *, expected_length: int, minimum: int, require_nonz
     if require_nonzero_sum and sum(normalized) <= 0:
         return None
     return normalized
+
+
+def _local_paths_from_mime_data(mime_data) -> list[str]:
+    if mime_data is None or not hasattr(mime_data, "hasUrls") or not mime_data.hasUrls():
+        return []
+    paths: list[str] = []
+    seen: set[str] = set()
+    for url in mime_data.urls():
+        path = normalize_path(url.toLocalFile()) if hasattr(url, "toLocalFile") else ""
+        if not path or path in seen:
+            continue
+        seen.add(path)
+        paths.append(path)
+    return paths
+
+
+def _collect_importable_drop_files(local_paths) -> tuple[list[str], list[str]]:
+    directories: list[str] = []
+    import_files: list[str] = []
+    seen_files: set[str] = set()
+
+    def _append_file(path: str):
+        normalized = normalize_path(path)
+        if not normalized or normalized in seen_files or not os.path.isfile(normalized):
+            return
+        seen_files.add(normalized)
+        import_files.append(normalized)
+
+    for raw_path in local_paths:
+        full_path = normalize_path(raw_path)
+        if not full_path:
+            continue
+        if os.path.isdir(full_path):
+            if full_path not in directories:
+                directories.append(full_path)
+            continue
+
+    direct_assets, direct_texts, _skipped_paths = _classify_selected_asset_files(
+        [path for path in local_paths if normalize_path(path) and os.path.isfile(normalize_path(path))]
+    )
+    for _section, path in direct_assets:
+        _append_file(path)
+    for path in direct_texts:
+        _append_file(path)
+
+    for directory in directories:
+        discovered_assets, discovered_texts = _discover_supported_assets(directory)
+        for _section, path in discovered_assets:
+            _append_file(path)
+        for path in discovered_texts:
+            _append_file(path)
+
+    return directories, import_files
 
 
 def _discover_supported_assets(root_dir: str):

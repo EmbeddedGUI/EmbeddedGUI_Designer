@@ -9,11 +9,38 @@ from ui_designer.tests.sdk_builders import build_test_sdk_root
 from ui_designer.tests.ui.window_test_helpers import close_test_window as _close_window
 
 if HAS_PYQT5:
-    from PyQt5.QtCore import QEvent, Qt
+    from PyQt5.QtCore import QEvent, Qt, QUrl
     from PyQt5.QtWidgets import QGroupBox, QHeaderView, QLabel, QMessageBox
 
 
 _skip_no_qt = skip_if_no_qt
+
+
+class _FakeUrlMimeData:
+    def __init__(self, paths):
+        self._urls = [QUrl.fromLocalFile(str(path)) for path in paths]
+
+    def hasUrls(self):
+        return True
+
+    def urls(self):
+        return self._urls
+
+
+class _FakeUrlDropEvent:
+    def __init__(self, paths):
+        self._mime = _FakeUrlMimeData(paths)
+        self.accepted = False
+        self.ignored = False
+
+    def mimeData(self):
+        return self._mime
+
+    def acceptProposedAction(self):
+        self.accepted = True
+
+    def ignore(self):
+        self.ignored = True
 
 
 @pytest.mark.usefixtures("isolated_config")
@@ -252,6 +279,78 @@ class TestResourceGeneratorWindow:
         assert reopened._workspace_stack.currentWidget() is reopened._professional_page
         assert reopened._capture_view_state() == expected_state
         _close_window(reopened)
+
+    @_skip_no_qt
+    def test_resource_generator_accepts_drag_for_supported_asset_file(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        image_path = tmp_path / "hero.png"
+        image_path.write_bytes(b"png")
+        window = ResourceGeneratorWindow("")
+        event = _FakeUrlDropEvent([image_path])
+
+        window.dragEnterEvent(event)
+
+        assert event.accepted is True
+        assert event.ignored is False
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_resource_generator_drop_single_directory_scans_assets(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        asset_dir = tmp_path / "bundle"
+        asset_dir.mkdir()
+        window = ResourceGeneratorWindow("")
+        scanned = []
+        imported = []
+        monkeypatch.setattr(window, "_scan_assets_from_directory", lambda path: scanned.append(path))
+        monkeypatch.setattr(window, "_import_assets_from_files", lambda paths: imported.append(list(paths)))
+        event = _FakeUrlDropEvent([asset_dir])
+
+        window.dropEvent(event)
+
+        assert scanned == [str(asset_dir)]
+        assert imported == []
+        assert event.accepted is True
+        assert event.ignored is False
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_resource_generator_drop_mixed_files_and_directories_imports_supported_assets(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        asset_dir = tmp_path / "bundle"
+        asset_dir.mkdir()
+        nested_dir = asset_dir / "nested"
+        nested_dir.mkdir()
+        image_path = asset_dir / "hero.png"
+        font_path = nested_dir / "display.ttf"
+        text_path = nested_dir / "display.txt"
+        external_video = tmp_path / "intro.mp4"
+        unsupported = tmp_path / "notes.md"
+        image_path.write_bytes(b"png")
+        font_path.write_bytes(b"ttf")
+        text_path.write_text("ABCD", encoding="utf-8")
+        external_video.write_bytes(b"mp4")
+        unsupported.write_text("ignore", encoding="utf-8")
+
+        window = ResourceGeneratorWindow("")
+        imported = []
+        scanned = []
+        monkeypatch.setattr(window, "_import_assets_from_files", lambda paths: imported.append(list(paths)))
+        monkeypatch.setattr(window, "_scan_assets_from_directory", lambda path: scanned.append(path))
+        event = _FakeUrlDropEvent([asset_dir, external_video, unsupported])
+
+        window.dropEvent(event)
+
+        assert scanned == []
+        assert len(imported) == 1
+        assert imported[0][0] == str(external_video)
+        assert set(imported[0][1:]) == {str(image_path), str(font_path), str(text_path)}
+        assert event.accepted is True
+        assert event.ignored is False
+        _close_window(window)
 
     @_skip_no_qt
     def test_build_quick_preview_board_dialog_includes_all_assets(self, qapp, monkeypatch, tmp_path):
