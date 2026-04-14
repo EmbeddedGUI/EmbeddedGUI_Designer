@@ -761,6 +761,8 @@ class ResourceGeneratorWindow(QDialog):
         self._clean_user_data = make_empty_resource_config()
         self._ui_mode = "simple"
         self._simple_row_map: list[tuple[str, int]] = []
+        self._simple_asset_sort_column = -1
+        self._simple_asset_sort_descending = False
         self._window_shortcuts: dict[str, QShortcut] = {}
         self._view_state_updates_enabled = False
         self._pending_simple_workspace_splitter_sizes: list[int] | None = None
@@ -1436,11 +1438,14 @@ class ResourceGeneratorWindow(QDialog):
         simple_header.setMinimumHeight(max(24, simple_header.fontMetrics().height() + 10))
         simple_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         simple_header.setStretchLastSection(False)
+        simple_header.setSectionsClickable(True)
         for column in range(self._simple_asset_table.columnCount()):
             simple_header.setSectionResizeMode(column, QHeaderView.Interactive)
         simple_header.sectionResized.connect(lambda _index, _old_size, _new_size: self._remember_view_state())
+        simple_header.sectionClicked.connect(self._toggle_simple_asset_sort)
         for column, width in enumerate(_DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS):
             simple_header.resizeSection(column, width)
+        self._apply_simple_asset_sort_indicator()
 
     def _build_simple_asset_empty_state(self) -> QWidget:
         page = QWidget()
@@ -1525,6 +1530,49 @@ class ResourceGeneratorWindow(QDialog):
         if menu is None:
             return
         menu.exec_(self._simple_asset_table.viewport().mapToGlobal(pos))
+
+    def _toggle_simple_asset_sort(self, column: int):
+        if not (0 <= int(column) < self._simple_asset_table.columnCount()):
+            return
+        if self._simple_asset_sort_column != int(column):
+            self._simple_asset_sort_column = int(column)
+            self._simple_asset_sort_descending = False
+        elif not self._simple_asset_sort_descending:
+            self._simple_asset_sort_descending = True
+        else:
+            self._simple_asset_sort_column = -1
+            self._simple_asset_sort_descending = False
+        self._apply_simple_asset_sort_indicator()
+        self._refresh_simple_page()
+        self._remember_view_state()
+
+    def _apply_simple_asset_sort_indicator(self):
+        header = self._simple_asset_table.horizontalHeader()
+        if self._simple_asset_sort_column < 0:
+            header.setSortIndicatorShown(False)
+            return
+        header.setSortIndicatorShown(True)
+        header.setSortIndicator(
+            self._simple_asset_sort_column,
+            Qt.DescendingOrder if self._simple_asset_sort_descending else Qt.AscendingOrder,
+        )
+
+    def _simple_asset_row_sort_key(self, row_payload) -> tuple:
+        values = (
+            str(row_payload["type_label"] or "").strip().lower(),
+            str(row_payload["name_label"] or "").strip().lower(),
+            str(row_payload["file_label"] or "").strip().lower(),
+            str(row_payload["detail_label"] or "").strip().lower(),
+        )
+        sort_index = self._simple_asset_sort_column if 0 <= self._simple_asset_sort_column < len(values) else 1
+        return (
+            values[sort_index],
+            values[1],
+            values[2],
+            values[3],
+            values[0],
+            int(row_payload["index"]),
+        )
 
     def _build_simple_asset_context_menu(self, *, row: int | None = None) -> QMenu | None:
         if row is not None and row >= 0:
@@ -2408,29 +2456,45 @@ class ResourceGeneratorWindow(QDialog):
         search_text = str(self._simple_asset_search_edit.text() or "").strip().lower()
         has_filters = section_filter != "all" or bool(search_text)
         total_assets = sum(counts.values())
-        rows: list[tuple[str, int, dict]] = []
+        rows = []
         for section in KNOWN_RESOURCE_SECTIONS:
             if section_filter != "all" and section != section_filter:
                 continue
             for index, entry in enumerate(self._session.section_entries(section)):
                 if not isinstance(entry, dict):
                     continue
+                type_label = RESOURCE_SECTION_SPECS[section].label
+                name_label = section_entry_label(section, entry, index)
+                file_label = str(entry.get("file", "") or "")
                 detail = self._simple_asset_detail_text(section, entry)
                 search_blob = " ".join(
                     part
                     for part in (
-                        RESOURCE_SECTION_SPECS[section].label,
-                        section_entry_label(section, entry, index),
-                        str(entry.get("file", "") or ""),
+                        type_label,
+                        name_label,
+                        file_label,
                         detail,
                     )
                     if part
                 ).lower()
                 if search_text and search_text not in search_blob:
                     continue
-                rows.append((section, index, entry))
+                rows.append(
+                    {
+                        "section": section,
+                        "index": index,
+                        "entry": entry,
+                        "type_label": type_label,
+                        "name_label": name_label,
+                        "file_label": file_label,
+                        "detail_label": detail,
+                    }
+                )
 
-        self._simple_row_map = [(section, index) for section, index, _entry in rows]
+        if self._simple_asset_sort_column >= 0:
+            rows.sort(key=self._simple_asset_row_sort_key, reverse=self._simple_asset_sort_descending)
+
+        self._simple_row_map = [(row["section"], row["index"]) for row in rows]
         self._simple_asset_result_label.setText(f"Showing {len(rows)} of {total_assets} assets")
         selected_row = -1
         for row, (section, index) in enumerate(self._simple_row_map):
@@ -2439,12 +2503,11 @@ class ResourceGeneratorWindow(QDialog):
                 break
         with QSignalBlocker(self._simple_asset_table):
             self._simple_asset_table.setRowCount(len(rows))
-            for row, (section, index, entry) in enumerate(rows):
-                detail = self._simple_asset_detail_text(section, entry)
-                self._simple_asset_table.setItem(row, 0, QTableWidgetItem(RESOURCE_SECTION_SPECS[section].label))
-                self._simple_asset_table.setItem(row, 1, QTableWidgetItem(section_entry_label(section, entry, index)))
-                self._simple_asset_table.setItem(row, 2, QTableWidgetItem(str(entry.get("file", "") or "")))
-                self._simple_asset_table.setItem(row, 3, QTableWidgetItem(detail))
+            for row, payload in enumerate(rows):
+                self._simple_asset_table.setItem(row, 0, QTableWidgetItem(payload["type_label"]))
+                self._simple_asset_table.setItem(row, 1, QTableWidgetItem(payload["name_label"]))
+                self._simple_asset_table.setItem(row, 2, QTableWidgetItem(payload["file_label"]))
+                self._simple_asset_table.setItem(row, 3, QTableWidgetItem(payload["detail_label"]))
             if 0 <= selected_row < len(rows):
                 self._simple_asset_table.selectRow(selected_row)
             else:
@@ -5599,6 +5662,15 @@ class ResourceGeneratorWindow(QDialog):
             self._simple_asset_type_filter.setCurrentIndex(filter_index if filter_index >= 0 else 0)
         with QSignalBlocker(self._simple_asset_search_edit):
             self._simple_asset_search_edit.setText(str(saved_state.get("simple_asset_search", "") or ""))
+        try:
+            restored_sort_column = int(saved_state.get("simple_asset_sort_column", -1))
+        except (TypeError, ValueError):
+            restored_sort_column = -1
+        if not (-1 <= restored_sort_column < self._simple_asset_table.columnCount()):
+            restored_sort_column = -1
+        self._simple_asset_sort_column = restored_sort_column
+        self._simple_asset_sort_descending = bool(saved_state.get("simple_asset_sort_descending", False)) if restored_sort_column >= 0 else False
+        self._apply_simple_asset_sort_indicator()
 
         self._pending_simple_workspace_splitter_sizes = _coerce_int_list(
             saved_state.get("simple_workspace_splitter_sizes"),
@@ -5679,6 +5751,8 @@ class ResourceGeneratorWindow(QDialog):
             ) or list(_DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS),
             "simple_asset_type_filter": str(self._simple_asset_type_filter.currentData() or "all"),
             "simple_asset_search": str(self._simple_asset_search_edit.text() or ""),
+            "simple_asset_sort_column": self._simple_asset_sort_column,
+            "simple_asset_sort_descending": self._simple_asset_sort_descending,
         }
 
     def _remember_view_state(self):

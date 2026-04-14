@@ -180,6 +180,64 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_mode_asset_header_click_cycles_view_sort(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [
+                    {"file": "zeta.png", "name": "zeta"},
+                    {"file": "alpha.png", "name": "alpha"},
+                    {"file": "mid.png", "name": "mid"},
+                ]
+            },
+            dirty=False,
+        )
+        header = window._simple_asset_table.horizontalHeader()
+
+        assert [window._simple_asset_table.item(row, 1).text() for row in range(window._simple_asset_table.rowCount())] == [
+            "zeta",
+            "alpha",
+            "mid",
+        ]
+        assert header.isSortIndicatorShown() is False
+
+        window._toggle_simple_asset_sort(1)
+        qapp.processEvents()
+        assert [window._simple_asset_table.item(row, 1).text() for row in range(window._simple_asset_table.rowCount())] == [
+            "alpha",
+            "mid",
+            "zeta",
+        ]
+        assert header.isSortIndicatorShown() is True
+        assert header.sortIndicatorSection() == 1
+        assert header.sortIndicatorOrder() == Qt.AscendingOrder
+
+        window._toggle_simple_asset_sort(1)
+        qapp.processEvents()
+        assert [window._simple_asset_table.item(row, 1).text() for row in range(window._simple_asset_table.rowCount())] == [
+            "zeta",
+            "mid",
+            "alpha",
+        ]
+        assert header.sortIndicatorOrder() == Qt.DescendingOrder
+
+        window._toggle_simple_asset_sort(1)
+        qapp.processEvents()
+        assert [window._simple_asset_table.item(row, 1).text() for row in range(window._simple_asset_table.rowCount())] == [
+            "zeta",
+            "alpha",
+            "mid",
+        ]
+        assert header.isSortIndicatorShown() is False
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_empty_state_switches_to_clear_filters_when_search_has_no_results(self, qapp, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -307,6 +365,7 @@ class TestResourceGeneratorWindow:
         header.resizeSection(3, 308)
         window._simple_workspace_splitter.setSizes([160, 420, 260])
         window._simple_preview_splitter.setSizes([280, 620])
+        window._toggle_simple_asset_sort(2)
         window._set_ui_mode("professional")
         qapp.processEvents()
 
@@ -323,6 +382,8 @@ class TestResourceGeneratorWindow:
 
         assert reopened._workspace_stack.currentWidget() is reopened._professional_page
         assert reopened._capture_view_state() == expected_state
+        assert reopened._simple_asset_sort_column == 2
+        assert reopened._simple_asset_sort_descending is False
         _close_window(reopened)
 
     @_skip_no_qt
