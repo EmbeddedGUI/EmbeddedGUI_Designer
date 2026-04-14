@@ -1262,6 +1262,70 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_generate_placeholders_helper_fills_missing_image_entries(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+        from PyQt5.QtWidgets import QDialog, QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        keep_path = source_dir / "keep.png"
+        keep = QPixmap(12, 8)
+        assert keep.save(str(keep_path), "PNG")
+
+        class _FakeDialog:
+            def __init__(self, *, width, height, output_folder, parent=None):
+                assert width == 160
+                assert height == 120
+                assert output_folder == "placeholders"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def width_value(self):
+                return 64
+
+            def height_value(self):
+                return 48
+
+            def output_folder(self):
+                return "placeholders"
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickImagePlaceholderDialog", _FakeDialog)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [
+                    {"file": "hero.png", "name": "Hero Banner"},
+                    {"file": "", "name": "Logo Mark"},
+                    {"file": "keep.png", "name": "Keep"},
+                ],
+                "font": [],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._open_generate_placeholders_helper()
+
+        hero_placeholder = QPixmap(str(source_dir / "hero.png"))
+        logo_placeholder = QPixmap(str(source_dir / "placeholders" / "Logo_Mark_placeholder.png"))
+        assert hero_placeholder.width() == 64
+        assert hero_placeholder.height() == 48
+        assert logo_placeholder.width() == 64
+        assert logo_placeholder.height() == 48
+        files = [entry["file"] for entry in window._session.section_entries("img")]
+        assert files == ["hero.png", "placeholders/Logo_Mark_placeholder.png", "keep.png"]
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Generated 2 placeholders, updated 1 links."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_normalize_images_helper_creates_batch_png_entries(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QPixmap
         from PyQt5.QtWidgets import QDialog, QMessageBox

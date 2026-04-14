@@ -479,6 +479,54 @@ class _QuickFontPrerenderDialog(QDialog):
         return str(self._sample_edit.text() or "").strip()
 
 
+class _QuickImagePlaceholderDialog(QDialog):
+    def __init__(self, *, width: int, height: int, output_folder: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Generate Placeholders")
+        self.setMinimumWidth(400)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        summary = QLabel("Create simple PNG placeholders for image entries whose files are currently missing.")
+        summary.setWordWrap(True)
+        layout.addWidget(summary)
+
+        form = QFormLayout()
+        form.setSpacing(8)
+
+        self._width_spin = QSpinBox()
+        self._width_spin.setRange(16, 4096)
+        self._width_spin.setValue(max(int(width or 1), 16))
+        form.addRow("Width", self._width_spin)
+
+        self._height_spin = QSpinBox()
+        self._height_spin.setRange(16, 4096)
+        self._height_spin.setValue(max(int(height or 1), 16))
+        form.addRow("Height", self._height_spin)
+
+        self._folder_edit = QLineEdit(str(output_folder or "").strip())
+        self._folder_edit.setPlaceholderText("Used when an image entry has no file path yet")
+        form.addRow("Fallback Folder", self._folder_edit)
+
+        layout.addLayout(form)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def width_value(self) -> int:
+        return int(self._width_spin.value())
+
+    def height_value(self) -> int:
+        return int(self._height_spin.value())
+
+    def output_folder(self) -> str:
+        return str(self._folder_edit.text() or "").strip()
+
+
 class _QuickPreviewBoardDialog(QDialog):
     def __init__(self, cards, *, total_assets: int, parent=None):
         super().__init__(parent)
@@ -710,6 +758,9 @@ class ResourceGeneratorWindow(QDialog):
         self._generate_thumbnails_button = QPushButton("Generate Thumbnails...")
         self._generate_thumbnails_button.clicked.connect(self._open_generate_thumbnails_helper)
 
+        self._generate_placeholders_button = QPushButton("Generate Placeholders...")
+        self._generate_placeholders_button.clicked.connect(self._open_generate_placeholders_helper)
+
         self._normalize_images_button = QPushButton("Normalize Images...")
         self._normalize_images_button.clicked.connect(self._open_normalize_images_helper)
 
@@ -799,6 +850,7 @@ class ResourceGeneratorWindow(QDialog):
                 [
                     self._resize_image_button,
                     self._generate_thumbnails_button,
+                    self._generate_placeholders_button,
                     self._normalize_images_button,
                     self._compress_images_button,
                     self._prerender_fonts_button,
@@ -3152,6 +3204,42 @@ class ResourceGeneratorWindow(QDialog):
             filename_suffix=suffix,
         )
 
+    def _open_generate_placeholders_helper(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        image_entries = [
+            entry
+            for entry in self._session.section_entries("img")
+            if isinstance(entry, dict)
+        ]
+        if not image_entries:
+            QMessageBox.information(self, "Generate Placeholders", "Import or create some image assets first.")
+            return
+
+        dialog = _QuickImagePlaceholderDialog(
+            width=160,
+            height=120,
+            output_folder="placeholders",
+            parent=self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        output_folder = dialog.output_folder().replace("\\", "/").strip().strip("/")
+        if not output_folder:
+            QMessageBox.warning(self, "Generate Placeholders", "Enter a fallback folder inside Source Dir.")
+            return
+        if output_folder.startswith("..") or os.path.isabs(output_folder):
+            QMessageBox.warning(self, "Generate Placeholders", "Fallback folder must stay inside Source Dir.")
+            return
+
+        self._generate_placeholder_images_for_quick_mode(
+            width=dialog.width_value(),
+            height=dialog.height_value(),
+            output_folder=output_folder,
+        )
+
     def _open_normalize_images_helper(self):
         if not self._commit_raw_json_if_needed():
             return
@@ -3339,6 +3427,86 @@ class ResourceGeneratorWindow(QDialog):
             summary.append(f"added {added} assets")
         if updated:
             summary.append(f"updated {updated} assets")
+        self._set_status(", ".join(summary) + ".")
+
+    def _generate_placeholder_images_for_quick_mode(self, *, width: int, height: int, output_folder: str):
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if not source_dir:
+            QMessageBox.warning(self, "Generate Placeholders", "Set Source Dir before generating placeholder images.")
+            return
+
+        generated_files = 0
+        updated_links = 0
+        skipped_assets = 0
+        normalized_folder = output_folder.replace("\\", "/").strip().strip("/")
+
+        for index, entry in enumerate(self._session.section_entries("img")):
+            if not isinstance(entry, dict):
+                continue
+
+            file_name = str(entry.get("file", "") or "").strip()
+            resolved_path = self._resolve_entry_path("img", "file", file_name) if file_name else ""
+            if resolved_path and os.path.isfile(resolved_path):
+                continue
+
+            target_relative = ""
+            if file_name:
+                if os.path.isabs(file_name):
+                    if resolved_path and _is_subpath(resolved_path, source_dir):
+                        target_relative = os.path.relpath(resolved_path, source_dir).replace("\\", "/")
+                    else:
+                        skipped_assets += 1
+                        continue
+                else:
+                    normalized_output = file_name.replace("\\", "/").strip().lstrip("/")
+                    if not normalized_output or normalized_output.startswith(".."):
+                        skipped_assets += 1
+                        continue
+                    target_relative = normalized_output
+            else:
+                stem = _safe_quick_placeholder_stem(
+                    str(entry.get("name", "") or "") or _resource_name_from_file(entry.get("file", "")),
+                    fallback=f"image_{index + 1}",
+                )
+                target_relative = f"{normalized_folder}/{stem}_placeholder.png"
+
+            target_path = normalize_path(os.path.join(source_dir, target_relative.replace("/", os.sep)))
+            if not _is_subpath(target_path, source_dir):
+                skipped_assets += 1
+                continue
+
+            pixmap = _build_quick_placeholder_pixmap(
+                str(entry.get("name", "") or "") or _resource_name_from_file(target_relative) or "Placeholder",
+                width=max(int(width), 16),
+                height=max(int(height), 16),
+            )
+            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+            if not pixmap.save(target_path, "PNG"):
+                QMessageBox.warning(self, "Generate Placeholders", f"Failed to save placeholder image:\n{target_path}")
+                return
+
+            generated_files += 1
+            if target_relative != file_name:
+                self._session.update_entry_value("img", index, "file", target_relative)
+                updated_links += 1
+
+        if not generated_files:
+            self._set_status("No missing image assets needed placeholders.")
+            return
+
+        if updated_links:
+            self._mark_dirty()
+            self._refresh_entry_table()
+            self._update_merged_preview()
+            self._update_raw_editor()
+        else:
+            self._refresh_simple_page()
+
+        summary = [f"Generated {generated_files} placeholders"]
+        if updated_links:
+            summary.append(f"updated {updated_links} links")
+        if skipped_assets:
+            summary.append(f"skipped {skipped_assets} assets")
         self._set_status(", ".join(summary) + ".")
 
     def _prerender_fonts_for_quick_mode(self, *, output_folder: str, filename_suffix: str, sample_text_override: str):
@@ -4438,6 +4606,60 @@ def _quick_font_text_sample_lines(resource_data) -> list[str]:
             seen.add(candidate)
 
     return collected
+
+
+def _safe_quick_placeholder_stem(value: str, *, fallback: str) -> str:
+    cleaned = []
+    for character in str(value or "").strip():
+        if character.isalnum() or character in {"-", "_"}:
+            cleaned.append(character)
+        else:
+            cleaned.append("_")
+    stem = "".join(cleaned).strip("_")
+    while "__" in stem:
+        stem = stem.replace("__", "_")
+    return stem or str(fallback or "placeholder")
+
+
+def _build_quick_placeholder_pixmap(label: str, *, width: int, height: int) -> QPixmap:
+    safe_width = max(int(width or 0), 16)
+    safe_height = max(int(height or 0), 16)
+    text = str(label or "").strip() or "Placeholder"
+    seed = sum((index + 1) * ord(character) for index, character in enumerate(text))
+    hue = seed % 360
+
+    background = QColor.fromHsv(hue, 48, 232)
+    border = QColor.fromHsv(hue, 92, 150)
+    accent = QColor.fromHsv((hue + 28) % 360, 64, 246)
+
+    pixmap = QPixmap(safe_width, safe_height)
+    pixmap.fill(background)
+
+    painter = QPainter(pixmap)
+    try:
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(accent)
+        painter.drawRect(0, 0, safe_width, max(10, safe_height // 6))
+
+        painter.setBrush(Qt.NoBrush)
+        painter.setPen(QPen(border, 2))
+        painter.drawRect(1, 1, safe_width - 2, safe_height - 2)
+
+        font = QFont()
+        font.setBold(True)
+        font.setPointSize(max(10, min(safe_width // 11, safe_height // 5)))
+        painter.setFont(font)
+        painter.setPen(QColor(48, 45, 40))
+        painter.drawText(
+            pixmap.rect().adjusted(10, max(12, safe_height // 5), -10, -10),
+            Qt.AlignCenter | Qt.TextWordWrap,
+            text,
+        )
+    finally:
+        painter.end()
+
+    return pixmap
 
 
 def _is_quick_generated_helper_path(file_name) -> bool:
