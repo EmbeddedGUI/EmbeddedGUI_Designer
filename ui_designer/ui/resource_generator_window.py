@@ -300,6 +300,51 @@ class _QuickImageCropDialog(QDialog):
         return str(self._filename_edit.text() or "").strip()
 
 
+class _QuickImageBorderDialog(QDialog):
+    def __init__(self, *, output_filename: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Add Border")
+        self.setMinimumWidth(380)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        summary = QLabel("Extend the image with a simple solid-color border.")
+        summary.setWordWrap(True)
+        layout.addWidget(summary)
+
+        form = QFormLayout()
+        form.setSpacing(8)
+
+        self._border_spin = QSpinBox()
+        self._border_spin.setRange(1, 512)
+        self._border_spin.setValue(8)
+        form.addRow("Border Size", self._border_spin)
+
+        self._color_edit = QLineEdit("#FFFFFF")
+        self._color_edit.setPlaceholderText("#RRGGBB or #RRGGBBAA")
+        form.addRow("Border Color", self._color_edit)
+
+        self._filename_edit = QLineEdit(str(output_filename or "").strip())
+        form.addRow("Output File", self._filename_edit)
+        layout.addLayout(form)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def border_size(self) -> int:
+        return int(self._border_spin.value())
+
+    def color_value(self) -> str:
+        return str(self._color_edit.text() or "").strip()
+
+    def output_filename(self) -> str:
+        return str(self._filename_edit.text() or "").strip()
+
+
 class _QuickThumbnailBatchDialog(QDialog):
     def __init__(self, *, width: int, height: int, output_folder: str, suffix: str, parent=None):
         super().__init__(parent)
@@ -755,6 +800,9 @@ class ResourceGeneratorWindow(QDialog):
         self._resize_image_button = QPushButton("Resize Image...")
         self._resize_image_button.clicked.connect(self._open_resize_image_helper)
 
+        self._add_border_image_button = QPushButton("Add Border...")
+        self._add_border_image_button.clicked.connect(self._open_border_image_helper)
+
         self._generate_thumbnails_button = QPushButton("Generate Thumbnails...")
         self._generate_thumbnails_button.clicked.connect(self._open_generate_thumbnails_helper)
 
@@ -849,6 +897,7 @@ class ResourceGeneratorWindow(QDialog):
                 "Image Tools",
                 [
                     self._resize_image_button,
+                    self._add_border_image_button,
                     self._generate_thumbnails_button,
                     self._generate_placeholders_button,
                     self._normalize_images_button,
@@ -3162,6 +3211,53 @@ class ResourceGeneratorWindow(QDialog):
 
         self._apply_image_resize(entry, index, resolved_path, normalized_output, width, height)
 
+    def _open_border_image_helper(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None or section != "img":
+            QMessageBox.warning(self, "Add Border", "Select an image asset in Simple mode first.")
+            return
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path("img", "file", file_name)
+        if not resolved_path or not os.path.isfile(resolved_path):
+            QMessageBox.warning(self, "Add Border", f"Image file does not exist:\n{resolved_path or file_name}")
+            return
+
+        pixmap = QPixmap(resolved_path)
+        if pixmap.isNull():
+            QMessageBox.warning(self, "Add Border", f"Qt could not decode the selected image:\n{resolved_path}")
+            return
+
+        dialog = _QuickImageBorderDialog(output_filename=file_name, parent=self)
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        output_filename = dialog.output_filename()
+        if not output_filename:
+            QMessageBox.warning(self, "Add Border", "Enter an output filename.")
+            return
+        if os.path.isabs(output_filename):
+            QMessageBox.warning(self, "Add Border", "Output filename must stay inside Source Dir.")
+            return
+
+        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
+        if not normalized_output or normalized_output.startswith(".."):
+            QMessageBox.warning(self, "Add Border", "Output filename must stay inside Source Dir.")
+            return
+
+        color = QColor(dialog.color_value())
+        if not color.isValid():
+            QMessageBox.warning(self, "Add Border", "Enter a valid border color like #FFFFFF or #11223344.")
+            return
+
+        self._apply_image_border(
+            entry,
+            index,
+            resolved_path,
+            normalized_output,
+            dialog.border_size(),
+            color,
+        )
+
     def _open_generate_thumbnails_helper(self):
         if not self._commit_raw_json_if_needed():
             return
@@ -3764,6 +3860,54 @@ class ResourceGeneratorWindow(QDialog):
             index,
             output_filename,
             f"{action} resized image '{output_filename}' ({width} x {height}).",
+        )
+
+    def _apply_image_border(self, entry: dict, index: int, source_path: str, output_filename: str, border_size: int, color: QColor):
+        try:
+            from PIL import Image, ImageOps
+        except Exception as exc:
+            QMessageBox.warning(self, "Add Border", f"Pillow is required for border editing:\n{exc}")
+            return
+
+        source_dir = self._session.paths.source_dir
+        if not source_dir:
+            QMessageBox.warning(self, "Add Border", "Set Source Dir before editing images.")
+            return
+
+        target_path = normalize_path(os.path.join(source_dir, output_filename))
+        if not _is_subpath(target_path, source_dir) and normalize_path(target_path) != normalize_path(source_path):
+            QMessageBox.warning(self, "Add Border", "Output filename must stay inside Source Dir.")
+            return
+
+        existed_before = os.path.isfile(target_path)
+        if normalize_path(target_path) != normalize_path(source_path) and existed_before:
+            answer = QMessageBox.question(
+                self,
+                "Overwrite Image",
+                f"Overwrite existing image?\n\n{output_filename}",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if answer != QMessageBox.Yes:
+                return
+
+        try:
+            rgba = (color.red(), color.green(), color.blue(), color.alpha())
+            with Image.open(source_path) as image:
+                bordered = ImageOps.expand(image, border=max(int(border_size), 1), fill=rgba)
+                width, height = bordered.size
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                bordered.save(target_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Add Border", f"Failed to add border:\n{exc}")
+            return
+
+        action = "Created" if output_filename != str(entry.get("file", "") or "").replace("\\", "/") else "Updated"
+        self._finalize_saved_image_output(
+            entry,
+            index,
+            output_filename,
+            f"{action} bordered image '{output_filename}' ({width} x {height}).",
         )
 
     def _open_rotate_image_helper(self):

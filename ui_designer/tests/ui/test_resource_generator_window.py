@@ -1517,6 +1517,110 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_add_border_image_helper_overwrites_selected_image(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+        from PyQt5.QtWidgets import QDialog
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        assert pixmap.save(str(image_path), "PNG")
+
+        class _FakeDialog:
+            def __init__(self, *, output_filename, parent=None):
+                assert output_filename == "hero.png"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def output_filename(self):
+                return "hero.png"
+
+            def border_size(self):
+                return 2
+
+            def color_value(self):
+                return "#FF0000"
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickImageBorderDialog", _FakeDialog)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_border_image_helper()
+
+        bordered = QPixmap(str(image_path))
+        assert bordered.width() == 16
+        assert bordered.height() == 12
+        assert len(window._session.section_entries("img")) == 1
+        assert window._status_label.text() == "Updated bordered image 'hero.png' (16 x 12)."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_add_border_image_helper_can_create_new_image_entry(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+        from PyQt5.QtWidgets import QDialog, QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        assert pixmap.save(str(image_path), "PNG")
+
+        class _FakeDialog:
+            def __init__(self, *, output_filename, parent=None):
+                assert output_filename == "hero.png"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def output_filename(self):
+                return "variants/hero_border.png"
+
+            def border_size(self):
+                return 3
+
+            def color_value(self):
+                return "#00FF00"
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickImageBorderDialog", _FakeDialog)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_border_image_helper()
+
+        bordered_path = source_dir / "variants" / "hero_border.png"
+        bordered = QPixmap(str(bordered_path))
+        assert bordered.width() == 18
+        assert bordered.height() == 14
+        files = [entry["file"] for entry in window._session.section_entries("img")]
+        assert files == ["hero.png", "variants/hero_border.png"]
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Created bordered image 'variants/hero_border.png' (18 x 14)."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_resize_image_helper_overwrites_selected_image(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QPixmap
         from PyQt5.QtWidgets import QDialog
