@@ -447,6 +447,10 @@ class ResourceGeneratorWindow(QDialog):
         self._edit_asset_button.clicked.connect(self._open_selected_asset_in_external_editor)
         helper_row.addWidget(self._edit_asset_button)
 
+        self._open_asset_folder_button = QPushButton("Open Asset Folder...")
+        self._open_asset_folder_button.clicked.connect(self._open_selected_asset_folder)
+        helper_row.addWidget(self._open_asset_folder_button)
+
         self._resize_image_button = QPushButton("Resize Image...")
         self._resize_image_button.clicked.connect(self._open_resize_image_helper)
         helper_row.addWidget(self._resize_image_button)
@@ -1594,6 +1598,25 @@ class ResourceGeneratorWindow(QDialog):
         self._update_simple_asset_preview()
         if not QDesktopServices.openUrl(QUrl.fromLocalFile(resolved_path)):
             QMessageBox.warning(self, "Open Asset", f"Failed to open asset with the system editor:\n{resolved_path}")
+
+    def _open_selected_asset_folder(self):
+        section, index, entry = self._selected_simple_asset_context()
+        if entry is None:
+            QMessageBox.warning(self, "Open Asset Folder", "Select an asset in Simple mode first.")
+            return
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path(section or "", "file", file_name)
+        if not resolved_path or not os.path.exists(resolved_path):
+            QMessageBox.warning(self, "Open Asset Folder", f"Asset file does not exist:\n{resolved_path or file_name}")
+            return
+        target_dir = os.path.dirname(resolved_path)
+        self._active_section = section or self._active_section
+        self._active_entry_index = index
+        self._update_simple_asset_preview()
+        if not QDesktopServices.openUrl(QUrl.fromLocalFile(target_dir)):
+            QMessageBox.warning(self, "Open Asset Folder", f"Failed to open asset folder:\n{target_dir}")
+            return
+        self._set_status(f"Opened asset folder '{target_dir}'.")
 
     def _remove_selected_simple_asset(self):
         section, index, entry = self._selected_simple_asset_context()

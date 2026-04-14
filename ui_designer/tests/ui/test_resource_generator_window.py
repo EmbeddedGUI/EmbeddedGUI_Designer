@@ -584,6 +584,36 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_open_selected_asset_folder_uses_desktop_services(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src" / "images"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        image_path.write_bytes(b"png")
+
+        opened = []
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window.QDesktopServices.openUrl",
+            lambda url: opened.append(url.toLocalFile()) or True,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir.parent)),
+            {"img": [{"file": "images/hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_selected_asset_folder()
+
+        assert opened == [source_dir.resolve().as_posix()]
+        _close_window(window)
+
+    @_skip_no_qt
     def test_resize_image_helper_overwrites_selected_image(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QPixmap
         from PyQt5.QtWidgets import QDialog
