@@ -1272,8 +1272,17 @@ class ResourceGeneratorWindow(QDialog):
         asset_preview_layout.setContentsMargins(8, 8, 8, 8)
         asset_preview_layout.setSpacing(8)
 
+        preview_header = QHBoxLayout()
+        preview_header.setContentsMargins(0, 0, 0, 0)
+        preview_header.setSpacing(8)
         self._simple_asset_preview_title = QLabel("No asset selected.")
-        asset_preview_layout.addWidget(self._simple_asset_preview_title)
+        preview_header.addWidget(self._simple_asset_preview_title, 1)
+
+        self._simple_asset_primary_action_button = QPushButton("Open Asset")
+        self._simple_asset_primary_action_button.clicked.connect(self._trigger_selected_simple_asset_primary_action)
+        self._simple_asset_primary_action_button.hide()
+        preview_header.addWidget(self._simple_asset_primary_action_button, 0, Qt.AlignRight)
+        asset_preview_layout.addLayout(preview_header)
 
         self._simple_asset_preview_label = QLabel("Select an image, font, or video entry to inspect it here.")
         self._simple_asset_preview_label.setAlignment(Qt.AlignCenter)
@@ -1756,6 +1765,25 @@ class ResourceGeneratorWindow(QDialog):
                     return "Suggested Fix: Detect Video Info", self._detect_selected_video_metadata
 
         return None
+
+    def _simple_asset_primary_action_label(self, action_text: str) -> str:
+        normalized = str(action_text or "").strip()
+        prefix = "Suggested Fix: "
+        if normalized.startswith(prefix):
+            normalized = normalized[len(prefix) :].strip()
+        return normalized or "Open Asset"
+
+    def _simple_asset_primary_action(self, section: str, entry: dict, *, file_label: str = "") -> tuple[str, callable] | None:
+        primary_fix = self._simple_asset_primary_fix_action(section, entry, file_label=file_label)
+        if primary_fix is not None:
+            action_text, callback = primary_fix
+            return self._simple_asset_primary_action_label(action_text), callback
+
+        resolved_path = self._resolve_entry_path(section, "file", file_label)
+        if resolved_path and os.path.exists(resolved_path):
+            return "Open Asset", self._open_selected_asset_in_external_editor
+
+        return "Open Professional Mode", self._open_current_simple_selection_in_professional_mode
 
     def _simple_asset_search_blob(
         self,
@@ -2903,25 +2931,20 @@ class ResourceGeneratorWindow(QDialog):
         self._set_ui_mode("professional")
 
     def _activate_selected_simple_asset(self, _item=None):
+        self._trigger_selected_simple_asset_primary_action()
+
+    def _trigger_selected_simple_asset_primary_action(self):
         section, index, entry = self._selected_simple_asset_context()
         if entry is None or not section:
             return
         self._active_section = section
         self._active_entry_index = index
-
         file_name = str(entry.get("file", "") or "").strip()
-        primary_fix = self._simple_asset_primary_fix_action(section, entry, file_label=file_name)
-        if primary_fix is not None:
-            _action_text, callback = primary_fix
-            callback()
+        action = self._simple_asset_primary_action(section, entry, file_label=file_name)
+        if action is None:
             return
-
-        resolved_path = self._resolve_entry_path(section, "file", file_name)
-        if resolved_path and os.path.exists(resolved_path):
-            self._open_selected_asset_in_external_editor()
-            return
-
-        self._open_current_simple_selection_in_professional_mode()
+        _action_text, callback = action
+        callback()
 
     def _selected_simple_asset_context(self):
         selected = self._simple_asset_table.selectionModel().selectedRows() if self._simple_asset_table.selectionModel() else []
@@ -3190,12 +3213,25 @@ class ResourceGeneratorWindow(QDialog):
             self._simple_asset_preview_title.setText("No asset selected.")
             self._simple_asset_preview_label.setText("Select an image, font, or video entry to inspect it here.")
             self._simple_asset_meta.setPlainText("")
+            self._simple_asset_primary_action_button.hide()
+            self._simple_asset_primary_action_button.setEnabled(False)
             return
 
         payload = self._asset_preview_payload(section, index, entry)
         self._simple_asset_preview_title.setText(payload["title"])
         self._apply_preview_payload(self._simple_asset_preview_label, payload, max_width=360, max_height=220)
         self._simple_asset_meta.setPlainText(payload["meta_text"])
+        file_name = str(entry.get("file", "") or "").strip()
+        action = self._simple_asset_primary_action(section, entry, file_label=file_name)
+        if action is None:
+            self._simple_asset_primary_action_button.hide()
+            self._simple_asset_primary_action_button.setEnabled(False)
+        else:
+            action_text, _callback = action
+            self._simple_asset_primary_action_button.setText(action_text)
+            self._simple_asset_primary_action_button.setToolTip(action_text)
+            self._simple_asset_primary_action_button.setEnabled(True)
+            self._simple_asset_primary_action_button.show()
 
     def _asset_preview_payload(self, section: str, index: int, entry: dict) -> dict:
         file_name = str(entry.get("file", "") or "").strip()

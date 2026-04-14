@@ -562,6 +562,76 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_mode_preview_primary_action_button_tracks_selected_asset(self, qapp, tmp_path):
+        from PyQt5.QtGui import QPixmap
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        assert pixmap.save(str(image_path), "PNG")
+        (source_dir / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero"}],
+                "font": [{"file": "display.ttf", "name": "display", "text": ""}],
+                "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 0, "height": 180}],
+            },
+            dirty=False,
+        )
+
+        window._simple_asset_table.clearSelection()
+        qapp.processEvents()
+        assert window._simple_asset_primary_action_button.isHidden() is True
+
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+        assert window._simple_asset_primary_action_button.isHidden() is False
+        assert window._simple_asset_primary_action_button.text() == "Open Asset"
+
+        window._simple_asset_table.selectRow(1)
+        qapp.processEvents()
+        assert window._simple_asset_primary_action_button.text() == "Open Font Text..."
+
+        window._simple_asset_table.selectRow(2)
+        qapp.processEvents()
+        assert window._simple_asset_primary_action_button.text() == "Detect Video Info"
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_preview_primary_action_button_uses_missing_file_recovery(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "images/missing.png", "name": "missing"}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        triggered = []
+        monkeypatch.setattr(window, "_open_selected_asset_folder", lambda: triggered.append("folder"))
+
+        assert window._simple_asset_primary_action_button.text() == "Open Asset Folder"
+        window._simple_asset_primary_action_button.click()
+
+        assert triggered == ["folder"]
+        _close_window(window)
+
+    @_skip_no_qt
     def test_resource_generator_exposes_keyboard_shortcuts_for_common_resource_actions(self, qapp, monkeypatch):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
 
