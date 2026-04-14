@@ -10,6 +10,7 @@ from ui_designer.tests.ui.window_test_helpers import close_test_window as _close
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QEvent, Qt, QUrl
+    from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QApplication, QGroupBox, QHeaderView, QLabel, QMessageBox
 
 
@@ -254,12 +255,21 @@ class TestResourceGeneratorWindow:
             dirty=False,
         )
 
+        assert [window._simple_asset_table.item(row, 0).text() for row in range(window._simple_asset_table.rowCount())] == [
+            "Images",
+            "! Fonts",
+            "! MP4",
+        ]
         window._simple_asset_type_filter.setCurrentIndex(window._simple_asset_type_filter.findData("attention"))
         qapp.processEvents()
 
         assert [window._simple_asset_table.item(row, 1).text() for row in range(window._simple_asset_table.rowCount())] == [
             "display",
             "intro",
+        ]
+        assert [window._simple_asset_table.item(row, 0).text() for row in range(window._simple_asset_table.rowCount())] == [
+            "! Fonts",
+            "! MP4",
         ]
         assert window._simple_attention_count.text() == "Needs Attention: 2"
         assert "Show > Needs Attention" in window._simple_attention_count.toolTip()
@@ -305,6 +315,57 @@ class TestResourceGeneratorWindow:
         assert "no missing files" in window._simple_asset_empty_description.text().lower()
         assert window._simple_attention_count.text() == "Needs Attention: 0"
         assert window._simple_attention_count.toolTip() == "No assets currently need attention."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_count_labels_switch_filters(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        (source_dir / "fonts").mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        (source_dir / "fonts" / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+
+        window = ResourceGeneratorWindow("")
+        window.show()
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero"}],
+                "font": [{"file": "fonts/display.ttf", "name": "display", "text": ""}],
+                "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 0, "height": 180}],
+            },
+            dirty=False,
+        )
+        qapp.processEvents()
+
+        QTest.mouseClick(window._simple_font_count, Qt.LeftButton)
+        qapp.processEvents()
+        assert window._simple_asset_type_filter.currentData() == "font"
+        assert window._simple_asset_table.rowCount() == 1
+        assert window._simple_asset_table.item(0, 1).text() == "display"
+
+        QTest.mouseClick(window._simple_mp4_count, Qt.LeftButton)
+        qapp.processEvents()
+        assert window._simple_asset_type_filter.currentData() == "mp4"
+        assert window._simple_asset_table.rowCount() == 1
+        assert window._simple_asset_table.item(0, 1).text() == "intro"
+
+        QTest.mouseClick(window._simple_attention_count, Qt.LeftButton)
+        qapp.processEvents()
+        assert window._simple_asset_type_filter.currentData() == "attention"
+        assert [window._simple_asset_table.item(row, 1).text() for row in range(window._simple_asset_table.rowCount())] == [
+            "display",
+            "intro",
+        ]
+
+        QTest.mouseClick(window._simple_image_count, Qt.LeftButton)
+        qapp.processEvents()
+        assert window._simple_asset_type_filter.currentData() == "img"
+        assert window._simple_asset_table.rowCount() == 1
+        assert window._simple_asset_table.item(0, 1).text() == "hero"
         _close_window(window)
 
     @_skip_no_qt

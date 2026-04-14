@@ -11,7 +11,7 @@ import re
 import shutil
 import subprocess
 
-from PyQt5.QtCore import QEvent, QTimer, Qt, QSignalBlocker, QUrl
+from PyQt5.QtCore import QEvent, QTimer, Qt, QSignalBlocker, QUrl, pyqtSignal
 from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QKeySequence, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -84,6 +84,19 @@ _RESOURCE_GENERATOR_VIEW_STATE_KEY = "resource_generator_view"
 _DEFAULT_SIMPLE_WORKSPACE_SPLITTER_SIZES = [220, 320, 220]
 _DEFAULT_SIMPLE_PREVIEW_SPLITTER_SIZES = [460, 460]
 _DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS = [88, 220, 360, 280]
+
+
+class _ClickableLabel(QLabel):
+    clicked = pyqtSignal()
+
+    def __init__(self, text: str = "", parent=None):
+        super().__init__(text, parent)
+        self.setCursor(Qt.PointingHandCursor)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton and self.rect().contains(event.pos()):
+            self.clicked.emit()
+        super().mouseReleaseEvent(event)
 
 
 def _pil_image_to_qpixmap(image) -> QPixmap:
@@ -1051,14 +1064,21 @@ class ResourceGeneratorWindow(QDialog):
         counts_row = QHBoxLayout()
         counts_row.setContentsMargins(0, 0, 0, 0)
         counts_row.setSpacing(16)
-        self._simple_image_count = QLabel("Images: 0")
+        self._simple_image_count = _ClickableLabel("Images: 0")
+        self._simple_image_count.setToolTip("Show only image assets.")
+        self._simple_image_count.clicked.connect(lambda: self._set_simple_asset_filter("img"))
         counts_row.addWidget(self._simple_image_count)
-        self._simple_font_count = QLabel("Fonts: 0")
+        self._simple_font_count = _ClickableLabel("Fonts: 0")
+        self._simple_font_count.setToolTip("Show only font assets.")
+        self._simple_font_count.clicked.connect(lambda: self._set_simple_asset_filter("font"))
         counts_row.addWidget(self._simple_font_count)
-        self._simple_mp4_count = QLabel("MP4: 0")
+        self._simple_mp4_count = _ClickableLabel("MP4: 0")
+        self._simple_mp4_count.setToolTip("Show only video assets.")
+        self._simple_mp4_count.clicked.connect(lambda: self._set_simple_asset_filter("mp4"))
         counts_row.addWidget(self._simple_mp4_count)
-        self._simple_attention_count = QLabel("Needs Attention: 0")
+        self._simple_attention_count = _ClickableLabel("Needs Attention: 0")
         self._simple_attention_count.setToolTip("No assets currently need attention.")
+        self._simple_attention_count.clicked.connect(lambda: self._set_simple_asset_filter("attention"))
         counts_row.addWidget(self._simple_attention_count)
         counts_row.addStretch(1)
         intro_layout.addLayout(counts_row)
@@ -1725,6 +1745,16 @@ class ResourceGeneratorWindow(QDialog):
     def _on_simple_asset_search_changed(self, _text: str):
         self._refresh_simple_page()
         self._remember_view_state()
+
+    def _set_simple_asset_filter(self, filter_value: str):
+        target_index = self._simple_asset_type_filter.findData(str(filter_value or "all"))
+        if target_index < 0:
+            return
+        if self._simple_asset_type_filter.currentIndex() == target_index:
+            self._simple_asset_table.setFocus()
+            return
+        self._simple_asset_type_filter.setCurrentIndex(target_index)
+        self._simple_asset_table.setFocus()
 
     def _clear_simple_asset_filters(self):
         with QSignalBlocker(self._simple_asset_type_filter):
@@ -2555,6 +2585,7 @@ class ResourceGeneratorWindow(QDialog):
                 name_label = section_entry_label(section, entry, index)
                 file_label = str(entry.get("file", "") or "")
                 attention_messages = self._simple_asset_attention_messages(section, entry, file_label=file_label)
+                type_display_label = f"! {type_label}" if attention_messages else type_label
                 if attention_messages:
                     attention_count += 1
                 if not self._simple_asset_matches_filter(section_filter, section, entry, file_label=file_label):
@@ -2578,6 +2609,7 @@ class ResourceGeneratorWindow(QDialog):
                         "index": index,
                         "entry": entry,
                         "type_label": type_label,
+                        "type_display_label": type_display_label,
                         "name_label": name_label,
                         "file_label": file_label,
                         "detail_label": detail,
@@ -2602,7 +2634,7 @@ class ResourceGeneratorWindow(QDialog):
                 tooltip_text = "\n".join(payload["attention_messages"]) or payload["detail_label"] or payload["file_label"]
                 for column, value in enumerate(
                     (
-                        payload["type_label"],
+                        payload["type_display_label"],
                         payload["name_label"],
                         payload["file_label"],
                         payload["detail_label"],
