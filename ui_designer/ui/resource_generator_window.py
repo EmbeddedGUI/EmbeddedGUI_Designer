@@ -293,6 +293,59 @@ class _QuickImageCropDialog(QDialog):
         return str(self._filename_edit.text() or "").strip()
 
 
+class _QuickThumbnailBatchDialog(QDialog):
+    def __init__(self, *, width: int, height: int, output_folder: str, suffix: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Generate Thumbnails")
+        self.setMinimumWidth(380)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        summary = QLabel("Create resized thumbnail images for every image asset in quick mode.")
+        summary.setWordWrap(True)
+        layout.addWidget(summary)
+
+        form = QFormLayout()
+        form.setSpacing(8)
+
+        self._width_spin = QSpinBox()
+        self._width_spin.setRange(1, 4096)
+        self._width_spin.setValue(max(int(width or 1), 1))
+        form.addRow("Max Width", self._width_spin)
+
+        self._height_spin = QSpinBox()
+        self._height_spin.setRange(1, 4096)
+        self._height_spin.setValue(max(int(height or 1), 1))
+        form.addRow("Max Height", self._height_spin)
+
+        self._folder_edit = QLineEdit(str(output_folder or "").strip())
+        form.addRow("Output Folder", self._folder_edit)
+
+        self._suffix_edit = QLineEdit(str(suffix or "").strip())
+        form.addRow("Filename Suffix", self._suffix_edit)
+
+        layout.addLayout(form)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def width_value(self) -> int:
+        return int(self._width_spin.value())
+
+    def height_value(self) -> int:
+        return int(self._height_spin.value())
+
+    def output_folder(self) -> str:
+        return str(self._folder_edit.text() or "").strip()
+
+    def filename_suffix(self) -> str:
+        return str(self._suffix_edit.text() or "").strip()
+
+
 class _QuickPreviewBoardDialog(QDialog):
     def __init__(self, cards, *, total_assets: int, parent=None):
         super().__init__(parent)
@@ -512,6 +565,9 @@ class ResourceGeneratorWindow(QDialog):
         self._resize_image_button = QPushButton("Resize Image...")
         self._resize_image_button.clicked.connect(self._open_resize_image_helper)
 
+        self._generate_thumbnails_button = QPushButton("Generate Thumbnails...")
+        self._generate_thumbnails_button.clicked.connect(self._open_generate_thumbnails_helper)
+
         self._rotate_image_button = QPushButton("Rotate Image...")
         self._rotate_image_button.clicked.connect(self._open_rotate_image_helper)
 
@@ -588,6 +644,7 @@ class ResourceGeneratorWindow(QDialog):
                 "Image Tools",
                 [
                     self._resize_image_button,
+                    self._generate_thumbnails_button,
                     self._rotate_image_button,
                     self._flip_image_button,
                     self._crop_image_button,
@@ -2611,6 +2668,119 @@ class ResourceGeneratorWindow(QDialog):
             return
 
         self._apply_image_resize(entry, index, resolved_path, normalized_output, width, height)
+
+    def _open_generate_thumbnails_helper(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        image_entries = [
+            entry
+            for entry in self._session.section_entries("img")
+            if isinstance(entry, dict) and str(entry.get("file", "") or "").strip()
+        ]
+        if not image_entries:
+            QMessageBox.information(self, "Generate Thumbnails", "Import or create some image assets first.")
+            return
+
+        dialog = _QuickThumbnailBatchDialog(
+            width=160,
+            height=160,
+            output_folder="thumbnails",
+            suffix="_thumb",
+            parent=self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        output_folder = dialog.output_folder().replace("\\", "/").strip().strip("/")
+        suffix = dialog.filename_suffix().strip()
+        if not output_folder:
+            QMessageBox.warning(self, "Generate Thumbnails", "Enter an output folder inside Source Dir.")
+            return
+        if output_folder.startswith("..") or os.path.isabs(output_folder):
+            QMessageBox.warning(self, "Generate Thumbnails", "Output folder must stay inside Source Dir.")
+            return
+        if not suffix:
+            QMessageBox.warning(self, "Generate Thumbnails", "Enter a filename suffix for generated thumbnails.")
+            return
+
+        self._generate_thumbnail_images_for_quick_mode(
+            max_width=dialog.width_value(),
+            max_height=dialog.height_value(),
+            output_folder=output_folder,
+            filename_suffix=suffix,
+        )
+
+    def _generate_thumbnail_images_for_quick_mode(self, *, max_width: int, max_height: int, output_folder: str, filename_suffix: str):
+        try:
+            from PIL import Image, ImageOps
+        except Exception as exc:
+            QMessageBox.warning(self, "Generate Thumbnails", f"Pillow is required for thumbnail generation:\n{exc}")
+            return
+
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if not source_dir:
+            QMessageBox.warning(self, "Generate Thumbnails", "Set Source Dir before generating thumbnails.")
+            return
+
+        generated_assets: list[tuple[str, str]] = []
+        generated_files = 0
+
+        normalized_folder = output_folder.replace("\\", "/").strip().strip("/")
+        size = (max(max_width, 1), max(max_height, 1))
+
+        for entry in self._session.section_entries("img"):
+            if not isinstance(entry, dict):
+                continue
+
+            file_name = str(entry.get("file", "") or "").strip()
+            resolved_path = self._resolve_entry_path("img", "file", file_name)
+            if not resolved_path or not os.path.isfile(resolved_path):
+                continue
+
+            base_name = _resource_name_from_file(file_name or resolved_path)
+            if not base_name:
+                continue
+
+            relative_output = f"{normalized_folder}/{base_name}{filename_suffix}.png"
+            relative_output = relative_output.replace("//", "/")
+            target_path = normalize_path(os.path.join(source_dir, relative_output.replace("/", os.sep)))
+            if normalize_path(resolved_path) == target_path:
+                continue
+
+            try:
+                with Image.open(resolved_path) as image:
+                    prepared = ImageOps.exif_transpose(image)
+                    thumbnail = prepared.copy()
+                    thumbnail.thumbnail(size, Image.LANCZOS)
+                    if thumbnail.mode not in {"RGB", "RGBA"}:
+                        thumbnail = thumbnail.convert("RGBA")
+                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                    thumbnail.save(target_path, "PNG")
+            except Exception as exc:
+                QMessageBox.warning(self, "Generate Thumbnails", f"Failed to generate thumbnail for:\n{resolved_path}\n\n{exc}")
+                return
+
+            generated_files += 1
+            generated_assets.append(("img", target_path))
+
+        if not generated_assets:
+            self._set_status("No image assets were available for thumbnail generation.")
+            return
+
+        entries_by_section = self._build_entries_from_asset_paths(generated_assets, [], source_dir)
+        added, updated = self._merge_discovered_entries(entries_by_section)
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+
+        summary = [f"Generated {generated_files} thumbnails"]
+        if added:
+            summary.append(f"added {added} assets")
+        if updated:
+            summary.append(f"updated {updated} assets")
+        self._set_status(", ".join(summary) + ".")
 
     def _apply_image_resize(self, entry: dict, index: int, source_path: str, output_filename: str, width: int, height: int):
         try:
