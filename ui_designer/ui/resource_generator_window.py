@@ -67,6 +67,11 @@ _VIDEO_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv"}
 _TEXT_FILE_EXTENSIONS = {".txt"}
 _QUICK_GENERATED_ASSET_FOLDERS = ("thumbnails", "normalized", "compressed", "font_previews")
 _QUICK_GENERATED_ASSET_FOLDER_SET = {folder.lower() for folder in _QUICK_GENERATED_ASSET_FOLDERS}
+_STANDARD_SOURCE_DIR_FOLDERS = {
+    "img": "images",
+    "font": "fonts",
+    "mp4": "videos",
+}
 
 
 def _pil_image_to_qpixmap(image) -> QPixmap:
@@ -642,6 +647,9 @@ class ResourceGeneratorWindow(QDialog):
         self._pack_assets_button = QPushButton("Pack Into Source Dir")
         self._pack_assets_button.clicked.connect(self._pack_assets_into_source_dir)
 
+        self._organize_folders_button = QPushButton("Organize Folders")
+        self._organize_folders_button.clicked.connect(self._organize_assets_into_standard_folders)
+
         self._generate_font_text_button = QPushButton("Generate Font Text...")
         self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
 
@@ -737,6 +745,7 @@ class ResourceGeneratorWindow(QDialog):
                     self._import_assets_button,
                     self._scan_assets_button,
                     self._pack_assets_button,
+                    self._organize_folders_button,
                     self._generate_font_text_button,
                     self._auto_create_font_texts_button,
                     self._refresh_font_texts_button,
@@ -2452,6 +2461,116 @@ class ResourceGeneratorWindow(QDialog):
         self._update_merged_preview()
         self._update_raw_editor()
         self._set_status(f"Packed {copied_files} files into Source Dir, updated {updated_links} links.")
+
+    def _organize_assets_into_standard_folders(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if not source_dir:
+            QMessageBox.warning(
+                self,
+                "Organize Folders",
+                "Set Source Dir first so Designer knows which asset files should be reorganized.",
+            )
+            return
+
+        candidate_paths: set[str] = set()
+        for section, target_folder in _STANDARD_SOURCE_DIR_FOLDERS.items():
+            for entry in self._session.section_entries(section):
+                if not isinstance(entry, dict):
+                    continue
+
+                file_value = str(entry.get("file", "") or "").strip()
+                resolved_file = _organized_source_dir_candidate(
+                    file_value,
+                    target_folder,
+                    source_dir,
+                    skip_generated=section == "img",
+                )
+                if resolved_file:
+                    candidate_paths.add(resolved_file)
+
+                if section != "font":
+                    continue
+                for item in [candidate.strip() for candidate in str(entry.get("text", "") or "").split(",") if candidate.strip()]:
+                    resolved_text = _organized_source_dir_candidate(item, target_folder, source_dir)
+                    if resolved_text:
+                        candidate_paths.add(resolved_text)
+
+        if not candidate_paths:
+            self._set_status("Assets already use standard source folders.")
+            return
+
+        answer = QMessageBox.question(
+            self,
+            "Organize Folders",
+            f"Move {len(candidate_paths)} linked files into standard folders under Source Dir?\n\n"
+            "images/\nfonts/\nvideos/",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
+        if answer != QMessageBox.Yes:
+            return
+
+        relocated_paths: dict[str, str] = {}
+        moved_files = 0
+        updated_links = 0
+
+        for section, target_folder in _STANDARD_SOURCE_DIR_FOLDERS.items():
+            for index, entry in enumerate(self._session.section_entries(section)):
+                if not isinstance(entry, dict):
+                    continue
+
+                file_value = str(entry.get("file", "") or "").strip()
+                relocated_file, moved = _move_source_dir_asset_to_standard_folder(
+                    file_value,
+                    target_folder,
+                    source_dir,
+                    relocated_paths,
+                    skip_generated=section == "img",
+                )
+                if moved:
+                    moved_files += 1
+                if relocated_file and relocated_file != file_value:
+                    self._session.update_entry_value(section, index, "file", relocated_file)
+                    updated_links += 1
+
+                if section != "font":
+                    continue
+
+                text_items = [candidate.strip() for candidate in str(entry.get("text", "") or "").split(",") if candidate.strip()]
+                if not text_items:
+                    continue
+
+                rewritten_items = []
+                field_changed = False
+                for item in text_items:
+                    relocated_text, moved = _move_source_dir_asset_to_standard_folder(
+                        item,
+                        target_folder,
+                        source_dir,
+                        relocated_paths,
+                    )
+                    rewritten_items.append(relocated_text or item)
+                    if moved:
+                        moved_files += 1
+                    if relocated_text and relocated_text != item:
+                        field_changed = True
+
+                if field_changed:
+                    self._session.update_entry_value("font", index, "text", ", ".join(rewritten_items))
+                    updated_links += 1
+
+        if not moved_files and not updated_links:
+            self._set_status("Assets already use standard source folders.")
+            return
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(f"Organized {moved_files} files into standard folders, updated {updated_links} links.")
 
     def _auto_fill_missing_resource_info(self):
         if not self._commit_raw_json_if_needed():
@@ -4191,6 +4310,59 @@ def _is_quick_generated_helper_path(file_name) -> bool:
         return False
     first_segment = normalized.split("/", 1)[0].strip().lower()
     return first_segment in _QUICK_GENERATED_ASSET_FOLDER_SET
+
+
+def _organized_source_dir_candidate(file_name, target_folder: str, source_dir: str, *, skip_generated: bool = False) -> str:
+    normalized = str(file_name or "").replace("\\", "/").strip().lstrip("/")
+    if not normalized or os.path.isabs(str(file_name or "").strip()) or not target_folder or not source_dir:
+        return ""
+    if normalized.startswith("build_in/"):
+        return ""
+    if skip_generated and _is_quick_generated_helper_path(normalized):
+        return ""
+    if normalized.split("/", 1)[0].strip().lower() == str(target_folder or "").strip().lower():
+        return ""
+
+    resolved_path = normalize_path(os.path.join(source_dir, normalized))
+    if not resolved_path or not os.path.isfile(resolved_path) or not _is_subpath(resolved_path, source_dir):
+        return ""
+    return resolved_path
+
+
+def _move_source_dir_asset_to_standard_folder(
+    file_name,
+    target_folder: str,
+    source_dir: str,
+    relocated_paths: dict[str, str],
+    *,
+    skip_generated: bool = False,
+) -> tuple[str, bool]:
+    normalized = str(file_name or "").replace("\\", "/").strip().lstrip("/")
+    if not normalized:
+        return "", False
+
+    resolved_path = normalize_path(os.path.join(source_dir, normalized)) if source_dir and not os.path.isabs(str(file_name or "").strip()) else ""
+    if resolved_path and resolved_path in relocated_paths:
+        return relocated_paths[resolved_path], False
+
+    candidate_path = _organized_source_dir_candidate(
+        file_name,
+        target_folder,
+        source_dir,
+        skip_generated=skip_generated,
+    )
+    if not candidate_path:
+        return normalized, False
+
+    target_path = normalize_path(os.path.join(source_dir, target_folder, os.path.basename(candidate_path)))
+    if os.path.exists(target_path):
+        target_path = _next_available_copy_path(target_path)
+
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    shutil.move(candidate_path, target_path)
+    relative_target = os.path.relpath(target_path, source_dir).replace("\\", "/")
+    relocated_paths[candidate_path] = relative_target
+    return relative_target, True
 
 
 def _copy_file_into_source_dir(source_path: str, source_dir: str) -> tuple[str, bool]:

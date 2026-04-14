@@ -700,6 +700,44 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_organize_assets_into_standard_folders_moves_files_and_updates_links(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        (source_dir / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "display.txt").write_text("ABC", encoding="utf-8")
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero"}],
+                "font": [{"file": "display.ttf", "name": "display", "text": "display.txt"}],
+                "mp4": [{"file": "intro.mp4", "name": "intro"}],
+            },
+            dirty=False,
+        )
+
+        window._organize_assets_into_standard_folders()
+
+        assert (source_dir / "images" / "hero.png").read_bytes() == b"png"
+        assert (source_dir / "fonts" / "display.ttf").read_bytes() == b"ttf"
+        assert (source_dir / "fonts" / "display.txt").read_text(encoding="utf-8") == "ABC"
+        assert (source_dir / "videos" / "intro.mp4").read_bytes() == b"mp4"
+        assert window._session.section_entries("img")[0]["file"] == "images/hero.png"
+        assert window._session.section_entries("font")[0]["file"] == "fonts/display.ttf"
+        assert window._session.section_entries("font")[0]["text"] == "fonts/display.txt"
+        assert window._session.section_entries("mp4")[0]["file"] == "videos/intro.mp4"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Organized 4 files into standard folders, updated 4 links."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_open_selected_font_text_resource_opens_existing_file(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
