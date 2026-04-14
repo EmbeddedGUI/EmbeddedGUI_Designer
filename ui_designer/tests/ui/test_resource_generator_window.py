@@ -1951,6 +1951,54 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_open_specific_font_text_resource_can_skip_assignment_for_links_dialog(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QDialog, QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+
+        class _FakeDialog:
+            def __init__(self, *, filename, initial_text, is_new_file, parent=None):
+                assert filename == "charset.txt"
+                assert is_new_file is True
+                assert initial_text.startswith("HELLO")
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def text_value(self):
+                return "ABC\n"
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._FontTextEditorDialog", _FakeDialog)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected create confirmation")))
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "name": "display", "text": "ui_text.txt"}], "mp4": []},
+            dirty=False,
+        )
+
+        entry = window._session.section_entries("font")[0]
+        result = window._open_specific_font_text_resource(
+            0,
+            entry,
+            "charset.txt",
+            assign_to_font=False,
+            confirm_create=False,
+        )
+
+        assert result is True
+        assert entry["text"] == "ui_text.txt"
+        assert window.has_unsaved_changes() is False
+        assert (source_dir / "charset.txt").read_text(encoding="utf-8") == "ABC\n"
+        assert window._status_label.text() == "Created and saved font text 'charset.txt'."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_font_text_links_dialog_supports_add_edit_remove_and_reorder(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtWidgets import QInputDialog
 
@@ -1989,6 +2037,73 @@ class TestResourceGeneratorWindow:
         dialog._remove_selected_path()
         assert dialog.text_value() == "ui_text.txt\nrenamed.txt"
         assert dialog._count_label.text() == "Linked text files: 2 | Missing: 1"
+        dialog.close()
+
+    @_skip_no_qt
+    def test_font_text_links_dialog_can_create_new_file_via_callback(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QInputDialog
+
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("abc", encoding="utf-8")
+        created_path = source_dir / "charset" / "new.txt"
+        captured = []
+
+        def _edit_file(value):
+            captured.append(value)
+            created_path.parent.mkdir(parents=True, exist_ok=True)
+            created_path.write_text("ABC", encoding="utf-8")
+            return True
+
+        monkeypatch.setattr(QInputDialog, "getText", lambda *args, **kwargs: ("charset/new.txt", True))
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt"],
+            source_dir=str(source_dir),
+            edit_file_callback=_edit_file,
+            parent=None,
+        )
+
+        dialog._new_file()
+
+        assert captured == ["charset/new.txt"]
+        assert created_path.read_text(encoding="utf-8") == "ABC"
+        assert dialog.text_value() == "ui_text.txt\ncharset/new.txt"
+        assert dialog._count_label.text() == "Linked text files: 2"
+        dialog.close()
+
+    @_skip_no_qt
+    def test_font_text_links_dialog_does_not_add_new_file_when_creation_is_canceled(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QInputDialog
+
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("abc", encoding="utf-8")
+        captured = []
+
+        def _edit_file(value):
+            captured.append(value)
+            return False
+
+        monkeypatch.setattr(QInputDialog, "getText", lambda *args, **kwargs: ("charset/new.txt", True))
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt"],
+            source_dir=str(source_dir),
+            edit_file_callback=_edit_file,
+            parent=None,
+        )
+
+        dialog._new_file()
+
+        assert captured == ["charset/new.txt"]
+        assert dialog.text_value() == "ui_text.txt"
+        assert dialog._count_label.text() == "Linked text files: 1"
+        assert not (source_dir / "charset" / "new.txt").exists()
         dialog.close()
 
     @_skip_no_qt

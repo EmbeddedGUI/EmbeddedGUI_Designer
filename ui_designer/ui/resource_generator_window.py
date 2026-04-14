@@ -832,6 +832,11 @@ class _FontTextLinksDialog(QDialog):
         actions_col.setSpacing(8)
         content_row.addLayout(actions_col)
 
+        self._new_file_button = QPushButton("New File...")
+        self._new_file_button.setEnabled(callable(edit_file_callback))
+        self._new_file_button.clicked.connect(self._new_file)
+        actions_col.addWidget(self._new_file_button)
+
         self._add_files_button = QPushButton("Add Files...")
         self._add_files_button.setEnabled(callable(normalize_file_callback))
         self._add_files_button.clicked.connect(self._add_files)
@@ -896,6 +901,18 @@ class _FontTextLinksDialog(QDialog):
         if not items:
             return ""
         return str(items[0]).replace("\\", "/")
+
+    def _validated_manual_item(self, value: str, *, title: str) -> str:
+        normalized = self._normalize_manual_item(value)
+        if not normalized:
+            return ""
+        if os.path.isabs(normalized) or not self._source_dir:
+            return normalized
+        resolved = self._resolved_item_path(normalized)
+        if resolved and _is_subpath(resolved, self._source_dir):
+            return normalized
+        QMessageBox.warning(self, title, "Relative text file paths must stay inside Source Dir.")
+        return ""
 
     def _current_values(self) -> list[str]:
         values = []
@@ -1050,7 +1067,37 @@ class _FontTextLinksDialog(QDialog):
         )
         if not accepted:
             return ""
-        return self._normalize_manual_item(text)
+        return self._validated_manual_item(text, title=title)
+
+    def _new_file(self):
+        if not callable(self._edit_file_callback):
+            return
+
+        value = self._prompt_path(title="New Font Text File")
+        if not value:
+            return
+
+        items = self._current_values()
+        if value in items:
+            self._set_items(items, selected_index=items.index(value))
+            self._edit_selected_file()
+            return
+
+        resolved_path = self._resolved_item_path(value)
+        if resolved_path and os.path.isdir(resolved_path):
+            QMessageBox.warning(self, "New Font Text File", f"Selected path is a folder:\n{resolved_path}")
+            return
+
+        existed_before = bool(resolved_path and os.path.isfile(resolved_path))
+        result = self._edit_file_callback(value)
+        file_exists_after_edit = bool(resolved_path and os.path.isfile(resolved_path))
+        if result is False:
+            return
+        if not existed_before and not file_exists_after_edit and result is not True:
+            return
+
+        items.append(value)
+        self._set_items(items, selected_index=len(items) - 1)
 
     def _add_path(self):
         value = self._prompt_path(title="Add Font Text Path")
@@ -4440,6 +4487,8 @@ class ResourceGeneratorWindow(QDialog):
                 item_index,
                 item_entry,
                 item,
+                assign_to_font=False,
+                confirm_create=False,
             ),
             parent=self,
         )
@@ -4455,11 +4504,26 @@ class ResourceGeneratorWindow(QDialog):
             font_label = section_entry_label("font", current_entry, index)
             self._set_status(f"Updated font text links for '{font_label}'.")
 
-    def _open_specific_font_text_resource(self, index: int, entry: dict, target_filename: str):
+    def _open_specific_font_text_resource(
+        self,
+        index: int,
+        entry: dict,
+        target_filename: str,
+        *,
+        assign_to_font: bool = True,
+        confirm_create: bool = True,
+    ):
         if not target_filename:
             return False
         resolved_path = self._resolve_entry_path("font", "text", target_filename)
-        return self._open_font_text_resource_target(index, entry, target_filename, resolved_path)
+        return self._open_font_text_resource_target(
+            index,
+            entry,
+            target_filename,
+            resolved_path,
+            assign_to_font=assign_to_font,
+            confirm_create=confirm_create,
+        )
 
     def _open_selected_font_text_resource(self):
         index, entry = self._selected_font_text_context()
@@ -4472,7 +4536,16 @@ class ResourceGeneratorWindow(QDialog):
             return
         self._open_font_text_resource_target(index, entry, target_filename, resolved_path)
 
-    def _open_font_text_resource_target(self, index: int, entry: dict, target_filename: str, resolved_path: str):
+    def _open_font_text_resource_target(
+        self,
+        index: int,
+        entry: dict,
+        target_filename: str,
+        resolved_path: str,
+        *,
+        assign_to_font: bool = True,
+        confirm_create: bool = True,
+    ):
         if not target_filename or not resolved_path:
             QMessageBox.warning(
                 self,
@@ -4480,19 +4553,28 @@ class ResourceGeneratorWindow(QDialog):
                 "Set Source Dir first so Designer knows where to save the font text file.",
             )
             return False
+        if os.path.isdir(resolved_path):
+            QMessageBox.warning(self, "Edit Font Text", f"Selected path is a folder:\n{resolved_path}")
+            return False
+
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if source_dir and not os.path.isabs(str(target_filename or "").strip()) and not _is_subpath(resolved_path, source_dir):
+            QMessageBox.warning(self, "Edit Font Text", "Font text paths must stay inside Source Dir.")
+            return False
 
         is_new_file = not os.path.isfile(resolved_path)
         initial_text = ""
         if is_new_file:
-            answer = QMessageBox.question(
-                self,
-                "Create Font Text",
-                f"Create a new font text resource?\n\n{target_filename}",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes,
-            )
-            if answer != QMessageBox.Yes:
-                return False
+            if confirm_create:
+                answer = QMessageBox.question(
+                    self,
+                    "Create Font Text",
+                    f"Create a new font text resource?\n\n{target_filename}",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes,
+                )
+                if answer != QMessageBox.Yes:
+                    return False
             initial_text = _default_new_font_text_file_body()
         else:
             try:
@@ -4522,7 +4604,8 @@ class ResourceGeneratorWindow(QDialog):
 
         self._active_section = "font"
         self._active_entry_index = index
-        self._assign_generated_text_to_font(target_filename)
+        if assign_to_font:
+            self._assign_generated_text_to_font(target_filename)
         self._refresh_simple_page()
         self._update_form()
         self._update_simple_asset_preview()
