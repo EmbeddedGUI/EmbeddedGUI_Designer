@@ -1871,10 +1871,11 @@ class TestResourceGeneratorWindow:
         source_dir_text = str(source_dir)
 
         class _FakeDialog:
-            def __init__(self, *, initial_items, source_dir, normalize_file_callback=None, parent=None):
+            def __init__(self, *, initial_items, source_dir, normalize_file_callback=None, edit_file_callback=None, parent=None):
                 assert initial_items == ["ui_text.txt"]
                 assert source_dir == source_dir_text
                 assert callable(normalize_file_callback)
+                assert callable(edit_file_callback)
 
             def exec_(self):
                 return QDialog.Accepted
@@ -1916,8 +1917,9 @@ class TestResourceGeneratorWindow:
         source_dir.mkdir(parents=True)
 
         class _FakeDialog:
-            def __init__(self, *, initial_items, source_dir, normalize_file_callback=None, parent=None):
+            def __init__(self, *, initial_items, source_dir, normalize_file_callback=None, edit_file_callback=None, parent=None):
                 assert initial_items == ["ui_text.txt", "charset.txt"]
+                assert callable(edit_file_callback)
 
             def exec_(self):
                 return QDialog.Accepted
@@ -1987,6 +1989,35 @@ class TestResourceGeneratorWindow:
         dialog._remove_selected_path()
         assert dialog.text_value() == "ui_text.txt\nrenamed.txt"
         assert dialog._count_label.text() == "Linked text files: 2 | Missing: 1"
+        dialog.close()
+
+    @_skip_no_qt
+    def test_font_text_links_dialog_can_edit_selected_file_via_callback(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        missing_path = source_dir / "missing.txt"
+        captured = []
+
+        def _edit_file(value):
+            captured.append(value)
+            missing_path.write_text("abc", encoding="utf-8")
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["missing.txt"],
+            source_dir=str(source_dir),
+            edit_file_callback=_edit_file,
+            parent=None,
+        )
+        dialog._list_widget.setCurrentRow(0)
+
+        assert dialog._count_label.text() == "Linked text files: 1 | Missing: 1"
+        dialog._edit_selected_file()
+
+        assert captured == ["missing.txt"]
+        assert dialog._count_label.text() == "Linked text files: 1"
+        assert dialog._list_widget.item(0).text() == "missing.txt"
         dialog.close()
 
     @_skip_no_qt

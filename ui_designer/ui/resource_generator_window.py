@@ -784,11 +784,20 @@ class _FontTextEditorDialog(QDialog):
 
 
 class _FontTextLinksDialog(QDialog):
-    def __init__(self, *, initial_items: list[str], source_dir: str = "", normalize_file_callback=None, parent=None):
+    def __init__(
+        self,
+        *,
+        initial_items: list[str],
+        source_dir: str = "",
+        normalize_file_callback=None,
+        edit_file_callback=None,
+        parent=None,
+    ):
         super().__init__(parent)
         self.setWindowTitle("Font Text Files")
         self.setMinimumSize(640, 400)
         self._normalize_file_callback = normalize_file_callback
+        self._edit_file_callback = edit_file_callback
         self._source_dir = str(source_dir or "").strip()
 
         layout = QVBoxLayout(self)
@@ -835,6 +844,10 @@ class _FontTextLinksDialog(QDialog):
         self._edit_path_button = QPushButton("Edit Path...")
         self._edit_path_button.clicked.connect(self._edit_selected_path)
         actions_col.addWidget(self._edit_path_button)
+
+        self._edit_file_button = QPushButton("Edit File...")
+        self._edit_file_button.clicked.connect(self._edit_selected_file)
+        actions_col.addWidget(self._edit_file_button)
 
         self._remove_path_button = QPushButton("Remove")
         self._remove_path_button.clicked.connect(self._remove_selected_path)
@@ -949,6 +962,7 @@ class _FontTextLinksDialog(QDialog):
         has_selection = row >= 0
         count = self._list_widget.count()
         self._edit_path_button.setEnabled(has_selection)
+        self._edit_file_button.setEnabled(has_selection and callable(self._edit_file_callback))
         self._remove_path_button.setEnabled(has_selection)
         self._move_up_button.setEnabled(has_selection and row > 0)
         self._move_down_button.setEnabled(has_selection and 0 <= row < count - 1)
@@ -1023,6 +1037,16 @@ class _FontTextLinksDialog(QDialog):
         items = self._current_values()
         items.pop(row)
         self._set_items(items, selected_index=min(row, len(items) - 1))
+
+    def _edit_selected_file(self):
+        if not callable(self._edit_file_callback):
+            return
+        row = self._selected_row()
+        raw_value = self._selected_value()
+        if row < 0 or not raw_value:
+            return
+        self._edit_file_callback(raw_value)
+        self._set_items(self._current_values(), selected_index=row)
 
     def _move_selected_path(self, delta: int):
         row = self._selected_row()
@@ -4353,6 +4377,11 @@ class ResourceGeneratorWindow(QDialog):
             initial_items=self._font_text_items_from_value(previous_value),
             source_dir=self._session.paths.source_dir,
             normalize_file_callback=self._normalize_selected_font_text_path,
+            edit_file_callback=lambda item, item_index=index, item_entry=entry: self._open_specific_font_text_resource(
+                item_index,
+                item_entry,
+                item,
+            ),
             parent=self,
         )
         if dialog.exec_() != QDialog.Accepted:
@@ -4367,6 +4396,12 @@ class ResourceGeneratorWindow(QDialog):
             font_label = section_entry_label("font", current_entry, index)
             self._set_status(f"Updated font text links for '{font_label}'.")
 
+    def _open_specific_font_text_resource(self, index: int, entry: dict, target_filename: str):
+        if not target_filename:
+            return False
+        resolved_path = self._resolve_entry_path("font", "text", target_filename)
+        return self._open_font_text_resource_target(index, entry, target_filename, resolved_path)
+
     def _open_selected_font_text_resource(self):
         index, entry = self._selected_font_text_context()
         if entry is None:
@@ -4376,13 +4411,16 @@ class ResourceGeneratorWindow(QDialog):
         target_filename, resolved_path = self._choose_font_text_target(entry)
         if target_filename is None:
             return
+        self._open_font_text_resource_target(index, entry, target_filename, resolved_path)
+
+    def _open_font_text_resource_target(self, index: int, entry: dict, target_filename: str, resolved_path: str):
         if not target_filename or not resolved_path:
             QMessageBox.warning(
                 self,
                 "Edit Font Text",
                 "Set Source Dir first so Designer knows where to save the font text file.",
             )
-            return
+            return False
 
         is_new_file = not os.path.isfile(resolved_path)
         initial_text = ""
@@ -4395,7 +4433,7 @@ class ResourceGeneratorWindow(QDialog):
                 QMessageBox.Yes,
             )
             if answer != QMessageBox.Yes:
-                return
+                return False
             initial_text = _default_new_font_text_file_body()
         else:
             try:
@@ -4403,7 +4441,7 @@ class ResourceGeneratorWindow(QDialog):
                     initial_text = handle.read()
             except OSError as exc:
                 QMessageBox.warning(self, "Edit Font Text", f"Failed to read text file:\n{resolved_path}\n\n{exc}")
-                return
+                return False
 
         dialog = _FontTextEditorDialog(
             filename=target_filename,
@@ -4412,7 +4450,7 @@ class ResourceGeneratorWindow(QDialog):
             parent=self,
         )
         if dialog.exec_() != QDialog.Accepted:
-            return
+            return False
 
         content = str(dialog.text_value() or "").replace("\r\n", "\n").replace("\r", "\n")
         os.makedirs(os.path.dirname(resolved_path), exist_ok=True)
@@ -4421,7 +4459,7 @@ class ResourceGeneratorWindow(QDialog):
                 handle.write(content)
         except OSError as exc:
             QMessageBox.warning(self, "Edit Font Text", f"Failed to write text file:\n{resolved_path}\n\n{exc}")
-            return
+            return False
 
         self._active_section = "font"
         self._active_entry_index = index
@@ -4431,6 +4469,7 @@ class ResourceGeneratorWindow(QDialog):
         self._update_simple_asset_preview()
         action = "Created and saved" if is_new_file else "Saved"
         self._set_status(f"{action} font text '{target_filename}'.")
+        return True
 
     def _font_text_items_from_value(self, value) -> list[str]:
         items = []
