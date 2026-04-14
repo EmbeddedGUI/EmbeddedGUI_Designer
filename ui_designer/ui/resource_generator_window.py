@@ -11,7 +11,7 @@ import re
 import shutil
 import subprocess
 
-from PyQt5.QtCore import Qt, QSignalBlocker, QUrl
+from PyQt5.QtCore import QEvent, Qt, QSignalBlocker, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -62,6 +62,7 @@ from .resource_panel import (
     _suggest_charset_filename_for_resource,
     _suggest_charset_presets_for_resource,
 )
+from .theme import sync_window_chrome_theme
 
 
 _IMAGE_FILE_EXTENSIONS = {".png", ".bmp", ".jpg", ".jpeg", ".gif", ".webp"}
@@ -732,7 +733,10 @@ class ResourceGeneratorWindow(QDialog):
 
     def __init__(self, sdk_root: str = "", parent=None):
         super().__init__(parent)
-        self.setWindowFlags(self.windowFlags() | Qt.Window)
+        self.setWindowFlag(Qt.Window, True)
+        self.setWindowFlag(Qt.WindowMinMaxButtonsHint, True)
+        self.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.setObjectName("resource_generator_window")
         self.resize(1360, 860)
 
@@ -751,6 +755,18 @@ class ResourceGeneratorWindow(QDialog):
 
         self._build_ui()
         self._apply_paths_and_data(GenerationPaths(), make_empty_resource_config(), dirty=False)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._sync_window_chrome_theme()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in {QEvent.StyleChange, QEvent.PaletteChange}:
+            self._sync_window_chrome_theme()
+
+    def _sync_window_chrome_theme(self):
+        sync_window_chrome_theme(self)
 
     # -- Public API -----------------------------------------------------
 

@@ -9,6 +9,56 @@ import os
 import sys
 
 
+_PREVIOUS_QT_MESSAGE_HANDLER = None
+_QT_MESSAGE_FILTER_INSTALLED = False
+
+
+def _suppress_noisy_qt_platform_logs():
+    """Mute verbose Qt platform debug categories unless the user already chose rules."""
+    rules = str(os.environ.get("QT_LOGGING_RULES", "") or "").strip()
+    quiet_rules = [
+        "qt.qpa.windows.debug=false",
+        "qt.qpa.events.debug=false",
+    ]
+    if not rules:
+        os.environ["QT_LOGGING_RULES"] = ";".join(quiet_rules)
+        return
+
+    normalized = rules.lower()
+    missing = []
+    for rule in quiet_rules:
+        category = rule.split("=", 1)[0].strip().lower()
+        if category not in normalized:
+            missing.append(rule)
+    if missing:
+        os.environ["QT_LOGGING_RULES"] = ";".join([rules, *missing])
+
+
+def _should_suppress_qt_message(message: str) -> bool:
+    text = str(message or "")
+    return "External WM_DESTROY received for" in text
+
+
+def _install_qt_message_filter():
+    global _PREVIOUS_QT_MESSAGE_HANDLER, _QT_MESSAGE_FILTER_INSTALLED
+    if _QT_MESSAGE_FILTER_INSTALLED:
+        return
+
+    try:
+        from PyQt5.QtCore import qInstallMessageHandler
+    except ImportError:
+        return
+
+    def _handler(msg_type, context, message):
+        if _should_suppress_qt_message(message):
+            return
+        if callable(_PREVIOUS_QT_MESSAGE_HANDLER):
+            _PREVIOUS_QT_MESSAGE_HANDLER(msg_type, context, message)
+
+    _PREVIOUS_QT_MESSAGE_HANDLER = qInstallMessageHandler(_handler)
+    _QT_MESSAGE_FILTER_INSTALLED = True
+
+
 def _suppress_qfluentwidgets_tip():
     """Import qfluentwidgets while suppressing the promotion tip."""
     with contextlib.redirect_stdout(io.StringIO()):
@@ -16,6 +66,7 @@ def _suppress_qfluentwidgets_tip():
     return qfluentwidgets
 
 
+_suppress_noisy_qt_platform_logs()
 _suppress_qfluentwidgets_tip()
 
 # Ensure the repository root is on sys.path so package imports work.
@@ -63,6 +114,8 @@ def main():
     from ui_designer.model.workspace import find_sdk_root, normalize_path
     from ui_designer.ui.main_window import MainWindow
     from ui_designer.ui.theme import apply_theme, configure_platform_font_environment
+
+    _install_qt_message_filter()
 
     config = get_config()
     cli_project = normalize_path(args.project)

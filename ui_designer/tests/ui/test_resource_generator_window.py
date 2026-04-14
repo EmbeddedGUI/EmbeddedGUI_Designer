@@ -9,7 +9,7 @@ from ui_designer.tests.sdk_builders import build_test_sdk_root
 from ui_designer.tests.ui.window_test_helpers import close_test_window as _close_window
 
 if HAS_PYQT5:
-    from PyQt5.QtCore import Qt
+    from PyQt5.QtCore import QEvent, Qt
     from PyQt5.QtWidgets import QGroupBox, QHeaderView, QLabel, QMessageBox
 
 
@@ -31,6 +31,32 @@ class TestResourceGeneratorWindow:
 
         assert window._mode_combo.currentData() == "professional"
         assert window._workspace_stack.currentWidget() is window._professional_page
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_resource_generator_window_supports_maximize_and_syncs_native_chrome_theme(self, qapp, monkeypatch):
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+
+        synced_windows = []
+        monkeypatch.setattr(
+            resource_generator_window_module,
+            "sync_window_chrome_theme",
+            lambda window: synced_windows.append(window) or True,
+        )
+
+        window = resource_generator_window_module.ResourceGeneratorWindow("")
+
+        assert window.windowFlags() & Qt.Window
+        assert window.windowFlags() & Qt.WindowMinMaxButtonsHint
+        assert window.windowFlags() & Qt.WindowMaximizeButtonHint
+
+        window.show()
+        qapp.processEvents()
+        assert synced_windows == [window]
+
+        window.changeEvent(QEvent(QEvent.StyleChange))
+        assert synced_windows[-1] is window
+        assert len(synced_windows) >= 2
         _close_window(window)
 
     @_skip_no_qt

@@ -14,8 +14,12 @@ import os
 import sys
 
 from PyQt5.QtCore import QEvent, QObject, QSize
-from PyQt5.QtGui import QFont, QFontDatabase
+from PyQt5.QtGui import QColor, QFont, QFontDatabase
 from PyQt5.QtWidgets import QApplication, QWidget
+try:
+    from PyQt5 import sip as pyqt_sip
+except ImportError:
+    pyqt_sip = None
 
 try:
     from qfluentwidgets import (
@@ -660,6 +664,76 @@ def app_theme_tokens(app: QApplication | None = None):
     return theme_tokens(mode, density=density, font_size_pt=designer_font_size_pt(target_app, default=0))
 
 
+def _windows_colorref(color_value: str) -> int:
+    color = QColor(str(color_value or "").strip())
+    if not color.isValid():
+        return 0
+    return (int(color.blue()) << 16) | (int(color.green()) << 8) | int(color.red())
+
+
+def _qt_widget_is_usable(widget) -> bool:
+    if widget is None or not isinstance(widget, QWidget):
+        return False
+    if pyqt_sip is not None:
+        try:
+            if pyqt_sip.isdeleted(widget):
+                return False
+        except Exception:
+            return False
+    return True
+
+
+def sync_window_chrome_theme(window: QWidget | None) -> bool:
+    """Best-effort sync of the native window chrome with the active Designer theme."""
+    if not _qt_widget_is_usable(window) or sys.platform != "win32":
+        return False
+
+    try:
+        hwnd = int(window.winId())
+    except Exception:
+        return False
+    if hwnd <= 0:
+        return False
+
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        dwmapi = ctypes.windll.dwmapi
+    except Exception:
+        return False
+
+    app = QApplication.instance()
+    mode = str(app.property("designer_theme_mode") or "dark").strip().lower() if app is not None else "dark"
+    tokens = app_theme_tokens(app)
+    dark_mode = 0 if mode == "light" else 1
+
+    def _set_attribute(attribute: int, value, value_type) -> bool:
+        payload = value_type(value)
+        try:
+            result = dwmapi.DwmSetWindowAttribute(
+                wintypes.HWND(hwnd),
+                ctypes.c_uint(attribute),
+                ctypes.byref(payload),
+                ctypes.sizeof(payload),
+            )
+        except Exception:
+            return False
+        return int(result) == 0
+
+    applied = False
+    for attribute in (20, 19):  # DWMWA_USE_IMMERSIVE_DARK_MODE new/legacy
+        applied = _set_attribute(attribute, dark_mode, ctypes.c_int) or applied
+
+    caption_color = _windows_colorref(tokens.get("shell_bg", ""))
+    text_color = _windows_colorref(tokens.get("text", ""))
+    border_color = _windows_colorref(tokens.get("border", ""))
+    applied = _set_attribute(35, caption_color, wintypes.DWORD) or applied  # DWMWA_CAPTION_COLOR
+    applied = _set_attribute(36, text_color, wintypes.DWORD) or applied  # DWMWA_TEXT_COLOR
+    applied = _set_attribute(34, border_color, wintypes.DWORD) or applied  # DWMWA_BORDER_COLOR
+    return applied
+
+
 # Semantic aliases (spec names → existing keys) for documentation and future refactors.
 TOKEN_SEMANTIC_ALIASES = {
     "bg.canvas": "bg",
@@ -686,17 +760,20 @@ def resolve_semantic_token(mode: str, semantic_name: str, tokens: dict | None = 
 
 
 def _has_ancestor_object_name(widget: QWidget | None, object_name: str) -> bool:
-    current = widget if isinstance(widget, QWidget) else None
+    current = widget if _qt_widget_is_usable(widget) else None
     while current is not None:
-        if current.objectName() == object_name:
-            return True
-        current = current.parentWidget()
+        try:
+            if current.objectName() == object_name:
+                return True
+            current = current.parentWidget()
+        except Exception:
+            return False
     return False
 
 
 def _apply_fluent_engineering_style(widget):
     """Reduce Fluent widget radii so embedded controls match the shell theme."""
-    if not HAS_FLUENT or widget is None or not isinstance(widget, QWidget):
+    if not HAS_FLUENT or not _qt_widget_is_usable(widget):
         return False
 
     in_property_panel = _has_ancestor_object_name(widget, "property_panel_root")
@@ -749,7 +826,7 @@ def _apply_fluent_engineering_style(widget):
 
 class _FluentEngineeringStyleManager(QObject):
     def refresh_widget_tree(self, root):
-        if not HAS_FLUENT or root is None or not isinstance(root, QWidget):
+        if not HAS_FLUENT or not _qt_widget_is_usable(root):
             return
         _apply_fluent_engineering_style(root)
         for widget in root.findChildren(QWidget):
@@ -762,8 +839,28 @@ class _FluentEngineeringStyleManager(QObject):
             _apply_fluent_engineering_style(widget)
 
     def eventFilter(self, obj, event):
-        if HAS_FLUENT and isinstance(obj, QWidget) and event.type() in (QEvent.Polish, QEvent.Show):
+        if HAS_FLUENT and _qt_widget_is_usable(obj) and event.type() in (QEvent.Polish, QEvent.Show):
             _apply_fluent_engineering_style(obj)
+        return False
+
+
+class _WindowChromeSyncManager(QObject):
+    def refresh_all(self):
+        app = QApplication.instance()
+        if app is None:
+            return
+        for widget in list(app.topLevelWidgets()):
+            sync_window_chrome_theme(widget)
+
+    def eventFilter(self, obj, event):
+        if not _qt_widget_is_usable(obj):
+            return False
+        try:
+            is_window = obj.isWindow()
+        except Exception:
+            return False
+        if is_window and event.type() in (QEvent.Polish, QEvent.Show, QEvent.WinIdChange, QEvent.StyleChange, QEvent.PaletteChange):
+            sync_window_chrome_theme(obj)
         return False
 
 
@@ -775,6 +872,18 @@ def _ensure_fluent_engineering_style_manager(app):
     if manager is None:
         manager = _FluentEngineeringStyleManager(app)
         app._designer_fluent_engineering_style_manager = manager
+        app.installEventFilter(manager)
+    return manager
+
+
+def _ensure_window_chrome_sync_manager(app):
+    if app is None:
+        return None
+
+    manager = getattr(app, "_designer_window_chrome_sync_manager", None)
+    if manager is None:
+        manager = _WindowChromeSyncManager(app)
+        app._designer_window_chrome_sync_manager = manager
         app.installEventFilter(manager)
     return manager
 
@@ -3343,6 +3452,9 @@ def apply_theme(app: QApplication, mode="dark", density="standard"):
     tokens = theme_tokens(mode, density=density, font_size_pt=font_size_pt)
     _apply_app_base_font(app, tokens)
     app.setStyleSheet(_build_stylesheet(mode, density=density, font_size_pt=font_size_pt))
+    chrome_manager = _ensure_window_chrome_sync_manager(app)
     manager = _ensure_fluent_engineering_style_manager(app)
     if manager is not None:
         manager.refresh_all()
+    if chrome_manager is not None:
+        chrome_manager.refresh_all()

@@ -1,11 +1,13 @@
 import pytest
-from PyQt5.QtWidgets import QApplication, QSpinBox
+from PyQt5.QtCore import QEvent
+from PyQt5.QtWidgets import QApplication, QDialog, QSpinBox
 
 from ui_designer.ui.iconography import semantic_icon_keys
 from ui_designer.ui.typography import apply_typography_role
 from ui_designer.ui.theme import (
     _build_stylesheet,
     _ensure_fluent_engineering_style_manager,
+    _ensure_window_chrome_sync_manager,
     app_theme_tokens,
     apply_theme,
     designer_ui_font_family,
@@ -144,6 +146,56 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
 
 
         assert "border-radius: 0px;" in metrics
+
+
+def test_apply_theme_syncs_existing_and_future_window_chrome(monkeypatch):
+    import ui_designer.ui.theme as theme_module
+
+    app = _app()
+    synced = []
+    monkeypatch.setattr(theme_module, "sync_window_chrome_theme", lambda window: synced.append(window) or True)
+
+    existing = QDialog()
+    future = QDialog()
+    try:
+        existing.setObjectName("existing_dialog")
+        future.setObjectName("future_dialog")
+        existing.show()
+        app.processEvents()
+
+        apply_theme(app, "dark")
+
+        assert existing in synced
+
+        synced.clear()
+        future.show()
+        app.processEvents()
+
+        assert future in synced
+    finally:
+        existing.close()
+        existing.deleteLater()
+        future.close()
+        future.deleteLater()
+        app.processEvents()
+
+
+def test_window_chrome_sync_manager_ignores_runtime_errors_from_closing_widgets():
+    app = _app()
+    manager = _ensure_window_chrome_sync_manager(app)
+    assert manager is not None
+
+    class _BrokenDialog(QDialog):
+        def isWindow(self):
+            raise RuntimeError("wrapped C/C++ object has been deleted")
+
+    broken = _BrokenDialog()
+    try:
+        assert manager.eventFilter(broken, QEvent(QEvent.Show)) is False
+    finally:
+        broken.close()
+        broken.deleteLater()
+        app.processEvents()
 
 
 def test_tokens_include_xxs_spacing_for_all_themes():

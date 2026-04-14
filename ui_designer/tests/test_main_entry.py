@@ -320,3 +320,66 @@ def test_main_passes_default_sdk_cache_candidate_to_sdk_discovery(monkeypatch, t
 
     assert len(find_sdk_root_calls) == 1
     assert "extra_candidates" not in find_sdk_root_calls[0]
+
+
+def test_suppress_noisy_qt_platform_logs_sets_defaults_when_rules_missing(monkeypatch, main_module):
+    monkeypatch.delenv("QT_LOGGING_RULES", raising=False)
+
+    main_module._suppress_noisy_qt_platform_logs()
+
+    assert os.environ["QT_LOGGING_RULES"] == "qt.qpa.windows.debug=false;qt.qpa.events.debug=false"
+
+
+def test_suppress_noisy_qt_platform_logs_appends_missing_qpa_rules(monkeypatch, main_module):
+    monkeypatch.setenv("QT_LOGGING_RULES", "qt.network.ssl.warning=true")
+
+    main_module._suppress_noisy_qt_platform_logs()
+
+    assert os.environ["QT_LOGGING_RULES"] == (
+        "qt.network.ssl.warning=true;"
+        "qt.qpa.windows.debug=false;"
+        "qt.qpa.events.debug=false"
+    )
+
+
+def test_suppress_noisy_qt_platform_logs_preserves_explicit_qpa_rules(monkeypatch, main_module):
+    monkeypatch.setenv("QT_LOGGING_RULES", "qt.qpa.windows.debug=true;qt.network.ssl.warning=true")
+
+    main_module._suppress_noisy_qt_platform_logs()
+
+    assert os.environ["QT_LOGGING_RULES"] == (
+        "qt.qpa.windows.debug=true;"
+        "qt.network.ssl.warning=true;"
+        "qt.qpa.events.debug=false"
+    )
+
+
+def test_should_suppress_qt_message_matches_wm_destroy_noise(main_module):
+    assert main_module._should_suppress_qt_message("External WM_DESTROY received for QWidgetWindow(...)") is True
+    assert main_module._should_suppress_qt_message("qt.qpa.windows: QWindowsWindow::destroyWindow") is False
+
+
+def test_install_qt_message_filter_suppresses_only_matching_messages(monkeypatch, main_module):
+    installed = {}
+    forwarded = []
+
+    def previous_handler(msg_type, context, message):
+        forwarded.append((msg_type, context, message))
+
+    def fake_install(handler):
+        installed["handler"] = handler
+        return previous_handler
+
+    monkeypatch.setattr("PyQt5.QtCore.qInstallMessageHandler", fake_install)
+    main_module._PREVIOUS_QT_MESSAGE_HANDLER = None
+    main_module._QT_MESSAGE_FILTER_INSTALLED = False
+
+    main_module._install_qt_message_filter()
+
+    assert "handler" in installed
+    installed["handler"](0, object(), "External WM_DESTROY received for QWidgetWindow(...)")
+    installed["handler"](0, object(), "Some other Qt warning")
+
+    assert len(forwarded) == 1
+    assert forwarded[0][0] == 0
+    assert forwarded[0][2] == "Some other Qt warning"
