@@ -87,6 +87,49 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_export_quick_preview_board_image_writes_png(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QImage, QPixmap
+
+        from ui_designer.model.workspace import normalize_path
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        (source_dir / "fonts").mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(16, 10)
+        assert pixmap.save(str(image_path), "PNG")
+        (source_dir / "fonts" / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "fonts" / "display.txt").write_text("ABCD", encoding="utf-8")
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window.ResourceGeneratorWindow._build_font_preview_pixmap",
+            lambda self, font_path, sample_text: QPixmap(40, 24),
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero"}],
+                "font": [{"file": "fonts/display.ttf", "name": "display", "text": "fonts/display.txt"}],
+                "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 320, "height": 180}],
+            },
+            dirty=False,
+        )
+
+        output_path = tmp_path / "preview_board.png"
+        assert window._export_quick_preview_board_image(str(output_path)) is True
+
+        exported = QImage(str(output_path))
+        assert output_path.is_file()
+        assert exported.isNull() is False
+        assert exported.width() > 500
+        assert exported.height() > 300
+        assert window._status_label.text() == f"Exported preview board to '{normalize_path(str(output_path))}'."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_invalid_raw_json_blocks_tab_switch(self, qapp, monkeypatch):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
 

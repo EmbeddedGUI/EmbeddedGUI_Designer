@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 import os
 import shutil
 import subprocess
 
 from PyQt5.QtCore import Qt, QSignalBlocker, QUrl
-from PyQt5.QtGui import QDesktopServices, QImage, QPixmap
+from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -489,6 +490,9 @@ class ResourceGeneratorWindow(QDialog):
         self._preview_board_button = QPushButton("Preview Board...")
         self._preview_board_button.clicked.connect(self._open_quick_preview_board)
 
+        self._export_preview_board_button = QPushButton("Export Preview PNG...")
+        self._export_preview_board_button.clicked.connect(self._export_quick_preview_board_dialog)
+
         self._detect_video_info_button = QPushButton("Detect Video Info")
         self._detect_video_info_button.clicked.connect(self._detect_selected_video_metadata)
 
@@ -563,6 +567,7 @@ class ResourceGeneratorWindow(QDialog):
                 [
                     self._preview_asset_button,
                     self._preview_board_button,
+                    self._export_preview_board_button,
                     self._open_font_text_button,
                     self._detect_video_info_button,
                     self._edit_asset_button,
@@ -1580,6 +1585,22 @@ class ResourceGeneratorWindow(QDialog):
         self._set_status(f"Opened preview board for {dialog._cards_layout.count()} assets.")
         dialog.exec_()
 
+    def _export_quick_preview_board_dialog(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        start_dir = self._session.paths.source_dir or self._default_open_dir()
+        suggested_path = normalize_path(os.path.join(start_dir, "resource_preview_board.png"))
+        path, _selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Export Preview Board",
+            suggested_path,
+            "PNG Image (*.png);;All files (*)",
+        )
+        if not path:
+            return
+        self._export_quick_preview_board_image(path)
+
     def _build_quick_preview_board_dialog(self):
         cards = []
         for section in KNOWN_RESOURCE_SECTIONS:
@@ -1590,6 +1611,87 @@ class ResourceGeneratorWindow(QDialog):
         if not cards:
             return None
         return _QuickPreviewBoardDialog(cards, total_assets=len(cards), parent=self)
+
+    def _export_quick_preview_board_image(self, path: str) -> bool:
+        image = self._render_quick_preview_board_image()
+        if image is None:
+            self._set_status("No assets available for preview export.")
+            return False
+
+        target_path = normalize_path(path)
+        if not target_path.lower().endswith(".png"):
+            target_path += ".png"
+        target_dir = os.path.dirname(target_path)
+        if target_dir:
+            os.makedirs(target_dir, exist_ok=True)
+        if not image.save(target_path, "PNG"):
+            QMessageBox.warning(self, "Export Preview Board", f"Failed to save preview board image:\n{target_path}")
+            return False
+
+        self._set_status(f"Exported preview board to '{target_path}'.")
+        return True
+
+    def _render_quick_preview_board_image(self) -> QImage | None:
+        payloads = []
+        for section in KNOWN_RESOURCE_SECTIONS:
+            for index, entry in enumerate(self._session.section_entries(section)):
+                if not isinstance(entry, dict):
+                    continue
+                payloads.append(self._asset_preview_payload(section, index, entry))
+        if not payloads:
+            return None
+
+        columns = 3
+        gap = 18
+        page_margin = 24
+        card_width = 360
+        card_height = 320
+        header_height = 56
+        rows = max(1, int(math.ceil(len(payloads) / float(columns))))
+        image_width = (page_margin * 2) + (card_width * columns) + (gap * (columns - 1))
+        image_height = (page_margin * 2) + header_height + (card_height * rows) + (gap * max(rows - 1, 0))
+
+        image = QImage(image_width, image_height, QImage.Format_ARGB32)
+        image.fill(QColor(246, 244, 238))
+
+        painter = QPainter(image)
+        try:
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+
+            title_font = QFont()
+            title_font.setPointSize(18)
+            title_font.setBold(True)
+            painter.setFont(title_font)
+            painter.setPen(QColor(39, 39, 39))
+            painter.drawText(page_margin, page_margin + 28, "Quick Preview Board")
+
+            subtitle_font = QFont()
+            subtitle_font.setPointSize(10)
+            painter.setFont(subtitle_font)
+            painter.setPen(QColor(96, 96, 96))
+            painter.drawText(
+                page_margin,
+                page_margin + 48,
+                f"Assets: {len(payloads)}  Source Dir: {self._session.paths.source_dir or '(unset)'}",
+            )
+
+            for card_index, payload in enumerate(payloads):
+                row = card_index // columns
+                column = card_index % columns
+                x = page_margin + (column * (card_width + gap))
+                y = page_margin + header_height + (row * (card_height + gap))
+                self._paint_quick_preview_card(
+                    painter,
+                    x,
+                    y,
+                    card_width,
+                    card_height,
+                    payload,
+                )
+        finally:
+            painter.end()
+        return image
 
     def _build_quick_preview_card(self, section: str, index: int, entry: dict) -> QGroupBox:
         payload = self._asset_preview_payload(section, index, entry)
@@ -1612,6 +1714,64 @@ class ResourceGeneratorWindow(QDialog):
         meta_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout.addWidget(meta_label)
         return card
+
+    def _paint_quick_preview_card(self, painter: QPainter, x: int, y: int, width: int, height: int, payload: dict):
+        painter.save()
+        try:
+            painter.setPen(QPen(QColor(214, 208, 196), 1))
+            painter.setBrush(QColor(255, 252, 247))
+            painter.drawRoundedRect(x, y, width, height, 12, 12)
+
+            title_font = QFont()
+            title_font.setPointSize(11)
+            title_font.setBold(True)
+            painter.setFont(title_font)
+            painter.setPen(QColor(45, 45, 45))
+            title_rect = painter.boundingRect(x + 14, y + 12, width - 28, 40, Qt.TextWordWrap, payload["title"])
+            painter.drawText(title_rect, Qt.TextWordWrap, payload["title"])
+
+            preview_rect_top = title_rect.bottom() + 12
+            preview_rect_height = 138
+            preview_rect = (x + 14, preview_rect_top, width - 28, preview_rect_height)
+            painter.setPen(QPen(QColor(226, 220, 210), 1))
+            painter.setBrush(QColor(248, 246, 241))
+            painter.drawRoundedRect(preview_rect[0], preview_rect[1], preview_rect[2], preview_rect[3], 10, 10)
+
+            pixmap = payload.get("pixmap")
+            if pixmap is not None and not pixmap.isNull():
+                scaled = pixmap.scaled(preview_rect[2] - 16, preview_rect[3] - 16, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                px = preview_rect[0] + max(0, (preview_rect[2] - scaled.width()) // 2)
+                py = preview_rect[1] + max(0, (preview_rect[3] - scaled.height()) // 2)
+                painter.drawPixmap(px, py, scaled)
+            else:
+                painter.setPen(QColor(106, 106, 106))
+                preview_font = QFont()
+                preview_font.setPointSize(9)
+                painter.setFont(preview_font)
+                painter.drawText(
+                    preview_rect[0] + 10,
+                    preview_rect[1] + 10,
+                    preview_rect[2] - 20,
+                    preview_rect[3] - 20,
+                    Qt.AlignCenter | Qt.TextWordWrap,
+                    str(payload.get("preview_text", "") or ""),
+                )
+
+            meta_font = QFont()
+            meta_font.setPointSize(8)
+            painter.setFont(meta_font)
+            painter.setPen(QColor(78, 78, 78))
+            meta_top = preview_rect[1] + preview_rect[3] + 10
+            painter.drawText(
+                x + 14,
+                meta_top,
+                width - 28,
+                (y + height - 12) - meta_top,
+                Qt.TextWordWrap,
+                payload["meta_text"],
+            )
+        finally:
+            painter.restore()
 
     def _update_simple_asset_preview(self):
         section, index, entry = self._selected_simple_asset_context()
