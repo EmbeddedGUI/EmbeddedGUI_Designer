@@ -744,7 +744,7 @@ class TestResourceGeneratorWindow:
         action_texts = [action.text() for action in menu.actions() if action.text()]
 
         assert action_texts[0] == "Suggested Fix: Open Font Text..."
-        assert "Open Font Text" in action_texts
+        assert "Open Font Text" not in action_texts
         _close_window(window)
 
     @_skip_no_qt

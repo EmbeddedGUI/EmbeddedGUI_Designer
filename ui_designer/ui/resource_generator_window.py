@@ -1772,6 +1772,7 @@ class ResourceGeneratorWindow(QDialog):
 
         menu = QMenu(self)
         primary_fix = self._simple_asset_primary_fix_action(section, entry, file_label=file_name)
+        primary_fix_text = primary_fix[0] if primary_fix is not None else ""
         if primary_fix is not None:
             action_text, callback = primary_fix
             fix_action = menu.addAction(action_text)
@@ -1789,7 +1790,7 @@ class ResourceGeneratorWindow(QDialog):
         open_folder_action.setEnabled(has_resolved_file)
         open_folder_action.triggered.connect(self._open_selected_asset_folder)
 
-        if section == "font":
+        if section == "font" and primary_fix_text != "Suggested Fix: Open Font Text...":
             open_text_action = menu.addAction("Open Font Text")
             open_text_action.triggered.connect(self._open_selected_font_text_resource)
 
