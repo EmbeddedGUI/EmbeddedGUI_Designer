@@ -1655,13 +1655,17 @@ class ResourceGeneratorWindow(QDialog):
         normalized_file = str(file_label or entry.get("file", "") or "").strip()
         resolved_path = self._resolve_entry_path(section, "file", normalized_file)
         file_exists = bool(resolved_path and os.path.exists(resolved_path))
+        target_dir = self._simple_asset_target_folder(section, file_label=normalized_file)
 
         if not normalized_file:
             suggestions.append("Set the File field in Professional Mode.")
         elif not resolved_path:
             suggestions.append("Set Source Dir or correct the asset path in Professional Mode.")
         elif not file_exists:
-            suggestions.append("Restore the missing file or remove the asset from the config.")
+            if target_dir:
+                suggestions.append("Use Open Asset Folder to restore the missing file, or remove the asset from the config.")
+            else:
+                suggestions.append("Restore the missing file or remove the asset from the config.")
 
         if section == "font":
             text_value = str(entry.get("text", "") or "").strip()
@@ -1695,10 +1699,33 @@ class ResourceGeneratorWindow(QDialog):
 
         return tuple(dict.fromkeys(item for item in suggestions if item))
 
+    def _simple_asset_target_folder(self, section: str, *, file_label: str = "") -> str:
+        resolved_path = self._resolve_entry_path(section, "file", file_label)
+        candidates = []
+        if resolved_path:
+            candidates.append(os.path.dirname(resolved_path))
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if source_dir:
+            candidates.append(source_dir)
+
+        for candidate in candidates:
+            current = normalize_path(candidate)
+            while current:
+                if os.path.isdir(current):
+                    return current
+                parent = normalize_path(os.path.dirname(current))
+                if not parent or parent == current:
+                    break
+                current = parent
+        return ""
+
     def _simple_asset_primary_fix_action(self, section: str, entry: dict, *, file_label: str = "") -> tuple[str, callable] | None:
         normalized_file = str(file_label or entry.get("file", "") or "").strip()
         resolved_path = self._resolve_entry_path(section, "file", normalized_file)
         file_exists = bool(resolved_path and os.path.exists(resolved_path))
+        target_dir = self._simple_asset_target_folder(section, file_label=normalized_file)
+        if normalized_file and resolved_path and not file_exists and target_dir:
+            return "Suggested Fix: Open Asset Folder", self._open_selected_asset_folder
         if not normalized_file or not resolved_path or not file_exists:
             return "Suggested Fix: Open Professional Mode", self._open_current_simple_selection_in_professional_mode
 
@@ -1772,6 +1799,9 @@ class ResourceGeneratorWindow(QDialog):
         resolved_path = self._resolve_entry_path(section, "file", file_name)
         has_file_value = bool(file_name)
         has_resolved_file = bool(resolved_path and os.path.exists(resolved_path))
+        target_dir = self._simple_asset_target_folder(section, file_label=file_name)
+        has_target_dir = bool(target_dir)
+        has_expected_full_path = bool(resolved_path)
 
         menu = QMenu(self)
         primary_fix = self._simple_asset_primary_fix_action(section, entry, file_label=file_name)
@@ -1790,7 +1820,7 @@ class ResourceGeneratorWindow(QDialog):
         open_asset_action.triggered.connect(self._open_selected_asset_in_external_editor)
 
         open_folder_action = menu.addAction("Open Asset Folder")
-        open_folder_action.setEnabled(has_resolved_file)
+        open_folder_action.setEnabled(has_target_dir)
         open_folder_action.triggered.connect(self._open_selected_asset_folder)
 
         if section == "font" and primary_fix_text != "Suggested Fix: Open Font Text...":
@@ -1807,7 +1837,7 @@ class ResourceGeneratorWindow(QDialog):
         copy_asset_path_action.triggered.connect(self._copy_selected_simple_asset_relative_path)
 
         copy_full_path_action = menu.addAction("Copy Full Path")
-        copy_full_path_action.setEnabled(has_resolved_file)
+        copy_full_path_action.setEnabled(has_expected_full_path)
         copy_full_path_action.triggered.connect(self._copy_selected_simple_asset_absolute_path)
 
         menu.addSeparator()
@@ -3303,10 +3333,10 @@ class ResourceGeneratorWindow(QDialog):
             return
         file_name = str(entry.get("file", "") or "").strip()
         resolved_path = self._resolve_entry_path(section or "", "file", file_name)
-        if not resolved_path or not os.path.exists(resolved_path):
-            QMessageBox.warning(self, "Open Asset Folder", f"Asset file does not exist:\n{resolved_path or file_name}")
+        target_dir = self._simple_asset_target_folder(section or "", file_label=file_name)
+        if not target_dir:
+            QMessageBox.warning(self, "Open Asset Folder", f"Asset folder could not be resolved:\n{resolved_path or file_name}")
             return
-        target_dir = os.path.dirname(resolved_path)
         self._active_section = section or self._active_section
         self._active_entry_index = index
         self._update_simple_asset_preview()
@@ -3343,11 +3373,14 @@ class ResourceGeneratorWindow(QDialog):
             return
         file_name = str(entry.get("file", "") or "").strip()
         resolved_path = self._resolve_entry_path(section, "file", file_name)
-        if not resolved_path or not os.path.exists(resolved_path):
-            QMessageBox.warning(self, "Copy Full Path", f"Asset file does not exist:\n{resolved_path or file_name}")
+        if not resolved_path:
+            QMessageBox.warning(self, "Copy Full Path", f"Asset path could not be resolved:\n{file_name}")
             return
         QApplication.clipboard().setText(resolved_path)
-        self._set_status(f"Copied full asset path '{resolved_path}'.")
+        if os.path.exists(resolved_path):
+            self._set_status(f"Copied full asset path '{resolved_path}'.")
+        else:
+            self._set_status(f"Copied expected full asset path '{resolved_path}'.")
 
     def _duplicate_selected_simple_asset(self):
         section, index, entry = self._selected_simple_asset_context()

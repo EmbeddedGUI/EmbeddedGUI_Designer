@@ -721,14 +721,14 @@ class TestResourceGeneratorWindow:
         menu = window._build_simple_asset_context_menu()
         action_map = {action.text(): action for action in menu.actions() if action.text()}
 
-        assert "Suggested Fix: Open Professional Mode" in action_map
+        assert "Suggested Fix: Open Asset Folder" in action_map
         assert action_map["Open Asset"].isEnabled() is False
-        assert action_map["Open Asset Folder"].isEnabled() is False
+        assert action_map["Open Asset Folder"].isEnabled() is True
         assert action_map["Copy Asset Path"].isEnabled() is True
-        assert action_map["Copy Full Path"].isEnabled() is False
+        assert action_map["Copy Full Path"].isEnabled() is True
         assert window._simple_asset_table.item(0, 0).toolTip() == (
             "Asset file is missing.\n"
-            "Fix: Restore the missing file or remove the asset from the config."
+            "Fix: Use Open Asset Folder to restore the missing file, or remove the asset from the config."
         )
         _close_window(window)
 
@@ -756,6 +756,30 @@ class TestResourceGeneratorWindow:
 
         assert action_texts[0] == "Suggested Fix: Open Font Text..."
         assert "Open Font Text" not in action_texts
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_copy_full_path_for_missing_asset_uses_expected_target(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "images/missing.png", "name": "missing"}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        QApplication.clipboard().clear()
+        window._copy_selected_simple_asset_absolute_path()
+
+        assert QApplication.clipboard().text() == str(source_dir / "images" / "missing.png")
+        assert window._status_label.text() == f"Copied expected full asset path '{source_dir / 'images' / 'missing.png'}'."
         _close_window(window)
 
     @_skip_no_qt
@@ -864,11 +888,11 @@ class TestResourceGeneratorWindow:
         qapp.processEvents()
 
         opened = []
-        monkeypatch.setattr(window, "_open_current_simple_selection_in_professional_mode", lambda: opened.append("professional"))
+        monkeypatch.setattr(window, "_open_selected_asset_folder", lambda: opened.append("folder"))
 
         window._activate_selected_simple_asset()
 
-        assert opened == ["professional"]
+        assert opened == ["folder"]
         _close_window(window)
 
     @_skip_no_qt
