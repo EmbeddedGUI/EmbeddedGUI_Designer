@@ -830,9 +830,11 @@ class _FontTextLinksDialog(QDialog):
         self._list_widget.setDropIndicatorShown(True)
         self._list_widget.setDragDropMode(QAbstractItemView.InternalMove)
         self._list_widget.setDefaultDropAction(Qt.MoveAction)
+        self._list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self._list_widget.itemSelectionChanged.connect(self._refresh_action_state)
         self._list_widget.itemDoubleClicked.connect(lambda _item: self._activate_selected_item())
         self._list_widget.model().rowsMoved.connect(lambda *_args: self._handle_list_order_changed())
+        self._list_widget.customContextMenuRequested.connect(self._open_list_context_menu)
         content_row.addWidget(self._list_widget, 1)
 
         self._move_up_shortcut = QShortcut(QKeySequence("Ctrl+Shift+Up"), self._list_widget)
@@ -1042,6 +1044,69 @@ class _FontTextLinksDialog(QDialog):
     def _handle_list_order_changed(self):
         self._update_count_label()
         self._refresh_action_state()
+
+    def _build_list_context_menu(self) -> QMenu:
+        menu = QMenu(self)
+
+        new_file_action = menu.addAction("New File...")
+        new_file_action.setEnabled(self._new_file_button.isEnabled())
+        new_file_action.triggered.connect(self._new_file)
+
+        add_files_action = menu.addAction("Add Files...")
+        add_files_action.setEnabled(self._add_files_button.isEnabled())
+        add_files_action.triggered.connect(self._add_files)
+
+        add_path_action = menu.addAction("Add Path...")
+        add_path_action.triggered.connect(self._add_path)
+
+        has_selection = self._selected_row() >= 0
+        if has_selection:
+            menu.addSeparator()
+
+            edit_file_action = menu.addAction(self._edit_file_button.text() or "Edit File...")
+            edit_file_action.setEnabled(self._edit_file_button.isEnabled())
+            edit_file_action.triggered.connect(self._edit_selected_file)
+
+            edit_path_action = menu.addAction("Edit Path...")
+            edit_path_action.setEnabled(self._edit_path_button.isEnabled())
+            edit_path_action.triggered.connect(self._edit_selected_path)
+
+            copy_path_action = menu.addAction("Copy Full Path")
+            copy_path_action.setEnabled(self._copy_path_button.isEnabled())
+            copy_path_action.triggered.connect(self._copy_selected_path)
+
+            open_folder_action = menu.addAction("Open Folder")
+            open_folder_action.setEnabled(self._open_folder_button.isEnabled())
+            open_folder_action.triggered.connect(self._open_selected_folder)
+
+            move_up_action = menu.addAction("Move Up")
+            move_up_action.setEnabled(self._move_up_button.isEnabled())
+            move_up_action.triggered.connect(lambda: self._move_selected_path(-1))
+
+            move_down_action = menu.addAction("Move Down")
+            move_down_action.setEnabled(self._move_down_button.isEnabled())
+            move_down_action.triggered.connect(lambda: self._move_selected_path(1))
+
+            remove_action = menu.addAction("Remove")
+            remove_action.setEnabled(self._remove_path_button.isEnabled())
+            remove_action.triggered.connect(self._remove_selected_path)
+
+        if self._remove_missing_button.isEnabled():
+            menu.addSeparator()
+            remove_missing_action = menu.addAction("Remove Missing")
+            remove_missing_action.triggered.connect(self._remove_missing_paths)
+
+        return menu
+
+    def _open_list_context_menu(self, position):
+        item = self._list_widget.itemAt(position)
+        if item is not None:
+            self._list_widget.setCurrentItem(item)
+
+        menu = self._build_list_context_menu()
+        if menu.isEmpty():
+            return
+        menu.exec_(self._list_widget.viewport().mapToGlobal(position))
 
     def _display_path_for_value(self, raw_value: str) -> str:
         raw = str(raw_value or "").strip()

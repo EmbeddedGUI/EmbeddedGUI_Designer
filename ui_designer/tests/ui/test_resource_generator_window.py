@@ -2326,6 +2326,62 @@ class TestResourceGeneratorWindow:
         dialog.close()
 
     @_skip_no_qt
+    def test_font_text_links_dialog_context_menu_exposes_expected_actions(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("abc", encoding="utf-8")
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt", "missing.txt"],
+            source_dir=str(source_dir),
+            edit_file_callback=lambda value: True,
+            parent=None,
+        )
+        dialog._list_widget.setCurrentRow(1)
+
+        menu = dialog._build_list_context_menu()
+        actions = [action for action in menu.actions() if not action.isSeparator()]
+        action_map = {action.text(): action for action in actions}
+
+        assert [action.text() for action in actions[:3]] == ["New File...", "Add Files...", "Add Path..."]
+        assert "Create File..." in action_map
+        assert action_map["Create File..."].isEnabled() is True
+        assert action_map["Move Up"].isEnabled() is True
+        assert action_map["Move Down"].isEnabled() is False
+        assert action_map["Remove Missing"].isEnabled() is True
+        dialog.close()
+
+    @_skip_no_qt
+    def test_font_text_links_dialog_context_menu_selects_clicked_item(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QMenu
+
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("abc", encoding="utf-8")
+
+        captured = []
+        monkeypatch.setattr(QMenu, "exec_", lambda self, *args, **kwargs: captured.append([action.text() for action in self.actions()]))
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt", "missing.txt"],
+            source_dir=str(source_dir),
+            edit_file_callback=lambda value: True,
+            parent=None,
+        )
+        dialog._list_widget.setCurrentRow(0)
+
+        target_item = dialog._list_widget.item(1)
+        dialog._open_list_context_menu(dialog._list_widget.visualItemRect(target_item).center())
+
+        assert dialog._selected_row() == 1
+        assert any("Create File..." in items for items in captured)
+        dialog.close()
+
+    @_skip_no_qt
     def test_font_text_links_dialog_can_copy_full_path_and_open_folder(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtWidgets import QApplication
 
