@@ -11,7 +11,7 @@ from ui_designer.tests.ui.window_test_helpers import close_test_window as _close
 if HAS_PYQT5:
     from PyQt5.QtCore import QEvent, Qt, QUrl
     from PyQt5.QtTest import QTest
-    from PyQt5.QtWidgets import QApplication, QGroupBox, QHeaderView, QLabel, QMessageBox
+    from PyQt5.QtWidgets import QApplication, QGroupBox, QHeaderView, QLabel, QMessageBox, QPushButton
 
 
 _skip_no_qt = skip_if_no_qt
@@ -94,6 +94,7 @@ class TestResourceGeneratorWindow:
         window = ResourceGeneratorWindow("")
 
         group_titles = {group.title() for group in window._simple_page.findChildren(QGroupBox)}
+        simple_button_texts = {button.text() for button in window._simple_page.findChildren(QPushButton)}
         assert {"Import & Setup", "Batch Fixes", "Preview & Export", "Image Tools", "Selection"} <= group_titles
         assert [window._simple_action_tabs.tabText(index) for index in range(window._simple_action_tabs.count())] == [
             "Start",
@@ -102,6 +103,8 @@ class TestResourceGeneratorWindow:
             "Transforms",
             "Selection",
         ]
+        assert "Preview Selected Asset" not in simple_button_texts
+        assert not any(text.startswith("Auto ") for text in simple_button_texts)
         _close_window(window)
 
     @_skip_no_qt
@@ -136,6 +139,25 @@ class TestResourceGeneratorWindow:
         assert header.height() >= 24
         assert header.font().pointSize() == 10
         assert window._simple_asset_table.verticalHeader().defaultSectionSize() >= window.fontMetrics().height() + 12
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_resource_generator_tables_use_theme_palette_for_unselected_rows(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+        from ui_designer.ui.theme import app_theme_tokens
+
+        window = ResourceGeneratorWindow("")
+        tokens = app_theme_tokens()
+
+        simple_palette = window._simple_asset_table.palette()
+        assert simple_palette.base().color().name().lower() == tokens["panel_raised"].lower()
+        assert simple_palette.alternateBase().color().name().lower() == tokens["panel_alt"].lower()
+        assert simple_palette.text().color().name().lower() == tokens["text"].lower()
+
+        entry_palette = window._entry_table.palette()
+        assert entry_palette.base().color().name().lower() == tokens["panel_alt"].lower()
+        assert entry_palette.alternateBase().color().name().lower() == tokens["panel_raised"].lower()
+        assert entry_palette.text().color().name().lower() == tokens["text"].lower()
         _close_window(window)
 
     @_skip_no_qt
@@ -277,7 +299,7 @@ class TestResourceGeneratorWindow:
         assert window._simple_asset_result_label.text() == "Showing 2 of 3 assets"
         assert window._simple_asset_table.item(0, 0).toolTip() == (
             "Font text file is not linked.\n"
-            "Fix: Use Open Font Text... or Auto Create Font Texts."
+            "Fix: Use Edit Font Text... to create the charset file."
         )
         assert window._simple_asset_table.item(1, 0).toolTip() == (
             "Video metadata is incomplete: width\n"
@@ -293,7 +315,7 @@ class TestResourceGeneratorWindow:
         qapp.processEvents()
 
         assert "Attention: Font text file is not linked." in window._simple_asset_meta.toPlainText()
-        assert "Suggested Fix: Use Open Font Text... or Auto Create Font Texts." in window._simple_asset_meta.toPlainText()
+        assert "Suggested Fix: Use Edit Font Text... to create the charset file." in window._simple_asset_meta.toPlainText()
         _close_window(window)
 
     @_skip_no_qt
@@ -600,7 +622,7 @@ class TestResourceGeneratorWindow:
 
         window._simple_asset_table.selectRow(1)
         qapp.processEvents()
-        assert window._simple_asset_primary_action_button.text() == "Open Font Text..."
+        assert window._simple_asset_primary_action_button.text() == "Edit Font Text..."
 
         window._simple_asset_table.selectRow(2)
         qapp.processEvents()
@@ -869,7 +891,7 @@ class TestResourceGeneratorWindow:
         menu = window._build_simple_asset_context_menu()
         action_map = {action.text(): action for action in menu.actions() if action.text()}
 
-        assert {"Open Asset", "Open Asset Folder", "Open Font Text", "Copy Resource Name", "Copy Asset Path", "Copy Full Path", "Duplicate", "Remove", "Open Professional Mode"} <= set(action_map)
+        assert {"Open Asset", "Open Asset Folder", "Edit Font Text", "Copy Resource Name", "Copy Asset Path", "Copy Full Path", "Duplicate", "Remove", "Open Professional Mode"} <= set(action_map)
         assert not any(action.text().startswith("Suggested Fix:") for action in menu.actions() if action.text())
         assert action_map["Open Asset"].isEnabled() is True
         assert action_map["Copy Full Path"].isEnabled() is True
@@ -938,8 +960,8 @@ class TestResourceGeneratorWindow:
         menu = window._build_simple_asset_context_menu()
         action_texts = [action.text() for action in menu.actions() if action.text()]
 
-        assert action_texts[0] == "Suggested Fix: Open Font Text..."
-        assert "Open Font Text" not in action_texts
+        assert action_texts[0] == "Suggested Fix: Edit Font Text..."
+        assert "Edit Font Text" not in action_texts
         _close_window(window)
 
     @_skip_no_qt
@@ -1587,177 +1609,6 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
-    def test_refresh_all_video_metadata_updates_entries_and_simple_table(self, qapp, monkeypatch, tmp_path):
-        from ui_designer.model.resource_generation_session import GenerationPaths
-        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
-
-        source_dir = tmp_path / "resource" / "src"
-        source_dir.mkdir(parents=True)
-        (source_dir / "intro.mp4").write_bytes(b"mp4")
-        (source_dir / "loop.mp4").write_bytes(b"mp4")
-        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
-        monkeypatch.setattr(
-            "ui_designer.ui.resource_generator_window._detect_video_metadata",
-            lambda path: (
-                {"fps": 24, "width": 320, "height": 180}
-                if path.endswith("intro.mp4")
-                else {"fps": 12, "width": 160, "height": 90}
-            ),
-        )
-
-        window = ResourceGeneratorWindow("")
-        window._apply_paths_and_data(
-            GenerationPaths(source_dir=str(source_dir)),
-            {
-                "img": [],
-                "font": [],
-                "mp4": [
-                    {"file": "intro.mp4", "name": "intro", "fps": 1, "width": 2, "height": 3},
-                    {"file": "loop.mp4", "name": "loop"},
-                ],
-            },
-            dirty=False,
-        )
-
-        window._refresh_all_video_metadata()
-
-        intro = window._session.section_entries("mp4")[0]
-        loop = window._session.section_entries("mp4")[1]
-        assert intro["fps"] == 24
-        assert intro["width"] == 320
-        assert intro["height"] == 180
-        assert loop["fps"] == 12
-        assert loop["width"] == 160
-        assert loop["height"] == 90
-        assert window._simple_asset_table.item(0, 3).text() == "24fps | 320x180"
-        assert window._simple_asset_table.item(1, 3).text() == "12fps | 160x90"
-        assert window.has_unsaved_changes() is True
-        assert window._status_label.text() == "Refreshed video metadata for 2 videos."
-        _close_window(window)
-
-    @_skip_no_qt
-    def test_refresh_font_text_links_updates_entries_and_simple_table(self, qapp, monkeypatch, tmp_path):
-        from ui_designer.model.resource_generation_session import GenerationPaths
-        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
-
-        source_dir = tmp_path / "resource" / "src"
-        (source_dir / "fonts").mkdir(parents=True)
-        (source_dir / "fonts" / "display.ttf").write_bytes(b"ttf")
-        (source_dir / "fonts" / "display.txt").write_text("ABC", encoding="utf-8")
-        (source_dir / "title.ttf").write_bytes(b"ttf")
-        (source_dir / "title.txt").write_text("XYZ", encoding="utf-8")
-        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
-
-        window = ResourceGeneratorWindow("")
-        window._apply_paths_and_data(
-            GenerationPaths(source_dir=str(source_dir)),
-            {
-                "img": [],
-                "font": [
-                    {"file": "fonts/display.ttf", "name": "display", "text": "stale.txt"},
-                    {"file": "title.ttf", "name": "title"},
-                ],
-                "mp4": [],
-            },
-            dirty=False,
-        )
-
-        window._refresh_font_text_links()
-
-        display = window._session.section_entries("font")[0]
-        title = window._session.section_entries("font")[1]
-        assert display["text"] == "fonts/display.txt"
-        assert title["text"] == "title.txt"
-        assert window._simple_asset_table.item(0, 3).text() == "fonts/display.txt"
-        assert window._simple_asset_table.item(1, 3).text() == "title.txt"
-        assert window.has_unsaved_changes() is True
-        assert window._status_label.text() == "Refreshed font text links for 2 fonts."
-        _close_window(window)
-
-    @_skip_no_qt
-    def test_auto_create_font_text_resources_creates_missing_files_and_updates_links(self, qapp, monkeypatch, tmp_path):
-        from ui_designer.model.resource_generation_session import GenerationPaths
-        from ui_designer.services.font_charset_presets import build_charset, serialize_charset_chars
-        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
-
-        source_dir = tmp_path / "resource" / "src"
-        source_dir.mkdir(parents=True)
-        (source_dir / "display.ttf").write_bytes(b"ttf")
-        (source_dir / "title.ttf").write_bytes(b"ttf")
-        (source_dir / "title.txt").write_text("XYZ", encoding="utf-8")
-        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
-
-        window = ResourceGeneratorWindow("")
-        window._apply_paths_and_data(
-            GenerationPaths(source_dir=str(source_dir)),
-            {
-                "img": [],
-                "font": [
-                    {"file": "display.ttf", "name": "display"},
-                    {"file": "title.ttf", "name": "title"},
-                ],
-                "mp4": [],
-            },
-            dirty=False,
-        )
-
-        window._auto_create_font_text_resources()
-
-        expected_charset = serialize_charset_chars(build_charset(("ascii_printable",)).chars)
-        display_entry = window._session.section_entries("font")[0]
-        title_entry = window._session.section_entries("font")[1]
-        assert display_entry["text"] == "display_charset.txt"
-        assert title_entry["text"] == "title.txt"
-        assert (source_dir / "display_charset.txt").read_text(encoding="utf-8") == expected_charset
-        assert (source_dir / "title.txt").read_text(encoding="utf-8") == "XYZ"
-        assert window._simple_asset_table.item(0, 3).text() == "display_charset.txt"
-        assert window._simple_asset_table.item(1, 3).text() == "title.txt"
-        assert window.has_unsaved_changes() is True
-        assert window._status_label.text() == "Prepared font text for 2 fonts, created 1 files, updated 2 links."
-        _close_window(window)
-
-    @_skip_no_qt
-    def test_auto_generate_font_text_samples_writes_default_english_samples(self, qapp, monkeypatch, tmp_path):
-        from ui_designer.model.resource_generation_session import GenerationPaths
-        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
-
-        source_dir = tmp_path / "resource" / "src"
-        (source_dir / "fonts").mkdir(parents=True)
-        (source_dir / "fonts" / "display.ttf").write_bytes(b"ttf")
-        (source_dir / "hero.png").write_bytes(b"png")
-        (source_dir / "intro.mp4").write_bytes(b"mp4")
-        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
-
-        window = ResourceGeneratorWindow("")
-        window._apply_paths_and_data(
-            GenerationPaths(source_dir=str(source_dir)),
-            {
-                "img": [{"file": "hero.png", "name": "Hero Banner"}],
-                "font": [{"file": "fonts/display.ttf", "name": "Display Font", "text": ""}],
-                "mp4": [{"file": "intro.mp4", "name": "Intro Clip"}],
-            },
-            dirty=False,
-        )
-
-        window._auto_generate_font_text_samples()
-
-        text_path = source_dir / "fonts" / "display_charset.txt"
-        content = text_path.read_text(encoding="utf-8")
-        assert text_path.is_file()
-        assert "HELLO\n" in content
-        assert "Designer\n" in content
-        assert "Quick Brown Fox\n" in content
-        assert "1234\n" in content
-        assert "Hero Banner\n" not in content
-        assert "Display Font\n" not in content
-        assert "Intro Clip\n" not in content
-        assert window._session.section_entries("font")[0]["text"] == "fonts/display_charset.txt"
-        assert window._simple_asset_table.item(1, 3).text() == "fonts/display_charset.txt"
-        assert window.has_unsaved_changes() is True
-        assert window._status_label.text() == "Generated sample text for 1 fonts, created 1 files, added 4 lines, updated 1 links."
-        _close_window(window)
-
-    @_skip_no_qt
     def test_pack_assets_into_source_dir_copies_external_files_and_updates_links(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -1839,39 +1690,66 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
-    def test_open_selected_font_text_resource_opens_existing_file(self, qapp, monkeypatch, tmp_path):
+    def test_open_selected_font_text_resource_uses_active_font_and_detected_sibling_text(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QDialog
+
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
 
         source_dir = tmp_path / "resource" / "src"
-        (source_dir / "charset").mkdir(parents=True)
-        (source_dir / "display.ttf").write_bytes(b"ttf")
-        text_path = source_dir / "charset" / "basic.txt"
+        fonts_dir = source_dir / "fonts"
+        fonts_dir.mkdir(parents=True)
+        (fonts_dir / "display.ttf").write_bytes(b"ttf")
+        text_path = fonts_dir / "display.txt"
         text_path.write_text("ABC", encoding="utf-8")
 
-        opened = []
-        monkeypatch.setattr(
-            "ui_designer.ui.resource_generator_window.QDesktopServices.openUrl",
-            lambda url: opened.append(url.toLocalFile()) or True,
-        )
+        captured = {}
+
+        class _FakeDialog:
+            def __init__(self, *, filename, initial_text, is_new_file, parent=None):
+                captured["filename"] = filename
+                captured["initial_text"] = initial_text
+                captured["is_new_file"] = is_new_file
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def text_value(self):
+                return "ABCD\n"
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._FontTextEditorDialog", _FakeDialog)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
 
         window = ResourceGeneratorWindow("")
         window._apply_paths_and_data(
             GenerationPaths(source_dir=str(source_dir)),
-            {"img": [], "font": [{"file": "display.ttf", "name": "display", "text": "charset/basic.txt"}], "mp4": []},
+            {"img": [], "font": [{"file": "fonts/display.ttf", "name": "display", "text": ""}], "mp4": []},
             dirty=False,
         )
-        window._simple_asset_table.selectRow(0)
+        window._set_ui_mode("professional")
+        window._active_section = "font"
+        window._active_entry_index = 0
+        window._refresh_section_selection()
+        window._refresh_entry_table()
+        window._update_form()
+        window._simple_asset_table.clearSelection()
         qapp.processEvents()
 
         window._open_selected_font_text_resource()
 
-        assert opened == [text_path.resolve().as_posix()]
-        assert window._status_label.text() == "Opened font text 'charset/basic.txt'."
+        assert captured["filename"] == "fonts/display.txt"
+        assert captured["initial_text"] == "ABC"
+        assert captured["is_new_file"] is False
+        assert text_path.read_text(encoding="utf-8") == "ABCD\n"
+        assert window._session.section_entries("font")[0]["text"] == "fonts/display.txt"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Saved font text 'fonts/display.txt'."
         _close_window(window)
 
     @_skip_no_qt
     def test_open_selected_font_text_resource_can_create_missing_file(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QDialog
+
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
 
@@ -1879,12 +1757,22 @@ class TestResourceGeneratorWindow:
         source_dir.mkdir(parents=True)
         (source_dir / "display.ttf").write_bytes(b"ttf")
 
-        opened = []
+        captured = {}
+
+        class _FakeDialog:
+            def __init__(self, *, filename, initial_text, is_new_file, parent=None):
+                captured["filename"] = filename
+                captured["initial_text"] = initial_text
+                captured["is_new_file"] = is_new_file
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def text_value(self):
+                return "HELLO\nWORLD\n"
+
         monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
-        monkeypatch.setattr(
-            "ui_designer.ui.resource_generator_window.QDesktopServices.openUrl",
-            lambda url: opened.append(url.toLocalFile()) or True,
-        )
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._FontTextEditorDialog", _FakeDialog)
 
         window = ResourceGeneratorWindow("")
         window._apply_paths_and_data(
@@ -1899,54 +1787,14 @@ class TestResourceGeneratorWindow:
 
         text_path = source_dir / "display_charset.txt"
         assert text_path.is_file()
-        assert opened == [text_path.resolve().as_posix()]
+        assert captured["filename"] == "display_charset.txt"
+        assert captured["is_new_file"] is True
+        assert "HELLO" in captured["initial_text"]
+        assert "Quick Brown Fox" in captured["initial_text"]
+        assert text_path.read_text(encoding="utf-8") == "HELLO\nWORLD\n"
         assert window._session.section_entries("font")[0]["text"] == "display_charset.txt"
         assert window.has_unsaved_changes() is True
-        assert window._status_label.text() == "Created and opened font text 'display_charset.txt'."
-        _close_window(window)
-
-    @_skip_no_qt
-    def test_auto_fill_missing_resource_info_updates_names_font_text_and_video_metadata(self, qapp, monkeypatch, tmp_path):
-        from ui_designer.model.resource_generation_session import GenerationPaths
-        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
-
-        source_dir = tmp_path / "resource" / "src"
-        source_dir.mkdir(parents=True)
-        (source_dir / "hero.png").write_bytes(b"png")
-        (source_dir / "display.ttf").write_bytes(b"ttf")
-        (source_dir / "display.txt").write_text("ABC", encoding="utf-8")
-        (source_dir / "intro.mp4").write_bytes(b"mp4")
-
-        monkeypatch.setattr(
-            "ui_designer.ui.resource_generator_window._detect_video_metadata",
-            lambda path: {"fps": 24, "width": 320, "height": 180},
-        )
-        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
-
-        window = ResourceGeneratorWindow("")
-        window._apply_paths_and_data(
-            GenerationPaths(source_dir=str(source_dir)),
-            {
-                "img": [{"file": "hero.png"}],
-                "font": [{"file": "display.ttf"}],
-                "mp4": [{"file": "intro.mp4"}],
-            },
-            dirty=False,
-        )
-
-        window._auto_fill_missing_resource_info()
-
-        assert window._session.section_entries("img")[0]["name"] == "hero"
-        font_entry = window._session.section_entries("font")[0]
-        assert font_entry["name"] == "display"
-        assert font_entry["text"] == "display.txt"
-        video_entry = window._session.section_entries("mp4")[0]
-        assert video_entry["name"] == "intro"
-        assert video_entry["fps"] == 24
-        assert video_entry["width"] == 320
-        assert video_entry["height"] == 180
-        assert window.has_unsaved_changes() is True
-        assert window._status_label.text() == "Filled 5 missing fields, names 3, font texts 1, video metadata 1."
+        assert window._status_label.text() == "Created and saved font text 'display_charset.txt'."
         _close_window(window)
 
     @_skip_no_qt

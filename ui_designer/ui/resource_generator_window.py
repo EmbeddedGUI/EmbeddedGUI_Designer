@@ -12,7 +12,7 @@ import shutil
 import subprocess
 
 from PyQt5.QtCore import QEvent, QTimer, Qt, QSignalBlocker, QUrl, pyqtSignal
-from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QKeySequence, QPainter, QPen, QPixmap
+from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QKeySequence, QPainter, QPalette, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -57,7 +57,6 @@ from ..model.resource_generation_session import (
     section_entry_label,
 )
 from ..model.config import get_config
-from ..services.font_charset_presets import build_charset, serialize_charset_chars
 from ..model.workspace import normalize_path
 from ..utils.font_preview_renderer import render_font_preview_image
 from ..utils.resource_config_overlay import APP_RESOURCE_CONFIG_FILENAME, make_empty_resource_config
@@ -749,6 +748,40 @@ class _QuickPreviewBoardDialog(QDialog):
         layout.addWidget(buttons)
 
 
+class _FontTextEditorDialog(QDialog):
+    def __init__(self, *, filename: str, initial_text: str, is_new_file: bool, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Edit Font Text")
+        self.setMinimumSize(560, 420)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        summary = QLabel(
+            "Edit the UTF-8 text content used to generate glyphs for this font."
+            + (" A new text file will be created when you save." if is_new_file else "")
+        )
+        summary.setWordWrap(True)
+        layout.addWidget(summary)
+
+        filename_label = QLabel(f"Target: {filename}")
+        filename_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        layout.addWidget(filename_label)
+
+        self._editor = QPlainTextEdit()
+        self._editor.setPlainText(str(initial_text or ""))
+        layout.addWidget(self._editor, 1)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def text_value(self) -> str:
+        return self._editor.toPlainText()
+
+
 class ResourceGeneratorWindow(QDialog):
     """Modeless standalone window for editing and generating resources."""
 
@@ -799,6 +832,7 @@ class ResourceGeneratorWindow(QDialog):
         super().changeEvent(event)
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange}:
             self._sync_window_chrome_theme()
+            self._apply_resource_table_palettes()
             if getattr(self, "_simple_asset_table", None) is not None:
                 self._refresh_simple_page()
 
@@ -940,7 +974,7 @@ class ResourceGeneratorWindow(QDialog):
         intro_layout.setSpacing(8)
 
         intro = QLabel(
-            "Use quick helpers to scan an asset folder, generate font text files, and build resources without editing every field manually."
+            "Use quick helpers to scan an asset folder, edit font text files, and build resources without editing every field manually."
         )
         intro.setWordWrap(True)
         intro_layout.addWidget(intro)
@@ -961,20 +995,8 @@ class ResourceGeneratorWindow(QDialog):
         self._organize_folders_button = QPushButton("Organize Folders")
         self._organize_folders_button.clicked.connect(self._organize_assets_into_standard_folders)
 
-        self._generate_sample_texts_button = QPushButton("Auto Generate Texts")
-        self._generate_sample_texts_button.clicked.connect(self._auto_generate_font_text_samples)
-
         self._generate_font_text_button = QPushButton("Generate Font Text...")
         self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
-
-        self._auto_create_font_texts_button = QPushButton("Auto Create Font Texts")
-        self._auto_create_font_texts_button.clicked.connect(self._auto_create_font_text_resources)
-
-        self._refresh_font_texts_button = QPushButton("Refresh Font Texts")
-        self._refresh_font_texts_button.clicked.connect(self._refresh_font_text_links)
-
-        self._auto_fill_button = QPushButton("Auto Fill Missing Info")
-        self._auto_fill_button.clicked.connect(self._auto_fill_missing_resource_info)
 
         self._rename_assets_button = QPushButton("Rename Names From Files")
         self._rename_assets_button.clicked.connect(self._rename_asset_names_from_files)
@@ -991,11 +1013,8 @@ class ResourceGeneratorWindow(QDialog):
         self._clean_helper_outputs_button = QPushButton("Clean Helper Outputs")
         self._clean_helper_outputs_button.clicked.connect(self._remove_generated_helper_outputs_for_quick_mode)
 
-        self._open_font_text_button = QPushButton("Open Font Text...")
+        self._open_font_text_button = QPushButton("Edit Font Text...")
         self._open_font_text_button.clicked.connect(self._open_selected_font_text_resource)
-
-        self._preview_asset_button = QPushButton("Preview Selected Asset")
-        self._preview_asset_button.clicked.connect(self._preview_selected_simple_asset)
 
         self._preview_board_button = QPushButton("Preview Board...")
         self._preview_board_button.clicked.connect(self._open_quick_preview_board)
@@ -1005,9 +1024,6 @@ class ResourceGeneratorWindow(QDialog):
 
         self._detect_video_info_button = QPushButton("Detect Video Info")
         self._detect_video_info_button.clicked.connect(self._detect_selected_video_metadata)
-
-        self._refresh_videos_button = QPushButton("Refresh Videos")
-        self._refresh_videos_button.clicked.connect(self._refresh_all_video_metadata)
 
         self._edit_asset_button = QPushButton("Edit / Open Asset...")
         self._edit_asset_button.clicked.connect(self._open_selected_asset_in_external_editor)
@@ -1098,7 +1114,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_action_tabs.addTab(
             self._build_simple_action_tab(
                 "Start",
-                "Import or normalize incoming resources before generation.",
+                "Import resources, organize files, and prepare font text content.",
                 [
                     self._build_simple_action_group(
                         "Import & Setup",
@@ -1107,10 +1123,7 @@ class ResourceGeneratorWindow(QDialog):
                             self._scan_assets_button,
                             self._pack_assets_button,
                             self._organize_folders_button,
-                            self._generate_sample_texts_button,
                             self._generate_font_text_button,
-                            self._auto_create_font_texts_button,
-                            self._refresh_font_texts_button,
                         ],
                         columns=3,
                     )
@@ -1121,14 +1134,12 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_action_tabs.addTab(
             self._build_simple_action_tab(
                 "Clean",
-                "Fill missing metadata and keep the asset set tidy.",
+                "Keep the asset set tidy without bulk auto-fixing hidden fields.",
                 [
                     self._build_simple_action_group(
                         "Batch Fixes",
                         [
-                            self._auto_fill_button,
                             self._rename_assets_button,
-                            self._refresh_videos_button,
                             self._sort_assets_button,
                             self._dedupe_assets_button,
                             self._remove_missing_assets_button,
@@ -1462,6 +1473,7 @@ class ResourceGeneratorWindow(QDialog):
         return page
 
     def _configure_simple_asset_table(self):
+        self._apply_resource_table_palettes()
         self._simple_asset_table.verticalHeader().setVisible(False)
         self._simple_asset_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._simple_asset_table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -1492,6 +1504,39 @@ class ResourceGeneratorWindow(QDialog):
         for column, width in enumerate(_DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS):
             simple_header.resizeSection(column, width)
         self._apply_simple_asset_sort_indicator()
+
+    def _apply_resource_table_palette(self, table: QTableWidget | None, *, use_alt_background: bool):
+        if table is None:
+            return
+        tokens = app_theme_tokens()
+        palette = QPalette(table.palette())
+        base_color = QColor(tokens["panel_alt"] if use_alt_background else tokens["panel_raised"])
+        alternate_color = QColor(tokens["panel_raised"] if use_alt_background else tokens["panel_alt"])
+        text_color = QColor(tokens["text"])
+        muted_color = QColor(tokens["text_soft"])
+        highlight_color = QColor(tokens["selection"])
+        inactive_highlight_color = QColor(tokens["selection_soft"])
+        palette.setColor(QPalette.Base, base_color)
+        palette.setColor(QPalette.AlternateBase, alternate_color)
+        palette.setColor(QPalette.Window, base_color)
+        palette.setColor(QPalette.Text, text_color)
+        palette.setColor(QPalette.WindowText, text_color)
+        palette.setColor(QPalette.ButtonText, text_color)
+        palette.setColor(QPalette.Highlight, highlight_color)
+        palette.setColor(QPalette.HighlightedText, text_color)
+        palette.setColor(QPalette.Disabled, QPalette.Text, muted_color)
+        palette.setColor(QPalette.Disabled, QPalette.WindowText, muted_color)
+        palette.setColor(QPalette.Inactive, QPalette.Highlight, inactive_highlight_color)
+        palette.setColor(QPalette.Inactive, QPalette.HighlightedText, text_color)
+        table.setPalette(palette)
+        viewport = table.viewport() if hasattr(table, "viewport") else None
+        if viewport is not None:
+            viewport.setPalette(palette)
+            viewport.setAutoFillBackground(True)
+
+    def _apply_resource_table_palettes(self):
+        self._apply_resource_table_palette(getattr(self, "_simple_asset_table", None), use_alt_background=False)
+        self._apply_resource_table_palette(getattr(self, "_entry_table", None), use_alt_background=True)
 
     def _build_simple_asset_empty_state(self) -> QWidget:
         page = QWidget()
@@ -1691,7 +1736,7 @@ class ResourceGeneratorWindow(QDialog):
             text_value = str(entry.get("text", "") or "").strip()
             text_items = [item.strip() for item in text_value.split(",") if item.strip()]
             if not text_items:
-                suggestions.append("Use Open Font Text... or Auto Create Font Texts.")
+                suggestions.append("Use Edit Font Text... to create the charset file.")
             else:
                 missing_text_items = []
                 for item in text_items:
@@ -1699,10 +1744,10 @@ class ResourceGeneratorWindow(QDialog):
                     if not resolved_text or not os.path.exists(resolved_text):
                         missing_text_items.append(item)
                 if missing_text_items:
-                    suggestions.append("Use Open Font Text... to create the missing charset file.")
+                    suggestions.append("Use Edit Font Text... to create or update the charset file.")
                 matched_text = self._matched_font_text_path("font", entry)
                 if matched_text and matched_text != text_value:
-                    suggestions.append("Run Refresh Font Text Links to relink the detected charset file.")
+                    suggestions.append("Use Professional Mode to relink the detected charset file.")
 
         if section == "mp4":
             missing_fields = []
@@ -1758,10 +1803,10 @@ class ResourceGeneratorWindow(QDialog):
                 if not resolved_text or not os.path.exists(resolved_text):
                     missing_text_items.append(item)
             if not text_items or missing_text_items:
-                return "Suggested Fix: Open Font Text...", self._open_selected_font_text_resource
+                return "Suggested Fix: Edit Font Text...", self._open_selected_font_text_resource
             matched_text = self._matched_font_text_path("font", entry)
             if matched_text and matched_text != text_value:
-                return "Suggested Fix: Refresh Font Text Links", self._refresh_font_text_links
+                return "Suggested Fix: Open Professional Mode", self._open_current_simple_selection_in_professional_mode
 
         if section == "mp4":
             for field_name in ("fps", "width", "height"):
@@ -1890,8 +1935,8 @@ class ResourceGeneratorWindow(QDialog):
         open_folder_action.setEnabled(has_target_dir)
         open_folder_action.triggered.connect(self._open_selected_asset_folder)
 
-        if section == "font" and primary_fix_text != "Suggested Fix: Open Font Text...":
-            open_text_action = menu.addAction("Open Font Text")
+        if section == "font" and primary_fix_text != "Suggested Fix: Edit Font Text...":
+            open_text_action = menu.addAction("Edit Font Text")
             open_text_action.triggered.connect(self._open_selected_font_text_resource)
 
         menu.addSeparator()
@@ -2063,6 +2108,7 @@ class ResourceGeneratorWindow(QDialog):
         header = self._entry_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         header.setSectionResizeMode(1, QHeaderView.Stretch)
+        self._apply_resource_table_palettes()
         layout.addWidget(self._entry_table, 1)
         return container
 
@@ -2255,6 +2301,10 @@ class ResourceGeneratorWindow(QDialog):
             button = QPushButton("Browse...")
             button.clicked.connect(lambda _checked=False, spec=field_spec: self._browse_entry_field(spec))
             layout.addWidget(button)
+        if self._active_section == "font" and field_spec.name == "text":
+            edit_button = QPushButton("Edit...")
+            edit_button.clicked.connect(self._open_selected_font_text_resource)
+            layout.addWidget(edit_button)
 
         return wrapper
 
@@ -2983,7 +3033,6 @@ class ResourceGeneratorWindow(QDialog):
         section, _index, entry = self._selected_simple_asset_context()
         has_selection = bool(section and entry is not None)
         any_selection_buttons = (
-            self._preview_asset_button,
             self._edit_asset_button,
             self._open_asset_folder_button,
             self._duplicate_simple_asset_button,
@@ -3011,15 +3060,6 @@ class ResourceGeneratorWindow(QDialog):
             button.setEnabled(has_selection and section == "font")
         for button in video_buttons:
             button.setEnabled(has_selection and section == "mp4")
-
-    def _preview_selected_simple_asset(self):
-        section, index, entry = self._selected_simple_asset_context()
-        if entry is None:
-            QMessageBox.warning(self, "Preview Asset", "Select an asset in Simple mode first.")
-            return
-        self._active_section = section or self._active_section
-        self._active_entry_index = index
-        self._update_simple_asset_preview()
 
     def _open_quick_preview_board(self):
         if not self._commit_raw_json_if_needed():
@@ -3548,215 +3588,6 @@ class ResourceGeneratorWindow(QDialog):
         self._refresh_simple_page()
         self._set_status(f"Video metadata already up to date for '{section_entry_label('mp4', entry, index)}'.")
 
-    def _refresh_all_video_metadata(self):
-        if not self._commit_raw_json_if_needed():
-            return
-
-        refreshed = 0
-        for index, entry in enumerate(self._session.section_entries("mp4")):
-            if not isinstance(entry, dict):
-                continue
-            changed, _metadata = self._sync_video_metadata(index, entry, overwrite_existing=True)
-            if changed:
-                refreshed += 1
-
-        if not refreshed:
-            self._set_status("Video metadata already matches current files.")
-            return
-
-        self._mark_dirty()
-        self._refresh_entry_table()
-        self._update_merged_preview()
-        self._update_raw_editor()
-        self._set_status(f"Refreshed video metadata for {refreshed} videos.")
-
-    def _refresh_font_text_links(self):
-        if not self._commit_raw_json_if_needed():
-            return
-
-        refreshed = 0
-        for index, entry in enumerate(self._session.section_entries("font")):
-            if not isinstance(entry, dict):
-                continue
-            matched_text = self._matched_font_text_path("font", entry)
-            if not matched_text:
-                continue
-            existing = str(entry.get("text", "") or "").strip()
-            if existing == matched_text:
-                continue
-            self._session.update_entry_value("font", index, "text", matched_text)
-            refreshed += 1
-
-        if not refreshed:
-            self._set_status("Font text links already match current files.")
-            return
-
-        self._mark_dirty()
-        self._refresh_entry_table()
-        self._update_merged_preview()
-        self._update_raw_editor()
-        self._set_status(f"Refreshed font text links for {refreshed} fonts.")
-
-    def _auto_generate_font_text_samples(self):
-        if not self._commit_raw_json_if_needed():
-            return
-
-        source_dir = normalize_path(self._session.paths.source_dir)
-        if not source_dir:
-            QMessageBox.warning(
-                self,
-                "Auto Generate Texts",
-                "Set Source Dir first so Designer knows where to save generated font text files.",
-            )
-            return
-
-        font_entries = [
-            (index, entry)
-            for index, entry in enumerate(self._session.section_entries("font"))
-            if isinstance(entry, dict) and str(entry.get("file", "") or "").strip()
-        ]
-        if not font_entries:
-            QMessageBox.information(self, "Auto Generate Texts", "Import or create some font assets first.")
-            return
-
-        sample_lines = _quick_font_text_sample_lines()
-        written_fonts = 0
-        created_files = 0
-        added_lines = 0
-        updated_links = 0
-
-        for index, entry in font_entries:
-            target_filename, resolved_path = self._preferred_quick_font_text_target(entry)
-            if not target_filename or not resolved_path:
-                continue
-
-            existing_lines: list[str] = []
-            if os.path.isfile(resolved_path):
-                try:
-                    with open(resolved_path, "r", encoding="utf-8") as handle:
-                        existing_lines = [line.strip() for line in handle.read().splitlines() if line.strip()]
-                except OSError as exc:
-                    QMessageBox.warning(self, "Auto Generate Texts", f"Failed to read text file:\n{resolved_path}\n\n{exc}")
-                    return
-            else:
-                created_files += 1
-
-            existing_set = set(existing_lines)
-            appended_lines = [line for line in sample_lines if line not in existing_set]
-
-            touched = False
-            if appended_lines or not os.path.isfile(resolved_path):
-                os.makedirs(os.path.dirname(resolved_path), exist_ok=True)
-                merged_lines = existing_lines + appended_lines
-                try:
-                    with open(resolved_path, "w", encoding="utf-8", newline="\n") as handle:
-                        handle.write("\n".join(merged_lines) + ("\n" if merged_lines else ""))
-                except OSError as exc:
-                    QMessageBox.warning(self, "Auto Generate Texts", f"Failed to write text file:\n{resolved_path}\n\n{exc}")
-                    return
-                added_lines += len(appended_lines)
-                touched = True
-
-            current_text = str(entry.get("text", "") or "").strip()
-            if current_text != target_filename:
-                self._session.update_entry_value("font", index, "text", target_filename)
-                updated_links += 1
-                touched = True
-
-            if touched:
-                written_fonts += 1
-
-        if not written_fonts:
-            self._set_status("Font text files already contain the current sample lines.")
-            return
-
-        self._mark_dirty()
-        self._refresh_entry_table()
-        self._update_merged_preview()
-        self._update_raw_editor()
-
-        summary = [f"Generated sample text for {written_fonts} fonts"]
-        if created_files:
-            summary.append(f"created {created_files} files")
-        if added_lines:
-            summary.append(f"added {added_lines} lines")
-        if updated_links:
-            summary.append(f"updated {updated_links} links")
-        self._set_status(", ".join(summary) + ".")
-
-    def _auto_create_font_text_resources(self):
-        if not self._commit_raw_json_if_needed():
-            return
-
-        source_dir = self._session.paths.source_dir
-        if not source_dir:
-            QMessageBox.warning(
-                self,
-                "Auto Create Font Texts",
-                "Set Source Dir first so Designer knows where to save generated font text files.",
-            )
-            return
-
-        prepared = 0
-        created = 0
-        updated_links = 0
-
-        for index, entry in enumerate(self._session.section_entries("font")):
-            if not isinstance(entry, dict):
-                continue
-
-            current_text = str(entry.get("text", "") or "").strip()
-            if current_text:
-                has_existing_text = False
-                for item in [candidate.strip() for candidate in current_text.split(",") if candidate.strip()]:
-                    resolved = self._resolve_entry_path("font", "text", item)
-                    if resolved and os.path.isfile(resolved):
-                        has_existing_text = True
-                        break
-                if has_existing_text:
-                    continue
-
-            touched = False
-            matched_text = self._matched_font_text_path("font", entry)
-            if matched_text:
-                if current_text != matched_text:
-                    self._session.update_entry_value("font", index, "text", matched_text)
-                    updated_links += 1
-                    touched = True
-            else:
-                target_filename, resolved_path = self._preferred_font_text_target(entry)
-                if not target_filename or not resolved_path:
-                    continue
-                os.makedirs(os.path.dirname(resolved_path), exist_ok=True)
-                if not os.path.isfile(resolved_path):
-                    with open(resolved_path, "w", encoding="utf-8") as handle:
-                        handle.write(_default_quick_font_charset_text())
-                    created += 1
-                    touched = True
-                if current_text != target_filename:
-                    self._session.update_entry_value("font", index, "text", target_filename)
-                    updated_links += 1
-                    touched = True
-
-            if touched:
-                prepared += 1
-
-        if not prepared:
-            self._set_status("Font text files already exist for all fonts.")
-            return
-
-        self._mark_dirty()
-        self._refresh_entry_table()
-        self._update_merged_preview()
-        self._update_raw_editor()
-
-        summary = [f"Prepared font text for {prepared} fonts"]
-        if created:
-            summary.append(f"created {created} files")
-        if updated_links:
-            summary.append(f"updated {updated_links} links")
-        self._set_status(", ".join(summary) + ".")
-
     def _pack_assets_into_source_dir(self):
         if not self._commit_raw_json_if_needed():
             return
@@ -3934,47 +3765,6 @@ class ResourceGeneratorWindow(QDialog):
         self._update_merged_preview()
         self._update_raw_editor()
         self._set_status(f"Organized {moved_files} files into standard folders, updated {updated_links} links.")
-
-    def _auto_fill_missing_resource_info(self):
-        if not self._commit_raw_json_if_needed():
-            return
-
-        updates = {
-            "name": 0,
-            "font_text": 0,
-            "video_meta": 0,
-        }
-
-        for section in KNOWN_RESOURCE_SECTIONS:
-            entries = self._session.section_entries(section)
-            for index, entry in enumerate(entries):
-                if not isinstance(entry, dict):
-                    continue
-                if self._auto_fill_entry_name(section, index, entry):
-                    updates["name"] += 1
-                if section == "font" and self._auto_fill_font_text(section, index, entry):
-                    updates["font_text"] += 1
-                if section == "mp4" and self._auto_fill_video_metadata(index, entry):
-                    updates["video_meta"] += 1
-
-        total_updates = sum(updates.values())
-        if not total_updates:
-            self._set_status("No missing asset info needed to be filled.")
-            return
-
-        self._mark_dirty()
-        self._refresh_entry_table()
-        self._update_merged_preview()
-        self._update_raw_editor()
-
-        summary = [f"Filled {total_updates} missing fields"]
-        if updates["name"]:
-            summary.append(f"names {updates['name']}")
-        if updates["font_text"]:
-            summary.append(f"font texts {updates['font_text']}")
-        if updates["video_meta"]:
-            summary.append(f"video metadata {updates['video_meta']}")
-        self._set_status(", ".join(summary) + ".")
 
     def _sort_assets_for_quick_mode(self):
         if not self._commit_raw_json_if_needed():
@@ -4189,28 +3979,6 @@ class ResourceGeneratorWindow(QDialog):
             f"Cleaned {len(removable_indices)} generated helper assets, deleted {deleted_files} files in {deleted_dirs} folders."
         )
 
-    def _auto_fill_entry_name(self, section: str, index: int, entry: dict) -> bool:
-        if str(entry.get("name", "") or "").strip():
-            return False
-        suggested = _resource_name_from_file(entry.get("file", ""))
-        if not suggested:
-            return False
-        self._session.update_entry_value(section, index, "name", suggested)
-        return True
-
-    def _auto_fill_font_text(self, section: str, index: int, entry: dict) -> bool:
-        if str(entry.get("text", "") or "").strip():
-            return False
-        matched_text = self._matched_font_text_path(section, entry)
-        if not matched_text:
-            return False
-        self._session.update_entry_value(section, index, "text", matched_text)
-        return True
-
-    def _auto_fill_video_metadata(self, index: int, entry: dict) -> bool:
-        changed, _metadata = self._sync_video_metadata(index, entry, overwrite_existing=False)
-        return changed
-
     def _sync_video_metadata(self, index: int, entry: dict, *, overwrite_existing: bool) -> tuple[bool, dict]:
         file_name = str(entry.get("file", "") or "").strip()
         resolved_path = self._resolve_entry_path("mp4", "file", file_name)
@@ -4255,23 +4023,32 @@ class ResourceGeneratorWindow(QDialog):
             return candidate
         return ""
 
-    def _open_selected_font_text_resource(self):
+    def _selected_font_text_context(self) -> tuple[int, dict | None]:
         section, index, entry = self._selected_simple_asset_context()
-        if entry is None or section != "font":
-            QMessageBox.warning(self, "Open Font Text", "Select a font asset in Simple mode first.")
+        if section == "font" and entry is not None:
+            return index, entry
+        if self._active_section == "font":
+            return self._active_entry_index, self._current_entry()
+        return -1, None
+
+    def _open_selected_font_text_resource(self):
+        index, entry = self._selected_font_text_context()
+        if entry is None:
+            QMessageBox.warning(self, "Edit Font Text", "Select a font asset first.")
             return
 
         target_filename, resolved_path = self._preferred_font_text_target(entry)
         if not target_filename or not resolved_path:
             QMessageBox.warning(
                 self,
-                "Open Font Text",
-                "Set Source Dir first, or generate a font text file before opening it.",
+                "Edit Font Text",
+                "Set Source Dir first so Designer knows where to save the font text file.",
             )
             return
 
-        created = False
-        if not os.path.isfile(resolved_path):
+        is_new_file = not os.path.isfile(resolved_path)
+        initial_text = ""
+        if is_new_file:
             answer = QMessageBox.question(
                 self,
                 "Create Font Text",
@@ -4281,21 +4058,40 @@ class ResourceGeneratorWindow(QDialog):
             )
             if answer != QMessageBox.Yes:
                 return
-            os.makedirs(os.path.dirname(resolved_path), exist_ok=True)
+            initial_text = _default_new_font_text_file_body()
+        else:
+            try:
+                with open(resolved_path, "r", encoding="utf-8") as handle:
+                    initial_text = handle.read()
+            except OSError as exc:
+                QMessageBox.warning(self, "Edit Font Text", f"Failed to read text file:\n{resolved_path}\n\n{exc}")
+                return
+
+        dialog = _FontTextEditorDialog(
+            filename=target_filename,
+            initial_text=initial_text,
+            is_new_file=is_new_file,
+            parent=self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        content = str(dialog.text_value() or "").replace("\r\n", "\n").replace("\r", "\n")
+        os.makedirs(os.path.dirname(resolved_path), exist_ok=True)
+        try:
             with open(resolved_path, "w", encoding="utf-8", newline="\n") as handle:
-                handle.write("")
-            self._active_section = "font"
-            self._active_entry_index = index
-            self._assign_generated_text_to_font(target_filename)
-            created = True
+                handle.write(content)
+        except OSError as exc:
+            QMessageBox.warning(self, "Edit Font Text", f"Failed to write text file:\n{resolved_path}\n\n{exc}")
+            return
 
         self._active_section = "font"
         self._active_entry_index = index
+        linked = self._assign_generated_text_to_font(target_filename)
+        self._refresh_simple_page()
+        self._update_form()
         self._update_simple_asset_preview()
-        if not QDesktopServices.openUrl(QUrl.fromLocalFile(resolved_path)):
-            QMessageBox.warning(self, "Open Font Text", f"Failed to open text file with the system editor:\n{resolved_path}")
-            return
-        action = "Created and opened" if created else "Opened"
+        action = "Created and saved" if is_new_file else "Saved"
         self._set_status(f"{action} font text '{target_filename}'.")
 
     def _preferred_font_text_target(self, entry: dict) -> tuple[str, str]:
@@ -4310,35 +4106,17 @@ class ResourceGeneratorWindow(QDialog):
             first = candidates[0]
             return first, self._resolve_entry_path("font", "text", first)
 
+        matched_text = self._matched_font_text_path("font", entry)
+        if matched_text:
+            resolved_path = self._resolve_entry_path("font", "text", matched_text)
+            if resolved_path:
+                return matched_text, resolved_path
+
         source_dir = self._session.paths.source_dir
         if not source_dir:
             return "", ""
         suggested = _suggest_charset_filename_for_resource("font", str(entry.get("file", "") or ""))
         return suggested, normalize_path(os.path.join(source_dir, suggested))
-
-    def _preferred_quick_font_text_target(self, entry: dict) -> tuple[str, str]:
-        source_dir = normalize_path(self._session.paths.source_dir)
-        if not source_dir:
-            return "", ""
-
-        text_value = str(entry.get("text", "") or "").strip()
-        candidates = [item.strip() for item in text_value.split(",") if item.strip()]
-        for item in candidates:
-            resolved = self._resolve_entry_path("font", "text", item)
-            if resolved and _is_subpath(resolved, source_dir):
-                stored = os.path.relpath(resolved, source_dir).replace("\\", "/")
-                return stored, resolved
-
-        if candidates and not os.path.isabs(candidates[0]):
-            first = candidates[0].replace("\\", "/").strip().lstrip("/")
-            return first, normalize_path(os.path.join(source_dir, first))
-
-        font_file = str(entry.get("file", "") or "").replace("\\", "/").strip().lstrip("/")
-        font_dir = os.path.dirname(font_file)
-        suggested_name = _suggest_charset_filename_for_resource("font", font_file)
-        relative_target = f"{font_dir}/{suggested_name}" if font_dir else suggested_name
-        relative_target = relative_target.replace("//", "/")
-        return relative_target, normalize_path(os.path.join(source_dir, relative_target.replace("/", os.sep)))
 
     def _open_resize_image_helper(self):
         section, index, entry = self._selected_simple_asset_context()
@@ -5960,6 +5738,8 @@ class ResourceGeneratorWindow(QDialog):
         self._mark_dirty()
         self._refresh_section_selection()
         self._refresh_entry_table()
+        self._update_form()
+        self._refresh_simple_page()
         return True
 
     def _mark_dirty(self):
@@ -6372,10 +6152,6 @@ def _resource_name_from_file(file_name) -> str:
     return os.path.splitext(os.path.basename(normalized))[0].strip()
 
 
-def _default_quick_font_charset_text() -> str:
-    return serialize_charset_chars(build_charset(("ascii_printable",)).chars)
-
-
 def _quick_font_text_sample_lines() -> list[str]:
     return [
         "HELLO",
@@ -6383,6 +6159,11 @@ def _quick_font_text_sample_lines() -> list[str]:
         "Quick Brown Fox",
         "1234",
     ]
+
+
+def _default_new_font_text_file_body() -> str:
+    lines = _quick_font_text_sample_lines()
+    return "\n".join(lines) + ("\n" if lines else "")
 
 
 def _default_quick_font_preview_text() -> str:
