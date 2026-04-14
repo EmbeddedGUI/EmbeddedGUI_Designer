@@ -864,6 +864,10 @@ class _FontTextLinksDialog(QDialog):
         self._open_folder_button.clicked.connect(self._open_selected_folder)
         actions_col.addWidget(self._open_folder_button)
 
+        self._remove_missing_button = QPushButton("Remove Missing")
+        self._remove_missing_button.clicked.connect(self._remove_missing_paths)
+        actions_col.addWidget(self._remove_missing_button)
+
         self._remove_path_button = QPushButton("Remove")
         self._remove_path_button.clicked.connect(self._remove_selected_path)
         actions_col.addWidget(self._remove_path_button)
@@ -1076,6 +1080,7 @@ class _FontTextLinksDialog(QDialog):
         self._edit_file_button.setEnabled(has_selection and callable(self._edit_file_callback))
         self._copy_path_button.setEnabled(has_selection)
         self._open_folder_button.setEnabled(bool(self._folder_path_for_value(self._selected_value())))
+        self._remove_missing_button.setEnabled(any(not self._resolved_item_path(value) or not os.path.exists(self._resolved_item_path(value)) for value in self._current_values()))
         self._remove_path_button.setEnabled(has_selection)
         self._move_up_button.setEnabled(has_selection and row > 0)
         self._move_down_button.setEnabled(has_selection and 0 <= row < count - 1)
@@ -1277,6 +1282,17 @@ class _FontTextLinksDialog(QDialog):
         items = self._current_values()
         items.pop(row)
         self._set_items(items, selected_index=min(row, len(items) - 1))
+
+    def _remove_missing_paths(self):
+        items = self._current_values()
+        kept_items = []
+        for value in items:
+            resolved = self._resolved_item_path(value)
+            if resolved and os.path.exists(resolved):
+                kept_items.append(value)
+        if len(kept_items) == len(items):
+            return
+        self._set_items(kept_items, selected_index=0)
 
     def _activate_selected_item(self):
         if callable(self._edit_file_callback):

@@ -2019,6 +2019,7 @@ class TestResourceGeneratorWindow:
         dialog = _FontTextLinksDialog(initial_items=["ui_text.txt", "missing.txt"], source_dir=str(source_dir), parent=None)
 
         assert dialog._count_label.text() == "Linked text files: 2 | Missing: 1"
+        assert dialog._remove_missing_button.isEnabled() is True
         assert dialog.text_value() == "ui_text.txt\nmissing.txt"
 
         dialog._add_path()
@@ -2037,6 +2038,11 @@ class TestResourceGeneratorWindow:
         dialog._remove_selected_path()
         assert dialog.text_value() == "ui_text.txt\nrenamed.txt"
         assert dialog._count_label.text() == "Linked text files: 2 | Missing: 1"
+
+        dialog._remove_missing_paths()
+        assert dialog.text_value() == "ui_text.txt"
+        assert dialog._count_label.text() == "Linked text files: 1"
+        assert dialog._remove_missing_button.isEnabled() is False
         dialog.close()
 
     @_skip_no_qt
