@@ -2107,6 +2107,56 @@ class TestResourceGeneratorWindow:
         dialog.close()
 
     @_skip_no_qt
+    def test_font_text_links_dialog_activation_prefers_editing_file_when_available(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("abc", encoding="utf-8")
+        captured = []
+
+        def _edit_file(value):
+            captured.append(value)
+            return True
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt"],
+            source_dir=str(source_dir),
+            edit_file_callback=_edit_file,
+            parent=None,
+        )
+        dialog._list_widget.setCurrentRow(0)
+
+        dialog._activate_selected_item()
+
+        assert captured == ["ui_text.txt"]
+        assert dialog.text_value() == "ui_text.txt"
+        dialog.close()
+
+    @_skip_no_qt
+    def test_font_text_links_dialog_activation_falls_back_to_editing_path(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QInputDialog
+
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("abc", encoding="utf-8")
+        monkeypatch.setattr(QInputDialog, "getText", lambda *args, **kwargs: ("renamed.txt", True))
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt"],
+            source_dir=str(source_dir),
+            parent=None,
+        )
+        dialog._list_widget.setCurrentRow(0)
+
+        dialog._activate_selected_item()
+
+        assert dialog.text_value() == "renamed.txt"
+        dialog.close()
+
+    @_skip_no_qt
     def test_font_text_links_dialog_can_edit_selected_file_via_callback(self, qapp, tmp_path):
         from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
 

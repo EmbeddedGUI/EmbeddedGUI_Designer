@@ -824,7 +824,7 @@ class _FontTextLinksDialog(QDialog):
         self._list_widget = QListWidget()
         self._list_widget.setSelectionMode(QAbstractItemView.SingleSelection)
         self._list_widget.itemSelectionChanged.connect(self._refresh_action_state)
-        self._list_widget.itemDoubleClicked.connect(lambda _item: self._edit_selected_path())
+        self._list_widget.itemDoubleClicked.connect(lambda _item: self._activate_selected_item())
         content_row.addWidget(self._list_widget, 1)
 
         actions_col = QVBoxLayout()
@@ -1133,6 +1133,12 @@ class _FontTextLinksDialog(QDialog):
         items = self._current_values()
         items.pop(row)
         self._set_items(items, selected_index=min(row, len(items) - 1))
+
+    def _activate_selected_item(self):
+        if callable(self._edit_file_callback):
+            self._edit_selected_file()
+            return
+        self._edit_selected_path()
 
     def _edit_selected_file(self):
         if not callable(self._edit_file_callback):
