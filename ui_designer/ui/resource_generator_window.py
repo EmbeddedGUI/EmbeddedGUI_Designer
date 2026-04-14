@@ -2628,6 +2628,8 @@ class ResourceGeneratorWindow(QDialog):
             if section == self._active_section and index == self._active_entry_index:
                 selected_row = row
                 break
+        if selected_row < 0 and rows and has_filters:
+            selected_row = 0
         with QSignalBlocker(self._simple_asset_table):
             self._simple_asset_table.setRowCount(len(rows))
             for row, payload in enumerate(rows):
@@ -2646,6 +2648,9 @@ class ResourceGeneratorWindow(QDialog):
                     self._simple_asset_table.setItem(row, column, item)
             if 0 <= selected_row < len(rows):
                 self._simple_asset_table.selectRow(selected_row)
+                selected_section, selected_index = self._simple_row_map[selected_row]
+                self._active_section = selected_section
+                self._active_entry_index = selected_index
             else:
                 self._simple_asset_table.clearSelection()
         self._update_simple_asset_empty_state(total_assets=total_assets, visible_assets=len(rows), has_filters=has_filters)

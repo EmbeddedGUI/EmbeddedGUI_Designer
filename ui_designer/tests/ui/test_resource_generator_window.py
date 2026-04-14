@@ -346,12 +346,15 @@ class TestResourceGeneratorWindow:
         assert window._simple_asset_type_filter.currentData() == "font"
         assert window._simple_asset_table.rowCount() == 1
         assert window._simple_asset_table.item(0, 1).text() == "display"
+        assert window._simple_asset_table.selectionModel().selectedRows()[0].row() == 0
+        assert window._simple_asset_preview_title.text() == "Fonts: display"
 
         QTest.mouseClick(window._simple_mp4_count, Qt.LeftButton)
         qapp.processEvents()
         assert window._simple_asset_type_filter.currentData() == "mp4"
         assert window._simple_asset_table.rowCount() == 1
         assert window._simple_asset_table.item(0, 1).text() == "intro"
+        assert window._simple_asset_preview_title.text() == "MP4: intro"
 
         QTest.mouseClick(window._simple_attention_count, Qt.LeftButton)
         qapp.processEvents()
@@ -360,12 +363,15 @@ class TestResourceGeneratorWindow:
             "display",
             "intro",
         ]
+        assert window._simple_asset_table.selectionModel().selectedRows()[0].row() == 1
+        assert window._simple_asset_preview_title.text() == "MP4: intro"
 
         QTest.mouseClick(window._simple_image_count, Qt.LeftButton)
         qapp.processEvents()
         assert window._simple_asset_type_filter.currentData() == "img"
         assert window._simple_asset_table.rowCount() == 1
         assert window._simple_asset_table.item(0, 1).text() == "hero"
+        assert window._simple_asset_preview_title.text() == "Images: hero"
         _close_window(window)
 
     @_skip_no_qt
