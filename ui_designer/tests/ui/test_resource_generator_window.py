@@ -680,6 +680,7 @@ class TestResourceGeneratorWindow:
         action_map = {action.text(): action for action in menu.actions() if action.text()}
 
         assert {"Preview Asset", "Open Asset", "Open Asset Folder", "Open Font Text", "Copy Resource Name", "Copy Asset Path", "Copy Full Path", "Duplicate", "Remove", "Open Professional Mode"} <= set(action_map)
+        assert not any(action.text().startswith("Suggested Fix:") for action in menu.actions() if action.text())
         assert action_map["Open Asset"].isEnabled() is True
         assert action_map["Copy Full Path"].isEnabled() is True
 
@@ -718,6 +719,67 @@ class TestResourceGeneratorWindow:
         assert action_map["Open Asset Folder"].isEnabled() is False
         assert action_map["Copy Asset Path"].isEnabled() is True
         assert action_map["Copy Full Path"].isEnabled() is False
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_asset_context_menu_exposes_font_fix_action_for_missing_text(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        fonts_dir = source_dir / "fonts"
+        fonts_dir.mkdir(parents=True)
+        (fonts_dir / "display.ttf").write_bytes(b"ttf")
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"font": [{"file": "fonts/display.ttf", "name": "display", "text": ""}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        menu = window._build_simple_asset_context_menu()
+        action_texts = [action.text() for action in menu.actions() if action.text()]
+
+        assert action_texts[0] == "Suggested Fix: Open Font Text..."
+        assert "Open Font Text" in action_texts
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_asset_context_menu_suggested_fix_updates_video_metadata(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window._detect_video_metadata",
+            lambda path: {"fps": 24, "width": 320, "height": 180},
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [], "mp4": [{"file": "intro.mp4", "name": "intro", "fps": 24, "width": 0, "height": 180}]},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        menu = window._build_simple_asset_context_menu()
+        action_map = {action.text(): action for action in menu.actions() if action.text()}
+
+        assert "Suggested Fix: Detect Video Info" in action_map
+        action_map["Suggested Fix: Detect Video Info"].trigger()
+
+        entry = window._session.section_entries("mp4")[0]
+        assert entry["width"] == 320
+        assert entry["height"] == 180
+        assert window._status_label.text() == "Updated video metadata for 'intro' (24fps 320x180)."
         _close_window(window)
 
     @_skip_no_qt

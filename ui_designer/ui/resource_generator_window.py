@@ -1695,6 +1695,36 @@ class ResourceGeneratorWindow(QDialog):
 
         return tuple(dict.fromkeys(item for item in suggestions if item))
 
+    def _simple_asset_primary_fix_action(self, section: str, entry: dict, *, file_label: str = "") -> tuple[str, callable] | None:
+        normalized_file = str(file_label or entry.get("file", "") or "").strip()
+        if section == "font":
+            text_value = str(entry.get("text", "") or "").strip()
+            text_items = [item.strip() for item in text_value.split(",") if item.strip()]
+            missing_text_items = []
+            for item in text_items:
+                resolved_text = self._resolve_entry_path("font", "text", item)
+                if not resolved_text or not os.path.exists(resolved_text):
+                    missing_text_items.append(item)
+            if not text_items or missing_text_items:
+                return "Suggested Fix: Open Font Text...", self._open_selected_font_text_resource
+            matched_text = self._matched_font_text_path("font", entry)
+            if matched_text and matched_text != text_value:
+                return "Suggested Fix: Refresh Font Text Links", self._refresh_font_text_links
+
+        if section == "mp4":
+            for field_name in ("fps", "width", "height"):
+                raw_value = str(entry.get(field_name, "") or "").strip()
+                try:
+                    numeric_value = int(raw_value)
+                except Exception:
+                    numeric_value = 0
+                if numeric_value <= 0:
+                    return "Suggested Fix: Detect Video Info", self._detect_selected_video_metadata
+
+        if not normalized_file:
+            return None
+        return None
+
     def _update_simple_attention_count(self, attention_count: int):
         count = max(0, int(attention_count))
         self._simple_attention_count.setText(f"Needs Attention: {count}")
@@ -1741,6 +1771,12 @@ class ResourceGeneratorWindow(QDialog):
         has_resolved_file = bool(resolved_path and os.path.exists(resolved_path))
 
         menu = QMenu(self)
+        primary_fix = self._simple_asset_primary_fix_action(section, entry, file_label=file_name)
+        if primary_fix is not None:
+            action_text, callback = primary_fix
+            fix_action = menu.addAction(action_text)
+            fix_action.triggered.connect(callback)
+            menu.addSeparator()
 
         preview_action = menu.addAction("Preview Asset")
         preview_action.triggered.connect(self._preview_selected_simple_asset)
