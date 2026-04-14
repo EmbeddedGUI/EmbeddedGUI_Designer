@@ -428,6 +428,50 @@ class _QuickImageCompressDialog(QDialog):
         return int(self._color_spin.value())
 
 
+class _QuickFontPrerenderDialog(QDialog):
+    def __init__(self, *, output_folder: str, suffix: str, sample_text: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Pre-Render Fonts")
+        self.setMinimumWidth(420)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        summary = QLabel("Render each font asset into a PNG preview card so quick mode users can compare fonts visually.")
+        summary.setWordWrap(True)
+        layout.addWidget(summary)
+
+        form = QFormLayout()
+        form.setSpacing(8)
+
+        self._folder_edit = QLineEdit(str(output_folder or "").strip())
+        form.addRow("Output Folder", self._folder_edit)
+
+        self._suffix_edit = QLineEdit(str(suffix or "").strip())
+        form.addRow("Filename Suffix", self._suffix_edit)
+
+        self._sample_edit = QLineEdit(str(sample_text or "").strip())
+        self._sample_edit.setPlaceholderText("Leave empty to use the linked text file or built-in sample")
+        form.addRow("Sample Text", self._sample_edit)
+
+        layout.addLayout(form)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def output_folder(self) -> str:
+        return str(self._folder_edit.text() or "").strip()
+
+    def filename_suffix(self) -> str:
+        return str(self._suffix_edit.text() or "").strip()
+
+    def sample_text(self) -> str:
+        return str(self._sample_edit.text() or "").strip()
+
+
 class _QuickPreviewBoardDialog(QDialog):
     def __init__(self, cards, *, total_assets: int, parent=None):
         super().__init__(parent)
@@ -656,6 +700,9 @@ class ResourceGeneratorWindow(QDialog):
         self._compress_images_button = QPushButton("Compress Images...")
         self._compress_images_button.clicked.connect(self._open_compress_images_helper)
 
+        self._prerender_fonts_button = QPushButton("Pre-Render Fonts...")
+        self._prerender_fonts_button.clicked.connect(self._open_prerender_fonts_helper)
+
         self._rotate_image_button = QPushButton("Rotate Image...")
         self._rotate_image_button.clicked.connect(self._open_rotate_image_helper)
 
@@ -735,6 +782,7 @@ class ResourceGeneratorWindow(QDialog):
                     self._generate_thumbnails_button,
                     self._normalize_images_button,
                     self._compress_images_button,
+                    self._prerender_fonts_button,
                     self._rotate_image_button,
                     self._flip_image_button,
                     self._crop_image_button,
@@ -2879,6 +2927,46 @@ class ResourceGeneratorWindow(QDialog):
             color_limit=dialog.color_limit(),
         )
 
+    def _open_prerender_fonts_helper(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        font_entries = [
+            entry
+            for entry in self._session.section_entries("font")
+            if isinstance(entry, dict) and str(entry.get("file", "") or "").strip()
+        ]
+        if not font_entries:
+            QMessageBox.information(self, "Pre-Render Fonts", "Import or create some font assets first.")
+            return
+
+        dialog = _QuickFontPrerenderDialog(
+            output_folder="font_previews",
+            suffix="_preview",
+            sample_text="",
+            parent=self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        output_folder = dialog.output_folder().replace("\\", "/").strip().strip("/")
+        suffix = dialog.filename_suffix().strip()
+        if not output_folder:
+            QMessageBox.warning(self, "Pre-Render Fonts", "Enter an output folder inside Source Dir.")
+            return
+        if output_folder.startswith("..") or os.path.isabs(output_folder):
+            QMessageBox.warning(self, "Pre-Render Fonts", "Output folder must stay inside Source Dir.")
+            return
+        if not suffix:
+            QMessageBox.warning(self, "Pre-Render Fonts", "Enter a filename suffix for rendered previews.")
+            return
+
+        self._prerender_fonts_for_quick_mode(
+            output_folder=output_folder,
+            filename_suffix=suffix,
+            sample_text_override=dialog.sample_text(),
+        )
+
     def _generate_thumbnail_images_for_quick_mode(self, *, max_width: int, max_height: int, output_folder: str, filename_suffix: str):
         try:
             from PIL import Image, ImageOps
@@ -2944,6 +3032,73 @@ class ResourceGeneratorWindow(QDialog):
         self._update_raw_editor()
 
         summary = [f"Generated {generated_files} thumbnails"]
+        if added:
+            summary.append(f"added {added} assets")
+        if updated:
+            summary.append(f"updated {updated} assets")
+        self._set_status(", ".join(summary) + ".")
+
+    def _prerender_fonts_for_quick_mode(self, *, output_folder: str, filename_suffix: str, sample_text_override: str):
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if not source_dir:
+            QMessageBox.warning(self, "Pre-Render Fonts", "Set Source Dir before rendering font previews.")
+            return
+
+        generated_assets: list[tuple[str, str]] = []
+        rendered_files = 0
+        normalized_folder = output_folder.replace("\\", "/").strip().strip("/")
+        shared_sample = str(sample_text_override or "").strip()
+
+        for entry in self._session.section_entries("font"):
+            if not isinstance(entry, dict):
+                continue
+
+            file_name = str(entry.get("file", "") or "").strip()
+            resolved_path = self._resolve_entry_path("font", "file", file_name)
+            if not resolved_path or not os.path.isfile(resolved_path):
+                continue
+
+            base_name = str(entry.get("name", "") or "").strip()
+            if not base_name:
+                normalized_name = os.path.splitext(str(file_name or "").replace("\\", "/").strip().lstrip("/"))[0]
+                base_name = normalized_name.replace("/", "_").strip() or _resource_name_from_file(resolved_path)
+            if not base_name:
+                continue
+
+            sample_text = shared_sample or self._font_preview_sample(entry)[0]
+            preview_pixmap = self._build_font_preview_pixmap(resolved_path, sample_text)
+            if preview_pixmap is None or preview_pixmap.isNull():
+                QMessageBox.warning(
+                    self,
+                    "Pre-Render Fonts",
+                    f"Failed to render a font preview for:\n{resolved_path}\n\nCheck that Pillow is installed and the font file is valid.",
+                )
+                return
+
+            relative_output = f"{normalized_folder}/{base_name}{filename_suffix}.png"
+            relative_output = relative_output.replace("//", "/")
+            target_path = normalize_path(os.path.join(source_dir, relative_output.replace("/", os.sep)))
+
+            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+            if not preview_pixmap.save(target_path, "PNG"):
+                QMessageBox.warning(self, "Pre-Render Fonts", f"Failed to save rendered preview:\n{target_path}")
+                return
+
+            rendered_files += 1
+            generated_assets.append(("img", target_path))
+
+        if not generated_assets:
+            self._set_status("No font assets were available for pre-rendering.")
+            return
+
+        entries_by_section = self._build_entries_from_asset_paths(generated_assets, [], source_dir)
+        added, updated = self._merge_discovered_entries(entries_by_section)
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+
+        summary = [f"Pre-rendered {rendered_files} fonts"]
         if added:
             summary.append(f"added {added} assets")
         if updated:

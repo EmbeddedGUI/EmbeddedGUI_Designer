@@ -1260,6 +1260,83 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_prerender_fonts_helper_creates_batch_png_entries(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+        from PyQt5.QtWidgets import QDialog, QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        fonts_dir = source_dir / "fonts"
+        fonts_dir.mkdir(parents=True)
+        (fonts_dir / "display.ttf").write_bytes(b"ttf")
+        (fonts_dir / "title.ttf").write_bytes(b"ttf")
+
+        class _FakeDialog:
+            def __init__(self, *, output_folder, suffix, sample_text, parent=None):
+                assert output_folder == "font_previews"
+                assert suffix == "_preview"
+                assert sample_text == ""
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def output_folder(self):
+                return "font_previews"
+
+            def filename_suffix(self):
+                return "_preview"
+
+            def sample_text(self):
+                return "Hello Designer"
+
+        rendered = []
+
+        def _fake_build_font_preview(self, font_path, sample_text):
+            rendered.append((font_path.replace("\\", "/"), sample_text))
+            pixmap = QPixmap(72, 30)
+            pixmap.fill()
+            return pixmap
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickFontPrerenderDialog", _FakeDialog)
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window.ResourceGeneratorWindow._build_font_preview_pixmap",
+            _fake_build_font_preview,
+        )
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [],
+                "font": [
+                    {"file": "fonts/display.ttf", "name": "display"},
+                    {"file": "fonts/title.ttf", "name": "title"},
+                ],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._open_prerender_fonts_helper()
+
+        display_preview = QPixmap(str(source_dir / "font_previews" / "display_preview.png"))
+        title_preview = QPixmap(str(source_dir / "font_previews" / "title_preview.png"))
+        assert display_preview.isNull() is False
+        assert title_preview.isNull() is False
+        assert rendered == [
+            ((fonts_dir / "display.ttf").resolve().as_posix(), "Hello Designer"),
+            ((fonts_dir / "title.ttf").resolve().as_posix(), "Hello Designer"),
+        ]
+        files = [entry["file"] for entry in window._session.section_entries("img")]
+        assert files == ["font_previews/display_preview.png", "font_previews/title_preview.png"]
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Pre-rendered 2 fonts, added 2 assets."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_resize_image_helper_overwrites_selected_image(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QPixmap
         from PyQt5.QtWidgets import QDialog
