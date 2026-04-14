@@ -1227,7 +1227,11 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_asset_table.setContextMenuPolicy(Qt.CustomContextMenu)
         self._simple_asset_table.customContextMenuRequested.connect(self._show_simple_asset_context_menu)
         self._configure_simple_asset_table()
-        assets_layout.addWidget(self._simple_asset_table, 1)
+        self._simple_asset_empty_state = self._build_simple_asset_empty_state()
+        self._simple_asset_content_stack = QStackedWidget()
+        self._simple_asset_content_stack.addWidget(self._simple_asset_table)
+        self._simple_asset_content_stack.addWidget(self._simple_asset_empty_state)
+        assets_layout.addWidget(self._simple_asset_content_stack, 1)
 
         self._simple_preview_splitter = QSplitter(Qt.Horizontal)
         self._simple_preview_splitter.setChildrenCollapsible(False)
@@ -1437,6 +1441,84 @@ class ResourceGeneratorWindow(QDialog):
         simple_header.sectionResized.connect(lambda _index, _old_size, _new_size: self._remember_view_state())
         for column, width in enumerate(_DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS):
             simple_header.resizeSection(column, width)
+
+    def _build_simple_asset_empty_state(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(24, 20, 24, 20)
+        layout.setSpacing(10)
+        layout.addStretch(1)
+
+        self._simple_asset_empty_title = QLabel("No assets imported yet.")
+        empty_title_font = QFont(self._simple_asset_empty_title.font())
+        empty_title_font.setPointSize(max(empty_title_font.pointSize(), 12))
+        empty_title_font.setBold(True)
+        self._simple_asset_empty_title.setFont(empty_title_font)
+        self._simple_asset_empty_title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self._simple_asset_empty_title)
+
+        self._simple_asset_empty_description = QLabel(
+            "Drag files or asset folders here, import files, or scan an asset folder to start building resources."
+        )
+        self._simple_asset_empty_description.setAlignment(Qt.AlignCenter)
+        self._simple_asset_empty_description.setWordWrap(True)
+        layout.addWidget(self._simple_asset_empty_description)
+
+        buttons_row = QHBoxLayout()
+        buttons_row.setContentsMargins(0, 0, 0, 0)
+        buttons_row.setSpacing(8)
+        buttons_row.addStretch(1)
+
+        self._simple_asset_empty_import_button = QPushButton("Import Files...")
+        self._simple_asset_empty_import_button.clicked.connect(self._import_asset_files_dialog)
+        buttons_row.addWidget(self._simple_asset_empty_import_button)
+
+        self._simple_asset_empty_scan_button = QPushButton("Scan Asset Folder...")
+        self._simple_asset_empty_scan_button.clicked.connect(self._scan_assets_directory_dialog)
+        buttons_row.addWidget(self._simple_asset_empty_scan_button)
+
+        self._simple_asset_empty_clear_button = QPushButton("Clear Filters")
+        self._simple_asset_empty_clear_button.clicked.connect(self._clear_simple_asset_filters)
+        buttons_row.addWidget(self._simple_asset_empty_clear_button)
+
+        buttons_row.addStretch(1)
+        layout.addLayout(buttons_row)
+        layout.addStretch(1)
+        return page
+
+    def _update_simple_asset_empty_state(self, *, total_assets: int, visible_assets: int, has_filters: bool):
+        if visible_assets > 0:
+            self._simple_asset_content_stack.setCurrentWidget(self._simple_asset_table)
+            return
+
+        self._simple_asset_content_stack.setCurrentWidget(self._simple_asset_empty_state)
+        if total_assets <= 0:
+            self._simple_asset_empty_title.setText("No assets imported yet.")
+            self._simple_asset_empty_description.setText(
+                "Drag files or asset folders here, import files, or scan an asset folder to start building resources."
+            )
+            self._simple_asset_empty_import_button.setVisible(True)
+            self._simple_asset_empty_scan_button.setVisible(True)
+            self._simple_asset_empty_clear_button.setVisible(False)
+            return
+
+        if has_filters:
+            self._simple_asset_empty_title.setText("No assets match the current filters.")
+            self._simple_asset_empty_description.setText(
+                "Clear the search or asset type filter to bring matching resources back into view."
+            )
+            self._simple_asset_empty_import_button.setVisible(False)
+            self._simple_asset_empty_scan_button.setVisible(False)
+            self._simple_asset_empty_clear_button.setVisible(True)
+            return
+
+        self._simple_asset_empty_title.setText("No visible assets in the current view.")
+        self._simple_asset_empty_description.setText(
+            "Import files or scan an asset folder to populate the quick resource list."
+        )
+        self._simple_asset_empty_import_button.setVisible(True)
+        self._simple_asset_empty_scan_button.setVisible(True)
+        self._simple_asset_empty_clear_button.setVisible(False)
 
     def _show_simple_asset_context_menu(self, pos):
         menu = self._build_simple_asset_context_menu(row=self._simple_asset_table.rowAt(pos.y()))
@@ -2324,6 +2406,7 @@ class ResourceGeneratorWindow(QDialog):
 
         section_filter = str(self._simple_asset_type_filter.currentData() or "all")
         search_text = str(self._simple_asset_search_edit.text() or "").strip().lower()
+        has_filters = section_filter != "all" or bool(search_text)
         total_assets = sum(counts.values())
         rows: list[tuple[str, int, dict]] = []
         for section in KNOWN_RESOURCE_SECTIONS:
@@ -2366,6 +2449,7 @@ class ResourceGeneratorWindow(QDialog):
                 self._simple_asset_table.selectRow(selected_row)
             else:
                 self._simple_asset_table.clearSelection()
+        self._update_simple_asset_empty_state(total_assets=total_assets, visible_assets=len(rows), has_filters=has_filters)
         self._update_simple_action_button_states()
         self._update_simple_asset_preview()
 

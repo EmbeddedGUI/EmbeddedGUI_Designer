@@ -138,6 +138,19 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_mode_shows_empty_state_before_assets_are_imported(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+
+        assert window._simple_asset_content_stack.currentWidget() is window._simple_asset_empty_state
+        assert window._simple_asset_empty_title.text() == "No assets imported yet."
+        assert window._simple_asset_empty_import_button.isHidden() is False
+        assert window._simple_asset_empty_scan_button.isHidden() is False
+        assert window._simple_asset_empty_clear_button.isHidden() is True
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_asset_filters_reduce_visible_rows(self, qapp, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -164,6 +177,38 @@ class TestResourceGeneratorWindow:
         assert window._simple_asset_table.item(0, 1).text() == "display"
         assert window._simple_asset_table.item(0, 3).text() == "18px | 4-bit | charset/display.txt"
         assert window._simple_asset_result_label.text() == "Showing 1 of 3 assets"
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_empty_state_switches_to_clear_filters_when_search_has_no_results(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}]},
+            dirty=False,
+        )
+
+        assert window._simple_asset_content_stack.currentWidget() is window._simple_asset_table
+
+        window._simple_asset_search_edit.setText("missing")
+        qapp.processEvents()
+
+        assert window._simple_asset_content_stack.currentWidget() is window._simple_asset_empty_state
+        assert window._simple_asset_empty_title.text() == "No assets match the current filters."
+        assert window._simple_asset_empty_import_button.isHidden() is True
+        assert window._simple_asset_empty_scan_button.isHidden() is True
+        assert window._simple_asset_empty_clear_button.isHidden() is False
+
+        window._simple_asset_empty_clear_button.click()
+        qapp.processEvents()
+
+        assert window._simple_asset_search_edit.text() == ""
+        assert window._simple_asset_content_stack.currentWidget() is window._simple_asset_table
         _close_window(window)
 
     @_skip_no_qt
