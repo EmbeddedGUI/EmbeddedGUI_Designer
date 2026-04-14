@@ -431,6 +431,10 @@ class ResourceGeneratorWindow(QDialog):
         self._auto_fill_button.clicked.connect(self._auto_fill_missing_resource_info)
         helper_row.addWidget(self._auto_fill_button)
 
+        self._rename_assets_button = QPushButton("Rename Names From Files")
+        self._rename_assets_button.clicked.connect(self._rename_asset_names_from_files)
+        helper_row.addWidget(self._rename_assets_button)
+
         self._sort_assets_button = QPushButton("Sort Assets")
         self._sort_assets_button.clicked.connect(self._sort_assets_for_quick_mode)
         helper_row.addWidget(self._sort_assets_button)
@@ -1787,6 +1791,34 @@ class ResourceGeneratorWindow(QDialog):
         self._update_raw_editor()
         self._set_status(f"Sorted {total_sorted} assets across quick mode sections.")
 
+    def _rename_asset_names_from_files(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        renamed = 0
+        for section in KNOWN_RESOURCE_SECTIONS:
+            for index, entry in enumerate(self._session.section_entries(section)):
+                if not isinstance(entry, dict):
+                    continue
+                suggested = _resource_name_from_file(entry.get("file", ""))
+                if not suggested:
+                    continue
+                existing = str(entry.get("name", "") or "").strip()
+                if existing == suggested:
+                    continue
+                self._session.update_entry_value(section, index, "name", suggested)
+                renamed += 1
+
+        if not renamed:
+            self._set_status("Asset names already match filenames.")
+            return
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+        self._set_status(f"Renamed {renamed} assets from filenames.")
+
     def _remove_duplicate_assets_for_quick_mode(self):
         if not self._commit_raw_json_if_needed():
             return
@@ -1886,10 +1918,7 @@ class ResourceGeneratorWindow(QDialog):
     def _auto_fill_entry_name(self, section: str, index: int, entry: dict) -> bool:
         if str(entry.get("name", "") or "").strip():
             return False
-        file_name = str(entry.get("file", "") or "").strip()
-        if not file_name:
-            return False
-        suggested = os.path.splitext(os.path.basename(file_name.replace("\\", "/")))[0].strip()
+        suggested = _resource_name_from_file(entry.get("file", ""))
         if not suggested:
             return False
         self._session.update_entry_value(section, index, "name", suggested)
@@ -2881,8 +2910,7 @@ def _duplicated_resource_name(section: str, entry, existing_entries) -> str:
     item = entry if isinstance(entry, dict) else {}
     base_name = str(item.get("name", "") or "").strip()
     if not base_name:
-        file_name = str(item.get("file", "") or "").replace("\\", "/").strip()
-        base_name = os.path.splitext(os.path.basename(file_name))[0].strip()
+        base_name = _resource_name_from_file(item.get("file", ""))
     if not base_name:
         base_name = _resource_kind_label(section)
 
@@ -2897,6 +2925,13 @@ def _duplicated_resource_name(section: str, entry, existing_entries) -> str:
         attempt = f"{base_name}_copy{suffix}"
         suffix += 1
     return attempt
+
+
+def _resource_name_from_file(file_name) -> str:
+    normalized = str(file_name or "").replace("\\", "/").strip()
+    if not normalized:
+        return ""
+    return os.path.splitext(os.path.basename(normalized))[0].strip()
 
 
 def _resource_dedupe_key(section: str, entry) -> tuple[str, str] | None:

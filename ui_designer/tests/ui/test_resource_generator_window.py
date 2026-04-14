@@ -541,6 +541,43 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_rename_asset_names_from_files_updates_session_and_simple_table(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [
+                    {"file": "hero_banner.png", "name": "home_hero"},
+                    {"file": "", "name": "keep_manual"},
+                ],
+                "font": [{"file": "display.ttf", "name": "headline"}],
+                "mp4": [{"file": "intro.mp4"}],
+            },
+            dirty=False,
+        )
+
+        window._rename_asset_names_from_files()
+
+        assert window._session.section_entries("img")[0]["name"] == "hero_banner"
+        assert window._session.section_entries("img")[1]["name"] == "keep_manual"
+        assert window._session.section_entries("font")[0]["name"] == "display"
+        assert window._session.section_entries("mp4")[0]["name"] == "intro"
+        assert window._simple_asset_table.item(0, 1).text() == "hero_banner"
+        assert window._simple_asset_table.item(1, 1).text() == "keep_manual"
+        assert window._simple_asset_table.item(2, 1).text() == "display"
+        assert window._simple_asset_table.item(3, 1).text() == "intro"
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Renamed 3 assets from filenames."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_sort_assets_for_quick_mode_reorders_entries_and_table(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
