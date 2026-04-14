@@ -440,6 +440,50 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_auto_fill_missing_resource_info_updates_names_font_text_and_video_metadata(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        (source_dir / "display.ttf").write_bytes(b"ttf")
+        (source_dir / "display.txt").write_text("ABC", encoding="utf-8")
+        (source_dir / "intro.mp4").write_bytes(b"mp4")
+
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window._detect_video_metadata",
+            lambda path: {"fps": 24, "width": 320, "height": 180},
+        )
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png"}],
+                "font": [{"file": "display.ttf"}],
+                "mp4": [{"file": "intro.mp4"}],
+            },
+            dirty=False,
+        )
+
+        window._auto_fill_missing_resource_info()
+
+        assert window._session.section_entries("img")[0]["name"] == "hero"
+        font_entry = window._session.section_entries("font")[0]
+        assert font_entry["name"] == "display"
+        assert font_entry["text"] == "display.txt"
+        video_entry = window._session.section_entries("mp4")[0]
+        assert video_entry["name"] == "intro"
+        assert video_entry["fps"] == 24
+        assert video_entry["width"] == 320
+        assert video_entry["height"] == 180
+        assert window.has_unsaved_changes() is True
+        assert window._status_label.text() == "Filled 5 missing fields, names 3, font texts 1, video metadata 1."
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_selection_updates_image_preview(self, qapp, tmp_path):
         from PyQt5.QtGui import QPixmap
 

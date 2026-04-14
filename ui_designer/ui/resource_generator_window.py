@@ -366,6 +366,10 @@ class ResourceGeneratorWindow(QDialog):
         self._generate_font_text_button.clicked.connect(self._open_generate_charset_helper)
         helper_row.addWidget(self._generate_font_text_button)
 
+        self._auto_fill_button = QPushButton("Auto Fill Missing Info")
+        self._auto_fill_button.clicked.connect(self._auto_fill_missing_resource_info)
+        helper_row.addWidget(self._auto_fill_button)
+
         self._open_font_text_button = QPushButton("Open Font Text...")
         self._open_font_text_button.clicked.connect(self._open_selected_font_text_resource)
         helper_row.addWidget(self._open_font_text_button)
@@ -1591,6 +1595,103 @@ class ResourceGeneratorWindow(QDialog):
 
         self._refresh_simple_page()
         self._set_status(f"Video metadata already up to date for '{section_entry_label('mp4', entry, index)}'.")
+
+    def _auto_fill_missing_resource_info(self):
+        if not self._commit_raw_json_if_needed():
+            return
+
+        updates = {
+            "name": 0,
+            "font_text": 0,
+            "video_meta": 0,
+        }
+
+        for section in KNOWN_RESOURCE_SECTIONS:
+            entries = self._session.section_entries(section)
+            for index, entry in enumerate(entries):
+                if not isinstance(entry, dict):
+                    continue
+                if self._auto_fill_entry_name(section, index, entry):
+                    updates["name"] += 1
+                if section == "font" and self._auto_fill_font_text(section, index, entry):
+                    updates["font_text"] += 1
+                if section == "mp4" and self._auto_fill_video_metadata(index, entry):
+                    updates["video_meta"] += 1
+
+        total_updates = sum(updates.values())
+        if not total_updates:
+            self._set_status("No missing asset info needed to be filled.")
+            return
+
+        self._mark_dirty()
+        self._refresh_entry_table()
+        self._update_merged_preview()
+        self._update_raw_editor()
+
+        summary = [f"Filled {total_updates} missing fields"]
+        if updates["name"]:
+            summary.append(f"names {updates['name']}")
+        if updates["font_text"]:
+            summary.append(f"font texts {updates['font_text']}")
+        if updates["video_meta"]:
+            summary.append(f"video metadata {updates['video_meta']}")
+        self._set_status(", ".join(summary) + ".")
+
+    def _auto_fill_entry_name(self, section: str, index: int, entry: dict) -> bool:
+        if str(entry.get("name", "") or "").strip():
+            return False
+        file_name = str(entry.get("file", "") or "").strip()
+        if not file_name:
+            return False
+        suggested = os.path.splitext(os.path.basename(file_name.replace("\\", "/")))[0].strip()
+        if not suggested:
+            return False
+        self._session.update_entry_value(section, index, "name", suggested)
+        return True
+
+    def _auto_fill_font_text(self, section: str, index: int, entry: dict) -> bool:
+        if str(entry.get("text", "") or "").strip():
+            return False
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_font = self._resolve_entry_path(section, "file", file_name)
+        if not resolved_font or not os.path.isfile(resolved_font):
+            return False
+
+        source_dir = self._session.paths.source_dir
+        candidates = [normalize_path(os.path.splitext(resolved_font)[0] + ".txt")]
+        if source_dir:
+            basename = os.path.splitext(os.path.basename(file_name.replace("\\", "/")))[0]
+            candidates.append(normalize_path(os.path.join(source_dir, f"{basename}.txt")))
+
+        for candidate in candidates:
+            if not candidate or not os.path.isfile(candidate):
+                continue
+            stored = candidate
+            if source_dir and _is_subpath(candidate, source_dir):
+                stored = os.path.relpath(candidate, source_dir).replace("\\", "/")
+            self._session.update_entry_value(section, index, "text", stored)
+            return True
+        return False
+
+    def _auto_fill_video_metadata(self, index: int, entry: dict) -> bool:
+        missing_fields = [field for field in ("fps", "width", "height") if entry.get(field, "") in ("", None, 0)]
+        if not missing_fields:
+            return False
+
+        file_name = str(entry.get("file", "") or "").strip()
+        resolved_path = self._resolve_entry_path("mp4", "file", file_name)
+        if not resolved_path or not os.path.isfile(resolved_path):
+            return False
+
+        metadata = _detect_video_metadata(resolved_path)
+        changed = False
+        for field_name in missing_fields:
+            incoming = metadata.get(field_name)
+            if incoming in (None, "", 0):
+                continue
+            self._session.update_entry_value("mp4", index, field_name, incoming)
+            changed = True
+        return changed
 
     def _open_selected_font_text_resource(self):
         section, index, entry = self._selected_simple_asset_context()
