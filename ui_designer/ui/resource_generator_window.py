@@ -11,7 +11,7 @@ import re
 import shutil
 import subprocess
 
-from PyQt5.QtCore import QEvent, Qt, QSignalBlocker, QUrl
+from PyQt5.QtCore import QEvent, QTimer, Qt, QSignalBlocker, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QKeySequence, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -54,6 +54,7 @@ from ..model.resource_generation_session import (
     infer_generation_paths,
     section_entry_label,
 )
+from ..model.config import get_config
 from ..services.font_charset_presets import build_charset, serialize_charset_chars
 from ..model.workspace import normalize_path
 from ..utils.font_preview_renderer import render_font_preview_image
@@ -77,6 +78,10 @@ _STANDARD_SOURCE_DIR_FOLDERS = {
     "font": "fonts",
     "mp4": "videos",
 }
+_RESOURCE_GENERATOR_VIEW_STATE_KEY = "resource_generator_view"
+_DEFAULT_SIMPLE_WORKSPACE_SPLITTER_SIZES = [220, 320, 220]
+_DEFAULT_SIMPLE_PREVIEW_SPLITTER_SIZES = [460, 460]
+_DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS = [88, 220, 360, 280]
 
 
 def _pil_image_to_qpixmap(image) -> QPixmap:
@@ -741,6 +746,7 @@ class ResourceGeneratorWindow(QDialog):
         self.setObjectName("resource_generator_window")
         self.resize(1360, 860)
 
+        self._config = get_config()
         self._session = ResourceGenerationSession(sdk_root=sdk_root)
         self._dirty = False
         self._raw_dirty = False
@@ -754,13 +760,21 @@ class ResourceGeneratorWindow(QDialog):
         self._ui_mode = "simple"
         self._simple_row_map: list[tuple[str, int]] = []
         self._window_shortcuts: dict[str, QShortcut] = {}
+        self._view_state_updates_enabled = False
+        self._pending_simple_workspace_splitter_sizes: list[int] | None = None
+        self._pending_simple_preview_splitter_sizes: list[int] | None = None
+        self._pending_simple_asset_column_widths: list[int] | None = None
 
         self._build_ui()
         self._configure_shortcuts()
+        self._restore_view_state()
         self._apply_paths_and_data(GenerationPaths(), make_empty_resource_config(), dirty=False)
+        self._view_state_updates_enabled = True
+        QTimer.singleShot(0, self._apply_pending_view_state_layouts)
 
     def showEvent(self, event):
         super().showEvent(event)
+        self._apply_pending_view_state_layouts()
         self._sync_window_chrome_theme()
 
     def changeEvent(self, event):
@@ -1144,13 +1158,13 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_asset_type_filter.addItem("Images", "img")
         self._simple_asset_type_filter.addItem("Fonts", "font")
         self._simple_asset_type_filter.addItem("MP4", "mp4")
-        self._simple_asset_type_filter.currentIndexChanged.connect(lambda _index: self._refresh_simple_page())
+        self._simple_asset_type_filter.currentIndexChanged.connect(self._on_simple_asset_filter_changed)
         asset_toolbar.addWidget(self._simple_asset_type_filter)
 
         asset_toolbar.addWidget(QLabel("Search"))
         self._simple_asset_search_edit = QLineEdit()
         self._simple_asset_search_edit.setPlaceholderText("Filter by name, file, text file, format, size...")
-        self._simple_asset_search_edit.textChanged.connect(lambda _text: self._refresh_simple_page())
+        self._simple_asset_search_edit.textChanged.connect(self._on_simple_asset_search_changed)
         asset_toolbar.addWidget(self._simple_asset_search_edit, 1)
 
         self._simple_asset_clear_filters_button = QPushButton("Clear Filters")
@@ -1168,7 +1182,9 @@ class ResourceGeneratorWindow(QDialog):
         self._configure_simple_asset_table()
         assets_layout.addWidget(self._simple_asset_table, 1)
 
-        preview_splitter = QSplitter(Qt.Horizontal)
+        self._simple_preview_splitter = QSplitter(Qt.Horizontal)
+        self._simple_preview_splitter.setChildrenCollapsible(False)
+        self._simple_preview_splitter.setHandleWidth(8)
 
         asset_preview_group = QGroupBox("Asset Preview")
         asset_preview_layout = QVBoxLayout(asset_preview_group)
@@ -1188,7 +1204,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_asset_meta.setReadOnly(True)
         self._simple_asset_meta.setMinimumHeight(72)
         asset_preview_layout.addWidget(self._simple_asset_meta, 1)
-        preview_splitter.addWidget(asset_preview_group)
+        self._simple_preview_splitter.addWidget(asset_preview_group)
 
         preview_group = QGroupBox("Merged Preview")
         preview_layout = QVBoxLayout(preview_group)
@@ -1196,23 +1212,25 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_preview = QPlainTextEdit()
         self._simple_preview.setReadOnly(True)
         preview_layout.addWidget(self._simple_preview)
-        preview_splitter.addWidget(preview_group)
-        preview_splitter.setStretchFactor(0, 1)
-        preview_splitter.setStretchFactor(1, 1)
-        preview_splitter.setSizes([460, 460])
-        preview_splitter.setMinimumHeight(120)
+        self._simple_preview_splitter.addWidget(preview_group)
+        self._simple_preview_splitter.setStretchFactor(0, 1)
+        self._simple_preview_splitter.setStretchFactor(1, 1)
+        self._simple_preview_splitter.setSizes(_DEFAULT_SIMPLE_PREVIEW_SPLITTER_SIZES)
+        self._simple_preview_splitter.setMinimumHeight(120)
         self._simple_workspace_splitter = QSplitter(Qt.Vertical)
         self._simple_workspace_splitter.setChildrenCollapsible(False)
         self._simple_workspace_splitter.setHandleWidth(8)
         self._simple_workspace_splitter.addWidget(intro_group)
         self._simple_workspace_splitter.addWidget(assets_group)
-        self._simple_workspace_splitter.addWidget(preview_splitter)
+        self._simple_workspace_splitter.addWidget(self._simple_preview_splitter)
         intro_group.setMinimumHeight(120)
         assets_group.setMinimumHeight(140)
         self._simple_workspace_splitter.setStretchFactor(0, 0)
         self._simple_workspace_splitter.setStretchFactor(1, 1)
         self._simple_workspace_splitter.setStretchFactor(2, 1)
-        self._simple_workspace_splitter.setSizes([220, 320, 220])
+        self._simple_workspace_splitter.setSizes(_DEFAULT_SIMPLE_WORKSPACE_SPLITTER_SIZES)
+        self._simple_workspace_splitter.splitterMoved.connect(lambda _pos, _index: self._remember_view_state())
+        self._simple_preview_splitter.splitterMoved.connect(lambda _pos, _index: self._remember_view_state())
         layout.addWidget(self._simple_workspace_splitter, 1)
         self._update_simple_action_button_states()
         return page
@@ -1300,10 +1318,17 @@ class ResourceGeneratorWindow(QDialog):
         simple_header.setStretchLastSection(False)
         for column in range(self._simple_asset_table.columnCount()):
             simple_header.setSectionResizeMode(column, QHeaderView.Interactive)
-        simple_header.resizeSection(0, 88)
-        simple_header.resizeSection(1, 220)
-        simple_header.resizeSection(2, 360)
-        simple_header.resizeSection(3, 280)
+        simple_header.sectionResized.connect(lambda _index, _old_size, _new_size: self._remember_view_state())
+        for column, width in enumerate(_DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS):
+            simple_header.resizeSection(column, width)
+
+    def _on_simple_asset_filter_changed(self, _index: int):
+        self._refresh_simple_page()
+        self._remember_view_state()
+
+    def _on_simple_asset_search_changed(self, _text: str):
+        self._refresh_simple_page()
+        self._remember_view_state()
 
     def _clear_simple_asset_filters(self):
         with QSignalBlocker(self._simple_asset_type_filter):
@@ -2231,6 +2256,7 @@ class ResourceGeneratorWindow(QDialog):
         if self._mode_combo.currentIndex() != combo_index:
             with QSignalBlocker(self._mode_combo):
                 self._mode_combo.setCurrentIndex(combo_index)
+        self._remember_view_state()
 
     def _open_simple_selection_in_professional_mode(self, item):
         row = item.row() if item is not None else -1
@@ -5262,7 +5288,114 @@ class ResourceGeneratorWindow(QDialog):
         if not self._confirm_discard_changes():
             event.ignore()
             return
+        self._save_view_state()
         super().closeEvent(event)
+
+    def _restore_view_state(self):
+        workspace_state = self._config.workspace_state if isinstance(self._config.workspace_state, dict) else {}
+        saved_state = workspace_state.get(_RESOURCE_GENERATOR_VIEW_STATE_KEY, {})
+        if not isinstance(saved_state, dict):
+            return
+
+        self._ui_mode = "professional" if saved_state.get("ui_mode") == "professional" else "simple"
+        filter_value = str(saved_state.get("simple_asset_type_filter", "all") or "all")
+        filter_index = self._simple_asset_type_filter.findData(filter_value)
+        with QSignalBlocker(self._simple_asset_type_filter):
+            self._simple_asset_type_filter.setCurrentIndex(filter_index if filter_index >= 0 else 0)
+        with QSignalBlocker(self._simple_asset_search_edit):
+            self._simple_asset_search_edit.setText(str(saved_state.get("simple_asset_search", "") or ""))
+
+        self._pending_simple_workspace_splitter_sizes = _coerce_int_list(
+            saved_state.get("simple_workspace_splitter_sizes"),
+            expected_length=3,
+            minimum=0,
+            require_nonzero_sum=True,
+        )
+        self._pending_simple_preview_splitter_sizes = _coerce_int_list(
+            saved_state.get("simple_preview_splitter_sizes"),
+            expected_length=2,
+            minimum=0,
+            require_nonzero_sum=True,
+        )
+        self._pending_simple_asset_column_widths = _coerce_int_list(
+            saved_state.get("simple_asset_column_widths"),
+            expected_length=self._simple_asset_table.columnCount(),
+            minimum=24,
+        )
+
+    def _apply_pending_view_state_layouts(self):
+        if self._pending_simple_workspace_splitter_sizes:
+            self._simple_workspace_splitter.setSizes(self._pending_simple_workspace_splitter_sizes)
+            self._pending_simple_workspace_splitter_sizes = None
+        if self._pending_simple_preview_splitter_sizes:
+            self._simple_preview_splitter.setSizes(self._pending_simple_preview_splitter_sizes)
+            self._pending_simple_preview_splitter_sizes = None
+        if self._pending_simple_asset_column_widths:
+            header = self._simple_asset_table.horizontalHeader()
+            for column, width in enumerate(self._pending_simple_asset_column_widths):
+                header.resizeSection(column, width)
+            self._pending_simple_asset_column_widths = None
+
+    def _capture_view_state(self) -> dict:
+        workspace_state = self._config.workspace_state if isinstance(self._config.workspace_state, dict) else {}
+        saved_state = workspace_state.get(_RESOURCE_GENERATOR_VIEW_STATE_KEY, {})
+        saved_state = saved_state if isinstance(saved_state, dict) else {}
+        use_live_simple_layout = self._ui_mode == "simple" and self._workspace_stack.currentWidget() is self._simple_page
+        return {
+            "ui_mode": self._ui_mode,
+            "simple_workspace_splitter_sizes": (
+                _coerce_int_list(
+                    self._simple_workspace_splitter.sizes(),
+                    expected_length=3,
+                    minimum=0,
+                    require_nonzero_sum=True,
+                )
+                if use_live_simple_layout
+                else None
+            ) or _coerce_int_list(
+                saved_state.get("simple_workspace_splitter_sizes"),
+                expected_length=3,
+                minimum=0,
+                require_nonzero_sum=True,
+            ) or list(_DEFAULT_SIMPLE_WORKSPACE_SPLITTER_SIZES),
+            "simple_preview_splitter_sizes": (
+                _coerce_int_list(
+                    self._simple_preview_splitter.sizes(),
+                    expected_length=2,
+                    minimum=0,
+                    require_nonzero_sum=True,
+                )
+                if use_live_simple_layout
+                else None
+            ) or _coerce_int_list(
+                saved_state.get("simple_preview_splitter_sizes"),
+                expected_length=2,
+                minimum=0,
+                require_nonzero_sum=True,
+            ) or list(_DEFAULT_SIMPLE_PREVIEW_SPLITTER_SIZES),
+            "simple_asset_column_widths": _coerce_int_list(
+                [self._simple_asset_table.columnWidth(column) for column in range(self._simple_asset_table.columnCount())],
+                expected_length=self._simple_asset_table.columnCount(),
+                minimum=24,
+            ) or _coerce_int_list(
+                saved_state.get("simple_asset_column_widths"),
+                expected_length=self._simple_asset_table.columnCount(),
+                minimum=24,
+            ) or list(_DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS),
+            "simple_asset_type_filter": str(self._simple_asset_type_filter.currentData() or "all"),
+            "simple_asset_search": str(self._simple_asset_search_edit.text() or ""),
+        }
+
+    def _remember_view_state(self):
+        if not self._view_state_updates_enabled:
+            return
+        if not isinstance(self._config.workspace_state, dict):
+            self._config.workspace_state = {}
+        self._config.workspace_state[_RESOURCE_GENERATOR_VIEW_STATE_KEY] = self._capture_view_state()
+
+    def _save_view_state(self):
+        self._remember_view_state()
+        self._config.save()
 
 
 def _is_subpath(path: str, root: str) -> bool:
@@ -5274,6 +5407,23 @@ def _is_subpath(path: str, root: str) -> bool:
         return os.path.commonpath([path, root]) == root
     except ValueError:
         return False
+
+
+def _coerce_int_list(values, *, expected_length: int, minimum: int, require_nonzero_sum: bool = False) -> list[int] | None:
+    if not isinstance(values, (list, tuple)) or len(values) != expected_length:
+        return None
+    normalized = []
+    for value in values:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            return None
+        if number < minimum:
+            return None
+        normalized.append(number)
+    if require_nonzero_sum and sum(normalized) <= 0:
+        return None
+    return normalized
 
 
 def _discover_supported_assets(root_dir: str):

@@ -219,6 +219,41 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_resource_generator_persists_and_restores_quick_view_state(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        window.show()
+        qapp.processEvents()
+
+        window._simple_asset_type_filter.setCurrentIndex(window._simple_asset_type_filter.findData("font"))
+        window._simple_asset_search_edit.setText("display")
+        header = window._simple_asset_table.horizontalHeader()
+        header.resizeSection(0, 104)
+        header.resizeSection(1, 248)
+        header.resizeSection(2, 432)
+        header.resizeSection(3, 308)
+        window._simple_workspace_splitter.setSizes([160, 420, 260])
+        window._simple_preview_splitter.setSizes([280, 620])
+        window._set_ui_mode("professional")
+        qapp.processEvents()
+
+        expected_state = window._capture_view_state()
+        _close_window(window)
+
+        assert isolated_config.workspace_state["resource_generator_view"] == expected_state
+        saved_config = json.loads((tmp_path / "config" / "config.json").read_text(encoding="utf-8"))
+        assert saved_config["workspace_state"]["resource_generator_view"] == expected_state
+
+        reopened = ResourceGeneratorWindow("")
+        reopened.show()
+        qapp.processEvents()
+
+        assert reopened._workspace_stack.currentWidget() is reopened._professional_page
+        assert reopened._capture_view_state() == expected_state
+        _close_window(reopened)
+
+    @_skip_no_qt
     def test_build_quick_preview_board_dialog_includes_all_assets(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QPixmap
 
