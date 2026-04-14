@@ -1,4 +1,5 @@
 import json
+import os
 from types import SimpleNamespace
 
 import pytest
@@ -2345,12 +2346,45 @@ class TestResourceGeneratorWindow:
         actions = [action for action in menu.actions() if not action.isSeparator()]
         action_map = {action.text(): action for action in actions}
 
-        assert [action.text() for action in actions[:3]] == ["New File...", "Add Files...", "Add Path..."]
+        assert [action.text() for action in actions[:4]] == ["New File...", "Add Files...", "Paste Paths", "Add Path..."]
         assert "Create File..." in action_map
         assert action_map["Create File..."].isEnabled() is True
         assert action_map["Move Up"].isEnabled() is True
         assert action_map["Move Down"].isEnabled() is False
         assert action_map["Remove Missing"].isEnabled() is True
+        dialog.close()
+
+    @_skip_no_qt
+    def test_font_text_links_dialog_can_paste_paths_from_clipboard(self, qapp, tmp_path):
+        from PyQt5.QtWidgets import QApplication
+
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        extra_dir = source_dir / "charset"
+        extra_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("A\nB\n", encoding="utf-8")
+        extra_file = extra_dir / "external_charset.txt"
+        extra_file.write_text("1\n2\n", encoding="utf-8")
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt"],
+            source_dir=str(source_dir),
+            normalize_file_callback=lambda path: os.path.relpath(path, str(source_dir)).replace("\\", "/")
+            if os.path.isabs(path)
+            else path,
+            parent=None,
+        )
+        dialog.show()
+        qapp.processEvents()
+
+        QApplication.clipboard().setText(f'ui_text.txt\n"{extra_file}"\nui_text.txt')
+        dialog._list_widget.setFocus()
+        QTest.keyClick(dialog._list_widget, Qt.Key_V, Qt.ControlModifier)
+
+        assert dialog.text_value() == "ui_text.txt\ncharset/external_charset.txt"
+        assert dialog._preview_sample_label.text() == "Preview Sample: AB12\nPreview Source: ui_text.txt, charset/external_charset.txt"
+        assert dialog._combined_preview_text_edit.toPlainText() == "[ui_text.txt]\nA\nB\n\n[charset/external_charset.txt]\n1\n2"
         dialog.close()
 
     @_skip_no_qt

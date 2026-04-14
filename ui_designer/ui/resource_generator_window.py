@@ -843,6 +843,8 @@ class _FontTextLinksDialog(QDialog):
         self._move_down_shortcut.activated.connect(lambda: self._move_selected_path(1))
         self._remove_selected_shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self._list_widget)
         self._remove_selected_shortcut.activated.connect(self._remove_selected_path)
+        self._paste_paths_shortcut = QShortcut(QKeySequence.Paste, self._list_widget)
+        self._paste_paths_shortcut.activated.connect(self._paste_paths_from_clipboard)
         self._activate_shortcut = QShortcut(QKeySequence(Qt.Key_Return), self._list_widget)
         self._activate_shortcut.activated.connect(self._activate_selected_item)
         self._activate_keypad_shortcut = QShortcut(QKeySequence(Qt.Key_Enter), self._list_widget)
@@ -1055,6 +1057,10 @@ class _FontTextLinksDialog(QDialog):
         add_files_action = menu.addAction("Add Files...")
         add_files_action.setEnabled(self._add_files_button.isEnabled())
         add_files_action.triggered.connect(self._add_files)
+
+        paste_paths_action = menu.addAction("Paste Paths")
+        paste_paths_action.setEnabled(bool(self._clipboard_path_candidates()))
+        paste_paths_action.triggered.connect(self._paste_paths_from_clipboard)
 
         add_path_action = menu.addAction("Add Path...")
         add_path_action.triggered.connect(self._add_path)
@@ -1292,6 +1298,41 @@ class _FontTextLinksDialog(QDialog):
             if normalized and normalized not in items:
                 items.append(normalized)
         self._set_items(items, selected_index=len(items) - 1)
+
+    def _clipboard_path_candidates(self) -> list[str]:
+        clipboard_text = QApplication.clipboard().text().strip()
+        if not clipboard_text:
+            return []
+        candidates = []
+        for item in self._split_items(clipboard_text):
+            candidate = str(item or "").strip().strip("\"")
+            if candidate:
+                candidates.append(candidate)
+        return candidates
+
+    def _normalize_pasted_item(self, value: str) -> str:
+        candidate = str(value or "").strip().strip("\"")
+        if not candidate:
+            return ""
+        normalized_path = normalize_path(candidate)
+        if callable(self._normalize_file_callback):
+            if os.path.isabs(candidate) or os.path.isfile(normalized_path):
+                return self._normalize_file_callback(normalized_path) or ""
+        return self._validated_manual_item(candidate, title="Paste Font Text Paths")
+
+    def _paste_paths_from_clipboard(self):
+        candidates = self._clipboard_path_candidates()
+        if not candidates:
+            return
+        items = self._current_values()
+        changed = False
+        for candidate in candidates:
+            normalized = self._normalize_pasted_item(candidate)
+            if normalized and normalized not in items:
+                items.append(normalized)
+                changed = True
+        if changed:
+            self._set_items(items, selected_index=len(items) - 1)
 
     def _prompt_path(self, *, title: str, initial_value: str = "") -> str:
         text, accepted = QInputDialog.getText(
