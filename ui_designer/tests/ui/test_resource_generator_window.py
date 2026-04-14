@@ -2261,6 +2261,36 @@ class TestResourceGeneratorWindow:
         dialog.close()
 
     @_skip_no_qt
+    def test_font_text_links_dialog_shortcuts_reorder_and_remove_selected_item(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("A\nB\n", encoding="utf-8")
+        (source_dir / "charset.txt").write_text("1\n2\n", encoding="utf-8")
+
+        dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt", "charset.txt", "missing.txt"],
+            source_dir=str(source_dir),
+            parent=None,
+        )
+        dialog.show()
+        qapp.processEvents()
+
+        dialog._list_widget.setCurrentRow(1)
+        dialog._list_widget.setFocus()
+        QTest.keyClick(dialog._list_widget, Qt.Key_Up, Qt.ControlModifier | Qt.ShiftModifier)
+
+        assert dialog.text_value() == "charset.txt\nui_text.txt\nmissing.txt"
+        assert dialog._preview_sample_label.text() == "Preview Sample: 12AB\nPreview Source: charset.txt, ui_text.txt"
+
+        QTest.keyClick(dialog._list_widget, Qt.Key_Delete)
+
+        assert dialog.text_value() == "ui_text.txt\nmissing.txt"
+        assert dialog._count_label.text() == "Linked text files: 2 | Missing: 1"
+        dialog.close()
+
+    @_skip_no_qt
     def test_font_text_links_dialog_can_copy_full_path_and_open_folder(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtWidgets import QApplication
 

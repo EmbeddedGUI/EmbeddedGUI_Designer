@@ -835,6 +835,13 @@ class _FontTextLinksDialog(QDialog):
         self._list_widget.model().rowsMoved.connect(lambda *_args: self._handle_list_order_changed())
         content_row.addWidget(self._list_widget, 1)
 
+        self._move_up_shortcut = QShortcut(QKeySequence("Ctrl+Shift+Up"), self._list_widget)
+        self._move_up_shortcut.activated.connect(lambda: self._move_selected_path(-1))
+        self._move_down_shortcut = QShortcut(QKeySequence("Ctrl+Shift+Down"), self._list_widget)
+        self._move_down_shortcut.activated.connect(lambda: self._move_selected_path(1))
+        self._remove_selected_shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self._list_widget)
+        self._remove_selected_shortcut.activated.connect(self._remove_selected_path)
+
         actions_col = QVBoxLayout()
         actions_col.setContentsMargins(0, 0, 0, 0)
         actions_col.setSpacing(8)
