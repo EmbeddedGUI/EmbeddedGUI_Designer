@@ -11,7 +11,7 @@ from ui_designer.tests.ui.window_test_helpers import close_test_window as _close
 if HAS_PYQT5:
     from PyQt5.QtCore import QEvent, Qt, QUrl
     from PyQt5.QtTest import QTest
-    from PyQt5.QtWidgets import QApplication, QGroupBox, QHeaderView, QLabel, QMessageBox, QPushButton
+    from PyQt5.QtWidgets import QApplication, QAbstractItemView, QGroupBox, QHeaderView, QLabel, QMessageBox, QPushButton
 
 
 _skip_no_qt = skip_if_no_qt
@@ -2018,6 +2018,7 @@ class TestResourceGeneratorWindow:
 
         dialog = _FontTextLinksDialog(initial_items=["ui_text.txt", "missing.txt"], source_dir=str(source_dir), parent=None)
 
+        assert dialog._list_widget.dragDropMode() == QAbstractItemView.InternalMove
         assert dialog._count_label.text() == "Linked text files: 2 | Missing: 1"
         assert dialog._remove_missing_button.isEnabled() is True
         assert dialog.text_value() == "ui_text.txt\nmissing.txt"
@@ -2249,7 +2250,10 @@ class TestResourceGeneratorWindow:
         assert dialog._combined_preview_text_edit.toPlainText() == "[ui_text.txt]\nA\nB\n\n[charset.txt]\n1\n2"
 
         dialog._list_widget.setCurrentRow(1)
-        dialog._move_selected_path(-1)
+        moved_item = dialog._list_widget.takeItem(1)
+        dialog._list_widget.insertItem(0, moved_item)
+        dialog._list_widget.setCurrentRow(0)
+        dialog._handle_list_order_changed()
 
         assert dialog.text_value() == "charset.txt\nui_text.txt"
         assert dialog._preview_sample_label.text() == "Preview Sample: 12AB\nPreview Source: charset.txt, ui_text.txt"

@@ -806,7 +806,7 @@ class _FontTextLinksDialog(QDialog):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(10)
 
-        summary = QLabel("Manage linked UTF-8 text files. Enter one path per line. Duplicates are removed when you save.")
+        summary = QLabel("Manage linked UTF-8 text files. Drag to reorder them. Duplicates are removed when you save.")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
@@ -825,8 +825,14 @@ class _FontTextLinksDialog(QDialog):
 
         self._list_widget = QListWidget()
         self._list_widget.setSelectionMode(QAbstractItemView.SingleSelection)
+        self._list_widget.setDragEnabled(True)
+        self._list_widget.setAcceptDrops(True)
+        self._list_widget.setDropIndicatorShown(True)
+        self._list_widget.setDragDropMode(QAbstractItemView.InternalMove)
+        self._list_widget.setDefaultDropAction(Qt.MoveAction)
         self._list_widget.itemSelectionChanged.connect(self._refresh_action_state)
         self._list_widget.itemDoubleClicked.connect(lambda _item: self._activate_selected_item())
+        self._list_widget.model().rowsMoved.connect(lambda *_args: self._handle_list_order_changed())
         content_row.addWidget(self._list_widget, 1)
 
         actions_col = QVBoxLayout()
@@ -1008,8 +1014,7 @@ class _FontTextLinksDialog(QDialog):
             if self._list_widget.count() > 0:
                 target_row = selected_index if 0 <= selected_index < self._list_widget.count() else 0
                 self._list_widget.setCurrentRow(target_row)
-        self._update_count_label()
-        self._refresh_action_state()
+        self._handle_list_order_changed()
 
     def _selected_row(self) -> int:
         return int(self._list_widget.currentRow())
@@ -1020,6 +1025,10 @@ class _FontTextLinksDialog(QDialog):
             return ""
         item = self._list_widget.item(row)
         return str(item.data(Qt.UserRole) or "").strip() if item is not None else ""
+
+    def _handle_list_order_changed(self):
+        self._update_count_label()
+        self._refresh_action_state()
 
     def _display_path_for_value(self, raw_value: str) -> str:
         raw = str(raw_value or "").strip()
