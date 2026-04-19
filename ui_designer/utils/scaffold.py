@@ -1272,6 +1272,8 @@ def _remove_file_if_exists(path):
 
 def generate_designer_resource_config(project, src_dir):
     """Ensure the user overlay exists and regenerate the Designer resource config."""
+    _remove_file_if_exists(os.path.join(src_dir, APP_RESOURCE_CONFIG_DESIGNER_FILENAME))
+    _remove_file_if_exists(os.path.join(src_dir, APP_RESOURCE_CONFIG_MERGED_FILENAME))
     user_config_path = user_resource_config_path(src_dir)
     user_config_created = ensure_resource_config_file(user_config_path)
 

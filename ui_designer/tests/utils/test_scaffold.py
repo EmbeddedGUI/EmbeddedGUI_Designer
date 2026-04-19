@@ -2074,12 +2074,17 @@ class TestApplyDesignerProjectScaffold:
     def test_generate_designer_resource_config_creates_user_overlay_and_designer_file(self, tmp_path):
         src_dir = tmp_path / "resource" / "src"
         designer_config_path = src_dir / ".designer" / "app_resource_config_designer.json"
+        legacy_designer_config_path = src_dir / "app_resource_config_designer.json"
+        legacy_merged_config_path = src_dir / ".app_resource_config_merged.json"
         project = build_empty_project_model(
             "GeneratedResourceConfigHelperApp",
             320,
             240,
             pages=["home"],
         )
+        src_dir.mkdir(parents=True, exist_ok=True)
+        legacy_designer_config_path.write_text("{\"img\": [], \"font\": [], \"mp4\": []}\n", encoding="utf-8")
+        legacy_merged_config_path.write_text("{\"img\": [], \"font\": [], \"mp4\": []}\n", encoding="utf-8")
 
         created, config_path = generate_designer_resource_config(project, str(src_dir))
         created_again, config_path_again = generate_designer_resource_config(project, str(src_dir))
@@ -2089,6 +2094,8 @@ class TestApplyDesignerProjectScaffold:
         assert os.path.normpath(config_path) == os.path.normpath(str(designer_config_path))
         assert os.path.normpath(config_path_again) == os.path.normpath(str(designer_config_path))
         assert (src_dir / "app_resource_config.json").read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": [],\n    "mp4": []\n}\n'
+        assert legacy_designer_config_path.exists() is False
+        assert legacy_merged_config_path.exists() is False
         assert json.loads(designer_config_path.read_text(encoding="utf-8")) == {
             "img": [],
             "font": [],
