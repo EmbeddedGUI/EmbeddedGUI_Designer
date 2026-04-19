@@ -26,6 +26,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_FONT_DIR_RELPATH,
     RESOURCE_IMG_DIR_RELPATH,
     RESOURCE_SRC_DIR_RELPATH,
+    SUPPORTED_TEXT_RELPATH,
     project_resource_catalog_path,
 )
 
@@ -89,6 +90,7 @@ class TestProjectCleaner:
         (project_dir / ".designer" / "build_designer.mk").write_text("EGUI_CODE_SRC += $(EGUI_APP_PATH)\n", encoding="utf-8")
         (project_dir / ".designer" / "app_egui_config_designer.h").write_text("#define EGUI_CONFIG_SCEEN_WIDTH 240\n", encoding="utf-8")
         (project_dir / "resource" / "src" / "app_resource_config.json").write_text("{}\n", encoding="utf-8")
+        (project_dir / "resource" / "src" / "supported_text.txt").write_text("abc123\n", encoding="utf-8")
         (project_dir / "resource" / "src" / ".designer").mkdir()
         (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").write_text("{}\n", encoding="utf-8")
         (project_dir / "resource" / "src" / ".designer" / ".app_resource_config_merged.json").write_text("{}\n", encoding="utf-8")
@@ -113,6 +115,7 @@ class TestProjectCleaner:
         assert (project_dir / "resource").is_dir()
         assert (project_dir / "resource" / "src").is_dir()
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
+        assert (project_dir / "resource" / "src" / "supported_text.txt").is_file()
 
         assert not (project_dir / "main_page.c").exists()
         assert not (project_dir / "uicode.h").exists()
@@ -129,6 +132,7 @@ class TestProjectCleaner:
         assert "resource" in report.preserved_paths
         assert "resource/src" in report.preserved_paths
         assert "resource/src/app_resource_config.json" in report.preserved_paths
+        assert SUPPORTED_TEXT_RELPATH in report.preserved_paths
         assert ".eguiproject/layout" in report.preserved_paths
         assert ".eguiproject/resources" in report.preserved_paths
         assert ".eguiproject/mockup" in report.preserved_paths

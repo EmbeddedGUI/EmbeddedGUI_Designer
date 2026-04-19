@@ -22,6 +22,7 @@ from ..utils.scaffold import (
     RESOURCE_FONT_DIR_RELPATH,
     RESOURCE_IMG_DIR_RELPATH,
     RESOURCE_SRC_DIR_RELPATH,
+    SUPPORTED_TEXT_RELPATH,
 )
 from .workspace import normalize_path
 
@@ -57,7 +58,10 @@ _PRESERVED_TOP_LEVEL_FILES = {
     os.path.basename(BUILD_MK_RELPATH),
     os.path.basename(APP_CONFIG_RELPATH),
 }
-_PRESERVED_RESOURCE_SRC_FILES = {os.path.basename(RESOURCE_CONFIG_RELPATH)}
+_PRESERVED_RESOURCE_SRC_FILES = {
+    os.path.basename(RESOURCE_CONFIG_RELPATH),
+    os.path.basename(SUPPORTED_TEXT_RELPATH),
+}
 _RESOURCE_DIRNAME = os.path.basename(os.path.dirname(RESOURCE_SRC_DIR_RELPATH))
 _RESOURCE_SRC_DIRNAME = os.path.basename(RESOURCE_SRC_DIR_RELPATH)
 
