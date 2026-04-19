@@ -113,6 +113,36 @@ def _reserved_resource_folder_error(name: str) -> str:
     )
 
 
+def _reserved_resource_path_label(path: str, *, root_dir: str = "") -> str:
+    normalized = str(path or "").replace("\\", "/").strip()
+    if not normalized:
+        return ""
+    normalized_root = normalize_path(root_dir)
+    if normalized_root:
+        try:
+            path_abs = os.path.abspath(path)
+            root_abs = os.path.abspath(normalized_root)
+            if os.path.commonpath([path_abs, root_abs]) == root_abs:
+                return os.path.relpath(path_abs, root_abs).replace("\\", "/")
+        except ValueError:
+            pass
+    parts = [part for part in normalized.split("/") if part and part != "."]
+    if DESIGNER_RESOURCE_DIRNAME in parts:
+        return "/".join(parts[parts.index(DESIGNER_RESOURCE_DIRNAME):])
+    return os.path.basename(normalized)
+
+
+def _reserved_resource_path_error(path: str, *, root_dir: str = "") -> str:
+    normalized = str(path or "").replace("\\", "/").strip()
+    if not normalized or not is_designer_resource_path(normalized):
+        return ""
+    label = _reserved_resource_path_label(normalized, root_dir=root_dir)
+    return (
+        f"'{label}' is reserved for Designer-generated files.\n"
+        "Choose a different filename."
+    )
+
+
 def _designer_resource_path_label(path: str) -> str:
     normalized = normalize_path(path)
     if not normalized:
@@ -4410,6 +4440,23 @@ class ResourceGeneratorWindow(QDialog):
             )
             return
 
+        for section in KNOWN_RESOURCE_SECTIONS:
+            for entry in self._session.section_entries(section):
+                if not isinstance(entry, dict):
+                    continue
+                file_value = str(entry.get("file", "") or "").strip()
+                reserved_error = _reserved_resource_path_error(file_value, root_dir=source_dir)
+                if reserved_error:
+                    QMessageBox.warning(self, "Pack Into Source Dir", reserved_error)
+                    return
+                if section != "font":
+                    continue
+                for item in self._font_text_items_from_value(entry.get("text", "")):
+                    reserved_error = _reserved_resource_path_error(item, root_dir=source_dir)
+                    if reserved_error:
+                        QMessageBox.warning(self, "Pack Into Source Dir", reserved_error)
+                        return
+
         copied_files = 0
         updated_links = 0
 
@@ -4485,6 +4532,10 @@ class ResourceGeneratorWindow(QDialog):
                     continue
 
                 file_value = str(entry.get("file", "") or "").strip()
+                reserved_error = _reserved_resource_path_error(file_value, root_dir=source_dir)
+                if reserved_error:
+                    QMessageBox.warning(self, "Organize Folders", reserved_error)
+                    return
                 resolved_file = _organized_source_dir_candidate(
                     file_value,
                     target_folder,
@@ -4497,6 +4548,10 @@ class ResourceGeneratorWindow(QDialog):
                 if section != "font":
                     continue
                 for item in [candidate.strip() for candidate in str(entry.get("text", "") or "").split(",") if candidate.strip()]:
+                    reserved_error = _reserved_resource_path_error(item, root_dir=source_dir)
+                    if reserved_error:
+                        QMessageBox.warning(self, "Organize Folders", reserved_error)
+                        return
                     resolved_text = _organized_source_dir_candidate(item, target_folder, source_dir)
                     if resolved_text:
                         candidate_paths.add(resolved_text)
@@ -6548,10 +6603,7 @@ class ResourceGeneratorWindow(QDialog):
     def _normalize_selected_resource_path(self, field_spec, selected_path: str):
         source_dir = self._session.paths.source_dir
         selected_path = normalize_path(selected_path)
-        reserved_candidate = os.path.basename(selected_path)
-        if source_dir and _is_subpath(selected_path, source_dir):
-            reserved_candidate = os.path.relpath(selected_path, source_dir).replace("\\", "/")
-        reserved_error = _reserved_resource_filename_error(reserved_candidate)
+        reserved_error = _reserved_resource_path_error(selected_path, root_dir=source_dir)
         if reserved_error:
             QMessageBox.warning(self, f"Choose {field_spec.label}", reserved_error)
             return None
@@ -7397,6 +7449,8 @@ def _organized_source_dir_candidate(file_name, target_folder: str, source_dir: s
     normalized = str(file_name or "").replace("\\", "/").strip().lstrip("/")
     if not normalized or os.path.isabs(str(file_name or "").strip()) or not target_folder or not source_dir:
         return ""
+    if is_designer_resource_path(normalized):
+        return ""
     if normalized.startswith("build_in/"):
         return ""
     if skip_generated and _is_quick_generated_helper_path(normalized):
@@ -7450,6 +7504,8 @@ def _copy_file_into_source_dir(source_path: str, source_dir: str) -> tuple[str, 
     normalized_source = normalize_path(source_path)
     normalized_dir = normalize_path(source_dir)
     if not normalized_source or not normalized_dir:
+        return "", False
+    if is_designer_resource_path(normalized_source):
         return "", False
 
     basename = os.path.basename(normalized_source)

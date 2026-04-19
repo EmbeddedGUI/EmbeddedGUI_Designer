@@ -1885,6 +1885,56 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_pack_assets_into_source_dir_rejects_designer_managed_external_paths_without_partial_copies(
+        self, qapp, monkeypatch, tmp_path
+    ):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        external_dir = tmp_path / "imports"
+        external_dir.mkdir(parents=True)
+        external_image = external_dir / "hero.png"
+        external_image.write_bytes(b"png")
+        designer_text = external_dir / ".designer" / "display.txt"
+        designer_text.parent.mkdir(parents=True)
+        designer_text.write_text("ABC", encoding="utf-8")
+        warnings = []
+
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": str(external_image), "name": "hero"}],
+                "font": [{"file": "display.ttf", "name": "display", "text": str(designer_text)}],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._pack_assets_into_source_dir()
+
+        assert warnings == [
+            (
+                "Pack Into Source Dir",
+                "'.designer/display.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        assert not (source_dir / "hero.png").exists()
+        assert not (source_dir / "display.txt").exists()
+        assert window._session.section_entries("img")[0]["file"] == str(external_image)
+        assert window._session.section_entries("font")[0]["text"] == str(designer_text)
+        assert window.has_unsaved_changes() is False
+        _close_window(window)
+
+    @_skip_no_qt
     def test_organize_assets_into_standard_folders_moves_files_and_updates_links(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -1920,6 +1970,55 @@ class TestResourceGeneratorWindow:
         assert window._session.section_entries("mp4")[0]["file"] == "videos/intro.mp4"
         assert window.has_unsaved_changes() is True
         assert window._status_label.text() == "Organized 4 files into standard folders, updated 4 links."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_organize_assets_into_standard_folders_rejects_designer_managed_paths(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "hero.png").write_bytes(b"png")
+        (source_dir / "display.ttf").write_bytes(b"ttf")
+        designer_text = source_dir / ".designer" / "display.txt"
+        designer_text.parent.mkdir(parents=True)
+        designer_text.write_text("ABC", encoding="utf-8")
+        warnings = []
+
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "hero.png", "name": "hero"}],
+                "font": [{"file": "display.ttf", "name": "display", "text": ".designer/display.txt"}],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._organize_assets_into_standard_folders()
+
+        assert warnings == [
+            (
+                "Organize Folders",
+                "'.designer/display.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        assert (source_dir / "hero.png").read_bytes() == b"png"
+        assert (source_dir / "display.ttf").read_bytes() == b"ttf"
+        assert designer_text.read_text(encoding="utf-8") == "ABC"
+        assert not (source_dir / "images" / "hero.png").exists()
+        assert window._session.section_entries("img")[0]["file"] == "hero.png"
+        assert window._session.section_entries("font")[0]["text"] == ".designer/display.txt"
+        assert window.has_unsaved_changes() is False
         _close_window(window)
 
     @_skip_no_qt
@@ -4517,6 +4616,38 @@ class TestResourceGeneratorWindow:
                 "'.designer/scratch.txt' is reserved for Designer-generated files.\nChoose a different filename.",
             )
         ]
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_normalize_selected_resource_path_rejects_external_designer_directory_file(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        designer_file = tmp_path / "imports" / ".designer" / "scratch.txt"
+        designer_file.parent.mkdir(parents=True)
+        designer_file.write_text("designer-only\n", encoding="utf-8")
+
+        warnings = []
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._session.paths.source_dir = str(source_dir)
+
+        result = window._normalize_selected_resource_path(RESOURCE_SECTION_SPECS["img"].fields[0], str(designer_file))
+
+        assert result is None
+        assert warnings == [
+            (
+                "Choose File",
+                "'.designer/scratch.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        assert not (source_dir / "scratch.txt").exists()
         _close_window(window)
 
     @_skip_no_qt
