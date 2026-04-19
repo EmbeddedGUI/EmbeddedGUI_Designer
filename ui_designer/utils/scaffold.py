@@ -746,7 +746,7 @@ def designer_scaffold_kwargs(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Return normalized scaffold keyword arguments for shared Designer helpers."""
     if circle_radius is None:
@@ -2772,7 +2772,7 @@ def apply_designer_project_scaffold(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Apply the shared split scaffold policy used by Designer entry points."""
     if refresh_designer_resource_config is None:
@@ -2819,7 +2819,7 @@ def save_project_with_designer_scaffold(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Apply the shared Designer sidecar scaffold and save a project model."""
     project_dir = _prepare_project_save(
@@ -2943,7 +2943,7 @@ def save_project_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     newline=None,
@@ -2982,7 +2982,7 @@ def save_project_model(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Save a project model with optional Designer scaffold sidecars."""
     if with_designer_scaffold:
@@ -3706,7 +3706,7 @@ def save_empty_project_with_designer_scaffold(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build and save an empty project model with the shared Designer scaffold policy."""
     return build_saved_project_model(
@@ -3740,7 +3740,7 @@ def save_empty_sdk_example_project_with_designer_scaffold(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build and save an empty Designer project for an SDK example app."""
     paths = sdk_example_paths(sdk_root, app_name)
@@ -3785,7 +3785,7 @@ def scaffold_designer_project(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Apply the complete shared Designer project scaffold to a directory."""
     actions = apply_designer_project_scaffold(
@@ -3826,7 +3826,7 @@ def scaffold_designer_project_with_sdk_root(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Apply the complete shared Designer scaffold using a relative stored SDK root."""
     from ..model.workspace import serialize_sdk_root

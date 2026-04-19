@@ -764,6 +764,7 @@ class TestCoreProjectScaffold:
             "circle_radius": 120,
             "extra_config_macros": [("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
             "refresh_designer_resource_config": False,
+            "remove_legacy_designer_files": True,
         }
 
     def test_designer_conversion_scaffold_kwargs_enables_shadow_support_defaults(self):
@@ -2031,6 +2032,36 @@ class TestApplyDesignerProjectScaffold:
         assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "unchanged"
         assert '"keep_me"' in designer_resource_path.read_text(encoding="utf-8")
 
+    def test_apply_designer_project_scaffold_removes_legacy_resource_configs_by_default(self, tmp_path):
+        project_dir = tmp_path / "LegacyDefaultHelperApp"
+        resource_src_dir = project_dir / "resource" / "src"
+        resource_src_dir.mkdir(parents=True)
+        (resource_src_dir / "app_resource_config.json").write_text(
+            '{"img": [{"name": "user_asset"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / "app_resource_config_designer.json").write_text(
+            '{"img": [{"name": "legacy"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / ".app_resource_config_merged.json").write_text(
+            '{"img": [{"name": "merged"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+
+        actions = apply_designer_project_scaffold(
+            str(project_dir),
+            "LegacyDefaultHelperApp",
+            320,
+            240,
+        )
+
+        assert actions[LEGACY_DESIGNER_RESOURCE_CONFIG_RELPATH] == "removed"
+        assert actions[LEGACY_MERGED_RESOURCE_CONFIG_RELPATH] == "removed"
+        assert (resource_src_dir / "app_resource_config_designer.json").exists() is False
+        assert (resource_src_dir / ".app_resource_config_merged.json").exists() is False
+        assert '"user_asset"' in (resource_src_dir / "app_resource_config.json").read_text(encoding="utf-8")
+
     def test_save_project_with_designer_scaffold_writes_sidecars_and_project_files(self, tmp_path):
         project_dir = tmp_path / "SavedHelperApp"
         project = build_empty_project_model(
@@ -2391,6 +2422,42 @@ class TestApplyDesignerProjectScaffold:
         assert (project_dir / "ScaffoldSaveHelperApp.egui").is_file()
         assert (project_dir / ".designer" / "build_designer.mk").is_file()
 
+    def test_save_project_model_with_designer_scaffold_removes_legacy_resource_configs_by_default(self, tmp_path):
+        project_dir = tmp_path / "LegacyScaffoldSaveHelperApp"
+        resource_src_dir = project_dir / "resource" / "src"
+        resource_src_dir.mkdir(parents=True)
+        (resource_src_dir / "app_resource_config.json").write_text(
+            '{"img": [{"name": "user_asset"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / "app_resource_config_designer.json").write_text(
+            '{"img": [{"name": "legacy"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / ".app_resource_config_merged.json").write_text(
+            '{"img": [{"name": "merged"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        project = build_empty_project_model(
+            "LegacyScaffoldSaveHelperApp",
+            320,
+            240,
+            pages=["home"],
+        )
+
+        actions = save_project_model(
+            project,
+            str(project_dir),
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+        )
+
+        assert actions[LEGACY_DESIGNER_RESOURCE_CONFIG_RELPATH] == "removed"
+        assert actions[LEGACY_MERGED_RESOURCE_CONFIG_RELPATH] == "removed"
+        assert (resource_src_dir / "app_resource_config_designer.json").exists() is False
+        assert (resource_src_dir / ".app_resource_config_merged.json").exists() is False
+        assert '"user_asset"' in (resource_src_dir / "app_resource_config.json").read_text(encoding="utf-8")
+
     def test_save_project_and_materialize_codegen_runs_before_save_hook_after_binding(self, tmp_path):
         project_dir = tmp_path / "SavedGeneratedHookHelperApp"
         project = build_empty_project_model(
@@ -2458,6 +2525,32 @@ class TestApplyDesignerProjectScaffold:
         assert project.string_catalog.get("greeting", "default") == "Hello"
         reloaded = project.__class__.load(str(project_dir))
         assert reloaded.string_catalog.get("greeting", "default") == "Hello"
+
+    def test_save_empty_project_with_designer_scaffold_removes_legacy_resource_configs_by_default(self, tmp_path):
+        project_dir = tmp_path / "LegacyEmptyScaffoldHelperApp"
+        resource_src_dir = project_dir / "resource" / "src"
+        resource_src_dir.mkdir(parents=True)
+        (resource_src_dir / "app_resource_config.json").write_text(
+            '{"img": [{"name": "user_asset"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / "app_resource_config_designer.json").write_text(
+            '{"img": [{"name": "legacy"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / ".app_resource_config_merged.json").write_text(
+            '{"img": [{"name": "merged"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+
+        save_empty_project_with_designer_scaffold(
+            "LegacyEmptyScaffoldHelperApp",
+            str(project_dir),
+        )
+
+        assert (resource_src_dir / "app_resource_config_designer.json").exists() is False
+        assert (resource_src_dir / ".app_resource_config_merged.json").exists() is False
+        assert '"user_asset"' in (resource_src_dir / "app_resource_config.json").read_text(encoding="utf-8")
 
     def test_save_empty_sdk_example_project_with_designer_scaffold_uses_app_config_dimensions(self, tmp_path):
         sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
