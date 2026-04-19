@@ -811,6 +811,26 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_resource_generator_rejects_drag_for_designer_managed_paths(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        designer_dir = tmp_path / "resource" / "src" / ".designer"
+        designer_dir.mkdir(parents=True)
+        (designer_dir / "display.ttf").write_bytes(b"ttf")
+        window = ResourceGeneratorWindow("")
+        file_event = _FakeUrlDropEvent([designer_dir / "display.ttf"])
+        dir_event = _FakeUrlDropEvent([designer_dir])
+
+        window.dragEnterEvent(file_event)
+        window.dragEnterEvent(dir_event)
+
+        assert file_event.accepted is False
+        assert file_event.ignored is True
+        assert dir_event.accepted is False
+        assert dir_event.ignored is True
+        _close_window(window)
+
+    @_skip_no_qt
     def test_resource_generator_drop_single_directory_scans_assets(self, qapp, monkeypatch, tmp_path):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
 

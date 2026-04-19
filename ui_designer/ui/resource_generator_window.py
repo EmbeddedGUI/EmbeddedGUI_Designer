@@ -2103,6 +2103,8 @@ class ResourceGeneratorWindow(QDialog):
         if not local_paths:
             return False
         for path in local_paths:
+            if is_designer_resource_path(path):
+                continue
             if os.path.isdir(path):
                 return True
             if not os.path.isfile(path):
