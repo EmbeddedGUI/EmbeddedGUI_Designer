@@ -1396,6 +1396,34 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_scan_assets_from_directory_rejects_designer_root_as_source_dir(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        designer_dir = tmp_path / "imports" / ".designer"
+        designer_dir.mkdir(parents=True)
+        (designer_dir / "display.ttf").write_bytes(b"ttf")
+        warnings = []
+
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._scan_assets_from_directory(str(designer_dir))
+
+        assert window._session.paths.source_dir == ""
+        assert window._session.section_entries("font") == []
+        assert warnings == [
+            (
+                "Source Dir",
+                "'.designer' is Designer-managed and cannot be used as Source Dir.\nChoose a parent folder outside .designer.",
+            )
+        ]
+        _close_window(window)
+
+    @_skip_no_qt
     def test_scan_assets_from_directory_can_copy_into_existing_source_dir(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -1511,6 +1539,81 @@ class TestResourceGeneratorWindow:
         assert entry["height"] == 180
         assert window._simple_asset_table.rowCount() == 1
         assert window._simple_asset_table.item(0, 3).text() == "24fps | 320x180 | rgb565 | a0"
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_on_path_edited_rejects_designer_source_dir(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        designer_dir = source_dir / ".designer"
+        source_dir.mkdir(parents=True)
+        designer_dir.mkdir(parents=True)
+        warnings = []
+
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._source_dir_edit.setText(str(designer_dir))
+
+        window._on_path_edited("source_dir", window._source_dir_edit)
+
+        assert window._session.paths.source_dir == str(source_dir.resolve())
+        assert window._source_dir_edit.text() == str(source_dir.resolve())
+        assert warnings == [
+            (
+                "Source Dir",
+                "'.designer' is Designer-managed and cannot be used as Source Dir.\nChoose a parent folder outside .designer.",
+            )
+        ]
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_sync_path_widgets_to_session_rejects_designer_source_dir(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        designer_dir = source_dir / ".designer"
+        source_dir.mkdir(parents=True)
+        designer_dir.mkdir(parents=True)
+        warnings = []
+
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._source_dir_edit.setText(str(designer_dir))
+
+        synced = window._sync_path_widgets_to_session()
+
+        assert synced is False
+        assert window._session.paths.source_dir == str(source_dir.resolve())
+        assert window._source_dir_edit.text() == str(source_dir.resolve())
+        assert warnings == [
+            (
+                "Source Dir",
+                "'.designer' is Designer-managed and cannot be used as Source Dir.\nChoose a parent folder outside .designer.",
+            )
+        ]
         _close_window(window)
 
     @_skip_no_qt

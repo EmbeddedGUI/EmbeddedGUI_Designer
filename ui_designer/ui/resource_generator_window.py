@@ -60,7 +60,12 @@ from ..model.resource_generation_session import (
 from ..model.config import get_config
 from ..model.workspace import normalize_path
 from ..utils.font_preview_renderer import render_font_preview_image
-from ..utils.resource_config_overlay import APP_RESOURCE_CONFIG_FILENAME, is_designer_resource_path, make_empty_resource_config
+from ..utils.resource_config_overlay import (
+    APP_RESOURCE_CONFIG_FILENAME,
+    DESIGNER_RESOURCE_DIRNAME,
+    is_designer_resource_path,
+    make_empty_resource_config,
+)
 from .resource_panel import (
     _GenerateCharsetDialog,
     _suggest_charset_filename_for_resource,
@@ -95,6 +100,26 @@ def _reserved_resource_filename_error(name: str) -> str:
     return (
         f"'{normalized}' is reserved for Designer-generated files.\n"
         "Choose a different filename."
+    )
+
+
+def _designer_resource_path_label(path: str) -> str:
+    normalized = normalize_path(path)
+    if not normalized:
+        return ""
+    parts = [part for part in normalized.replace("\\", "/").split("/") if part and part != "."]
+    if DESIGNER_RESOURCE_DIRNAME in parts:
+        return "/".join(parts[parts.index(DESIGNER_RESOURCE_DIRNAME):])
+    return normalized
+
+
+def _source_dir_reserved_error(path: str) -> str:
+    normalized = normalize_path(path)
+    if not normalized or not is_designer_resource_path(normalized):
+        return ""
+    return (
+        f"'{_designer_resource_path_label(normalized)}' is Designer-managed and cannot be used as Source Dir.\n"
+        "Choose a parent folder outside .designer."
     )
 
 
@@ -2871,7 +2896,12 @@ class ResourceGeneratorWindow(QDialog):
             workspace_dir=self._session.paths.workspace_dir,
             bin_output_dir=self._session.paths.bin_output_dir,
         )
-        self._session.update_path(field_name, value)
+        if field_name == "source_dir":
+            if not self._apply_source_dir_change(value):
+                self._refresh_path_fields()
+                return
+        else:
+            self._session.update_path(field_name, value)
         if field_name == "config_path":
             self._rebase_inferred_paths(previous_paths, self._session.paths.config_path)
             self._refresh_path_fields()
@@ -2881,14 +2911,21 @@ class ResourceGeneratorWindow(QDialog):
         self._update_form()
 
     def _sync_path_widgets_to_session(self):
+        source_dir = self._source_dir_edit.text().strip()
+        reserved_error = _source_dir_reserved_error(source_dir)
+        if reserved_error:
+            QMessageBox.warning(self, "Source Dir", reserved_error)
+            self._refresh_path_fields()
+            return False
         self._session.set_paths(
             GenerationPaths(
                 config_path=self._config_path_edit.text().strip(),
-                source_dir=self._source_dir_edit.text().strip(),
+                source_dir=source_dir,
                 workspace_dir=self._workspace_dir_edit.text().strip(),
                 bin_output_dir=self._bin_output_dir_edit.text().strip(),
             )
         )
+        return True
 
     def _refresh_path_fields(self):
         self._config_path_edit.setText(self._session.paths.config_path)
@@ -3043,7 +3080,8 @@ class ResourceGeneratorWindow(QDialog):
     def _new_config(self):
         if not self._confirm_discard_changes():
             return
-        self._sync_path_widgets_to_session()
+        if not self._sync_path_widgets_to_session():
+            return
         self._apply_paths_and_data(self._session.paths, make_empty_resource_config(), dirty=False)
         self._set_status("New resource config ready.")
 
@@ -3116,7 +3154,8 @@ class ResourceGeneratorWindow(QDialog):
         )
 
         if not source_dir:
-            self._apply_source_dir_change(import_root)
+            if not self._apply_source_dir_change(import_root):
+                return
             source_dir = self._session.paths.source_dir
             source_changed = self._session.paths != previous_paths
         elif not all_inside_source_dir:
@@ -3135,7 +3174,8 @@ class ResourceGeneratorWindow(QDialog):
             if answer == QMessageBox.Cancel:
                 return
             if answer == QMessageBox.No:
-                self._apply_source_dir_change(import_root)
+                if not self._apply_source_dir_change(import_root):
+                    return
                 source_dir = self._session.paths.source_dir
                 source_changed = self._session.paths != previous_paths
             else:
@@ -3192,7 +3232,8 @@ class ResourceGeneratorWindow(QDialog):
         copied_files = 0
 
         if not source_dir:
-            self._apply_source_dir_change(import_root)
+            if not self._apply_source_dir_change(import_root):
+                return
             source_dir = self._session.paths.source_dir
             source_changed = self._session.paths != previous_paths
             asset_paths, text_paths = _discover_supported_assets(import_root)
@@ -3213,7 +3254,8 @@ class ResourceGeneratorWindow(QDialog):
             if answer == QMessageBox.Cancel:
                 return
             if answer == QMessageBox.No:
-                self._apply_source_dir_change(import_root)
+                if not self._apply_source_dir_change(import_root):
+                    return
                 source_dir = self._session.paths.source_dir
                 source_changed = self._session.paths != previous_paths
                 asset_paths, text_paths = _discover_supported_assets(import_root)
@@ -3307,7 +3349,8 @@ class ResourceGeneratorWindow(QDialog):
     def _save_config(self):
         if not self._commit_raw_json_if_needed():
             return False
-        self._sync_path_widgets_to_session()
+        if not self._sync_path_widgets_to_session():
+            return False
         if not self._session.paths.config_path:
             return self._save_config_as()
         try:
@@ -3325,7 +3368,8 @@ class ResourceGeneratorWindow(QDialog):
     def _save_config_as(self):
         if not self._commit_raw_json_if_needed():
             return False
-        self._sync_path_widgets_to_session()
+        if not self._sync_path_widgets_to_session():
+            return False
         start_dir = self._default_open_dir()
         default_name = self._session.paths.config_path or os.path.join(start_dir, APP_RESOURCE_CONFIG_FILENAME)
         path, _ = QFileDialog.getSaveFileName(
@@ -3359,7 +3403,8 @@ class ResourceGeneratorWindow(QDialog):
     def _generate_resources(self):
         if not self._commit_raw_json_if_needed():
             return
-        self._sync_path_widgets_to_session()
+        if not self._sync_path_widgets_to_session():
+            return
         self._update_merged_preview()
         issues = self._session.validation_issues(for_generation=True)
         if any(issue.severity == "error" for issue in issues):
@@ -6436,7 +6481,7 @@ class ResourceGeneratorWindow(QDialog):
             return ""
         return normalize_path(os.path.join(source_dir, raw))
 
-    def _apply_source_dir_change(self, new_source_dir: str):
+    def _apply_source_dir_change(self, new_source_dir: str) -> bool:
         previous_paths = GenerationPaths(
             config_path=self._session.paths.config_path,
             source_dir=self._session.paths.source_dir,
@@ -6444,6 +6489,10 @@ class ResourceGeneratorWindow(QDialog):
             bin_output_dir=self._session.paths.bin_output_dir,
         )
         normalized_source_dir = normalize_path(new_source_dir)
+        reserved_error = _source_dir_reserved_error(normalized_source_dir)
+        if reserved_error:
+            QMessageBox.warning(self, "Source Dir", reserved_error)
+            return False
         self._session.paths.source_dir = normalized_source_dir
 
         previous_defaults = infer_generation_paths(
@@ -6458,6 +6507,7 @@ class ResourceGeneratorWindow(QDialog):
             self._session.paths.workspace_dir = new_defaults.workspace_dir
         if previous_paths.bin_output_dir in {"", previous_defaults.bin_output_dir}:
             self._session.paths.bin_output_dir = new_defaults.bin_output_dir
+        return True
 
     def _copy_supported_assets_into_source_dir(self, import_root: str, source_dir: str, asset_paths, text_paths):
         copied_assets: list[tuple[str, str]] = []
