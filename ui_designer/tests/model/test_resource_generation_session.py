@@ -155,6 +155,52 @@ def test_validation_issues_reject_designer_managed_source_dir(tmp_path):
     assert any(issue.code == "source_dir_reserved" for issue in issues)
 
 
+def test_validation_issues_reject_designer_managed_entry_paths(tmp_path):
+    sdk_root = _build_sdk_with_generator(tmp_path / "sdk")
+    source_dir = tmp_path / "resource" / "src"
+    workspace_dir = tmp_path / "workspace"
+    bin_output_dir = tmp_path / "bin"
+    source_dir.mkdir(parents=True)
+
+    session = ResourceGenerationSession(str(sdk_root))
+    session.reset(
+        GenerationPaths(
+            config_path=str(source_dir / "app_resource_config.json"),
+            source_dir=str(source_dir),
+            workspace_dir=str(workspace_dir),
+            bin_output_dir=str(bin_output_dir),
+        ),
+        {
+            "img": [{"file": ".designer/hero.png", "format": "rgb565", "alpha": "4", "external": "0"}],
+            "font": [
+                {
+                    "file": ".designer/display.ttf",
+                    "pixelsize": "16",
+                    "fontbitsize": "4",
+                    "external": "0",
+                    "text": ".designer/labels.txt",
+                }
+            ],
+            "mp4": [],
+        },
+    )
+
+    issues = session.validation_issues(for_generation=True)
+
+    assert any(
+        issue.code == "designer_managed_path" and issue.section == "img" and issue.field == "file"
+        for issue in issues
+    )
+    assert any(
+        issue.code == "designer_managed_path" and issue.section == "font" and issue.field == "file"
+        for issue in issues
+    )
+    assert any(
+        issue.code == "designer_managed_path" and issue.section == "font" and issue.field == "text"
+        for issue in issues
+    )
+
+
 def test_stage_workspace_copies_source_tree_and_writes_current_user_config(tmp_path):
     source_dir = tmp_path / "source"
     workspace_dir = tmp_path / "workspace"

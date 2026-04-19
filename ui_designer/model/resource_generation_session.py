@@ -788,6 +788,13 @@ def _validate_relative_source_file(entry: dict, field_name: str, source_dir: str
     raw = str(entry.get(field_name, "") or "").strip()
     if not raw:
         return
+    if is_designer_resource_path(raw):
+        add_issue(
+            "designer_managed_path",
+            f"Field '{field_name}' cannot point to Designer-managed files: {raw}",
+            field=field_name,
+        )
+        return
     if os.path.isabs(raw):
         add_issue(
             "absolute_path_unsupported",
@@ -810,6 +817,13 @@ def _validate_multi_relative_source_file(entry: dict, field_name: str, source_di
         path_item = item.strip()
         if not path_item:
             continue
+        if is_designer_resource_path(path_item):
+            add_issue(
+                "designer_managed_path",
+                f"Field '{field_name}' cannot point to Designer-managed files: {path_item}",
+                field=field_name,
+            )
+            return
         if os.path.isabs(path_item):
             add_issue(
                 "absolute_path_unsupported",
@@ -826,6 +840,13 @@ def _validate_multi_relative_source_file(entry: dict, field_name: str, source_di
 def _validate_font_file(entry: dict, field_name: str, source_dir: str, build_in_dir: str, add_issue):
     raw = str(entry.get(field_name, "") or "").strip()
     if not raw:
+        return
+    if is_designer_resource_path(raw):
+        add_issue(
+            "designer_managed_path",
+            f"Field '{field_name}' cannot point to Designer-managed files: {raw}",
+            field=field_name,
+        )
         return
     if os.path.isabs(raw):
         if not os.path.isfile(raw):

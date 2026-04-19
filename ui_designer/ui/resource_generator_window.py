@@ -103,6 +103,16 @@ def _reserved_resource_filename_error(name: str) -> str:
     )
 
 
+def _reserved_resource_folder_error(name: str) -> str:
+    normalized = str(name or "").replace("\\", "/").strip().strip("/")
+    if not normalized or not is_designer_resource_path(normalized):
+        return ""
+    return (
+        f"'{normalized}' is reserved for Designer-generated files.\n"
+        "Choose a different folder."
+    )
+
+
 def _designer_resource_path_label(path: str) -> str:
     normalized = normalize_path(path)
     if not normalized:
@@ -1030,6 +1040,10 @@ class _FontTextLinksDialog(QDialog):
     def _validated_manual_item(self, value: str, *, title: str) -> str:
         normalized = self._normalize_manual_item(value)
         if not normalized:
+            return ""
+        reserved_error = _reserved_resource_filename_error(normalized)
+        if reserved_error:
+            QMessageBox.warning(self, title, reserved_error)
             return ""
         if os.path.isabs(normalized) or not self._source_dir:
             return normalized
@@ -3345,7 +3359,13 @@ class ResourceGeneratorWindow(QDialog):
         if dialog.exec_() != QDialog.Accepted:
             return
 
-        filename = dialog.filename()
+        filename = self._normalize_relative_source_output_path(
+            dialog.filename(),
+            title="Generate Font Text",
+            stay_inside_message="Output filename must stay inside Source Dir.",
+        )
+        if not filename:
+            return
         target_path = os.path.join(source_dir, filename)
         if os.path.isfile(target_path):
             diff = dialog.overwrite_diff()
@@ -4910,6 +4930,22 @@ class ResourceGeneratorWindow(QDialog):
                 "Set Source Dir first so Designer knows where to save the font text file.",
             )
             return False
+        raw_target_filename = str(target_filename or "").strip()
+        if os.path.isabs(raw_target_filename):
+            reserved_error = _reserved_resource_filename_error(raw_target_filename)
+            if reserved_error:
+                QMessageBox.warning(self, "Edit Font Text", reserved_error)
+                return False
+        else:
+            normalized_target = self._normalize_relative_source_output_path(
+                raw_target_filename,
+                title="Edit Font Text",
+                stay_inside_message="Font text paths must stay inside Source Dir.",
+            )
+            if not normalized_target:
+                return False
+            target_filename = normalized_target
+            resolved_path = self._resolve_entry_path("font", "text", target_filename)
         if os.path.isdir(resolved_path):
             QMessageBox.warning(self, "Edit Font Text", f"Selected path is a folder:\n{resolved_path}")
             return False
@@ -5069,13 +5105,12 @@ class ResourceGeneratorWindow(QDialog):
         if not output_filename:
             QMessageBox.warning(self, "Resize Image", "Enter an output filename.")
             return
-        if os.path.isabs(output_filename):
-            QMessageBox.warning(self, "Resize Image", "Output filename must stay inside Source Dir.")
-            return
-
-        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
-        if not normalized_output or normalized_output.startswith(".."):
-            QMessageBox.warning(self, "Resize Image", "Output filename must stay inside Source Dir.")
+        normalized_output = self._normalize_relative_source_output_path(
+            output_filename,
+            title="Resize Image",
+            stay_inside_message="Output filename must stay inside Source Dir.",
+        )
+        if not normalized_output:
             return
 
         self._apply_image_resize(entry, index, resolved_path, normalized_output, width, height)
@@ -5104,13 +5139,12 @@ class ResourceGeneratorWindow(QDialog):
         if not output_filename:
             QMessageBox.warning(self, "Add Border", "Enter an output filename.")
             return
-        if os.path.isabs(output_filename):
-            QMessageBox.warning(self, "Add Border", "Output filename must stay inside Source Dir.")
-            return
-
-        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
-        if not normalized_output or normalized_output.startswith(".."):
-            QMessageBox.warning(self, "Add Border", "Output filename must stay inside Source Dir.")
+        normalized_output = self._normalize_relative_source_output_path(
+            output_filename,
+            title="Add Border",
+            stay_inside_message="Output filename must stay inside Source Dir.",
+        )
+        if not normalized_output:
             return
 
         color = QColor(dialog.color_value())
@@ -5151,13 +5185,12 @@ class ResourceGeneratorWindow(QDialog):
         if not output_filename:
             QMessageBox.warning(self, "Add Background", "Enter an output filename.")
             return
-        if os.path.isabs(output_filename):
-            QMessageBox.warning(self, "Add Background", "Output filename must stay inside Source Dir.")
-            return
-
-        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
-        if not normalized_output or normalized_output.startswith(".."):
-            QMessageBox.warning(self, "Add Background", "Output filename must stay inside Source Dir.")
+        normalized_output = self._normalize_relative_source_output_path(
+            output_filename,
+            title="Add Background",
+            stay_inside_message="Output filename must stay inside Source Dir.",
+        )
+        if not normalized_output:
             return
 
         color = QColor(dialog.color_value())
@@ -5202,13 +5235,12 @@ class ResourceGeneratorWindow(QDialog):
         if not output_filename:
             QMessageBox.warning(self, "Round Corners", "Enter an output filename.")
             return
-        if os.path.isabs(output_filename):
-            QMessageBox.warning(self, "Round Corners", "Output filename must stay inside Source Dir.")
-            return
-
-        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
-        if not normalized_output or normalized_output.startswith(".."):
-            QMessageBox.warning(self, "Round Corners", "Output filename must stay inside Source Dir.")
+        normalized_output = self._normalize_relative_source_output_path(
+            output_filename,
+            title="Round Corners",
+            stay_inside_message="Output filename must stay inside Source Dir.",
+        )
+        if not normalized_output:
             return
 
         self._apply_image_round_corners(
@@ -5243,13 +5275,12 @@ class ResourceGeneratorWindow(QDialog):
         if not output_filename:
             QMessageBox.warning(self, "Adjust Opacity", "Enter an output filename.")
             return
-        if os.path.isabs(output_filename):
-            QMessageBox.warning(self, "Adjust Opacity", "Output filename must stay inside Source Dir.")
-            return
-
-        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
-        if not normalized_output or normalized_output.startswith(".."):
-            QMessageBox.warning(self, "Adjust Opacity", "Output filename must stay inside Source Dir.")
+        normalized_output = self._normalize_relative_source_output_path(
+            output_filename,
+            title="Adjust Opacity",
+            stay_inside_message="Output filename must stay inside Source Dir.",
+        )
+        if not normalized_output:
             return
 
         self._apply_image_opacity(
@@ -5283,13 +5314,13 @@ class ResourceGeneratorWindow(QDialog):
         if dialog.exec_() != QDialog.Accepted:
             return
 
-        output_folder = dialog.output_folder().replace("\\", "/").strip().strip("/")
+        output_folder = self._normalize_relative_source_output_folder(
+            dialog.output_folder(),
+            title="Generate Thumbnails",
+            stay_inside_message="Output folder must stay inside Source Dir.",
+        )
         suffix = dialog.filename_suffix().strip()
         if not output_folder:
-            QMessageBox.warning(self, "Generate Thumbnails", "Enter an output folder inside Source Dir.")
-            return
-        if output_folder.startswith("..") or os.path.isabs(output_folder):
-            QMessageBox.warning(self, "Generate Thumbnails", "Output folder must stay inside Source Dir.")
             return
         if not suffix:
             QMessageBox.warning(self, "Generate Thumbnails", "Enter a filename suffix for generated thumbnails.")
@@ -5324,12 +5355,12 @@ class ResourceGeneratorWindow(QDialog):
         if dialog.exec_() != QDialog.Accepted:
             return
 
-        output_folder = dialog.output_folder().replace("\\", "/").strip().strip("/")
+        output_folder = self._normalize_relative_source_output_folder(
+            dialog.output_folder(),
+            title="Generate Placeholders",
+            stay_inside_message="Fallback folder must stay inside Source Dir.",
+        )
         if not output_folder:
-            QMessageBox.warning(self, "Generate Placeholders", "Enter a fallback folder inside Source Dir.")
-            return
-        if output_folder.startswith("..") or os.path.isabs(output_folder):
-            QMessageBox.warning(self, "Generate Placeholders", "Fallback folder must stay inside Source Dir.")
             return
 
         self._generate_placeholder_images_for_quick_mode(
@@ -5359,13 +5390,13 @@ class ResourceGeneratorWindow(QDialog):
         if dialog.exec_() != QDialog.Accepted:
             return
 
-        output_folder = dialog.output_folder().replace("\\", "/").strip().strip("/")
+        output_folder = self._normalize_relative_source_output_folder(
+            dialog.output_folder(),
+            title="Normalize Images",
+            stay_inside_message="Output folder must stay inside Source Dir.",
+        )
         suffix = dialog.filename_suffix().strip()
         if not output_folder:
-            QMessageBox.warning(self, "Normalize Images", "Enter an output folder inside Source Dir.")
-            return
-        if output_folder.startswith("..") or os.path.isabs(output_folder):
-            QMessageBox.warning(self, "Normalize Images", "Output folder must stay inside Source Dir.")
             return
         if not suffix:
             QMessageBox.warning(self, "Normalize Images", "Enter a filename suffix for normalized images.")
@@ -5398,13 +5429,13 @@ class ResourceGeneratorWindow(QDialog):
         if dialog.exec_() != QDialog.Accepted:
             return
 
-        output_folder = dialog.output_folder().replace("\\", "/").strip().strip("/")
+        output_folder = self._normalize_relative_source_output_folder(
+            dialog.output_folder(),
+            title="Compress Images",
+            stay_inside_message="Output folder must stay inside Source Dir.",
+        )
         suffix = dialog.filename_suffix().strip()
         if not output_folder:
-            QMessageBox.warning(self, "Compress Images", "Enter an output folder inside Source Dir.")
-            return
-        if output_folder.startswith("..") or os.path.isabs(output_folder):
-            QMessageBox.warning(self, "Compress Images", "Output folder must stay inside Source Dir.")
             return
         if not suffix:
             QMessageBox.warning(self, "Compress Images", "Enter a filename suffix for compressed images.")
@@ -5438,13 +5469,13 @@ class ResourceGeneratorWindow(QDialog):
         if dialog.exec_() != QDialog.Accepted:
             return
 
-        output_folder = dialog.output_folder().replace("\\", "/").strip().strip("/")
+        output_folder = self._normalize_relative_source_output_folder(
+            dialog.output_folder(),
+            title="Pre-Render Fonts",
+            stay_inside_message="Output folder must stay inside Source Dir.",
+        )
         suffix = dialog.filename_suffix().strip()
         if not output_folder:
-            QMessageBox.warning(self, "Pre-Render Fonts", "Enter an output folder inside Source Dir.")
-            return
-        if output_folder.startswith("..") or os.path.isabs(output_folder):
-            QMessageBox.warning(self, "Pre-Render Fonts", "Output folder must stay inside Source Dir.")
             return
         if not suffix:
             QMessageBox.warning(self, "Pre-Render Fonts", "Enter a filename suffix for rendered previews.")
@@ -5468,11 +5499,16 @@ class ResourceGeneratorWindow(QDialog):
             QMessageBox.warning(self, "Generate Thumbnails", "Set Source Dir before generating thumbnails.")
             return
 
-        generated_assets: list[tuple[str, str]] = []
-        generated_files = 0
+        normalized_folder = self._normalize_relative_source_output_folder(
+            output_folder,
+            title="Generate Thumbnails",
+            stay_inside_message="Output folder must stay inside Source Dir.",
+        )
+        if not normalized_folder:
+            return
 
-        normalized_folder = output_folder.replace("\\", "/").strip().strip("/")
         size = (max(max_width, 1), max(max_height, 1))
+        jobs: list[tuple[str, str]] = []
 
         for entry in self._session.section_entries("img"):
             if not isinstance(entry, dict):
@@ -5487,12 +5523,26 @@ class ResourceGeneratorWindow(QDialog):
             if not base_name:
                 continue
 
-            relative_output = f"{normalized_folder}/{base_name}{filename_suffix}.png"
-            relative_output = relative_output.replace("//", "/")
+            relative_output = self._normalize_relative_source_output_path(
+                f"{normalized_folder}/{base_name}{filename_suffix}.png",
+                title="Generate Thumbnails",
+                stay_inside_message="Generated thumbnails must stay inside Source Dir.",
+            )
+            if not relative_output:
+                return
             target_path = normalize_path(os.path.join(source_dir, relative_output.replace("/", os.sep)))
             if normalize_path(resolved_path) == target_path:
                 continue
+            jobs.append((resolved_path, target_path))
 
+        if not jobs:
+            self._set_status("No image assets were available for thumbnail generation.")
+            return
+
+        generated_assets: list[tuple[str, str]] = []
+        generated_files = 0
+
+        for resolved_path, target_path in jobs:
             try:
                 with Image.open(resolved_path) as image:
                     prepared = ImageOps.exif_transpose(image)
@@ -5508,10 +5558,6 @@ class ResourceGeneratorWindow(QDialog):
 
             generated_files += 1
             generated_assets.append(("img", target_path))
-
-        if not generated_assets:
-            self._set_status("No image assets were available for thumbnail generation.")
-            return
 
         entries_by_section = self._build_entries_from_asset_paths(generated_assets, [], source_dir)
         added, updated = self._merge_discovered_entries(entries_by_section)
@@ -5533,10 +5579,16 @@ class ResourceGeneratorWindow(QDialog):
             QMessageBox.warning(self, "Generate Placeholders", "Set Source Dir before generating placeholder images.")
             return
 
-        generated_files = 0
-        updated_links = 0
         skipped_assets = 0
-        normalized_folder = output_folder.replace("\\", "/").strip().strip("/")
+        normalized_folder = self._normalize_relative_source_output_folder(
+            output_folder,
+            title="Generate Placeholders",
+            stay_inside_message="Fallback folder must stay inside Source Dir.",
+        )
+        if not normalized_folder:
+            return
+
+        jobs: list[tuple[int, dict, str, str]] = []
 
         for index, entry in enumerate(self._session.section_entries("img")):
             if not isinstance(entry, dict):
@@ -5556,11 +5608,7 @@ class ResourceGeneratorWindow(QDialog):
                         skipped_assets += 1
                         continue
                 else:
-                    normalized_output = file_name.replace("\\", "/").strip().lstrip("/")
-                    if not normalized_output or normalized_output.startswith(".."):
-                        skipped_assets += 1
-                        continue
-                    target_relative = normalized_output
+                    target_relative = file_name
             else:
                 stem = _safe_quick_placeholder_stem(
                     str(entry.get("name", "") or "") or _resource_name_from_file(entry.get("file", "")),
@@ -5568,11 +5616,29 @@ class ResourceGeneratorWindow(QDialog):
                 )
                 target_relative = f"{normalized_folder}/{stem}_placeholder.png"
 
+            target_relative = self._normalize_relative_source_output_path(
+                target_relative,
+                title="Generate Placeholders",
+                stay_inside_message="Placeholder filenames must stay inside Source Dir.",
+            )
+            if not target_relative:
+                return
             target_path = normalize_path(os.path.join(source_dir, target_relative.replace("/", os.sep)))
             if not _is_subpath(target_path, source_dir):
                 skipped_assets += 1
                 continue
+            jobs.append((index, entry, target_relative, target_path))
 
+        if not jobs:
+            if skipped_assets:
+                self._set_status(f"No placeholders were generated; skipped {skipped_assets} invalid assets.")
+            else:
+                self._set_status("No missing image assets needed placeholders.")
+            return
+
+        generated_files = 0
+        updated_links = 0
+        for index, entry, target_relative, target_path in jobs:
             pixmap = _build_quick_placeholder_pixmap(
                 str(entry.get("name", "") or "") or _resource_name_from_file(target_relative) or "Placeholder",
                 width=max(int(width), 16),
@@ -5582,15 +5648,11 @@ class ResourceGeneratorWindow(QDialog):
             if not pixmap.save(target_path, "PNG"):
                 QMessageBox.warning(self, "Generate Placeholders", f"Failed to save placeholder image:\n{target_path}")
                 return
-
             generated_files += 1
+            file_name = str(entry.get("file", "") or "").strip()
             if target_relative != file_name:
                 self._session.update_entry_value("img", index, "file", target_relative)
                 updated_links += 1
-
-        if not generated_files:
-            self._set_status("No missing image assets needed placeholders.")
-            return
 
         if updated_links:
             self._mark_dirty()
@@ -5613,10 +5675,15 @@ class ResourceGeneratorWindow(QDialog):
             QMessageBox.warning(self, "Pre-Render Fonts", "Set Source Dir before rendering font previews.")
             return
 
-        generated_assets: list[tuple[str, str]] = []
-        rendered_files = 0
-        normalized_folder = output_folder.replace("\\", "/").strip().strip("/")
+        normalized_folder = self._normalize_relative_source_output_folder(
+            output_folder,
+            title="Pre-Render Fonts",
+            stay_inside_message="Output folder must stay inside Source Dir.",
+        )
+        if not normalized_folder:
+            return
         shared_sample = str(sample_text_override or "").strip()
+        jobs: list[tuple[QPixmap, str]] = []
 
         for entry in self._session.section_entries("font"):
             if not isinstance(entry, dict):
@@ -5644,10 +5711,24 @@ class ResourceGeneratorWindow(QDialog):
                 )
                 return
 
-            relative_output = f"{normalized_folder}/{base_name}{filename_suffix}.png"
-            relative_output = relative_output.replace("//", "/")
+            relative_output = self._normalize_relative_source_output_path(
+                f"{normalized_folder}/{base_name}{filename_suffix}.png",
+                title="Pre-Render Fonts",
+                stay_inside_message="Rendered preview filenames must stay inside Source Dir.",
+            )
+            if not relative_output:
+                return
             target_path = normalize_path(os.path.join(source_dir, relative_output.replace("/", os.sep)))
+            jobs.append((preview_pixmap, target_path))
 
+        if not jobs:
+            self._set_status("No font assets were available for pre-rendering.")
+            return
+
+        generated_assets: list[tuple[str, str]] = []
+        rendered_files = 0
+
+        for preview_pixmap, target_path in jobs:
             os.makedirs(os.path.dirname(target_path), exist_ok=True)
             if not preview_pixmap.save(target_path, "PNG"):
                 QMessageBox.warning(self, "Pre-Render Fonts", f"Failed to save rendered preview:\n{target_path}")
@@ -5655,10 +5736,6 @@ class ResourceGeneratorWindow(QDialog):
 
             rendered_files += 1
             generated_assets.append(("img", target_path))
-
-        if not generated_assets:
-            self._set_status("No font assets were available for pre-rendering.")
-            return
 
         entries_by_section = self._build_entries_from_asset_paths(generated_assets, [], source_dir)
         added, updated = self._merge_discovered_entries(entries_by_section)
@@ -5686,9 +5763,14 @@ class ResourceGeneratorWindow(QDialog):
             QMessageBox.warning(self, "Compress Images", "Set Source Dir before compressing images.")
             return
 
-        generated_assets: list[tuple[str, str]] = []
-        compressed_files = 0
-        normalized_folder = output_folder.replace("\\", "/").strip().strip("/")
+        normalized_folder = self._normalize_relative_source_output_folder(
+            output_folder,
+            title="Compress Images",
+            stay_inside_message="Output folder must stay inside Source Dir.",
+        )
+        if not normalized_folder:
+            return
+        jobs: list[tuple[str, str]] = []
 
         for entry in self._session.section_entries("img"):
             if not isinstance(entry, dict):
@@ -5706,12 +5788,26 @@ class ResourceGeneratorWindow(QDialog):
             if not base_name:
                 continue
 
-            relative_output = f"{normalized_folder}/{base_name}{filename_suffix}.png"
-            relative_output = relative_output.replace("//", "/")
+            relative_output = self._normalize_relative_source_output_path(
+                f"{normalized_folder}/{base_name}{filename_suffix}.png",
+                title="Compress Images",
+                stay_inside_message="Compressed image filenames must stay inside Source Dir.",
+            )
+            if not relative_output:
+                return
             target_path = normalize_path(os.path.join(source_dir, relative_output.replace("/", os.sep)))
             if normalize_path(resolved_path) == target_path:
                 continue
+            jobs.append((resolved_path, target_path))
 
+        if not jobs:
+            self._set_status("No image assets were available for compression.")
+            return
+
+        generated_assets: list[tuple[str, str]] = []
+        compressed_files = 0
+
+        for resolved_path, target_path in jobs:
             try:
                 with Image.open(resolved_path) as image:
                     compressed = ImageOps.exif_transpose(image)
@@ -5729,10 +5825,6 @@ class ResourceGeneratorWindow(QDialog):
 
             compressed_files += 1
             generated_assets.append(("img", target_path))
-
-        if not generated_assets:
-            self._set_status("No image assets were available for compression.")
-            return
 
         entries_by_section = self._build_entries_from_asset_paths(generated_assets, [], source_dir)
         added, updated = self._merge_discovered_entries(entries_by_section)
@@ -5760,9 +5852,14 @@ class ResourceGeneratorWindow(QDialog):
             QMessageBox.warning(self, "Normalize Images", "Set Source Dir before normalizing images.")
             return
 
-        generated_assets: list[tuple[str, str]] = []
-        normalized_files = 0
-        normalized_folder = output_folder.replace("\\", "/").strip().strip("/")
+        normalized_folder = self._normalize_relative_source_output_folder(
+            output_folder,
+            title="Normalize Images",
+            stay_inside_message="Output folder must stay inside Source Dir.",
+        )
+        if not normalized_folder:
+            return
+        jobs: list[tuple[str, str]] = []
 
         for entry in self._session.section_entries("img"):
             if not isinstance(entry, dict):
@@ -5780,12 +5877,26 @@ class ResourceGeneratorWindow(QDialog):
             if not base_name:
                 continue
 
-            relative_output = f"{normalized_folder}/{base_name}{filename_suffix}.png"
-            relative_output = relative_output.replace("//", "/")
+            relative_output = self._normalize_relative_source_output_path(
+                f"{normalized_folder}/{base_name}{filename_suffix}.png",
+                title="Normalize Images",
+                stay_inside_message="Normalized image filenames must stay inside Source Dir.",
+            )
+            if not relative_output:
+                return
             target_path = normalize_path(os.path.join(source_dir, relative_output.replace("/", os.sep)))
             if normalize_path(resolved_path) == target_path:
                 continue
+            jobs.append((resolved_path, target_path))
 
+        if not jobs:
+            self._set_status("No image assets were available for normalization.")
+            return
+
+        generated_assets: list[tuple[str, str]] = []
+        normalized_files = 0
+
+        for resolved_path, target_path in jobs:
             try:
                 with Image.open(resolved_path) as image:
                     normalized = ImageOps.exif_transpose(image)
@@ -5799,10 +5910,6 @@ class ResourceGeneratorWindow(QDialog):
 
             normalized_files += 1
             generated_assets.append(("img", target_path))
-
-        if not generated_assets:
-            self._set_status("No image assets were available for normalization.")
-            return
 
         entries_by_section = self._build_entries_from_asset_paths(generated_assets, [], source_dir)
         added, updated = self._merge_discovered_entries(entries_by_section)
@@ -5828,6 +5935,10 @@ class ResourceGeneratorWindow(QDialog):
         source_dir = self._session.paths.source_dir
         if not source_dir:
             QMessageBox.warning(self, "Resize Image", "Set Source Dir before resizing images.")
+            return
+        reserved_error = _reserved_resource_filename_error(output_filename)
+        if reserved_error:
+            QMessageBox.warning(self, "Resize Image", reserved_error)
             return
 
         target_path = normalize_path(os.path.join(source_dir, output_filename))
@@ -5874,6 +5985,10 @@ class ResourceGeneratorWindow(QDialog):
         source_dir = self._session.paths.source_dir
         if not source_dir:
             QMessageBox.warning(self, "Add Border", "Set Source Dir before editing images.")
+            return
+        reserved_error = _reserved_resource_filename_error(output_filename)
+        if reserved_error:
+            QMessageBox.warning(self, "Add Border", reserved_error)
             return
 
         target_path = normalize_path(os.path.join(source_dir, output_filename))
@@ -5922,6 +6037,10 @@ class ResourceGeneratorWindow(QDialog):
         source_dir = self._session.paths.source_dir
         if not source_dir:
             QMessageBox.warning(self, "Add Background", "Set Source Dir before editing images.")
+            return
+        reserved_error = _reserved_resource_filename_error(output_filename)
+        if reserved_error:
+            QMessageBox.warning(self, "Add Background", reserved_error)
             return
 
         target_path = normalize_path(os.path.join(source_dir, output_filename))
@@ -5972,6 +6091,10 @@ class ResourceGeneratorWindow(QDialog):
         source_dir = self._session.paths.source_dir
         if not source_dir:
             QMessageBox.warning(self, "Round Corners", "Set Source Dir before editing images.")
+            return
+        reserved_error = _reserved_resource_filename_error(output_filename)
+        if reserved_error:
+            QMessageBox.warning(self, "Round Corners", reserved_error)
             return
 
         target_path = normalize_path(os.path.join(source_dir, output_filename))
@@ -6025,6 +6148,10 @@ class ResourceGeneratorWindow(QDialog):
         source_dir = self._session.paths.source_dir
         if not source_dir:
             QMessageBox.warning(self, "Adjust Opacity", "Set Source Dir before editing images.")
+            return
+        reserved_error = _reserved_resource_filename_error(output_filename)
+        if reserved_error:
+            QMessageBox.warning(self, "Adjust Opacity", reserved_error)
             return
 
         target_path = normalize_path(os.path.join(source_dir, output_filename))
@@ -6094,13 +6221,12 @@ class ResourceGeneratorWindow(QDialog):
         if not output_filename:
             QMessageBox.warning(self, "Rotate Image", "Enter an output filename.")
             return
-        if os.path.isabs(output_filename):
-            QMessageBox.warning(self, "Rotate Image", "Output filename must stay inside Source Dir.")
-            return
-
-        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
-        if not normalized_output or normalized_output.startswith(".."):
-            QMessageBox.warning(self, "Rotate Image", "Output filename must stay inside Source Dir.")
+        normalized_output = self._normalize_relative_source_output_path(
+            output_filename,
+            title="Rotate Image",
+            stay_inside_message="Output filename must stay inside Source Dir.",
+        )
+        if not normalized_output:
             return
 
         self._apply_image_rotation(entry, index, resolved_path, normalized_output, dialog.rotation_degrees())
@@ -6115,6 +6241,10 @@ class ResourceGeneratorWindow(QDialog):
         source_dir = self._session.paths.source_dir
         if not source_dir:
             QMessageBox.warning(self, "Rotate Image", "Set Source Dir before rotating images.")
+            return
+        reserved_error = _reserved_resource_filename_error(output_filename)
+        if reserved_error:
+            QMessageBox.warning(self, "Rotate Image", reserved_error)
             return
 
         target_path = normalize_path(os.path.join(source_dir, output_filename))
@@ -6176,13 +6306,12 @@ class ResourceGeneratorWindow(QDialog):
         if not output_filename:
             QMessageBox.warning(self, "Flip Image", "Enter an output filename.")
             return
-        if os.path.isabs(output_filename):
-            QMessageBox.warning(self, "Flip Image", "Output filename must stay inside Source Dir.")
-            return
-
-        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
-        if not normalized_output or normalized_output.startswith(".."):
-            QMessageBox.warning(self, "Flip Image", "Output filename must stay inside Source Dir.")
+        normalized_output = self._normalize_relative_source_output_path(
+            output_filename,
+            title="Flip Image",
+            stay_inside_message="Output filename must stay inside Source Dir.",
+        )
+        if not normalized_output:
             return
 
         self._apply_image_flip(entry, index, resolved_path, normalized_output, dialog.flip_mode())
@@ -6197,6 +6326,10 @@ class ResourceGeneratorWindow(QDialog):
         source_dir = self._session.paths.source_dir
         if not source_dir:
             QMessageBox.warning(self, "Flip Image", "Set Source Dir before flipping images.")
+            return
+        reserved_error = _reserved_resource_filename_error(output_filename)
+        if reserved_error:
+            QMessageBox.warning(self, "Flip Image", reserved_error)
             return
 
         target_path = normalize_path(os.path.join(source_dir, output_filename))
@@ -6267,13 +6400,12 @@ class ResourceGeneratorWindow(QDialog):
         if not output_filename:
             QMessageBox.warning(self, "Crop Image", "Enter an output filename.")
             return
-        if os.path.isabs(output_filename):
-            QMessageBox.warning(self, "Crop Image", "Output filename must stay inside Source Dir.")
-            return
-
-        normalized_output = output_filename.replace("\\", "/").strip().lstrip("/")
-        if not normalized_output or normalized_output.startswith(".."):
-            QMessageBox.warning(self, "Crop Image", "Output filename must stay inside Source Dir.")
+        normalized_output = self._normalize_relative_source_output_path(
+            output_filename,
+            title="Crop Image",
+            stay_inside_message="Output filename must stay inside Source Dir.",
+        )
+        if not normalized_output:
             return
 
         x = dialog.x_value()
@@ -6296,6 +6428,10 @@ class ResourceGeneratorWindow(QDialog):
         source_dir = self._session.paths.source_dir
         if not source_dir:
             QMessageBox.warning(self, "Crop Image", "Set Source Dir before cropping images.")
+            return
+        reserved_error = _reserved_resource_filename_error(output_filename)
+        if reserved_error:
+            QMessageBox.warning(self, "Crop Image", reserved_error)
             return
 
         target_path = normalize_path(os.path.join(source_dir, output_filename))
@@ -6473,6 +6609,48 @@ class ResourceGeneratorWindow(QDialog):
             if existing:
                 return existing if os.path.isdir(existing) else os.path.dirname(existing)
         return normalize_path(os.getcwd())
+
+    def _normalize_relative_source_output_path(self, raw_path: str, *, title: str, stay_inside_message: str) -> str:
+        raw = str(raw_path or "").strip()
+        if os.path.isabs(raw):
+            QMessageBox.warning(self, title, stay_inside_message)
+            return ""
+        normalized = raw.replace("\\", "/").strip().lstrip("/")
+        if not normalized or normalized.startswith(".."):
+            QMessageBox.warning(self, title, stay_inside_message)
+            return ""
+        reserved_error = _reserved_resource_filename_error(normalized)
+        if reserved_error:
+            QMessageBox.warning(self, title, reserved_error)
+            return ""
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if source_dir:
+            target_path = normalize_path(os.path.join(source_dir, normalized))
+            if not _is_subpath(target_path, source_dir):
+                QMessageBox.warning(self, title, stay_inside_message)
+                return ""
+        return normalized
+
+    def _normalize_relative_source_output_folder(self, raw_path: str, *, title: str, stay_inside_message: str) -> str:
+        raw = str(raw_path or "").strip()
+        if os.path.isabs(raw):
+            QMessageBox.warning(self, title, stay_inside_message)
+            return ""
+        normalized = raw.replace("\\", "/").strip().strip("/")
+        if not normalized or normalized.startswith(".."):
+            QMessageBox.warning(self, title, stay_inside_message)
+            return ""
+        reserved_error = _reserved_resource_folder_error(normalized)
+        if reserved_error:
+            QMessageBox.warning(self, title, reserved_error)
+            return ""
+        source_dir = normalize_path(self._session.paths.source_dir)
+        if source_dir:
+            target_path = normalize_path(os.path.join(source_dir, normalized))
+            if not _is_subpath(target_path, source_dir):
+                QMessageBox.warning(self, title, stay_inside_message)
+                return ""
+        return normalized
 
     def _directory_value_for_field(self, field_name: str) -> str:
         value = getattr(self._session.paths, field_name, "")

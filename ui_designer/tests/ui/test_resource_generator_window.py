@@ -3121,6 +3121,75 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_generate_thumbnails_helper_rejects_designer_managed_output_folder(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+        from PyQt5.QtWidgets import QDialog, QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        hero_path = source_dir / "hero.png"
+        hero = QPixmap(12, 8)
+        assert hero.save(str(hero_path), "PNG")
+        warnings = []
+        generated_calls = []
+
+        class _FakeDialog:
+            def __init__(self, *, width, height, output_folder, suffix, parent=None):
+                assert width == 160
+                assert height == 160
+                assert output_folder == "thumbnails"
+                assert suffix == "_thumb"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def width_value(self):
+                return 5
+
+            def height_value(self):
+                return 3
+
+            def output_folder(self):
+                return ".designer"
+
+            def filename_suffix(self):
+                return "_thumb"
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickThumbnailBatchDialog", _FakeDialog)
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_generator_window.ResourceGeneratorWindow._generate_thumbnail_images_for_quick_mode",
+            lambda *args, **kwargs: generated_calls.append((args, kwargs)),
+        )
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+
+        window._open_generate_thumbnails_helper()
+
+        assert warnings == [
+            (
+                "Generate Thumbnails",
+                "'.designer' is reserved for Designer-generated files.\nChoose a different folder.",
+            )
+        ]
+        assert generated_calls == []
+        assert not (source_dir / ".designer" / "hero_thumb.png").exists()
+        assert window.has_unsaved_changes() is False
+        _close_window(window)
+
+    @_skip_no_qt
     def test_generate_placeholders_helper_fills_missing_image_entries(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QPixmap
         from PyQt5.QtWidgets import QDialog, QMessageBox
@@ -3182,6 +3251,53 @@ class TestResourceGeneratorWindow:
         assert files == ["hero.png", "placeholders/Logo_Mark_placeholder.png", "keep.png"]
         assert window.has_unsaved_changes() is True
         assert window._status_label.text() == "Generated 2 placeholders, updated 1 links."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_generate_placeholders_helper_rejects_designer_managed_existing_target_path_without_partial_writes(
+        self, qapp, monkeypatch, tmp_path
+    ):
+        from PyQt5.QtWidgets import QMessageBox
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        warnings = []
+
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [
+                    {"file": "hero.png", "name": "Hero Banner"},
+                    {"file": ".designer/logo.png", "name": "Logo"},
+                ],
+                "font": [],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        window._generate_placeholder_images_for_quick_mode(width=64, height=48, output_folder="placeholders")
+
+        assert warnings == [
+            (
+                "Generate Placeholders",
+                "'.designer/logo.png' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        assert not (source_dir / "hero.png").exists()
+        assert not (source_dir / ".designer" / "logo.png").exists()
+        assert [entry["file"] for entry in window._session.section_entries("img")] == ["hero.png", ".designer/logo.png"]
+        assert window.has_unsaved_changes() is False
         _close_window(window)
 
     @_skip_no_qt
@@ -3893,6 +4009,68 @@ class TestResourceGeneratorWindow:
         assert files == ["hero.png", "variants/hero_small.png"]
         assert window.has_unsaved_changes() is True
         assert window._status_label.text() == "Created resized image 'variants/hero_small.png' (5 x 3)."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_resize_image_helper_rejects_designer_managed_output_path(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtGui import QPixmap
+        from PyQt5.QtWidgets import QDialog
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        image_path = source_dir / "hero.png"
+        pixmap = QPixmap(12, 8)
+        assert pixmap.save(str(image_path), "PNG")
+        warnings = []
+
+        class _FakeDialog:
+            def __init__(self, *, width, height, output_filename, parent=None):
+                assert width == 12
+                assert height == 8
+                assert output_filename == "hero.png"
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def output_filename(self):
+                return ".designer/hero_small.png"
+
+            def width_value(self):
+                return 5
+
+            def height_value(self):
+                return 3
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._QuickImageResizeDialog", _FakeDialog)
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "hero.png", "name": "hero"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        window._open_resize_image_helper()
+
+        assert warnings == [
+            (
+                "Resize Image",
+                "'.designer/hero_small.png' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        assert not (source_dir / ".designer" / "hero_small.png").exists()
+        assert [entry["file"] for entry in window._session.section_entries("img")] == ["hero.png"]
+        assert window.has_unsaved_changes() is False
         _close_window(window)
 
     @_skip_no_qt
@@ -4610,6 +4788,63 @@ class TestResourceGeneratorWindow:
         assert (source_dir / "display_charset.txt").read_text(encoding="utf-8") == "A\nB\n"
         assert window._session.section_entries("font")[0]["text"] == "display_charset.txt"
         assert window.has_unsaved_changes() is True
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_generate_charset_helper_rejects_designer_managed_output_path(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QDialog
+
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        warnings = []
+
+        class _FakeDialog:
+            def __init__(self, resource_dir, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+                pass
+
+            def exec_(self):
+                return QDialog.Accepted
+
+            def filename(self):
+                return ".designer/display_charset.txt"
+
+            def generated_text(self):
+                return "A\nB\n"
+
+            def overwrite_diff(self):
+                return SimpleNamespace(existing_count=0, new_count=2, added_count=2, removed_count=0)
+
+        monkeypatch.setattr("ui_designer.ui.resource_generator_window._GenerateCharsetDialog", _FakeDialog)
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [], "font": [{"file": "display.ttf", "text": ""}], "mp4": []},
+            dirty=False,
+        )
+        window._active_section = "font"
+        window._active_entry_index = 0
+        window._refresh_entry_table()
+
+        window._open_generate_charset_helper()
+
+        assert warnings == [
+            (
+                "Generate Font Text",
+                "'.designer/display_charset.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        assert not (source_dir / ".designer" / "display_charset.txt").exists()
+        assert window._session.section_entries("font")[0]["text"] == ""
+        assert window.has_unsaved_changes() is False
         _close_window(window)
 
     @_skip_no_qt
