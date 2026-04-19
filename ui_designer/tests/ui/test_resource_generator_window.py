@@ -4254,6 +4254,19 @@ class TestResourceGeneratorWindow:
         assert discovered_texts == []
 
     @_skip_no_qt
+    def test_discover_supported_assets_skips_designer_root_directory(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _discover_supported_assets
+
+        designer_dir = tmp_path / "assets" / ".designer"
+        designer_dir.mkdir(parents=True)
+        (designer_dir / "scratch.txt").write_text("designer-only\n", encoding="utf-8")
+
+        discovered_assets, discovered_texts = _discover_supported_assets(str(designer_dir))
+
+        assert discovered_assets == []
+        assert discovered_texts == []
+
+    @_skip_no_qt
     def test_browse_font_text_duplicate_keeps_clean_state(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtWidgets import QFileDialog
 

@@ -6873,6 +6873,8 @@ def _collect_importable_drop_files(local_paths) -> tuple[list[str], list[str]]:
 def _discover_supported_assets(root_dir: str):
     discovered_assets: list[tuple[str, str]] = []
     discovered_texts: list[str] = []
+    if is_designer_resource_path(root_dir):
+        return discovered_assets, discovered_texts
     for current_root, dir_names, files in os.walk(root_dir):
         dir_names[:] = [name for name in dir_names if not is_designer_resource_path(name)]
         for filename in files:
