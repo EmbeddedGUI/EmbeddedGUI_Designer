@@ -123,6 +123,22 @@ def _source_dir_reserved_error(path: str) -> str:
     )
 
 
+def _config_path_reserved_error(path: str) -> str:
+    normalized = normalize_path(path)
+    if not normalized or not is_designer_resource_path(normalized):
+        return ""
+    hint = ""
+    parent_dir = os.path.basename(os.path.dirname(normalized))
+    if parent_dir == DESIGNER_RESOURCE_DIRNAME:
+        user_config = normalize_path(os.path.join(os.path.dirname(os.path.dirname(normalized)), APP_RESOURCE_CONFIG_FILENAME))
+        if user_config:
+            hint = f"\nUse the user overlay instead:\n{user_config}"
+    return (
+        f"'{_designer_resource_path_label(normalized)}' is Designer-managed and cannot be edited directly."
+        f"{hint}"
+    )
+
+
 class _ClickableLabel(QLabel):
     clicked = pyqtSignal()
 
@@ -2898,7 +2914,14 @@ class ResourceGeneratorWindow(QDialog):
             workspace_dir=self._session.paths.workspace_dir,
             bin_output_dir=self._session.paths.bin_output_dir,
         )
-        if field_name == "source_dir":
+        if field_name == "config_path":
+            reserved_error = _config_path_reserved_error(value)
+            if reserved_error:
+                QMessageBox.warning(self, "Config Path", reserved_error)
+                self._refresh_path_fields()
+                return
+            self._session.update_path(field_name, value)
+        elif field_name == "source_dir":
             if not self._apply_source_dir_change(value):
                 self._refresh_path_fields()
                 return
@@ -2913,6 +2936,12 @@ class ResourceGeneratorWindow(QDialog):
         self._update_form()
 
     def _sync_path_widgets_to_session(self):
+        config_path = self._config_path_edit.text().strip()
+        reserved_config_error = _config_path_reserved_error(config_path)
+        if reserved_config_error:
+            QMessageBox.warning(self, "Config Path", reserved_config_error)
+            self._refresh_path_fields()
+            return False
         source_dir = self._source_dir_edit.text().strip()
         reserved_error = _source_dir_reserved_error(source_dir)
         if reserved_error:
@@ -2921,7 +2950,7 @@ class ResourceGeneratorWindow(QDialog):
             return False
         self._session.set_paths(
             GenerationPaths(
-                config_path=self._config_path_edit.text().strip(),
+                config_path=config_path,
                 source_dir=source_dir,
                 workspace_dir=self._workspace_dir_edit.text().strip(),
                 bin_output_dir=self._bin_output_dir_edit.text().strip(),

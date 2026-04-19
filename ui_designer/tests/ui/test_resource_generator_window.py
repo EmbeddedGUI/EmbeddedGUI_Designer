@@ -1329,6 +1329,69 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_config_path_edit_rejects_designer_managed_path(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        original_config = tmp_path / "OldApp" / "resource" / "src" / "app_resource_config.json"
+        reserved_config = tmp_path / "OldApp" / "resource" / "src" / ".designer" / "app_resource_config_designer.json"
+        warnings = []
+
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window.open_with_paths(infer_generation_paths(str(original_config)), load_existing=False)
+        qapp.processEvents()
+        expected = infer_generation_paths(str(original_config))
+        window._config_path_edit.setText(str(reserved_config))
+
+        window._on_path_edited("config_path", window._config_path_edit)
+
+        assert window._session.paths.config_path == expected.config_path
+        assert window._config_path_edit.text() == expected.config_path
+        assert warnings
+        assert warnings[-1][0] == "Config Path"
+        assert "Designer-managed" in warnings[-1][1]
+        assert str((reserved_config.parent.parent / "app_resource_config.json").resolve()) in warnings[-1][1]
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_sync_path_widgets_to_session_rejects_designer_managed_config_path(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        original_config = tmp_path / "OldApp" / "resource" / "src" / "app_resource_config.json"
+        reserved_config = tmp_path / "OldApp" / "resource" / "src" / ".designer" / "app_resource_config_designer.json"
+        warnings = []
+
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window.open_with_paths(infer_generation_paths(str(original_config)), load_existing=False)
+        qapp.processEvents()
+        expected = infer_generation_paths(str(original_config))
+        window._config_path_edit.setText(str(reserved_config))
+
+        synced = window._sync_path_widgets_to_session()
+
+        assert synced is False
+        assert window._session.paths.config_path == expected.config_path
+        assert window._config_path_edit.text() == expected.config_path
+        assert warnings
+        assert warnings[-1][0] == "Config Path"
+        assert "Designer-managed" in warnings[-1][1]
+        assert str((reserved_config.parent.parent / "app_resource_config.json").resolve()) in warnings[-1][1]
+        _close_window(window)
+
+    @_skip_no_qt
     def test_save_as_rebases_default_paths_with_new_config_location(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtWidgets import QFileDialog
 
