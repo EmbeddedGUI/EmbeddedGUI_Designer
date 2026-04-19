@@ -1841,6 +1841,39 @@ class TestCoreProjectScaffold:
         assert Path(project_resource_catalog_path(str(project_dir))).is_file()
         assert page_path.read_text(encoding="utf-8") == "<Page><Legacy /></Page>\n"
 
+    def test_sync_project_scaffold_core_files_preserves_existing_resource_catalog(self, tmp_path):
+        project_dir = tmp_path / "CoreResourceApp"
+        catalog_path = project_dir / ".eguiproject" / "resources" / "resources.xml"
+        catalog_path.parent.mkdir(parents=True)
+        catalog_path.write_text(
+            (
+                '<?xml version="1.0" encoding="utf-8"?>\n'
+                "<Resources>\n"
+                "    <Images>\n"
+                '        <ImageFile file="hero.png" />\n'
+                "    </Images>\n"
+                "</Resources>\n"
+            ),
+            encoding="utf-8",
+        )
+
+        actions = sync_project_scaffold_core_files(
+            str(project_dir),
+            "CoreResourceApp",
+            320,
+            240,
+        )
+
+        assert actions[RESOURCE_CATALOG_RELPATH] == "unchanged"
+        assert catalog_path.read_text(encoding="utf-8") == (
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            "<Resources>\n"
+            "    <Images>\n"
+            '        <ImageFile file="hero.png" />\n'
+            "    </Images>\n"
+            "</Resources>\n"
+        )
+
 
 class TestApplyDesignerProjectScaffold:
     def test_overwrite_defaults_to_refreshing_designer_resource_config(self, tmp_path):

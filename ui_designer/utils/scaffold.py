@@ -2525,7 +2525,7 @@ def sync_project_scaffold_core_files(
             pages=normalized_pages,
         ),
     )
-    actions[RESOURCE_CATALOG_RELPATH] = _write_text_if_changed(
+    actions[RESOURCE_CATALOG_RELPATH] = _write_text_if_missing(
         project_resource_catalog_path(project_dir),
         build_empty_resources_xml(),
     )
