@@ -2515,7 +2515,7 @@ def sync_project_scaffold_core_files(
 
     actions = {}
     project_relpath = project_file_relpath(app_name)
-    actions[project_relpath] = _write_text_if_changed(
+    actions[project_relpath] = _write_text_if_missing(
         os.path.join(project_dir, project_relpath),
         build_empty_project_xml(
             app_name,

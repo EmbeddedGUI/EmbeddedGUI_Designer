@@ -1874,6 +1874,42 @@ class TestCoreProjectScaffold:
             "</Resources>\n"
         )
 
+    def test_sync_project_scaffold_core_files_preserves_existing_project_file(self, tmp_path):
+        project_dir = tmp_path / "CoreProjectApp"
+        project_file = project_dir / "CoreProjectApp.egui"
+        project_file.parent.mkdir(parents=True)
+        project_file.write_text(
+            (
+                '<?xml version="1.0" encoding="utf-8"?>\n'
+                '<Project app_name="CoreProjectApp" screen_width="480" screen_height="272" startup="detail_page">\n'
+                '    <Pages>\n'
+                '        <PageRef file="layout/home.xml" />\n'
+                '        <PageRef file="layout/detail.xml" />\n'
+                '    </Pages>\n'
+                '</Project>\n'
+            ),
+            encoding="utf-8",
+        )
+
+        actions = sync_project_scaffold_core_files(
+            str(project_dir),
+            "CoreProjectApp",
+            320,
+            240,
+            stored_sdk_root="../../sdk/EmbeddedGUI",
+        )
+
+        assert actions["CoreProjectApp.egui"] == "unchanged"
+        assert project_file.read_text(encoding="utf-8") == (
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            '<Project app_name="CoreProjectApp" screen_width="480" screen_height="272" startup="detail_page">\n'
+            '    <Pages>\n'
+            '        <PageRef file="layout/home.xml" />\n'
+            '        <PageRef file="layout/detail.xml" />\n'
+            '    </Pages>\n'
+            '</Project>\n'
+        )
+
 
 class TestApplyDesignerProjectScaffold:
     def test_overwrite_defaults_to_refreshing_designer_resource_config(self, tmp_path):
