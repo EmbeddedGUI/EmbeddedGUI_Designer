@@ -530,6 +530,7 @@ def _copy_tree_if_exists(src_dir: str, dst_dir: str) -> None:
 
 def _copy_project_root_user_sources(src_dir: str, dst_dir: str) -> None:
     reserved_filenames = {
+        APP_CONFIG_RELPATH,
         BUILD_DESIGNER_FILENAME,
         APP_CONFIG_DESIGNER_FILENAME,
         UICODE_HEADER_FILENAME,
@@ -545,10 +546,13 @@ def _copy_project_root_user_sources(src_dir: str, dst_dir: str) -> None:
             continue
         if name.endswith(".c") or name.endswith("_ext.h"):
             _copy_file_if_missing(src_path, os.path.join(dst_dir, name))
+            continue
+        if name.endswith(".h") and not os.path.isfile(os.path.join(src_dir, DESIGNER_PROJECT_DIRNAME, name)):
+            _copy_file_if_missing(src_path, os.path.join(dst_dir, name))
 
 
 def copy_project_user_code_files(src_dir: str, dst_dir: str) -> None:
-    """Copy user-owned root C sources and extension headers into ``dst_dir``."""
+    """Copy user-owned root C sources and headers into ``dst_dir``."""
     src_dir = _normalize_project_copy_dir(src_dir)
     dst_dir = _normalize_project_copy_dir(dst_dir)
     if not src_dir or not os.path.isdir(src_dir) or not dst_dir or src_dir == dst_dir:

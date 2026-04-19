@@ -343,8 +343,12 @@ class TestProjectSidecarCopyHelpers:
         (src_dir / "app_egui_config.h").write_text("#define CUSTOM_CFG 1\n", encoding="utf-8")
         (src_dir / "main_page.c").write_text("/* keep page source */\n", encoding="utf-8")
         (src_dir / "main_page_ext.h").write_text("#define KEEP_EXT 1\n", encoding="utf-8")
+        (src_dir / "legacy_logic.h").write_text("#define LEGACY_LOGIC 1\n", encoding="utf-8")
         (src_dir / "uicode.c").write_text("// stale legacy designer source\n", encoding="utf-8")
         (src_dir / "main_page_layout.c").write_text("// stale legacy layout\n", encoding="utf-8")
+        (src_dir / "main_page.h").write_text("// stale legacy page header\n", encoding="utf-8")
+        (src_dir / ".designer").mkdir(parents=True, exist_ok=True)
+        (src_dir / ".designer" / "main_page.h").write_text("// designer page header\n", encoding="utf-8")
         (resource_src_dir / "app_resource_config.json").write_text(
             json.dumps({"img": [{"file": "legacy.png"}], "font": []}, ensure_ascii=False) + "\n",
             encoding="utf-8",
@@ -370,8 +374,10 @@ class TestProjectSidecarCopyHelpers:
         assert (dst_dir / "app_egui_config.h").read_text(encoding="utf-8") == "#define CUSTOM_CFG 1\n"
         assert (dst_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep page source */\n"
         assert (dst_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_EXT 1\n"
+        assert (dst_dir / "legacy_logic.h").read_text(encoding="utf-8") == "#define LEGACY_LOGIC 1\n"
         assert not (dst_dir / "uicode.c").exists()
         assert not (dst_dir / "main_page_layout.c").exists()
+        assert not (dst_dir / "main_page.h").exists()
         assert json.loads((dst_dir / "resource" / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == {
             "img": [{"file": "legacy.png"}],
             "font": [],

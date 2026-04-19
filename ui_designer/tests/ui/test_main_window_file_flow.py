@@ -3201,6 +3201,10 @@ class TestMainWindowFileFlow:
         (src_dir / ".eguiproject" / "release.json").write_text('{"profiles":["pc"]}\n', encoding="utf-8")
         (src_dir / "main_page.c").write_text("/* keep page source */\n", encoding="utf-8")
         (src_dir / "main_page_ext.h").write_text("#define KEEP_MAIN_EXT 1\n", encoding="utf-8")
+        (src_dir / "legacy_logic.h").write_text("#define KEEP_LOGIC 1\n", encoding="utf-8")
+        (src_dir / ".designer").mkdir(parents=True, exist_ok=True)
+        (src_dir / ".designer" / "main_page.h").write_text("// designer page header\n", encoding="utf-8")
+        (src_dir / "main_page.h").write_text("// stale legacy page header\n", encoding="utf-8")
         widgets_dir = src_dir / "widgets"
         widgets_dir.mkdir(parents=True, exist_ok=True)
         (widgets_dir / "demo_widget.py").write_text("WIDGET = 1\n", encoding="utf-8")
@@ -3246,6 +3250,8 @@ class TestMainWindowFileFlow:
         assert not (dst_dir / "resource" / "src" / "_generated_text_demo_16_4.txt").exists()
         assert (dst_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep page source */\n"
         assert (dst_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_MAIN_EXT 1\n"
+        assert (dst_dir / "legacy_logic.h").read_text(encoding="utf-8") == "#define KEEP_LOGIC 1\n"
+        assert not (dst_dir / "main_page.h").exists()
         assert (dst_dir / ".eguiproject" / "orphaned_user_code" / "main_page" / "main_page.c").read_text(
             encoding="utf-8"
         ) == "// orphan\n"
@@ -3702,6 +3708,10 @@ class TestMainWindowFileFlow:
 
         (project_dir / "main_page.c").write_text("/* keep project user source */\n", encoding="utf-8")
         (project_dir / "main_page_ext.h").write_text("#define KEEP_PROJECT_USER_EXT 1\n", encoding="utf-8")
+        (project_dir / "legacy_logic.h").write_text("#define KEEP_PROJECT_LOGIC 1\n", encoding="utf-8")
+        (project_dir / ".designer").mkdir(parents=True, exist_ok=True)
+        (project_dir / ".designer" / "main_page.h").write_text("// designer page header\n", encoding="utf-8")
+        (project_dir / "main_page.h").write_text("// stale legacy page header\n", encoding="utf-8")
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
@@ -3713,6 +3723,8 @@ class TestMainWindowFileFlow:
 
         assert (export_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep project user source */\n"
         assert (export_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_PROJECT_USER_EXT 1\n"
+        assert (export_dir / "legacy_logic.h").read_text(encoding="utf-8") == "#define KEEP_PROJECT_LOGIC 1\n"
+        assert not (export_dir / "main_page.h").exists()
         assert (export_dir / ".designer" / "main_page.h").is_file()
         assert (export_dir / ".designer" / "main_page_layout.c").is_file()
         window._undo_manager.mark_all_saved()
