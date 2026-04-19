@@ -347,6 +347,37 @@ class TestResourceSync:
         assert (target_src_dir / "font.ttf").read_bytes() == b"TTF"
         assert (target_src_dir / "icon.png").read_bytes() == b"PNG"
 
+    def test_sync_resources_to_src_cleans_existing_designer_reserved_targets(self, tmp_path):
+        project_dir = tmp_path / "project"
+        resources_dir = project_dir / ".eguiproject" / "resources"
+        images_dir = resources_dir / "images"
+        target_src_dir = project_dir / "resource" / "src"
+        images_dir.mkdir(parents=True)
+        target_src_dir.mkdir(parents=True)
+
+        (resources_dir / "font.ttf").write_bytes(b"TTF")
+        (images_dir / "icon.png").write_bytes(b"PNG")
+        (target_src_dir / "app_resource_config_designer.json").write_text("{ }\n", encoding="utf-8")
+        (target_src_dir / ".app_resource_config_merged.json").write_text("{ }\n", encoding="utf-8")
+        (target_src_dir / "_generated_text_demo_16_4.txt").write_text("legacy\n", encoding="utf-8")
+        (target_src_dir / "nested" / ".designer").mkdir(parents=True)
+        (target_src_dir / "nested" / ".designer" / "stale.txt").write_text("stale\n", encoding="utf-8")
+        (target_src_dir / ".designer").mkdir(parents=True)
+        (target_src_dir / ".designer" / "keep.txt").write_text("keep\n", encoding="utf-8")
+
+        proj = Project(app_name="BoundDemo")
+        proj.project_dir = normalize_path(str(project_dir))
+
+        proj.sync_resources_to_src()
+
+        assert (target_src_dir / "font.ttf").read_bytes() == b"TTF"
+        assert (target_src_dir / "icon.png").read_bytes() == b"PNG"
+        assert not (target_src_dir / "app_resource_config_designer.json").exists()
+        assert not (target_src_dir / ".app_resource_config_merged.json").exists()
+        assert not (target_src_dir / "_generated_text_demo_16_4.txt").exists()
+        assert not (target_src_dir / "nested" / ".designer").exists()
+        assert (target_src_dir / ".designer" / "keep.txt").read_text(encoding="utf-8") == "keep\n"
+
 
 class TestGetAllWidgets:
     """Tests for get_all_widgets across multiple pages."""

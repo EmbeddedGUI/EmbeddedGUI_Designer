@@ -470,6 +470,38 @@ class Project:
 
         os.makedirs(target_src_dir, exist_ok=True)
 
+        def _cleanup_designer_reserved_targets():
+            for walk_root, dir_names, file_names in os.walk(target_src_dir):
+                rel_root = os.path.relpath(walk_root, target_src_dir).replace("\\", "/")
+                if rel_root == ".designer":
+                    dir_names[:] = []
+                    continue
+
+                for dir_name in list(dir_names):
+                    dir_path = os.path.join(walk_root, dir_name)
+                    rel_path = os.path.relpath(dir_path, target_src_dir).replace("\\", "/")
+                    if rel_path == ".designer":
+                        continue
+                    if not is_designer_resource_path(rel_path):
+                        continue
+                    try:
+                        shutil.rmtree(dir_path)
+                    except OSError:
+                        continue
+                    dir_names.remove(dir_name)
+
+                for file_name in file_names:
+                    file_path = os.path.join(walk_root, file_name)
+                    rel_path = os.path.relpath(file_path, target_src_dir).replace("\\", "/")
+                    if not is_designer_resource_path(rel_path):
+                        continue
+                    try:
+                        os.remove(file_path)
+                    except OSError:
+                        continue
+
+        _cleanup_designer_reserved_targets()
+
         def _sync_file(src_path, dst_path):
             if not os.path.exists(dst_path):
                 shutil.copy2(src_path, dst_path)
