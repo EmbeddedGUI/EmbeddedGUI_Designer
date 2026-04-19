@@ -60,7 +60,7 @@ class TestProjectCleaner:
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
         assert (
-            f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata"
+            f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata (legacy root designer resource configs also removed)"
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
         assert (
@@ -259,6 +259,7 @@ class TestProjectCleaner:
         (project_dir / "app_egui_config_designer.h").write_text("#define LEGACY_CONFIG 1\n", encoding="utf-8")
         (project_dir / "resource" / "src" / "app_resource_config.json").write_text("{ }\n", encoding="utf-8")
         (project_dir / "resource" / "src" / "app_resource_config_designer.json").write_text("{ }\n", encoding="utf-8")
+        (project_dir / "resource" / "src" / ".app_resource_config_merged.json").write_text("{ }\n", encoding="utf-8")
 
         report = clean_project_for_reconstruct(str(project_dir))
 
@@ -268,9 +269,11 @@ class TestProjectCleaner:
         assert not (project_dir / "build_designer.mk").exists()
         assert not (project_dir / "app_egui_config_designer.h").exists()
         assert not (project_dir / "resource" / "src" / "app_resource_config_designer.json").exists()
+        assert not (project_dir / "resource" / "src" / ".app_resource_config_merged.json").exists()
         assert "build_designer.mk" in report.removed_paths
         assert "app_egui_config_designer.h" in report.removed_paths
         assert "resource/src/app_resource_config_designer.json" in report.removed_paths
+        assert "resource/src/.app_resource_config_merged.json" in report.removed_paths
 
     def test_remove_path_unlinks_symlink_without_recursing_into_target(self, tmp_path, monkeypatch):
         project_dir = tmp_path / "LinkCleanupDemo"

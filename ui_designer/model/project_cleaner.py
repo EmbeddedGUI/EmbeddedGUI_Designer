@@ -61,7 +61,7 @@ DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
     f"{RESOURCE_IMG_DIR_RELPATH}, {RESOURCE_FONT_DIR_RELPATH}, and other synced/generated resource outputs",
     "runtime cache files inside app-local widget source dirs (__pycache__, *.pyc, *.pyo)",
     "designer-reserved generated resource files (for example _generated_text_*) inside preserved source trees",
-    f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata",
+    f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata (legacy root designer resource configs also removed)",
     f"{DESIGNER_PROJECT_DIRNAME}/** generated code and scaffold files (legacy root designer files also removed)",
     f"{REGRESSION_REPORT_RELPATH} and {REGRESSION_RESULTS_RELPATH} generated regression reports",
     f"{BACKUP_DIR_RELPATH} and other generated caches",
