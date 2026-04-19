@@ -21,12 +21,16 @@
             main_page.xml
         resources/
             resources.xml
-            app_resource_config.json
             images/
+            values/
+                strings.xml
+            values-zh/
+                strings.xml
     resource/
         src/
-            resources.xml
             app_resource_config.json
+            .designer/
+                app_resource_config_designer.json
     main_page.c
     main_page_ext.h
     app_egui_config.h
@@ -73,11 +77,13 @@
 
 ## 资源目录要怎么看
 
-资源相关最常见的是两层：
+资源相关最常见的是三层：
 
 - `.eguiproject/resources/`：Designer 工程侧资源元数据
-- `resource/src/`：工程侧覆盖配置与生成入口
+- `resource/src/`：工程侧用户输入与覆盖配置
 - `resource/src/.designer/`：Designer 自动生成的资源元数据
+
+其中 `.app_resource_config_merged.json` 只应该作为生成时的临时 staging 文件存在，不属于需要长期维护的工程文件。
 
 当你用资源面板工作时，重点看的是资源是否被正确登记，而不是只看磁盘上有没有某个文件。
 
