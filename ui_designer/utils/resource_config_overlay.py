@@ -37,6 +37,8 @@ def make_empty_resource_config_content() -> str:
 
 def ensure_resource_config_file(path: str) -> bool:
     """Create the default user-overlay resource config file when missing."""
+    if is_designer_resource_path(path):
+        raise ValueError(f"Designer-managed resource config paths are reserved: {path}")
     if os.path.exists(path):
         return False
     parent_dir = os.path.dirname(path)

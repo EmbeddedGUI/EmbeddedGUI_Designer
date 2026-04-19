@@ -2269,6 +2269,18 @@ class TestApplyDesignerProjectScaffold:
         assert created is True
         assert hook_calls == [(b"PNG", str(project_dir))]
 
+    def test_generate_designer_resource_config_rejects_designer_managed_src_dir(self, tmp_path):
+        src_dir = tmp_path / "resource" / "src" / ".designer" / "workspace"
+        project = build_empty_project_model(
+            "ReservedResourceConfigHelperApp",
+            320,
+            240,
+            pages=["home"],
+        )
+
+        with pytest.raises(ValueError, match="Designer-managed resource config paths are reserved"):
+            generate_designer_resource_config(project, str(src_dir))
+
     def test_save_project_and_materialize_codegen_writes_scaffold_and_generated_outputs(self, tmp_path):
         project_dir = tmp_path / "SavedGeneratedHelperApp"
         project = build_empty_project_model(

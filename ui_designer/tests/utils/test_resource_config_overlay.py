@@ -1,4 +1,5 @@
 import json
+import pytest
 
 from ui_designer.utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
@@ -264,6 +265,14 @@ class TestEnsureResourceConfigFile:
         assert created is True
         assert created_again is False
         assert config_path.read_text(encoding="utf-8") == make_empty_resource_config_content()
+
+    def test_rejects_designer_managed_config_paths(self, tmp_path):
+        config_path = tmp_path / "resource" / "src" / ".designer" / APP_RESOURCE_CONFIG_DESIGNER_FILENAME
+
+        with pytest.raises(ValueError, match="Designer-managed resource config paths are reserved"):
+            ensure_resource_config_file(str(config_path))
+
+        assert config_path.exists() is False
 
 
 class TestDesignerResourcePathDetection:
