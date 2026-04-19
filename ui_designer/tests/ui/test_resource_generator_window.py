@@ -4190,6 +4190,22 @@ class TestResourceGeneratorWindow:
         assert discovered_texts == [str((asset_dir / "labels.txt").resolve())]
 
     @_skip_no_qt
+    def test_discover_supported_assets_skips_designer_directory_contents(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _discover_supported_assets
+
+        asset_dir = tmp_path / "assets"
+        designer_dir = asset_dir / ".designer"
+        asset_dir.mkdir(parents=True)
+        designer_dir.mkdir(parents=True)
+        (asset_dir / "display.ttf").write_bytes(b"font")
+        (designer_dir / "scratch.txt").write_text("designer-only\n", encoding="utf-8")
+
+        discovered_assets, discovered_texts = _discover_supported_assets(str(asset_dir))
+
+        assert discovered_assets == [("font", str((asset_dir / "display.ttf").resolve()))]
+        assert discovered_texts == []
+
+    @_skip_no_qt
     def test_browse_font_text_duplicate_keeps_clean_state(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtWidgets import QFileDialog
 
