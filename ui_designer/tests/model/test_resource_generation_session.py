@@ -155,6 +155,36 @@ def test_validation_issues_reject_designer_managed_source_dir(tmp_path):
     assert any(issue.code == "source_dir_reserved" for issue in issues)
 
 
+def test_validation_issues_reject_designer_managed_workspace_and_bin_dirs(tmp_path):
+    sdk_root = _build_sdk_with_generator(tmp_path / "sdk")
+    source_dir = tmp_path / "resource" / "src"
+    workspace_dir = tmp_path / "resource" / "src" / ".designer" / "workspace"
+    bin_output_dir = tmp_path / "resource" / "src" / ".designer" / "bin"
+    source_dir.mkdir(parents=True)
+    workspace_dir.mkdir(parents=True)
+    bin_output_dir.mkdir(parents=True)
+
+    session = ResourceGenerationSession(str(sdk_root))
+    session.reset(
+        GenerationPaths(
+            config_path=str(source_dir / "app_resource_config.json"),
+            source_dir=str(source_dir),
+            workspace_dir=str(workspace_dir),
+            bin_output_dir=str(bin_output_dir),
+        ),
+        {
+            "img": [],
+            "font": [],
+            "mp4": [],
+        },
+    )
+
+    issues = session.validation_issues(for_generation=True)
+
+    assert any(issue.code == "workspace_dir_reserved" for issue in issues)
+    assert any(issue.code == "bin_output_dir_reserved" for issue in issues)
+
+
 def test_validation_issues_reject_designer_managed_entry_paths(tmp_path):
     sdk_root = _build_sdk_with_generator(tmp_path / "sdk")
     source_dir = tmp_path / "resource" / "src"
@@ -199,6 +229,31 @@ def test_validation_issues_reject_designer_managed_entry_paths(tmp_path):
         issue.code == "designer_managed_path" and issue.section == "font" and issue.field == "text"
         for issue in issues
     )
+
+
+def test_stage_workspace_rejects_designer_managed_workspace_dir(tmp_path):
+    source_dir = tmp_path / "resource" / "src"
+    workspace_dir = source_dir / ".designer" / "workspace"
+    source_dir.mkdir(parents=True)
+    workspace_dir.mkdir(parents=True)
+
+    session = ResourceGenerationSession("")
+    session.reset(
+        GenerationPaths(
+            source_dir=str(source_dir),
+            workspace_dir=str(workspace_dir),
+        ),
+        {
+            "img": [],
+            "font": [],
+            "mp4": [],
+        },
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        session.stage_workspace()
+
+    assert "Workspace directory cannot be a Designer-managed path" in str(excinfo.value)
 
 
 def test_stage_workspace_copies_source_tree_and_writes_current_user_config(tmp_path):

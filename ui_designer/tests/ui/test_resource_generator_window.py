@@ -1700,6 +1700,85 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_on_path_edited_rejects_designer_workspace_dir(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        workspace_dir = tmp_path / "workspace"
+        designer_workspace_dir = source_dir / ".designer" / "workspace"
+        source_dir.mkdir(parents=True)
+        workspace_dir.mkdir(parents=True)
+        designer_workspace_dir.mkdir(parents=True)
+        warnings = []
+
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir), workspace_dir=str(workspace_dir)),
+            {"img": [], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._workspace_dir_edit.setText(str(designer_workspace_dir))
+
+        window._on_path_edited("workspace_dir", window._workspace_dir_edit)
+
+        assert window._session.paths.workspace_dir == str(workspace_dir.resolve())
+        assert window._workspace_dir_edit.text() == str(workspace_dir.resolve())
+        assert warnings == [
+            (
+                "Workspace Dir",
+                "'.designer/workspace' is Designer-managed and cannot be used as Workspace Dir.\nChoose a folder outside Designer-managed paths.",
+            )
+        ]
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_sync_path_widgets_to_session_rejects_designer_bin_output_dir(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        bin_output_dir = tmp_path / "bin"
+        designer_bin_dir = source_dir / ".designer" / "bin"
+        source_dir.mkdir(parents=True)
+        bin_output_dir.mkdir(parents=True)
+        designer_bin_dir.mkdir(parents=True)
+        warnings = []
+
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir), bin_output_dir=str(bin_output_dir)),
+            {"img": [], "font": [], "mp4": []},
+            dirty=False,
+        )
+        window._bin_output_dir_edit.setText(str(designer_bin_dir))
+
+        synced = window._sync_path_widgets_to_session()
+
+        assert synced is False
+        assert window._session.paths.bin_output_dir == str(bin_output_dir.resolve())
+        assert window._bin_output_dir_edit.text() == str(bin_output_dir.resolve())
+        assert warnings == [
+            (
+                "Bin Output Dir",
+                "'.designer/bin' is Designer-managed and cannot be used as Bin Output Dir.\nChoose a folder outside Designer-managed paths.",
+            )
+        ]
+        _close_window(window)
+
+    @_skip_no_qt
     def test_remove_selected_simple_asset_updates_session_and_preview(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow

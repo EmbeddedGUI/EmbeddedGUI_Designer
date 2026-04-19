@@ -163,6 +163,16 @@ def _source_dir_reserved_error(path: str) -> str:
     )
 
 
+def _generation_dir_reserved_error(path: str, label: str) -> str:
+    normalized = normalize_path(path)
+    if not normalized or not is_designer_resource_path(normalized):
+        return ""
+    return (
+        f"'{_designer_resource_path_label(normalized)}' is Designer-managed and cannot be used as {label}.\n"
+        "Choose a folder outside Designer-managed paths."
+    )
+
+
 def _config_path_reserved_error(path: str) -> str:
     normalized = normalize_path(path)
     if not normalized or not is_designer_resource_path(normalized):
@@ -2970,6 +2980,12 @@ class ResourceGeneratorWindow(QDialog):
                 self._refresh_path_fields()
                 return
         else:
+            field_title = "Workspace Dir" if field_name == "workspace_dir" else "Bin Output Dir"
+            reserved_error = _generation_dir_reserved_error(value, field_title)
+            if reserved_error:
+                QMessageBox.warning(self, field_title, reserved_error)
+                self._refresh_path_fields()
+                return
             self._session.update_path(field_name, value)
         if field_name == "config_path":
             self._rebase_inferred_paths(previous_paths, self._session.paths.config_path)
@@ -2992,12 +3008,24 @@ class ResourceGeneratorWindow(QDialog):
             QMessageBox.warning(self, "Source Dir", reserved_error)
             self._refresh_path_fields()
             return False
+        workspace_dir = self._workspace_dir_edit.text().strip()
+        reserved_workspace_error = _generation_dir_reserved_error(workspace_dir, "Workspace Dir")
+        if reserved_workspace_error:
+            QMessageBox.warning(self, "Workspace Dir", reserved_workspace_error)
+            self._refresh_path_fields()
+            return False
+        bin_output_dir = self._bin_output_dir_edit.text().strip()
+        reserved_bin_error = _generation_dir_reserved_error(bin_output_dir, "Bin Output Dir")
+        if reserved_bin_error:
+            QMessageBox.warning(self, "Bin Output Dir", reserved_bin_error)
+            self._refresh_path_fields()
+            return False
         self._session.set_paths(
             GenerationPaths(
                 config_path=config_path,
                 source_dir=source_dir,
-                workspace_dir=self._workspace_dir_edit.text().strip(),
-                bin_output_dir=self._bin_output_dir_edit.text().strip(),
+                workspace_dir=workspace_dir,
+                bin_output_dir=bin_output_dir,
             )
         )
         return True

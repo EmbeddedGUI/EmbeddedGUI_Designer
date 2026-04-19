@@ -208,6 +208,13 @@ def _require_user_config_path(config_path: str) -> str:
     raise ValueError(f"'{normalized}' is Designer-managed and cannot be edited directly.{hint}")
 
 
+def _reserved_generation_dir_message(path: str, label: str) -> str:
+    normalized = normalize_path(path)
+    if not normalized:
+        return ""
+    return f"{label} cannot be a Designer-managed path: {normalized}"
+
+
 def default_entry_for_section(section: str) -> dict:
     if section == "img":
         return {
@@ -398,8 +405,24 @@ class ResourceGenerationSession:
                 )
             if not self.paths.workspace_dir:
                 issues.append(ResourceGenerationValidationIssue("error", "workspace_dir", "Workspace directory is required for generation."))
+            elif is_designer_resource_path(self.paths.workspace_dir):
+                issues.append(
+                    ResourceGenerationValidationIssue(
+                        "error",
+                        "workspace_dir_reserved",
+                        _reserved_generation_dir_message(self.paths.workspace_dir, "Workspace directory"),
+                    )
+                )
             if not self.paths.bin_output_dir:
                 issues.append(ResourceGenerationValidationIssue("error", "bin_output_dir", "Bin output directory is required for generation."))
+            elif is_designer_resource_path(self.paths.bin_output_dir):
+                issues.append(
+                    ResourceGenerationValidationIssue(
+                        "error",
+                        "bin_output_dir_reserved",
+                        _reserved_generation_dir_message(self.paths.bin_output_dir, "Bin output directory"),
+                    )
+                )
 
         if self.paths.source_dir and self.paths.workspace_dir and self.paths.source_dir == self.paths.workspace_dir:
             issues.append(
@@ -446,6 +469,8 @@ class ResourceGenerationSession:
         source_dir = self.paths.source_dir
         if not workspace_dir:
             raise ValueError("Workspace directory is empty.")
+        if is_designer_resource_path(workspace_dir):
+            raise ValueError(_reserved_generation_dir_message(workspace_dir, "Workspace directory"))
 
         target_src_dir = _workspace_src_dir(workspace_dir)
         source_dir = normalize_path(source_dir)
@@ -472,6 +497,8 @@ class ResourceGenerationSession:
         workspace_dir = self.paths.workspace_dir
         if not workspace_dir:
             raise ValueError("Workspace directory is empty.")
+        if is_designer_resource_path(workspace_dir):
+            raise ValueError(_reserved_generation_dir_message(workspace_dir, "Workspace directory"))
 
         target_src_dir = _staged_generation_src_dir(workspace_dir, self.paths.source_dir)
         os.makedirs(target_src_dir, exist_ok=True)
