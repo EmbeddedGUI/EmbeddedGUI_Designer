@@ -101,10 +101,9 @@ def is_designer_resource_path(path: str) -> bool:
     normalized = str(path or "").replace("\\", "/").strip()
     if not normalized:
         return False
+    path_parts = [part for part in normalized.split("/") if part and part != "."]
     basename = os.path.basename(normalized)
-    if normalized == DESIGNER_RESOURCE_DIRNAME:
-        return True
-    if normalized.startswith(f"{DESIGNER_RESOURCE_DIRNAME}/"):
+    if DESIGNER_RESOURCE_DIRNAME in path_parts:
         return True
     if basename in {APP_RESOURCE_CONFIG_DESIGNER_FILENAME, APP_RESOURCE_CONFIG_MERGED_FILENAME}:
         return True

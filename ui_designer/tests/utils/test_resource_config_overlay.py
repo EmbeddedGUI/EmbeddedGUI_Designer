@@ -273,5 +273,9 @@ class TestDesignerResourcePathDetection:
     def test_recognizes_designer_directory_relative_child(self):
         assert is_designer_resource_path(".designer/app_resource_config_designer.json") is True
 
+    def test_recognizes_designer_directory_absolute_child(self, tmp_path):
+        designer_file = tmp_path / ".designer" / "scratch.txt"
+        assert is_designer_resource_path(str(designer_file)) is True
+
     def test_recognizes_generated_text_basename(self):
         assert is_designer_resource_path("custom/_generated_text_demo_16_4.txt") is True

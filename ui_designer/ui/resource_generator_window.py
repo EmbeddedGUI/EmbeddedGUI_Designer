@@ -6336,7 +6336,10 @@ class ResourceGeneratorWindow(QDialog):
     def _normalize_selected_resource_path(self, field_spec, selected_path: str):
         source_dir = self._session.paths.source_dir
         selected_path = normalize_path(selected_path)
-        reserved_error = _reserved_resource_filename_error(os.path.basename(selected_path))
+        reserved_candidate = os.path.basename(selected_path)
+        if source_dir and _is_subpath(selected_path, source_dir):
+            reserved_candidate = os.path.relpath(selected_path, source_dir).replace("\\", "/")
+        reserved_error = _reserved_resource_filename_error(reserved_candidate)
         if reserved_error:
             QMessageBox.warning(self, f"Choose {field_spec.label}", reserved_error)
             return None
@@ -6904,7 +6907,7 @@ def _classify_selected_asset_files(file_paths):
             continue
 
         filename = os.path.basename(full_path)
-        if is_designer_resource_path(filename):
+        if is_designer_resource_path(full_path):
             skipped_paths.append(full_path)
             continue
 

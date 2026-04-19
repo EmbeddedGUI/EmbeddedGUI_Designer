@@ -4125,6 +4125,37 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_normalize_selected_resource_path_rejects_designer_directory_file(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        designer_file = source_dir / ".designer" / "scratch.txt"
+        designer_file.parent.mkdir(parents=True)
+        designer_file.write_text("designer-only\n", encoding="utf-8")
+
+        warnings = []
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._session.paths.source_dir = str(source_dir)
+
+        result = window._normalize_selected_resource_path(RESOURCE_SECTION_SPECS["img"].fields[0], str(designer_file))
+
+        assert result is None
+        assert warnings == [
+            (
+                "Choose File",
+                "'.designer/scratch.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        _close_window(window)
+
+    @_skip_no_qt
     def test_normalize_selected_font_file_keeps_absolute_path_outside_source_dir(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -4171,6 +4202,23 @@ class TestResourceGeneratorWindow:
         assert discovered_assets == [("font", str(normal_font.resolve()))]
         assert discovered_texts == []
         assert skipped_paths == [str(reserved_text.resolve())]
+
+    @_skip_no_qt
+    def test_classify_selected_asset_files_ignores_designer_directory_files(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _classify_selected_asset_files
+
+        asset_dir = tmp_path / "assets"
+        designer_file = asset_dir / ".designer" / "scratch.txt"
+        designer_file.parent.mkdir(parents=True)
+        designer_file.write_text("designer-only\n", encoding="utf-8")
+
+        discovered_assets, discovered_texts, skipped_paths = _classify_selected_asset_files(
+            [str(designer_file)]
+        )
+
+        assert discovered_assets == []
+        assert discovered_texts == []
+        assert skipped_paths == [str(designer_file.resolve())]
 
     @_skip_no_qt
     def test_discover_supported_assets_ignores_designer_reserved_files(self, qapp, tmp_path):
