@@ -64,6 +64,15 @@ RESOURCE_CONFIG_RELPATH = f"{RESOURCE_SRC_DIR_RELPATH}/{APP_RESOURCE_CONFIG_FILE
 DESIGNER_RESOURCE_CONFIG_RELPATH = (
     f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}"
 )
+APP_LOCAL_WIDGET_CACHE_DIRNAMES = frozenset(
+    {
+        "__pycache__",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".mypy_cache",
+    }
+)
+APP_LOCAL_WIDGET_CACHE_SUFFIXES = (".pyc", ".pyo")
 DESIGNER_CODEGEN_STALE_STRING_RELPATHS = (
     EGUI_STRINGS_HEADER_RELPATH,
     EGUI_STRINGS_SOURCE_RELPATH,
@@ -579,9 +588,38 @@ def _copy_project_resource_tree(src_dir: str, dst_dir: str) -> None:
             )
 
 
-def _copy_tree_if_exists(src_dir: str, dst_dir: str) -> None:
-    if os.path.isdir(src_dir):
-        shutil.copytree(src_dir, dst_dir, dirs_exist_ok=True)
+def _should_skip_copy_name(name: str, ignore_names, ignore_suffixes) -> bool:
+    normalized = str(name or "").strip().lower()
+    if not normalized:
+        return False
+    if normalized in ignore_names:
+        return True
+    return any(normalized.endswith(suffix) for suffix in ignore_suffixes)
+
+
+def _copy_tree_if_exists(src_dir: str, dst_dir: str, *, ignore_names=(), ignore_suffixes=()) -> None:
+    if not os.path.isdir(src_dir):
+        return
+
+    normalized_ignore_names = {str(name or "").strip().lower() for name in ignore_names if str(name or "").strip()}
+    normalized_ignore_suffixes = tuple(
+        str(suffix or "").strip().lower() for suffix in ignore_suffixes if str(suffix or "").strip()
+    )
+
+    for walk_root, dir_names, file_names in os.walk(src_dir):
+        dir_names[:] = [
+            name for name in dir_names if not _should_skip_copy_name(name, normalized_ignore_names, normalized_ignore_suffixes)
+        ]
+        rel_root = os.path.relpath(walk_root, src_dir)
+        walk_dst = dst_dir if rel_root in ("", ".") else os.path.join(dst_dir, rel_root)
+        os.makedirs(walk_dst, exist_ok=True)
+        for file_name in file_names:
+            if _should_skip_copy_name(file_name, normalized_ignore_names, normalized_ignore_suffixes):
+                continue
+            shutil.copy2(
+                os.path.join(walk_root, file_name),
+                os.path.join(walk_dst, file_name),
+            )
 
 
 def _copy_project_build_local_roots(src_dir: str, dst_dir: str) -> None:
@@ -670,8 +708,18 @@ def copy_project_sidecar_files(src_dir: str, dst_dir: str) -> None:
         project_config_orphaned_user_code_dir(src_dir),
         project_config_orphaned_user_code_dir(dst_dir),
     )
-    _copy_tree_if_exists(os.path.join(src_dir, "widgets"), os.path.join(dst_dir, "widgets"))
-    _copy_tree_if_exists(os.path.join(src_dir, "custom_widgets"), os.path.join(dst_dir, "custom_widgets"))
+    _copy_tree_if_exists(
+        os.path.join(src_dir, "widgets"),
+        os.path.join(dst_dir, "widgets"),
+        ignore_names=APP_LOCAL_WIDGET_CACHE_DIRNAMES,
+        ignore_suffixes=APP_LOCAL_WIDGET_CACHE_SUFFIXES,
+    )
+    _copy_tree_if_exists(
+        os.path.join(src_dir, "custom_widgets"),
+        os.path.join(dst_dir, "custom_widgets"),
+        ignore_names=APP_LOCAL_WIDGET_CACHE_DIRNAMES,
+        ignore_suffixes=APP_LOCAL_WIDGET_CACHE_SUFFIXES,
+    )
 
 
 def default_scaffold_circle_radius(screen_width, screen_height) -> int:

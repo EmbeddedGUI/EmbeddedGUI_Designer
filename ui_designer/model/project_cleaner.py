@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 
 from ..utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME, is_designer_resource_path
 from ..utils.scaffold import (
+    APP_LOCAL_WIDGET_CACHE_DIRNAMES,
+    APP_LOCAL_WIDGET_CACHE_SUFFIXES,
     APP_CONFIG_DESIGNER_RELPATH,
     APP_CONFIG_RELPATH,
     BACKUP_DIR_RELPATH,
@@ -57,6 +59,7 @@ DESIGNER_SOURCE_PRESERVE_SUMMARY = (
 DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
     "user-owned page files in the project root (*.c, *_ext.h)",
     f"{RESOURCE_IMG_DIR_RELPATH}, {RESOURCE_FONT_DIR_RELPATH}, and other synced/generated resource outputs",
+    "runtime cache files inside app-local widget source dirs (__pycache__, *.pyc, *.pyo)",
     "designer-reserved generated resource files (for example _generated_text_*) inside preserved source trees",
     f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata",
     f"{DESIGNER_PROJECT_DIRNAME}/** generated code and scaffold files (legacy root designer files also removed)",
@@ -65,6 +68,7 @@ DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
 )
 
 _PRESERVED_TOP_LEVEL_DIRS = {"widgets", "custom_widgets"}
+_PRESERVED_APP_LOCAL_WIDGET_DIRS = {"widgets", "custom_widgets"}
 _PRESERVED_EGUIPROJECT_DIRS = {
     os.path.basename(LAYOUT_DIR_RELPATH),
     os.path.basename(RESOURCE_DIR_RELPATH),
@@ -239,6 +243,42 @@ def _clean_resource_dir(project_dir: str, resource_dir: str, removed_paths: list
     return removed_files, removed_dirs
 
 
+def _is_app_local_widget_cache_name(name: str) -> bool:
+    normalized = str(name or "").strip().lower()
+    if not normalized:
+        return False
+    if normalized in APP_LOCAL_WIDGET_CACHE_DIRNAMES:
+        return True
+    return any(normalized.endswith(suffix) for suffix in APP_LOCAL_WIDGET_CACHE_SUFFIXES)
+
+
+def _clean_preserved_app_local_widget_dir(
+    project_dir: str,
+    source_dir: str,
+    removed_paths: list[str],
+    preserved_paths: list[str],
+) -> tuple[int, int]:
+    removed_files = 0
+    removed_dirs = 0
+    for name in os.listdir(source_dir):
+        child_path = os.path.join(source_dir, name)
+        if _is_app_local_widget_cache_name(name):
+            files, dirs = _remove_path(project_dir, child_path, removed_paths)
+            removed_files += files
+            removed_dirs += dirs
+            continue
+        if os.path.isdir(child_path):
+            files, dirs = _clean_preserved_app_local_widget_dir(
+                project_dir,
+                child_path,
+                removed_paths,
+                preserved_paths,
+            )
+            removed_files += files
+            removed_dirs += dirs
+    return removed_files, removed_dirs
+
+
 def _project_layout_page_names(project_dir: str) -> set[str]:
     layout_dir = os.path.join(project_dir, LAYOUT_DIR_RELPATH.replace("/", os.sep))
     if not os.path.isdir(layout_dir):
@@ -317,6 +357,15 @@ def clean_project_for_reconstruct(project_dir: str) -> ProjectCleanReport:
 
         if os.path.isdir(child_path) and name in _PRESERVED_TOP_LEVEL_DIRS:
             preserved_paths.append(rel_path)
+            if name in _PRESERVED_APP_LOCAL_WIDGET_DIRS:
+                files, dirs = _clean_preserved_app_local_widget_dir(
+                    project_dir,
+                    child_path,
+                    removed_paths,
+                    preserved_paths,
+                )
+                removed_files += files
+                removed_dirs += dirs
             continue
 
         if os.path.isdir(child_path) and name in build_local_roots:

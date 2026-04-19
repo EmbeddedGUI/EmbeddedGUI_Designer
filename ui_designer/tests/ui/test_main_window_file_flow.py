@@ -3222,7 +3222,10 @@ class TestMainWindowFileFlow:
         (widgets_dir / "demo_widget.py").write_text("WIDGET = 1\n", encoding="utf-8")
         custom_widgets_dir = src_dir / "custom_widgets"
         custom_widgets_dir.mkdir(parents=True, exist_ok=True)
+        (custom_widgets_dir / "__pycache__").mkdir(parents=True, exist_ok=True)
         (custom_widgets_dir / "demo_widget.json").write_text('{"name":"demo"}\n', encoding="utf-8")
+        (custom_widgets_dir / "demo_widget.pyc").write_bytes(b"PYC")
+        (custom_widgets_dir / "__pycache__" / "demo_widget.cpython-314.pyc").write_bytes(b"CACHE")
 
         window = MainWindow(str(sdk_root))
         window.project = project
@@ -3275,6 +3278,8 @@ class TestMainWindowFileFlow:
         assert (dst_dir / ".eguiproject" / "release.json").read_text(encoding="utf-8") == '{"profiles":["pc"]}\n'
         assert (dst_dir / "widgets" / "demo_widget.py").read_text(encoding="utf-8") == "WIDGET = 1\n"
         assert (dst_dir / "custom_widgets" / "demo_widget.json").read_text(encoding="utf-8") == '{"name":"demo"}\n'
+        assert not (dst_dir / "custom_widgets" / "demo_widget.pyc").exists()
+        assert not (dst_dir / "custom_widgets" / "__pycache__").exists()
         _close_window(window)
 
     def test_save_project_as_reports_editing_only_mode_when_preview_unavailable(
@@ -5893,6 +5898,7 @@ class TestMainWindowFileFlow:
         assert "widgets/** app-local widget sources" in captured["text"]
         assert f"{REFERENCE_FRAMES_DIR_RELPATH}/** regression baseline captures" in captured["text"]
         assert f"{ORPHANED_USER_CODE_DIR_RELPATH}/** archived user page code" in captured["text"]
+        assert "runtime cache files inside app-local widget source dirs (__pycache__, *.pyc, *.pyo)" in captured["text"]
         assert "designer-reserved generated resource files (for example _generated_text_*)" in captured["text"]
         assert captured["clean_path"] == os.path.normpath(os.path.abspath(project_dir))
         assert captured["persist_path"] == os.path.normpath(os.path.abspath(project_dir))

@@ -52,6 +52,10 @@ class TestProjectCleaner:
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
         assert (
+            "runtime cache files inside app-local widget source dirs (__pycache__, *.pyc, *.pyo)"
+            in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
+        )
+        assert (
             "designer-reserved generated resource files (for example _generated_text_*) inside preserved source trees"
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
@@ -104,6 +108,9 @@ class TestProjectCleaner:
         (project_dir / "widgets" / "egui_view_chip.h").write_text("// header\n", encoding="utf-8")
         (project_dir / "widgets" / "egui_view_chip.c").write_text("// source\n", encoding="utf-8")
         (project_dir / "custom_widgets" / "chip.py").write_text("descriptor = {}\n", encoding="utf-8")
+        (project_dir / "custom_widgets" / "chip.pyc").write_bytes(b"PYC")
+        (project_dir / "custom_widgets" / "__pycache__").mkdir(parents=True)
+        (project_dir / "custom_widgets" / "__pycache__" / "chip.cpython-314.pyc").write_bytes(b"CACHE")
 
         (project_dir / "main_page.c").write_text("// generated\n", encoding="utf-8")
         (project_dir / "local.c").write_text("int local(void) { return 1; }\n", encoding="utf-8")
@@ -147,6 +154,8 @@ class TestProjectCleaner:
         assert (project_dir / "widgets" / "egui_view_chip.h").is_file()
         assert (project_dir / "widgets" / "egui_view_chip.c").is_file()
         assert (project_dir / "custom_widgets" / "chip.py").is_file()
+        assert not (project_dir / "custom_widgets" / "chip.pyc").exists()
+        assert not (project_dir / "custom_widgets" / "__pycache__").exists()
         assert (project_dir / "feature" / "helper.c").is_file()
         assert (project_dir / "feature" / "helper.h").is_file()
         assert (project_dir / "build.mk").is_file()
@@ -170,8 +179,8 @@ class TestProjectCleaner:
         assert not (project_dir / ".eguiproject" / "regression_results.json").exists()
         assert not (project_dir / "notes").exists()
 
-        assert report.removed_files == 6
-        assert report.removed_dirs == 5
+        assert report.removed_files == 7
+        assert report.removed_dirs == 6
         assert "CleanAllDemo.egui" in report.preserved_paths
         assert "resource" in report.preserved_paths
         assert "resource/src" in report.preserved_paths
@@ -195,6 +204,8 @@ class TestProjectCleaner:
         assert ".designer" in report.removed_paths
         assert "resource/src/.designer" in report.removed_paths
         assert ".eguiproject/backup" in report.removed_paths
+        assert "custom_widgets/chip.pyc" in report.removed_paths
+        assert "custom_widgets/__pycache__" in report.removed_paths
         assert ".eguiproject/resources/_generated_text_demo_16_4.txt" in report.removed_paths
         assert ".eguiproject/resources/images/_generated_text_preview.png" in report.removed_paths
         assert ".eguiproject/regression_report.html" in report.removed_paths

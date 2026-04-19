@@ -329,6 +329,7 @@ class TestProjectSidecarCopyHelpers:
         designer_src_dir = resource_src_dir / ".designer"
         widgets_dir = src_dir / "widgets"
         custom_widgets_dir = src_dir / "custom_widgets"
+        custom_widgets_cache_dir = custom_widgets_dir / "__pycache__"
 
         images_dir.mkdir(parents=True)
         mockup_dir.mkdir(parents=True)
@@ -339,6 +340,7 @@ class TestProjectSidecarCopyHelpers:
         designer_src_dir.mkdir(parents=True)
         widgets_dir.mkdir(parents=True)
         custom_widgets_dir.mkdir(parents=True)
+        custom_widgets_cache_dir.mkdir(parents=True)
         dst_dir.mkdir(parents=True)
 
         feature_dir = src_dir / "feature"
@@ -377,6 +379,8 @@ class TestProjectSidecarCopyHelpers:
         (src_dir / ".eguiproject" / "regression_results.json").write_text('{"passed": 1}\n', encoding="utf-8")
         (widgets_dir / "demo_widget.py").write_text("WIDGET = 1\n", encoding="utf-8")
         (custom_widgets_dir / "demo_widget.json").write_text('{"name": "demo"}\n', encoding="utf-8")
+        (custom_widgets_dir / "demo_widget.pyc").write_bytes(b"PYC")
+        (custom_widgets_cache_dir / "demo_widget.cpython-314.pyc").write_bytes(b"CACHE")
 
         (dst_dir / "build.mk").write_text("# existing build\n", encoding="utf-8")
 
@@ -413,6 +417,8 @@ class TestProjectSidecarCopyHelpers:
         assert not (dst_dir / ".eguiproject" / "regression_results.json").exists()
         assert (dst_dir / "widgets" / "demo_widget.py").read_text(encoding="utf-8") == "WIDGET = 1\n"
         assert (dst_dir / "custom_widgets" / "demo_widget.json").read_text(encoding="utf-8") == '{"name": "demo"}\n'
+        assert not (dst_dir / "custom_widgets" / "demo_widget.pyc").exists()
+        assert not (dst_dir / "custom_widgets" / "__pycache__").exists()
 
 
 class TestSyncProjectScaffoldSidecars:
