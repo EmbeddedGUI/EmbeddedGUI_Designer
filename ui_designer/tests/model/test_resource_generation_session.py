@@ -3,6 +3,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from ui_designer.model.resource_generation_session import (
     GenerationPaths,
     ResourceGenerationSession,
@@ -84,6 +86,46 @@ def test_session_merged_config_uses_adjacent_designer_overlay(tmp_path):
             "text": ".designer/_generated_text_demo_16_4.txt,custom.txt",
         }
     ]
+
+
+def test_session_load_from_file_rejects_designer_managed_config(tmp_path):
+    source_dir = tmp_path / "resource" / "src"
+    designer_config = source_dir / ".designer" / "app_resource_config_designer.json"
+    designer_config.parent.mkdir(parents=True)
+    designer_config.write_text("{\"img\": [], \"font\": [], \"mp4\": []}\n", encoding="utf-8")
+    expected_user_config = source_dir / "app_resource_config.json"
+
+    session = ResourceGenerationSession()
+
+    with pytest.raises(ValueError) as excinfo:
+        session.load_from_file(str(designer_config))
+
+    assert "Designer-managed" in str(excinfo.value)
+    assert str(expected_user_config.resolve()) in str(excinfo.value)
+
+
+def test_session_save_user_config_rejects_designer_managed_config_path(tmp_path):
+    source_dir = tmp_path / "resource" / "src"
+    designer_config = source_dir / ".designer" / "app_resource_config_designer.json"
+
+    session = ResourceGenerationSession()
+    session.reset(
+        GenerationPaths(
+            config_path=str(source_dir / "app_resource_config.json"),
+            source_dir=str(source_dir),
+        ),
+        {
+            "img": [],
+            "font": [],
+            "mp4": [],
+        },
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        session.save_user_config(str(designer_config))
+
+    assert "Designer-managed" in str(excinfo.value)
+    assert not designer_config.exists()
 
 
 def test_stage_workspace_copies_source_tree_and_writes_current_user_config(tmp_path):

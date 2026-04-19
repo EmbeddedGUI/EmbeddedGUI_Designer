@@ -19,6 +19,7 @@ from .workspace import (
 from ..utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_FILENAME,
     designer_resource_config_path,
+    is_designer_resource_path,
     load_resource_config,
     make_empty_resource_config,
     merge_resource_configs,
@@ -168,6 +169,24 @@ def infer_generation_paths(config_path: str, *, source_dir: str = "", workspace_
     )
 
 
+def _require_user_config_path(config_path: str) -> str:
+    normalized = normalize_path(config_path)
+    if not normalized:
+        return ""
+    if not is_designer_resource_path(normalized):
+        return normalized
+
+    hint = ""
+    parent_dir = os.path.basename(os.path.dirname(normalized))
+    if parent_dir == ".designer":
+        source_dir = os.path.dirname(os.path.dirname(normalized))
+        user_config = normalize_path(os.path.join(source_dir, APP_RESOURCE_CONFIG_FILENAME))
+        if user_config:
+            hint = f" Use the user overlay instead: {user_config}"
+
+    raise ValueError(f"'{normalized}' is Designer-managed and cannot be edited directly.{hint}")
+
+
 def default_entry_for_section(section: str) -> dict:
     if section == "img":
         return {
@@ -245,6 +264,7 @@ class ResourceGenerationSession:
             workspace_dir=workspace_dir,
             bin_output_dir=bin_output_dir,
         )
+        resolved_paths.config_path = _require_user_config_path(resolved_paths.config_path)
         data = load_resource_config(resolved_paths.config_path) if resolved_paths.config_path else None
         if data is None:
             raise FileNotFoundError(f"Resource config not found: {config_path}")
@@ -277,7 +297,7 @@ class ResourceGenerationSession:
         return json.dumps(self.merged_config(), indent=4, ensure_ascii=False) + "\n"
 
     def save_user_config(self, path: str = "") -> str:
-        target_path = normalize_path(path or self.paths.config_path)
+        target_path = _require_user_config_path(path or self.paths.config_path)
         if not target_path:
             raise ValueError("Config path is empty.")
         parent_dir = os.path.dirname(target_path)

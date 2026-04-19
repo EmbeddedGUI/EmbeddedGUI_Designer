@@ -1341,6 +1341,41 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_save_as_rejects_designer_managed_config_path(self, qapp, monkeypatch, tmp_path):
+        from PyQt5.QtWidgets import QFileDialog
+
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        warnings = []
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        original_config = tmp_path / "OldApp" / "resource" / "src" / "app_resource_config.json"
+        reserved_config = tmp_path / "OldApp" / "resource" / "src" / ".designer" / "app_resource_config_designer.json"
+
+        window = ResourceGeneratorWindow("")
+        window.open_with_paths(infer_generation_paths(str(original_config)), load_existing=False)
+        qapp.processEvents()
+
+        monkeypatch.setattr(
+            QFileDialog,
+            "getSaveFileName",
+            lambda *args, **kwargs: (str(reserved_config), "Resource Config (*.json)"),
+        )
+
+        assert window._save_config_as() is False
+        assert warnings
+        assert warnings[-1][0] == "Save Resource Config"
+        assert "Designer-managed" in warnings[-1][1]
+        assert str((reserved_config.parent.parent / "app_resource_config.json").resolve()) in warnings[-1][1]
+        assert not reserved_config.exists()
+        _close_window(window)
+
+    @_skip_no_qt
     def test_scan_assets_from_directory_sets_source_dir_and_populates_entries(self, qapp, monkeypatch, tmp_path):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
 
