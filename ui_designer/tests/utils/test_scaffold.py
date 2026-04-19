@@ -775,6 +775,7 @@ class TestCoreProjectScaffold:
             "circle_radius": 120,
             "extra_config_macros": [("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
             "refresh_designer_resource_config": False,
+            "remove_legacy_designer_files": True,
         }
 
     def test_bind_project_storage_normalizes_project_dir_and_optional_sdk_root(self):
@@ -2566,6 +2567,38 @@ class TestApplyDesignerProjectScaffold:
         assert actions[".eguiproject/layout/detail.xml"] == "created"
         assert "#define EGUI_CONFIG_COLOR_DEPTH 32" in designer_config
         assert "#define EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW 1" in designer_config
+
+    def test_scaffold_conversion_project_with_sdk_root_removes_legacy_resource_configs_by_default(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        project_dir = sdk_root / "example" / "LegacyConversionApp"
+        resource_src_dir = project_dir / "resource" / "src"
+        resource_src_dir.mkdir(parents=True)
+        (resource_src_dir / "app_resource_config.json").write_text(
+            '{"img": [{"name": "user_asset"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / "app_resource_config_designer.json").write_text(
+            '{"img": [{"name": "legacy_asset"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / ".app_resource_config_merged.json").write_text(
+            '{"img": [{"name": "merged_asset"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+
+        scaffold_conversion_project_with_sdk_root(
+            str(project_dir),
+            "LegacyConversionApp",
+            str(sdk_root),
+            320,
+            240,
+            pages=["home"],
+        )
+
+        assert (resource_src_dir / "app_resource_config_designer.json").exists() is False
+        assert (resource_src_dir / ".app_resource_config_merged.json").exists() is False
+        assert '"user_asset"' in (resource_src_dir / "app_resource_config.json").read_text(encoding="utf-8")
+        assert (resource_src_dir / ".designer" / "app_resource_config_designer.json").is_file()
 
     def test_scaffold_sdk_example_conversion_project_returns_sdk_example_dir_and_actions(self, tmp_path):
         sdk_root = tmp_path / "sdk" / "EmbeddedGUI"

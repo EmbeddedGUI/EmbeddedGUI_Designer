@@ -780,6 +780,7 @@ def designer_conversion_scaffold_kwargs(
         color_depth=color_depth,
         extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
         refresh_designer_resource_config=False,
+        remove_legacy_designer_files=True,
     )
 
 
