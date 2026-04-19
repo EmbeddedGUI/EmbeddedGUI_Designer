@@ -485,49 +485,55 @@ class ResourceGenerationSession:
             staged_config_path,
         ]
         try:
-            completed = self._run_generator_subprocess(command, timeout_seconds=timeout_seconds)
-        except subprocess.TimeoutExpired as exc:
-            return ResourceGenerationResult(
-                success=False,
-                command=command,
-                returncode=-1,
-                stdout=str(exc.stdout or ""),
-                stderr=str(exc.stderr or ""),
-                staged_config_path=staged_config_path,
-                issues=issues + [
-                    ResourceGenerationValidationIssue(
-                        "error",
-                        "generation_timeout",
-                        f"Resource generation timed out after {timeout_seconds} seconds.",
-                    )
-                ],
-            )
-        except Exception as exc:
-            return ResourceGenerationResult(
-                success=False,
-                command=command,
-                returncode=-1,
-                stdout="",
-                stderr=str(exc),
-                staged_config_path=staged_config_path,
-                issues=issues + [
-                    ResourceGenerationValidationIssue(
-                        "error",
-                        "generation_failed",
-                        f"Failed to run resource generator: {exc}",
-                    )
-                ],
-            )
+            try:
+                completed = self._run_generator_subprocess(command, timeout_seconds=timeout_seconds)
+            except subprocess.TimeoutExpired as exc:
+                return ResourceGenerationResult(
+                    success=False,
+                    command=command,
+                    returncode=-1,
+                    stdout=str(exc.stdout or ""),
+                    stderr=str(exc.stderr or ""),
+                    staged_config_path=staged_config_path,
+                    issues=issues + [
+                        ResourceGenerationValidationIssue(
+                            "error",
+                            "generation_timeout",
+                            f"Resource generation timed out after {timeout_seconds} seconds.",
+                        )
+                    ],
+                )
+            except Exception as exc:
+                return ResourceGenerationResult(
+                    success=False,
+                    command=command,
+                    returncode=-1,
+                    stdout="",
+                    stderr=str(exc),
+                    staged_config_path=staged_config_path,
+                    issues=issues + [
+                        ResourceGenerationValidationIssue(
+                            "error",
+                            "generation_failed",
+                            f"Failed to run resource generator: {exc}",
+                        )
+                    ],
+                )
 
-        return ResourceGenerationResult(
-            success=completed.returncode == 0,
-            command=command,
-            returncode=completed.returncode,
-            stdout=completed.stdout or "",
-            stderr=completed.stderr or "",
-            staged_config_path=staged_config_path,
-            issues=issues,
-        )
+            return ResourceGenerationResult(
+                success=completed.returncode == 0,
+                command=command,
+                returncode=completed.returncode,
+                stdout=completed.stdout or "",
+                stderr=completed.stderr or "",
+                staged_config_path=staged_config_path,
+                issues=issues,
+            )
+        finally:
+            try:
+                os.remove(staged_config_path)
+            except OSError:
+                pass
 
     def _run_generator_subprocess(self, command: list[str], *, timeout_seconds: int):
         preferred_cwd = _resolved_existing_path(self.sdk_root) or None

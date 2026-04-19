@@ -359,7 +359,7 @@ def test_run_generation_uses_sdk_script_and_workspace_paths(tmp_path, monkeypatc
     ]
     assert captured["kwargs"]["cwd"] == str(sdk_root.resolve())
     assert (workspace_dir / "src" / "app_resource_config.json").is_file()
-    assert staged_generation_config.is_file()
+    assert staged_generation_config.exists() is False
 
 
 def test_run_generation_retries_without_cwd_when_process_launch_cwd_is_unsupported(tmp_path, monkeypatch):
@@ -398,3 +398,39 @@ def test_run_generation_retries_without_cwd_when_process_launch_cwd_is_unsupport
 
     assert result.success is True
     assert calls == [str(sdk_root.resolve()), None]
+    assert not (workspace_dir / "src" / ".designer" / ".app_resource_config_merged.json").exists()
+
+
+def test_run_generation_cleans_staged_config_after_failure(tmp_path, monkeypatch):
+    sdk_root = _build_sdk_with_generator(tmp_path / "sdk")
+    source_dir = tmp_path / "source"
+    workspace_dir = tmp_path / "workspace"
+    bin_output_dir = tmp_path / "bin"
+    source_dir.mkdir()
+
+    def _failing_run(_command, **_kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("ui_designer.model.resource_generation_session.subprocess.run", _failing_run)
+
+    session = ResourceGenerationSession(str(sdk_root))
+    session.reset(
+        GenerationPaths(
+            config_path=str(source_dir / "app_resource_config.json"),
+            source_dir=str(source_dir),
+            workspace_dir=str(workspace_dir),
+            bin_output_dir=str(bin_output_dir),
+        ),
+        {
+            "img": [],
+            "font": [],
+            "mp4": [],
+        },
+    )
+
+    result = session.run_generation()
+
+    assert result.success is False
+    assert result.returncode == -1
+    assert "boom" in result.stderr
+    assert not (workspace_dir / "src" / ".designer" / ".app_resource_config_merged.json").exists()
