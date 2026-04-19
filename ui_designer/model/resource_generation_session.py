@@ -169,6 +169,21 @@ def infer_generation_paths(config_path: str, *, source_dir: str = "", workspace_
     )
 
 
+def _workspace_src_dir(workspace_dir: str) -> str:
+    normalized_workspace_dir = normalize_path(workspace_dir)
+    if not normalized_workspace_dir:
+        return ""
+    return normalize_path(os.path.join(normalized_workspace_dir, "src"))
+
+
+def _staged_generation_src_dir(workspace_dir: str, source_dir: str) -> str:
+    workspace_src_dir = _workspace_src_dir(workspace_dir)
+    normalized_source_dir = normalize_path(source_dir)
+    if workspace_src_dir and normalized_source_dir and workspace_src_dir == normalized_source_dir:
+        return normalize_path(os.path.join(workspace_dir, ".resource_workspace", "src"))
+    return workspace_src_dir
+
+
 def _require_user_config_path(config_path: str) -> str:
     normalized = normalize_path(config_path)
     if not normalized:
@@ -426,9 +441,8 @@ class ResourceGenerationSession:
         if not workspace_dir:
             raise ValueError("Workspace directory is empty.")
 
-        target_src_dir = os.path.join(workspace_dir, "src")
+        target_src_dir = _workspace_src_dir(workspace_dir)
         source_dir = normalize_path(source_dir)
-        target_src_dir = normalize_path(target_src_dir)
         workspace_dir = normalize_path(workspace_dir)
 
         if source_dir and source_dir != target_src_dir:
@@ -440,6 +454,10 @@ class ResourceGenerationSession:
             os.makedirs(target_src_dir, exist_ok=True)
 
         staged_config_path = os.path.join(target_src_dir, APP_RESOURCE_CONFIG_FILENAME)
+        if source_dir and source_dir == target_src_dir:
+            # Keep Generate from implicitly saving unsaved user edits back into the
+            # live project when the workspace is the real resource directory.
+            return staged_config_path
         with open(staged_config_path, "w", encoding="utf-8", newline="\n") as f:
             f.write(self.to_user_json_text())
         return staged_config_path
@@ -449,7 +467,7 @@ class ResourceGenerationSession:
         if not workspace_dir:
             raise ValueError("Workspace directory is empty.")
 
-        target_src_dir = normalize_path(os.path.join(workspace_dir, "src"))
+        target_src_dir = _staged_generation_src_dir(workspace_dir, self.paths.source_dir)
         os.makedirs(target_src_dir, exist_ok=True)
         staged_config_path = merged_resource_config_path(target_src_dir)
         os.makedirs(os.path.dirname(staged_config_path), exist_ok=True)

@@ -434,3 +434,73 @@ def test_run_generation_cleans_staged_config_after_failure(tmp_path, monkeypatch
     assert result.returncode == -1
     assert "boom" in result.stderr
     assert not (workspace_dir / "src" / ".designer" / ".app_resource_config_merged.json").exists()
+
+
+def test_run_generation_keeps_live_project_source_configs_unmodified(tmp_path, monkeypatch):
+    sdk_root = _build_sdk_with_generator(tmp_path / "sdk")
+    resource_dir = tmp_path / "DemoApp" / "resource"
+    source_dir = resource_dir / "src"
+    bin_output_dir = resource_dir
+    source_dir.mkdir(parents=True)
+    (source_dir / "disk.png").write_bytes(b"PNG")
+    (source_dir / "session.png").write_bytes(b"PNG")
+    live_user_config = source_dir / "app_resource_config.json"
+    live_user_config.write_text(
+        json.dumps(
+            {
+                "img": [{"file": "disk.png", "format": "rgb565", "alpha": "4", "external": "0"}],
+                "font": [],
+                "mp4": [],
+            },
+            ensure_ascii=False,
+            indent=4,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    captured = {}
+
+    def _fake_run(command, **kwargs):
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return subprocess.CompletedProcess(command, 0, stdout="generated\n", stderr="")
+
+    monkeypatch.setattr("ui_designer.model.resource_generation_session.subprocess.run", _fake_run)
+
+    session = ResourceGenerationSession(str(sdk_root))
+    session.reset(
+        GenerationPaths(
+            config_path=str(live_user_config),
+            source_dir=str(source_dir),
+            workspace_dir=str(resource_dir),
+            bin_output_dir=str(bin_output_dir),
+        ),
+        {
+            "img": [{"file": "session.png", "format": "rgb565", "alpha": "4", "external": "0"}],
+            "font": [],
+            "mp4": [],
+        },
+    )
+
+    result = session.run_generation()
+
+    staged_generation_config = resource_dir / ".resource_workspace" / "src" / ".designer" / ".app_resource_config_merged.json"
+    assert result.success is True
+    assert captured["command"][2:] == [
+        "-r",
+        str(resource_dir.resolve()),
+        "-o",
+        str(bin_output_dir.resolve()),
+        "-f",
+        "true",
+        "--config",
+        str(staged_generation_config.resolve()),
+    ]
+    assert json.loads(live_user_config.read_text(encoding="utf-8")) == {
+        "img": [{"file": "disk.png", "format": "rgb565", "alpha": "4", "external": "0"}],
+        "font": [],
+        "mp4": [],
+    }
+    assert not (source_dir / ".designer" / ".app_resource_config_merged.json").exists()
+    assert staged_generation_config.exists() is False
