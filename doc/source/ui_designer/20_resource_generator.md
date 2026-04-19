@@ -97,6 +97,7 @@ Designer 会把它看成自动维护的 overlay：
 - 你编辑的是用户侧 `app_resource_config.json`
 - `Merged Preview` 里看到的是最终合并结果
 - 不会直接改写 `.designer/app_resource_config_designer.json`
+- 生成时如果需要临时合并配置，会在当前 `Workspace/src/.designer/` 下短暂使用 `.app_resource_config_merged.json`，生成结束后自动清理，不属于需要手工维护的项目文件
 
 这样可以把用户手工配置和 Designer 自动元数据分开。
 

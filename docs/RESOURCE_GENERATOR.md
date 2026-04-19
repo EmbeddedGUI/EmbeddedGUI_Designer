@@ -90,7 +90,7 @@
 - 编辑时只修改用户侧 `app_resource_config.json`
 - `Merged Preview` 展示合并后的实际结果
 - 不会直接改写 `.designer/app_resource_config_designer.json`
-- 生成时如果需要临时合并配置，会短暂使用 `.designer/.app_resource_config_merged.json`，生成结束后自动清理，不属于需要手工维护的项目文件
+- 生成时如果需要临时合并配置，会在当前 `Workspace/src/.designer/` 下短暂使用 `.app_resource_config_merged.json`，生成结束后自动清理，不属于需要手工维护的项目文件
 
 这能避免把 Designer 自动生成的元数据和用户手工配置混在一起。
 
