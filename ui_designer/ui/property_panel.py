@@ -32,7 +32,7 @@ from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_name import resolve_widget_name, sanitize_widget_name, is_valid_widget_name
 from ..model.widget_registry import WidgetRegistry
 from ..settings.ui_prefs import _normalize_inspector_group_expanded
-from ..utils.resource_config_overlay import is_designer_resource_path
+from ..utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME, is_designer_resource_path
 from ..utils.scaffold import (
     generated_resource_font_dir,
     preferred_resource_source_dir,
@@ -152,6 +152,36 @@ def _count_label(count, singular, plural=None):
     value = max(int(count or 0), 0)
     noun = singular if value == 1 else (plural or f"{singular}s")
     return f"{value} {noun}"
+
+
+def _reserved_resource_path_label(path, *, root_dir=""):
+    normalized = str(path or "").replace("\\", "/").strip()
+    if not normalized:
+        return ""
+    normalized_root = str(root_dir or "").strip()
+    if normalized_root:
+        try:
+            path_abs = os.path.abspath(path)
+            root_abs = os.path.abspath(normalized_root)
+            if os.path.commonpath([path_abs, root_abs]) == root_abs:
+                return os.path.relpath(path_abs, root_abs).replace("\\", "/")
+        except ValueError:
+            pass
+    parts = [part for part in normalized.split("/") if part and part != "."]
+    if DESIGNER_RESOURCE_DIRNAME in parts:
+        return "/".join(parts[parts.index(DESIGNER_RESOURCE_DIRNAME):])
+    return os.path.basename(normalized)
+
+
+def _reserved_resource_path_error(path, *, root_dir=""):
+    normalized = str(path or "").replace("\\", "/").strip()
+    if not normalized or not is_designer_resource_path(normalized):
+        return ""
+    label = _reserved_resource_path_label(normalized, root_dir=root_dir)
+    return (
+        f"'{label}' is reserved for Designer-generated files.\n"
+        "Choose a different filename."
+    )
 
 
 class _PropertyGridLayoutItem:
@@ -3090,11 +3120,12 @@ class PropertyPanel(QWidget):
             path_dir = os.path.dirname(path)
             if path_dir and os.path.isdir(path_dir):
                 self._last_external_file_dir = path_dir
-            if is_designer_resource_path(filename):
+            reserved_error = _reserved_resource_path_error(path, root_dir=self._source_resource_dir)
+            if reserved_error:
                 QMessageBox.warning(
                     self,
                     "Reserved Filename",
-                    f"'{filename}' is reserved for Designer-generated files.\nChoose a different filename.",
+                    reserved_error,
                 )
                 return
             imported = False

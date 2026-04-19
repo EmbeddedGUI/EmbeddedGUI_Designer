@@ -950,6 +950,45 @@ class TestPropertyPanelFileFlow:
         ]
         panel.deleteLater()
 
+    def test_browse_text_file_rejects_designer_directory_source_path(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        text_path = tmp_path / "project" / "resource" / "src" / ".designer" / "chars.txt"
+        text_path.parent.mkdir(parents=True)
+        text_path.write_text("abc\n", encoding="utf-8")
+
+        panel = PropertyPanel()
+        panel.set_source_resource_dir(str(resource_dir))
+        catalog = ResourceCatalog()
+        panel.set_resource_catalog(catalog)
+        panel._create_file_selector("font_text_file", "", [], "Text files (*.txt)")
+        combo = panel._editors["prop_font_text_file"]
+        warnings = []
+
+        monkeypatch.setattr(
+            "ui_designer.ui.property_panel.QFileDialog.getOpenFileName",
+            lambda *args, **kwargs: (str(text_path), "Text files (*.txt)"),
+        )
+        monkeypatch.setattr(
+            "ui_designer.ui.property_panel.QMessageBox.warning",
+            lambda *args: warnings.append((args[1], args[2])),
+        )
+
+        panel._browse_file(combo, "Text files (*.txt)")
+
+        assert not (resource_dir / "chars.txt").exists()
+        assert catalog.text_files == []
+        assert warnings == [
+            (
+                "Reserved Filename",
+                "'.designer/chars.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        panel.deleteLater()
+
     def test_single_selection_marks_missing_file_property(self, qapp):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.model.widget_model import WidgetModel

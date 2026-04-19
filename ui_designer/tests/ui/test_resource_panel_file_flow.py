@@ -1996,6 +1996,47 @@ class TestResourcePanelFileFlow:
         ]
         panel.deleteLater()
 
+    def test_replace_missing_text_rejects_designer_directory_source_path(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        source_path = tmp_path / "project" / "resource" / "src" / ".designer" / "chars.txt"
+        source_path.parent.mkdir(parents=True)
+        source_path.write_text("designer\n", encoding="utf-8")
+
+        catalog = ResourceCatalog()
+        catalog.add_text_file("chars.txt")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+
+        warnings = []
+        imported = []
+        panel.resource_imported.connect(lambda: imported.append(True))
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QFileDialog.getOpenFileName",
+            lambda *args, **kwargs: (str(source_path), "Text Files (*.txt)"),
+        )
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QMessageBox.warning",
+            lambda *args: warnings.append((args[1], args[2])),
+        )
+
+        panel._replace_missing_resource("chars.txt", "text")
+
+        assert panel.get_resource_catalog().text_files == ["chars.txt"]
+        assert imported == []
+        assert warnings == [
+            (
+                "Reserved Filename",
+                "'.designer/chars.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        panel.deleteLater()
+
     def test_replace_missing_resources_from_mapping_rejects_designer_reserved_filename(self, qapp, tmp_path):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.ui.resource_panel import ResourcePanel
@@ -2028,6 +2069,39 @@ class TestResourcePanelFileFlow:
             )
         ]
         assert not (resource_dir / "_generated_text_demo_16_4.txt").exists()
+        assert panel.get_resource_catalog().text_files == ["chars.txt"]
+        panel.deleteLater()
+
+    def test_replace_missing_resources_from_mapping_rejects_designer_directory_source_path(self, qapp, tmp_path):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        source_path = tmp_path / "project" / "resource" / "src" / ".designer" / "chars.txt"
+        source_path.parent.mkdir(parents=True)
+        source_path.write_text("designer\n", encoding="utf-8")
+
+        catalog = ResourceCatalog()
+        catalog.add_text_file("chars.txt")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+
+        restored, renamed_pairs, failures = panel._replace_missing_resources_from_mapping(
+            "text",
+            {"chars.txt": str(source_path)},
+        )
+
+        assert restored == []
+        assert renamed_pairs == []
+        assert failures == [
+            (
+                "chars.txt",
+                "'.designer/chars.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
         assert panel.get_resource_catalog().text_files == ["chars.txt"]
         panel.deleteLater()
 
@@ -3226,6 +3300,85 @@ class TestResourcePanelFileFlow:
             (
                 "Reserved Filename",
                 "'_generated_text_demo_16_4.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        panel.deleteLater()
+
+    def test_restore_missing_text_rejects_designer_directory_source_path(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        source_path = tmp_path / "project" / "resource" / "src" / ".designer" / "chars.txt"
+        source_path.parent.mkdir(parents=True)
+        source_path.write_text("designer\n", encoding="utf-8")
+
+        catalog = ResourceCatalog()
+        catalog.add_text_file("chars.txt")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+
+        warnings = []
+        imported = []
+        panel.resource_imported.connect(lambda: imported.append(True))
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QFileDialog.getOpenFileName",
+            lambda *args, **kwargs: (str(source_path), "Text Files (*.txt)"),
+        )
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QMessageBox.warning",
+            lambda *args: warnings.append((args[1], args[2])),
+        )
+
+        panel._restore_missing_resource("chars.txt", "text")
+
+        assert panel.get_resource_catalog().text_files == ["chars.txt"]
+        assert imported == []
+        assert warnings == [
+            (
+                "Reserved Filename",
+                "'.designer/chars.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        panel.deleteLater()
+
+    def test_import_text_rejects_designer_directory_source_path(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        source_path = tmp_path / "project" / "resource" / "src" / ".designer" / "scratch.txt"
+        source_path.parent.mkdir(parents=True)
+        source_path.write_text("designer\n", encoding="utf-8")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(ResourceCatalog())
+
+        warnings = []
+        imported = []
+        panel.resource_imported.connect(lambda: imported.append(True))
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QInputDialog.getText",
+            lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("rename dialog should not open")),
+        )
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QMessageBox.warning",
+            lambda *args: warnings.append((args[1], args[2])),
+        )
+
+        panel._do_import([str(source_path)], "text")
+
+        assert panel.get_resource_catalog().text_files == []
+        assert imported == []
+        assert warnings == [
+            (
+                "Reserved Filename",
+                "'.designer/scratch.txt' is reserved for Designer-generated files.\nChoose a different filename.",
             )
         ]
         panel.deleteLater()

@@ -58,7 +58,7 @@ from ..services.font_charset_presets import (
     suggest_charset_filename,
     summarize_charset_diff,
 )
-from ..utils.resource_config_overlay import is_designer_resource_path
+from ..utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME, is_designer_resource_path
 from ..utils.scaffold import preferred_resource_source_dir, resource_images_dir
 from .theme import designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size
 
@@ -110,6 +110,36 @@ def _reserved_resource_filename_error(name):
         return ""
     return (
         f"'{normalized}' is reserved for Designer-generated files.\n"
+        "Choose a different filename."
+    )
+
+
+def _reserved_resource_path_label(path, *, root_dir=""):
+    normalized = str(path or "").replace("\\", "/").strip()
+    if not normalized:
+        return ""
+    normalized_root = str(root_dir or "").strip()
+    if normalized_root:
+        try:
+            path_abs = os.path.abspath(path)
+            root_abs = os.path.abspath(normalized_root)
+            if os.path.commonpath([path_abs, root_abs]) == root_abs:
+                return os.path.relpath(path_abs, root_abs).replace("\\", "/")
+        except ValueError:
+            pass
+    parts = [part for part in normalized.split("/") if part and part != "."]
+    if DESIGNER_RESOURCE_DIRNAME in parts:
+        return "/".join(parts[parts.index(DESIGNER_RESOURCE_DIRNAME):])
+    return os.path.basename(normalized)
+
+
+def _reserved_resource_path_error(path, *, root_dir=""):
+    normalized = str(path or "").replace("\\", "/").strip()
+    if not normalized or not is_designer_resource_path(normalized):
+        return ""
+    label = _reserved_resource_path_label(normalized, root_dir=root_dir)
+    return (
+        f"'{label}' is reserved for Designer-generated files.\n"
         "Choose a different filename."
     )
 
@@ -3798,14 +3828,16 @@ class ResourcePanel(QWidget):
 
     def _validate_replacement_filenames(self, replacements):
         for source_path in replacements.values():
-            filename = os.path.basename(source_path or "")
-            reserved_error = _reserved_resource_filename_error(filename)
+            reserved_error = _reserved_resource_path_error(source_path, root_dir=self._src_dir)
             if reserved_error:
                 QMessageBox.warning(self, "Reserved Filename", reserved_error)
                 return False
         return True
 
     def _replace_missing_resource_with_path(self, old_name, resource_type, source_path):
+        reserved_error = _reserved_resource_path_error(source_path, root_dir=self._src_dir)
+        if reserved_error:
+            return "", reserved_error
         new_name = os.path.basename(source_path)
         if not _validate_english_filename(new_name):
             return "", f"'{new_name}' is invalid. Use only ASCII letters, digits, underscore, and dash."
@@ -4109,6 +4141,10 @@ class ResourcePanel(QWidget):
             if not target_name:
                 unmatched.append(source_name)
                 continue
+            reserved_error = _reserved_resource_path_error(source_path, root_dir=self._src_dir)
+            if reserved_error:
+                failures.append((target_name, reserved_error))
+                continue
 
             target_path = os.path.join(target_dir, target_name)
             try:
@@ -4204,6 +4240,10 @@ class ResourcePanel(QWidget):
                 "Extension Mismatch",
                 f"Expected a '{expected_ext}' file to restore '{filename}'.",
             )
+            return
+        reserved_error = _reserved_resource_path_error(source_path, root_dir=self._src_dir)
+        if reserved_error:
+            QMessageBox.warning(self, "Reserved Filename", reserved_error)
             return
 
         try:
@@ -4312,6 +4352,10 @@ class ResourcePanel(QWidget):
         first_imported_name = ""
         target_dir = self._target_dir_for_resource_type(resource_type)
         for src in source_paths:
+            reserved_error = _reserved_resource_path_error(src, root_dir=self._src_dir)
+            if reserved_error:
+                QMessageBox.warning(self, "Reserved Filename", reserved_error)
+                continue
             fname = os.path.basename(src)
             # Show rename dialog for each file
             new_name, ok = QInputDialog.getText(
