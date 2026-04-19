@@ -2076,6 +2076,9 @@ class TestApplyDesignerProjectScaffold:
         designer_config_path = src_dir / ".designer" / "app_resource_config_designer.json"
         legacy_designer_config_path = src_dir / "app_resource_config_designer.json"
         legacy_merged_config_path = src_dir / ".app_resource_config_merged.json"
+        legacy_generated_text_path = src_dir / "_generated_text_demo_16_4.txt"
+        legacy_nested_designer_dir = src_dir / "custom_assets" / ".designer"
+        preserved_designer_sidecar_path = src_dir / ".designer" / "keep.txt"
         project = build_empty_project_model(
             "GeneratedResourceConfigHelperApp",
             320,
@@ -2085,6 +2088,11 @@ class TestApplyDesignerProjectScaffold:
         src_dir.mkdir(parents=True, exist_ok=True)
         legacy_designer_config_path.write_text("{\"img\": [], \"font\": [], \"mp4\": []}\n", encoding="utf-8")
         legacy_merged_config_path.write_text("{\"img\": [], \"font\": [], \"mp4\": []}\n", encoding="utf-8")
+        legacy_generated_text_path.write_text("legacy\n", encoding="utf-8")
+        legacy_nested_designer_dir.mkdir(parents=True, exist_ok=True)
+        (legacy_nested_designer_dir / "stale.json").write_text("{}\n", encoding="utf-8")
+        preserved_designer_sidecar_path.parent.mkdir(parents=True, exist_ok=True)
+        preserved_designer_sidecar_path.write_text("keep\n", encoding="utf-8")
 
         created, config_path = generate_designer_resource_config(project, str(src_dir))
         created_again, config_path_again = generate_designer_resource_config(project, str(src_dir))
@@ -2096,6 +2104,9 @@ class TestApplyDesignerProjectScaffold:
         assert (src_dir / "app_resource_config.json").read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": [],\n    "mp4": []\n}\n'
         assert legacy_designer_config_path.exists() is False
         assert legacy_merged_config_path.exists() is False
+        assert legacy_generated_text_path.exists() is False
+        assert legacy_nested_designer_dir.exists() is False
+        assert preserved_designer_sidecar_path.exists() is True
         assert json.loads(designer_config_path.read_text(encoding="utf-8")) == {
             "img": [],
             "font": [],

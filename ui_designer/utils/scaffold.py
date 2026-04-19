@@ -1270,10 +1270,40 @@ def _remove_file_if_exists(path):
     return False
 
 
+def _cleanup_legacy_designer_resource_artifacts(src_dir):
+    src_dir = os.path.normpath(src_dir or "")
+    if not src_dir or not os.path.isdir(src_dir):
+        return
+
+    for walk_root, dir_names, file_names in os.walk(src_dir):
+        rel_root = os.path.relpath(walk_root, src_dir).replace("\\", "/")
+        if rel_root == DESIGNER_RESOURCE_DIRNAME:
+            dir_names[:] = []
+            continue
+
+        for dir_name in list(dir_names):
+            dir_path = os.path.join(walk_root, dir_name)
+            rel_path = os.path.relpath(dir_path, src_dir).replace("\\", "/")
+            if rel_path == DESIGNER_RESOURCE_DIRNAME:
+                continue
+            if not is_designer_resource_path(rel_path):
+                continue
+            try:
+                shutil.rmtree(dir_path)
+            except OSError:
+                continue
+            dir_names.remove(dir_name)
+
+        for file_name in file_names:
+            file_path = os.path.join(walk_root, file_name)
+            rel_path = os.path.relpath(file_path, src_dir).replace("\\", "/")
+            if is_designer_resource_path(rel_path):
+                _remove_file_if_exists(file_path)
+
+
 def generate_designer_resource_config(project, src_dir):
     """Ensure the user overlay exists and regenerate the Designer resource config."""
-    _remove_file_if_exists(os.path.join(src_dir, APP_RESOURCE_CONFIG_DESIGNER_FILENAME))
-    _remove_file_if_exists(os.path.join(src_dir, APP_RESOURCE_CONFIG_MERGED_FILENAME))
+    _cleanup_legacy_designer_resource_artifacts(src_dir)
     user_config_path = user_resource_config_path(src_dir)
     user_config_created = ensure_resource_config_file(user_config_path)
 
