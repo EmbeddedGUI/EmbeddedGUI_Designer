@@ -523,8 +523,32 @@ def _copy_project_resource_tree(src_dir: str, dst_dir: str) -> None:
             )
 
 
+def _copy_tree_if_exists(src_dir: str, dst_dir: str) -> None:
+    if os.path.isdir(src_dir):
+        shutil.copytree(src_dir, dst_dir, dirs_exist_ok=True)
+
+
+def _copy_project_root_user_sources(src_dir: str, dst_dir: str) -> None:
+    reserved_filenames = {
+        BUILD_DESIGNER_FILENAME,
+        APP_CONFIG_DESIGNER_FILENAME,
+        UICODE_HEADER_FILENAME,
+        UICODE_SOURCE_FILENAME,
+        EGUI_STRINGS_HEADER_FILENAME,
+        EGUI_STRINGS_SOURCE_FILENAME,
+    }
+    for name in os.listdir(src_dir):
+        src_path = os.path.join(src_dir, name)
+        if not os.path.isfile(src_path):
+            continue
+        if name in reserved_filenames or name.endswith(".egui") or name.endswith("_layout.c"):
+            continue
+        if name.endswith(".c") or name.endswith("_ext.h"):
+            _copy_file_if_missing(src_path, os.path.join(dst_dir, name))
+
+
 def copy_project_sidecar_files(src_dir: str, dst_dir: str) -> None:
-    """Copy user-owned Save As sidecars while skipping Designer-reserved resources."""
+    """Copy user-owned Save As sidecars while skipping Designer-reserved content."""
     src_dir = _normalize_project_copy_dir(src_dir)
     dst_dir = _normalize_project_copy_dir(dst_dir)
     if not src_dir or not os.path.isdir(src_dir) or not dst_dir or src_dir == dst_dir:
@@ -534,21 +558,38 @@ def copy_project_sidecar_files(src_dir: str, dst_dir: str) -> None:
         (project_build_mk_path(src_dir), project_build_mk_path(dst_dir)),
         (project_app_config_path(src_dir), project_app_config_path(dst_dir)),
         (
+            os.path.join(src_dir, RELEASE_CONFIG_RELPATH),
+            os.path.join(dst_dir, RELEASE_CONFIG_RELPATH),
+        ),
+        (
             os.path.join(src_dir, RESOURCE_CONFIG_RELPATH),
             os.path.join(dst_dir, RESOURCE_CONFIG_RELPATH),
         ),
     ):
         _copy_file_if_missing(src_path, dst_path)
 
+    _copy_project_root_user_sources(src_dir, dst_dir)
+
     src_resource_dir = project_config_resource_dir(src_dir)
     dst_resource_dir = project_config_resource_dir(dst_dir)
     if os.path.isdir(src_resource_dir):
         _copy_project_resource_tree(src_resource_dir, dst_resource_dir)
 
+    src_resource_src_dir = project_resource_src_dir(src_dir)
+    dst_resource_src_dir = project_resource_src_dir(dst_dir)
+    if os.path.isdir(src_resource_src_dir):
+        _copy_project_resource_tree(src_resource_src_dir, dst_resource_src_dir)
+
     src_mockup_dir = project_config_mockup_dir(src_dir)
     dst_mockup_dir = project_config_mockup_dir(dst_dir)
-    if os.path.isdir(src_mockup_dir):
-        shutil.copytree(src_mockup_dir, dst_mockup_dir, dirs_exist_ok=True)
+    _copy_tree_if_exists(src_mockup_dir, dst_mockup_dir)
+
+    _copy_tree_if_exists(
+        project_config_orphaned_user_code_dir(src_dir),
+        project_config_orphaned_user_code_dir(dst_dir),
+    )
+    _copy_tree_if_exists(os.path.join(src_dir, "widgets"), os.path.join(dst_dir, "widgets"))
+    _copy_tree_if_exists(os.path.join(src_dir, "custom_widgets"), os.path.join(dst_dir, "custom_widgets"))
 
 
 def default_scaffold_circle_radius(screen_width, screen_height) -> int:

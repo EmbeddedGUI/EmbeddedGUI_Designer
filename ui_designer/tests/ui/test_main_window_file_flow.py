@@ -3189,9 +3189,24 @@ class TestMainWindowFileFlow:
             json.dumps({"img": [{"file": "legacy.png"}], "font": []}, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
+        extra_resource_dir = resource_src_dir / "custom_assets"
+        extra_resource_dir.mkdir(parents=True, exist_ok=True)
+        (extra_resource_dir / "hero.png").write_bytes(b"HERO")
         mockup_dir = src_dir / ".eguiproject" / "mockup"
         mockup_dir.mkdir(parents=True, exist_ok=True)
         (mockup_dir / "legacy.txt").write_text("mock", encoding="utf-8")
+        orphaned_dir = src_dir / ".eguiproject" / "orphaned_user_code" / "main_page"
+        orphaned_dir.mkdir(parents=True, exist_ok=True)
+        (orphaned_dir / "main_page.c").write_text("// orphan\n", encoding="utf-8")
+        (src_dir / ".eguiproject" / "release.json").write_text('{"profiles":["pc"]}\n', encoding="utf-8")
+        (src_dir / "main_page.c").write_text("/* keep page source */\n", encoding="utf-8")
+        (src_dir / "main_page_ext.h").write_text("#define KEEP_MAIN_EXT 1\n", encoding="utf-8")
+        widgets_dir = src_dir / "widgets"
+        widgets_dir.mkdir(parents=True, exist_ok=True)
+        (widgets_dir / "demo_widget.py").write_text("WIDGET = 1\n", encoding="utf-8")
+        custom_widgets_dir = src_dir / "custom_widgets"
+        custom_widgets_dir.mkdir(parents=True, exist_ok=True)
+        (custom_widgets_dir / "demo_widget.json").write_text('{"name":"demo"}\n', encoding="utf-8")
 
         window = MainWindow(str(sdk_root))
         window.project = project
@@ -3226,8 +3241,17 @@ class TestMainWindowFileFlow:
             "font": [],
         }
         assert (dst_dir / "resource" / "src" / "legacy.png").is_file()
+        assert (dst_dir / "resource" / "src" / "custom_assets" / "hero.png").read_bytes() == b"HERO"
         assert not (dst_dir / "resource" / "src" / "_generated_text_preview.png").exists()
         assert not (dst_dir / "resource" / "src" / "_generated_text_demo_16_4.txt").exists()
+        assert (dst_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep page source */\n"
+        assert (dst_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_MAIN_EXT 1\n"
+        assert (dst_dir / ".eguiproject" / "orphaned_user_code" / "main_page" / "main_page.c").read_text(
+            encoding="utf-8"
+        ) == "// orphan\n"
+        assert (dst_dir / ".eguiproject" / "release.json").read_text(encoding="utf-8") == '{"profiles":["pc"]}\n'
+        assert (dst_dir / "widgets" / "demo_widget.py").read_text(encoding="utf-8") == "WIDGET = 1\n"
+        assert (dst_dir / "custom_widgets" / "demo_widget.json").read_text(encoding="utf-8") == '{"name":"demo"}\n'
         _close_window(window)
 
     def test_save_project_as_reports_editing_only_mode_when_preview_unavailable(

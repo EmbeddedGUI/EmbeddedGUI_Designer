@@ -322,27 +322,45 @@ class TestProjectSidecarCopyHelpers:
         resource_dir = src_dir / ".eguiproject" / "resources"
         images_dir = resource_dir / "images"
         mockup_dir = src_dir / ".eguiproject" / "mockup"
+        orphaned_dir = src_dir / ".eguiproject" / "orphaned_user_code" / "main_page"
         resource_src_dir = src_dir / "resource" / "src"
+        custom_resource_dir = resource_src_dir / "custom_assets"
         designer_src_dir = resource_src_dir / ".designer"
+        widgets_dir = src_dir / "widgets"
+        custom_widgets_dir = src_dir / "custom_widgets"
 
         images_dir.mkdir(parents=True)
         mockup_dir.mkdir(parents=True)
+        orphaned_dir.mkdir(parents=True)
         resource_src_dir.mkdir(parents=True)
+        custom_resource_dir.mkdir(parents=True)
         designer_src_dir.mkdir(parents=True)
+        widgets_dir.mkdir(parents=True)
+        custom_widgets_dir.mkdir(parents=True)
         dst_dir.mkdir(parents=True)
 
         (src_dir / "build.mk").write_text("# custom build\n", encoding="utf-8")
         (src_dir / "app_egui_config.h").write_text("#define CUSTOM_CFG 1\n", encoding="utf-8")
+        (src_dir / "main_page.c").write_text("/* keep page source */\n", encoding="utf-8")
+        (src_dir / "main_page_ext.h").write_text("#define KEEP_EXT 1\n", encoding="utf-8")
+        (src_dir / "uicode.c").write_text("// stale legacy designer source\n", encoding="utf-8")
+        (src_dir / "main_page_layout.c").write_text("// stale legacy layout\n", encoding="utf-8")
         (resource_src_dir / "app_resource_config.json").write_text(
             json.dumps({"img": [{"file": "legacy.png"}], "font": []}, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
+        (custom_resource_dir / "hero.png").write_bytes(b"HERO")
+        (custom_resource_dir / "_generated_text_preview.png").write_bytes(b"BAD")
         (designer_src_dir / "app_resource_config_designer.json").write_text("{}\n", encoding="utf-8")
         (images_dir / "legacy.png").write_bytes(b"PNG")
         (images_dir / "_generated_text_preview.png").write_bytes(b"BAD")
         (resource_dir / "_generated_text_demo_16_4.txt").write_text("designer\n", encoding="utf-8")
         (resource_dir / "keep.txt").write_text("keep\n", encoding="utf-8")
         (mockup_dir / "legacy.txt").write_text("mock\n", encoding="utf-8")
+        (orphaned_dir / "main_page.c").write_text("// orphan\n", encoding="utf-8")
+        (src_dir / ".eguiproject" / "release.json").write_text('{"profiles": ["pc"]}\n', encoding="utf-8")
+        (widgets_dir / "demo_widget.py").write_text("WIDGET = 1\n", encoding="utf-8")
+        (custom_widgets_dir / "demo_widget.json").write_text('{"name": "demo"}\n', encoding="utf-8")
 
         (dst_dir / "build.mk").write_text("# existing build\n", encoding="utf-8")
 
@@ -350,16 +368,28 @@ class TestProjectSidecarCopyHelpers:
 
         assert (dst_dir / "build.mk").read_text(encoding="utf-8") == "# existing build\n"
         assert (dst_dir / "app_egui_config.h").read_text(encoding="utf-8") == "#define CUSTOM_CFG 1\n"
+        assert (dst_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep page source */\n"
+        assert (dst_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_EXT 1\n"
+        assert not (dst_dir / "uicode.c").exists()
+        assert not (dst_dir / "main_page_layout.c").exists()
         assert json.loads((dst_dir / "resource" / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == {
             "img": [{"file": "legacy.png"}],
             "font": [],
         }
         assert not (dst_dir / "resource" / "src" / ".designer").exists()
+        assert (dst_dir / "resource" / "src" / "custom_assets" / "hero.png").read_bytes() == b"HERO"
+        assert not (dst_dir / "resource" / "src" / "custom_assets" / "_generated_text_preview.png").exists()
         assert (dst_dir / ".eguiproject" / "resources" / "images" / "legacy.png").read_bytes() == b"PNG"
         assert not (dst_dir / ".eguiproject" / "resources" / "images" / "_generated_text_preview.png").exists()
         assert not (dst_dir / ".eguiproject" / "resources" / "_generated_text_demo_16_4.txt").exists()
         assert (dst_dir / ".eguiproject" / "resources" / "keep.txt").read_text(encoding="utf-8") == "keep\n"
         assert (dst_dir / ".eguiproject" / "mockup" / "legacy.txt").read_text(encoding="utf-8") == "mock\n"
+        assert (dst_dir / ".eguiproject" / "orphaned_user_code" / "main_page" / "main_page.c").read_text(
+            encoding="utf-8"
+        ) == "// orphan\n"
+        assert (dst_dir / ".eguiproject" / "release.json").read_text(encoding="utf-8") == '{"profiles": ["pc"]}\n'
+        assert (dst_dir / "widgets" / "demo_widget.py").read_text(encoding="utf-8") == "WIDGET = 1\n"
+        assert (dst_dir / "custom_widgets" / "demo_widget.json").read_text(encoding="utf-8") == '{"name": "demo"}\n'
 
 
 class TestSyncProjectScaffoldSidecars:
