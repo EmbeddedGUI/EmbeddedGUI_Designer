@@ -5826,7 +5826,7 @@ class TestMainWindowFileFlow:
         _close_window(window)
 
     def test_clean_all_and_reconstruct_runs_destructive_recovery_flow(self, qapp, isolated_config, tmp_path, monkeypatch):
-        from ui_designer.utils.scaffold import ORPHANED_USER_CODE_DIR_RELPATH
+        from ui_designer.utils.scaffold import ORPHANED_USER_CODE_DIR_RELPATH, REFERENCE_FRAMES_DIR_RELPATH
         from ui_designer.model.project_cleaner import ProjectCleanReport
         from ui_designer.ui.main_window import MainWindow
 
@@ -5891,7 +5891,9 @@ class TestMainWindowFileFlow:
         assert "Preserved:" in captured["text"]
         assert "Deleted and reconstructed:" in captured["text"]
         assert "widgets/** app-local widget sources" in captured["text"]
+        assert f"{REFERENCE_FRAMES_DIR_RELPATH}/** regression baseline captures" in captured["text"]
         assert f"{ORPHANED_USER_CODE_DIR_RELPATH}/** archived user page code" in captured["text"]
+        assert "designer-reserved generated resource files (for example _generated_text_*)" in captured["text"]
         assert captured["clean_path"] == os.path.normpath(os.path.abspath(project_dir))
         assert captured["persist_path"] == os.path.normpath(os.path.abspath(project_dir))
         assert captured["shutdown_wait"] == 500

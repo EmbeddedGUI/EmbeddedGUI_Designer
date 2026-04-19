@@ -57,6 +57,7 @@ DESIGNER_SOURCE_PRESERVE_SUMMARY = (
 DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
     "user-owned page files in the project root (*.c, *_ext.h)",
     f"{RESOURCE_IMG_DIR_RELPATH}, {RESOURCE_FONT_DIR_RELPATH}, and other synced/generated resource outputs",
+    "designer-reserved generated resource files (for example _generated_text_*) inside preserved source trees",
     f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata",
     f"{DESIGNER_PROJECT_DIRNAME}/** generated code and scaffold files (legacy root designer files also removed)",
     f"{REGRESSION_REPORT_RELPATH} and {REGRESSION_RESULTS_RELPATH} generated regression reports",
@@ -141,11 +142,21 @@ def _remove_path(project_dir: str, path: str, removed_paths: list[str]) -> tuple
 def _clean_eguiproject_dir(project_dir: str, eguiproject_dir: str, removed_paths: list[str], preserved_paths: list[str]) -> tuple[int, int]:
     removed_files = 0
     removed_dirs = 0
+    resource_dir_name = os.path.basename(RESOURCE_DIR_RELPATH)
     for name in os.listdir(eguiproject_dir):
         child_path = os.path.join(eguiproject_dir, name)
         rel_path = os.path.relpath(child_path, project_dir).replace("\\", "/")
         if os.path.isdir(child_path) and name in _PRESERVED_EGUIPROJECT_DIRS:
             preserved_paths.append(rel_path)
+            if name == resource_dir_name:
+                files, dirs = _clean_preserved_resource_source_subtree(
+                    project_dir,
+                    child_path,
+                    removed_paths,
+                    preserved_paths,
+                )
+                removed_files += files
+                removed_dirs += dirs
             continue
         if os.path.isfile(child_path) and name in _PRESERVED_EGUIPROJECT_FILES:
             preserved_paths.append(rel_path)

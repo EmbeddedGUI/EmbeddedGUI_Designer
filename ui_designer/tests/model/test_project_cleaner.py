@@ -52,6 +52,10 @@ class TestProjectCleaner:
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
         assert (
+            "designer-reserved generated resource files (for example _generated_text_*) inside preserved source trees"
+            in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
+        )
+        assert (
             f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata"
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
@@ -87,6 +91,11 @@ class TestProjectCleaner:
         (project_dir / ".eguiproject" / "layout" / "main_page.xml").write_text("<Page />\n", encoding="utf-8")
         Path(project_resource_catalog_path(str(project_dir))).write_text("<resources />\n", encoding="utf-8")
         (project_dir / ".eguiproject" / "resources" / "images" / "hero.png").write_bytes(b"PNG")
+        (project_dir / ".eguiproject" / "resources" / "images" / "_generated_text_preview.png").write_bytes(b"BAD")
+        (project_dir / ".eguiproject" / "resources" / "_generated_text_demo_16_4.txt").write_text(
+            "designer\n",
+            encoding="utf-8",
+        )
         (project_dir / ".eguiproject" / "mockup" / "screen.png").write_bytes(b"PNG")
         (project_dir / ".eguiproject" / "reference_frames" / "frame_000.png").write_bytes(b"REF")
         (project_dir / ".eguiproject" / "release.json").write_text('{"schema_version": 1}\n', encoding="utf-8")
@@ -130,6 +139,8 @@ class TestProjectCleaner:
         assert (project_dir / ".eguiproject" / "layout" / "main_page.xml").is_file()
         assert Path(project_resource_catalog_path(str(project_dir))).is_file()
         assert (project_dir / ".eguiproject" / "resources" / "images" / "hero.png").is_file()
+        assert not (project_dir / ".eguiproject" / "resources" / "images" / "_generated_text_preview.png").exists()
+        assert not (project_dir / ".eguiproject" / "resources" / "_generated_text_demo_16_4.txt").exists()
         assert (project_dir / ".eguiproject" / "mockup" / "screen.png").is_file()
         assert (project_dir / ".eguiproject" / "reference_frames" / "frame_000.png").is_file()
         assert (project_dir / ".eguiproject" / "release.json").is_file()
@@ -159,7 +170,7 @@ class TestProjectCleaner:
         assert not (project_dir / ".eguiproject" / "regression_results.json").exists()
         assert not (project_dir / "notes").exists()
 
-        assert report.removed_files == 4
+        assert report.removed_files == 6
         assert report.removed_dirs == 5
         assert "CleanAllDemo.egui" in report.preserved_paths
         assert "resource" in report.preserved_paths
@@ -184,6 +195,8 @@ class TestProjectCleaner:
         assert ".designer" in report.removed_paths
         assert "resource/src/.designer" in report.removed_paths
         assert ".eguiproject/backup" in report.removed_paths
+        assert ".eguiproject/resources/_generated_text_demo_16_4.txt" in report.removed_paths
+        assert ".eguiproject/resources/images/_generated_text_preview.png" in report.removed_paths
         assert ".eguiproject/regression_report.html" in report.removed_paths
         assert ".eguiproject/regression_results.json" in report.removed_paths
         assert "main_page.c" in report.removed_paths
