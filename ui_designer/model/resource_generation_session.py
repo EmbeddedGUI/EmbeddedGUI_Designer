@@ -367,6 +367,14 @@ class ResourceGenerationSession:
                 issues.append(ResourceGenerationValidationIssue("error", "source_dir", "Source directory is required for generation."))
             elif not os.path.isdir(self.paths.source_dir):
                 issues.append(ResourceGenerationValidationIssue("error", "source_dir_missing", f"Source directory does not exist: {self.paths.source_dir}"))
+            elif is_designer_resource_path(self.paths.source_dir):
+                issues.append(
+                    ResourceGenerationValidationIssue(
+                        "error",
+                        "source_dir_reserved",
+                        f"Source directory cannot be a Designer-managed path: {self.paths.source_dir}",
+                    )
+                )
             if not self.paths.workspace_dir:
                 issues.append(ResourceGenerationValidationIssue("error", "workspace_dir", "Workspace directory is required for generation."))
             if not self.paths.bin_output_dir:
