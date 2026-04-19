@@ -323,10 +323,12 @@ class TestProjectSidecarCopyHelpers:
         images_dir = resource_dir / "images"
         mockup_dir = src_dir / ".eguiproject" / "mockup"
         resource_src_dir = src_dir / "resource" / "src"
+        designer_src_dir = resource_src_dir / ".designer"
 
         images_dir.mkdir(parents=True)
         mockup_dir.mkdir(parents=True)
         resource_src_dir.mkdir(parents=True)
+        designer_src_dir.mkdir(parents=True)
         dst_dir.mkdir(parents=True)
 
         (src_dir / "build.mk").write_text("# custom build\n", encoding="utf-8")
@@ -335,6 +337,7 @@ class TestProjectSidecarCopyHelpers:
             json.dumps({"img": [{"file": "legacy.png"}], "font": []}, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
+        (designer_src_dir / "app_resource_config_designer.json").write_text("{}\n", encoding="utf-8")
         (images_dir / "legacy.png").write_bytes(b"PNG")
         (images_dir / "_generated_text_preview.png").write_bytes(b"BAD")
         (resource_dir / "_generated_text_demo_16_4.txt").write_text("designer\n", encoding="utf-8")
@@ -351,6 +354,7 @@ class TestProjectSidecarCopyHelpers:
             "img": [{"file": "legacy.png"}],
             "font": [],
         }
+        assert not (dst_dir / "resource" / "src" / ".designer").exists()
         assert (dst_dir / ".eguiproject" / "resources" / "images" / "legacy.png").read_bytes() == b"PNG"
         assert not (dst_dir / ".eguiproject" / "resources" / "images" / "_generated_text_preview.png").exists()
         assert not (dst_dir / ".eguiproject" / "resources" / "_generated_text_demo_16_4.txt").exists()

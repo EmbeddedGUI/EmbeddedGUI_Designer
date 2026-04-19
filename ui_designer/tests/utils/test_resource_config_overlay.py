@@ -5,6 +5,7 @@ from ui_designer.utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
     ensure_resource_config_file,
+    is_designer_resource_path,
     load_merged_resource_config,
     make_empty_resource_config_content,
     merge_resource_configs,
@@ -263,3 +264,14 @@ class TestEnsureResourceConfigFile:
         assert created is True
         assert created_again is False
         assert config_path.read_text(encoding="utf-8") == make_empty_resource_config_content()
+
+
+class TestDesignerResourcePathDetection:
+    def test_recognizes_designer_directory_name(self):
+        assert is_designer_resource_path(".designer") is True
+
+    def test_recognizes_designer_directory_relative_child(self):
+        assert is_designer_resource_path(".designer/app_resource_config_designer.json") is True
+
+    def test_recognizes_generated_text_basename(self):
+        assert is_designer_resource_path("custom/_generated_text_demo_16_4.txt") is True

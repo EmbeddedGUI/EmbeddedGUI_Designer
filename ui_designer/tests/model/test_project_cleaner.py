@@ -36,6 +36,7 @@ class TestProjectCleaner:
         assert f"{BUILD_MK_RELPATH} and {APP_CONFIG_RELPATH} user override wrappers" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{RESOURCE_CONFIG_RELPATH} user overlay config" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{SUPPORTED_TEXT_RELPATH} extracted charset text" in DESIGNER_SOURCE_PRESERVE_SUMMARY
+        assert f"{RESOURCE_SRC_DIR_RELPATH}/** non-designer app resource sources" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{LAYOUT_DIR_RELPATH}/*.xml page layouts" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{RESOURCE_DIR_RELPATH}/** source assets and resource metadata" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{MOCKUP_DIR_RELPATH}/** preview mockups" in DESIGNER_SOURCE_PRESERVE_SUMMARY
@@ -149,6 +150,39 @@ class TestProjectCleaner:
         assert ".eguiproject/orphaned_user_code" in report.removed_paths
         assert "main_page.c" in report.removed_paths
         assert "notes" in report.removed_paths
+
+    def test_clean_project_for_reconstruct_preserves_non_designer_resource_source_files(self, tmp_path):
+        project_dir = tmp_path / "ResourceSourceCleanDemo"
+        source_dir = project_dir / "resource" / "src"
+        nested_dir = source_dir / "custom_assets"
+        nested_dir.mkdir(parents=True)
+        (project_dir / ".eguiproject" / "layout").mkdir(parents=True)
+
+        (project_dir / "ResourceSourceCleanDemo.egui").write_text("<Project />\n", encoding="utf-8")
+        (project_dir / ".eguiproject" / "layout" / "main_page.xml").write_text("<Page />\n", encoding="utf-8")
+        (source_dir / "app_resource_config.json").write_text("{}\n", encoding="utf-8")
+        (source_dir / "supported_text.txt").write_text("abc\n", encoding="utf-8")
+        (source_dir / "user_palette.txt").write_text("palette\n", encoding="utf-8")
+        (nested_dir / "hero.png").write_bytes(b"PNG")
+        (nested_dir / "notes.txt").write_text("notes\n", encoding="utf-8")
+        (nested_dir / "_generated_text_preview.png").write_bytes(b"BAD")
+        (source_dir / ".designer").mkdir()
+        (source_dir / ".designer" / "app_resource_config_designer.json").write_text("{}\n", encoding="utf-8")
+
+        report = clean_project_for_reconstruct(str(project_dir))
+
+        assert (source_dir / "app_resource_config.json").is_file()
+        assert (source_dir / "supported_text.txt").is_file()
+        assert (source_dir / "user_palette.txt").is_file()
+        assert (nested_dir / "hero.png").is_file()
+        assert (nested_dir / "notes.txt").is_file()
+        assert not (nested_dir / "_generated_text_preview.png").exists()
+        assert not (source_dir / ".designer").exists()
+        assert "resource/src/custom_assets" in report.preserved_paths
+        assert "resource/src/custom_assets/hero.png" in report.preserved_paths
+        assert "resource/src/custom_assets/notes.txt" in report.preserved_paths
+        assert "resource/src/custom_assets/_generated_text_preview.png" in report.removed_paths
+        assert "resource/src/.designer" in report.removed_paths
 
     def test_clean_project_for_reconstruct_removes_legacy_designer_wrapper_files(self, tmp_path):
         project_dir = tmp_path / "LegacyWrapperCleanupDemo"

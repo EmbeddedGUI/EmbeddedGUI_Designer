@@ -6,7 +6,7 @@ import os
 import shutil
 from dataclasses import dataclass, field
 
-from ..utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME
+from ..utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME, is_designer_resource_path
 from ..utils.scaffold import (
     APP_CONFIG_RELPATH,
     BACKUP_DIR_RELPATH,
@@ -32,6 +32,7 @@ DESIGNER_SOURCE_PRESERVE_SUMMARY = (
     f"{BUILD_MK_RELPATH} and {APP_CONFIG_RELPATH} user override wrappers",
     f"{RESOURCE_CONFIG_RELPATH} user overlay config",
     f"{SUPPORTED_TEXT_RELPATH} extracted charset text",
+    f"{RESOURCE_SRC_DIR_RELPATH}/** non-designer app resource sources",
     f"{LAYOUT_DIR_RELPATH}/*.xml page layouts",
     f"{RESOURCE_DIR_RELPATH}/** source assets and resource metadata",
     f"{MOCKUP_DIR_RELPATH}/** preview mockups",
@@ -58,10 +59,6 @@ _PRESERVED_EGUIPROJECT_FILES = {os.path.basename(RELEASE_CONFIG_RELPATH)}
 _PRESERVED_TOP_LEVEL_FILES = {
     os.path.basename(BUILD_MK_RELPATH),
     os.path.basename(APP_CONFIG_RELPATH),
-}
-_PRESERVED_RESOURCE_SRC_FILES = {
-    os.path.basename(RESOURCE_CONFIG_RELPATH),
-    os.path.basename(SUPPORTED_TEXT_RELPATH),
 }
 _RESOURCE_DIRNAME = os.path.basename(os.path.dirname(RESOURCE_SRC_DIR_RELPATH))
 _RESOURCE_SRC_DIRNAME = os.path.basename(RESOURCE_SRC_DIR_RELPATH)
@@ -135,18 +132,57 @@ def _clean_eguiproject_dir(project_dir: str, eguiproject_dir: str, removed_paths
     return removed_files, removed_dirs
 
 
+def _clean_preserved_resource_source_subtree(
+    project_dir: str,
+    source_dir: str,
+    removed_paths: list[str],
+    preserved_paths: list[str],
+) -> tuple[int, int]:
+    removed_files = 0
+    removed_dirs = 0
+    for name in os.listdir(source_dir):
+        child_path = os.path.join(source_dir, name)
+        rel_path = os.path.relpath(child_path, project_dir).replace("\\", "/")
+        if is_designer_resource_path(name):
+            files, dirs = _remove_path(project_dir, child_path, removed_paths)
+            removed_files += files
+            removed_dirs += dirs
+            continue
+        preserved_paths.append(rel_path)
+        if os.path.isdir(child_path):
+            files, dirs = _clean_preserved_resource_source_subtree(
+                project_dir,
+                child_path,
+                removed_paths,
+                preserved_paths,
+            )
+            removed_files += files
+            removed_dirs += dirs
+            continue
+    return removed_files, removed_dirs
+
+
 def _clean_resource_src_dir(project_dir: str, src_dir: str, removed_paths: list[str], preserved_paths: list[str]) -> tuple[int, int]:
     removed_files = 0
     removed_dirs = 0
     for name in os.listdir(src_dir):
         child_path = os.path.join(src_dir, name)
         rel_path = os.path.relpath(child_path, project_dir).replace("\\", "/")
-        if os.path.isfile(child_path) and name in _PRESERVED_RESOURCE_SRC_FILES:
-            preserved_paths.append(rel_path)
+        if is_designer_resource_path(name):
+            files, dirs = _remove_path(project_dir, child_path, removed_paths)
+            removed_files += files
+            removed_dirs += dirs
             continue
-        files, dirs = _remove_path(project_dir, child_path, removed_paths)
-        removed_files += files
-        removed_dirs += dirs
+        preserved_paths.append(rel_path)
+        if os.path.isdir(child_path):
+            files, dirs = _clean_preserved_resource_source_subtree(
+                project_dir,
+                child_path,
+                removed_paths,
+                preserved_paths,
+            )
+            removed_files += files
+            removed_dirs += dirs
     return removed_files, removed_dirs
 
 
