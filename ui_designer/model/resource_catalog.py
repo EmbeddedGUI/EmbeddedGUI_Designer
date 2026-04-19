@@ -38,6 +38,8 @@ class ResourceCatalog:
 
     def add_image(self, filename):
         """Add an image file to the catalog."""
+        if is_designer_resource_path(filename):
+            return
         if filename not in self.images:
             self.images.append(filename)
             self.images.sort()
@@ -55,6 +57,8 @@ class ResourceCatalog:
 
     def add_font(self, filename):
         """Add a font file to the catalog."""
+        if is_designer_resource_path(filename):
+            return
         if filename not in self.fonts:
             self.fonts.append(filename)
             self.fonts.sort()
@@ -159,14 +163,14 @@ class ResourceCatalog:
         if images_elem is not None:
             for elem in images_elem.findall("ImageFile"):
                 filename = elem.get("file", "")
-                if filename:
+                if filename and not is_designer_resource_path(filename):
                     catalog.images.append(filename)
 
         fonts_elem = root.find("Fonts")
         if fonts_elem is not None:
             for elem in fonts_elem.findall("FontFile"):
                 filename = elem.get("file", "")
-                if filename:
+                if filename and not is_designer_resource_path(filename):
                     catalog.fonts.append(filename)
 
         texts_elem = root.find("TextFiles")
@@ -195,6 +199,8 @@ class ResourceCatalog:
         if os.path.isdir(images_dir):
             for fname in sorted(os.listdir(images_dir)):
                 ext = os.path.splitext(fname)[1].lower()
+                if is_designer_resource_path(fname):
+                    continue
                 if ext in IMAGE_EXTENSIONS:
                     catalog.images.append(fname)
 

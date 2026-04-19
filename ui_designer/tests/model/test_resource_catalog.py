@@ -44,6 +44,11 @@ class TestImageManagement:
         cat.add_image("star.png")
         assert cat.images == ["star.png"]
 
+    def test_add_image_ignores_designer_generated_preview_file(self):
+        cat = ResourceCatalog()
+        cat.add_image("_generated_text_preview.png")
+        assert cat.images == []
+
     def test_remove_image(self):
         cat = ResourceCatalog()
         cat.add_image("star.png")
@@ -80,6 +85,11 @@ class TestFontManagement:
         cat.add_font("test.ttf")
         cat.add_font("test.ttf")
         assert cat.fonts == ["test.ttf"]
+
+    def test_add_font_ignores_designer_generated_filename(self):
+        cat = ResourceCatalog()
+        cat.add_font("_generated_text_demo_16_4.ttf")
+        assert cat.fonts == []
 
     def test_remove_font(self):
         cat = ResourceCatalog()
@@ -249,6 +259,35 @@ class TestXmlSerialization:
         assert loaded is not None
         assert loaded.text_files == ["supported_text.txt"]
 
+    def test_load_skips_designer_reserved_files_in_all_sections(self, tmp_path):
+        (tmp_path / os.path.basename(resource_catalog_path(str(tmp_path)))).write_text(
+            (
+                '<?xml version="1.0" encoding="utf-8"?>\n'
+                "<Resources>\n"
+                "    <Images>\n"
+                '        <ImageFile file="_generated_text_preview.png" />\n'
+                '        <ImageFile file="hero.png" />\n'
+                "    </Images>\n"
+                "    <Fonts>\n"
+                '        <FontFile file="_generated_text_demo_16_4.ttf" />\n'
+                '        <FontFile file="demo.ttf" />\n'
+                "    </Fonts>\n"
+                "    <TextFiles>\n"
+                '        <TextFile file="_generated_text_demo_16_4.txt" />\n'
+                '        <TextFile file="supported_text.txt" />\n'
+                "    </TextFiles>\n"
+                "</Resources>\n"
+            ),
+            encoding="utf-8",
+        )
+
+        loaded = ResourceCatalog.load(str(tmp_path))
+
+        assert loaded is not None
+        assert loaded.images == ["hero.png"]
+        assert loaded.fonts == ["demo.ttf"]
+        assert loaded.text_files == ["supported_text.txt"]
+
 
 class TestFromDirectory:
     """Test from_directory() filesystem scanning."""
@@ -274,6 +313,19 @@ class TestFromDirectory:
         cat = ResourceCatalog.from_directory(str(tmp_path))
         assert cat.has_image("icon.png")
         assert cat.has_font("font.ttf")
+
+    def test_scan_structured_directory_skips_designer_reserved_files(self, tmp_path):
+        images_dir = tmp_path / "images"
+        images_dir.mkdir()
+        (images_dir / "_generated_text_preview.png").write_bytes(b"")
+        (images_dir / "icon.png").write_bytes(b"")
+        (tmp_path / "_generated_text_demo_16_4.txt").write_text("designer\n")
+        (tmp_path / "supported_text.txt").write_text("user\n")
+
+        cat = ResourceCatalog.from_directory(str(tmp_path))
+
+        assert cat.images == ["icon.png"]
+        assert cat.text_files == ["supported_text.txt"]
 
     def test_scan_nonexistent_directory(self):
         cat = ResourceCatalog.from_directory("/nonexistent/path")
