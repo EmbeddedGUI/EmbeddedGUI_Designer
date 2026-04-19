@@ -194,6 +194,21 @@ class TestXmlSerialization:
         assert '<FontFile file="demo.ttf"' in xml
         assert '<TextFile file="supported_text.txt"' in xml
 
+    def test_to_xml_string_skips_designer_reserved_files_in_all_sections(self):
+        cat = ResourceCatalog()
+        cat.images = ["_generated_text_preview.png", "star.png"]
+        cat.fonts = ["_generated_text_demo_16_4.ttf", "demo.ttf"]
+        cat.text_files = ["_generated_text_demo_16_4.txt", "supported_text.txt"]
+
+        xml = cat.to_xml_string()
+
+        assert '_generated_text_preview.png' not in xml
+        assert '_generated_text_demo_16_4.ttf' not in xml
+        assert '_generated_text_demo_16_4.txt' not in xml
+        assert '<ImageFile file="star.png"' in xml
+        assert '<FontFile file="demo.ttf"' in xml
+        assert '<TextFile file="supported_text.txt"' in xml
+
     def test_save_and_load_roundtrip(self, tmp_path):
         cat = ResourceCatalog()
         cat.add_image("star.png")

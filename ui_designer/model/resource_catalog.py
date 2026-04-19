@@ -120,12 +120,16 @@ class ResourceCatalog:
         if self.images:
             images_elem = ET.SubElement(root, "Images")
             for img in self.images:
+                if is_designer_resource_path(img):
+                    continue
                 elem = ET.SubElement(images_elem, "ImageFile")
                 elem.set("file", img)
 
         if self.fonts:
             fonts_elem = ET.SubElement(root, "Fonts")
             for font in self.fonts:
+                if is_designer_resource_path(font):
+                    continue
                 elem = ET.SubElement(fonts_elem, "FontFile")
                 elem.set("file", font)
 
