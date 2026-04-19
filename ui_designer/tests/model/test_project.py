@@ -363,6 +363,7 @@ class TestResourceSync:
         (target_src_dir / "nested" / ".designer").mkdir(parents=True)
         (target_src_dir / "nested" / ".designer" / "stale.txt").write_text("stale\n", encoding="utf-8")
         (target_src_dir / ".designer").mkdir(parents=True)
+        (target_src_dir / ".designer" / ".app_resource_config_merged.json").write_text("{ }\n", encoding="utf-8")
         (target_src_dir / ".designer" / "keep.txt").write_text("keep\n", encoding="utf-8")
 
         proj = Project(app_name="BoundDemo")
@@ -376,6 +377,7 @@ class TestResourceSync:
         assert not (target_src_dir / ".app_resource_config_merged.json").exists()
         assert not (target_src_dir / "_generated_text_demo_16_4.txt").exists()
         assert not (target_src_dir / "nested" / ".designer").exists()
+        assert not (target_src_dir / ".designer" / ".app_resource_config_merged.json").exists()
         assert (target_src_dir / ".designer" / "keep.txt").read_text(encoding="utf-8") == "keep\n"
 
 

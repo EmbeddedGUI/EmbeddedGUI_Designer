@@ -474,6 +474,10 @@ class Project:
             for walk_root, dir_names, file_names in os.walk(target_src_dir):
                 rel_root = os.path.relpath(walk_root, target_src_dir).replace("\\", "/")
                 if rel_root == ".designer":
+                    try:
+                        os.remove(os.path.join(walk_root, ".app_resource_config_merged.json"))
+                    except OSError:
+                        pass
                     dir_names[:] = []
                     continue
 

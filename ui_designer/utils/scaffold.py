@@ -1278,6 +1278,7 @@ def _cleanup_legacy_designer_resource_artifacts(src_dir):
     for walk_root, dir_names, file_names in os.walk(src_dir):
         rel_root = os.path.relpath(walk_root, src_dir).replace("\\", "/")
         if rel_root == DESIGNER_RESOURCE_DIRNAME:
+            _remove_file_if_exists(os.path.join(walk_root, APP_RESOURCE_CONFIG_MERGED_FILENAME))
             dir_names[:] = []
             continue
 

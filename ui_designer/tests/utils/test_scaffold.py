@@ -2079,6 +2079,7 @@ class TestApplyDesignerProjectScaffold:
         legacy_generated_text_path = src_dir / "_generated_text_demo_16_4.txt"
         legacy_nested_designer_dir = src_dir / "custom_assets" / ".designer"
         preserved_designer_sidecar_path = src_dir / ".designer" / "keep.txt"
+        stale_designer_merged_path = src_dir / ".designer" / ".app_resource_config_merged.json"
         project = build_empty_project_model(
             "GeneratedResourceConfigHelperApp",
             320,
@@ -2093,6 +2094,7 @@ class TestApplyDesignerProjectScaffold:
         (legacy_nested_designer_dir / "stale.json").write_text("{}\n", encoding="utf-8")
         preserved_designer_sidecar_path.parent.mkdir(parents=True, exist_ok=True)
         preserved_designer_sidecar_path.write_text("keep\n", encoding="utf-8")
+        stale_designer_merged_path.write_text("{\"img\": [], \"font\": [], \"mp4\": []}\n", encoding="utf-8")
 
         created, config_path = generate_designer_resource_config(project, str(src_dir))
         created_again, config_path_again = generate_designer_resource_config(project, str(src_dir))
@@ -2107,6 +2109,7 @@ class TestApplyDesignerProjectScaffold:
         assert legacy_generated_text_path.exists() is False
         assert legacy_nested_designer_dir.exists() is False
         assert preserved_designer_sidecar_path.exists() is True
+        assert stale_designer_merged_path.exists() is False
         assert json.loads(designer_config_path.read_text(encoding="utf-8")) == {
             "img": [],
             "font": [],
