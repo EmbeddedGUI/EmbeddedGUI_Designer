@@ -31,6 +31,7 @@ DESIGNER_SOURCE_PRESERVE_SUMMARY = (
     "*.egui project metadata",
     f"{BUILD_MK_RELPATH} and {APP_CONFIG_RELPATH} user override wrappers",
     f"{RESOURCE_CONFIG_RELPATH} user overlay config",
+    f"{SUPPORTED_TEXT_RELPATH} extracted charset text",
     f"{LAYOUT_DIR_RELPATH}/*.xml page layouts",
     f"{RESOURCE_DIR_RELPATH}/** source assets and resource metadata",
     f"{MOCKUP_DIR_RELPATH}/** preview mockups",
