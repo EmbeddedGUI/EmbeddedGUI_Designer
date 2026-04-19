@@ -60,7 +60,7 @@ from ..model.resource_generation_session import (
 from ..model.config import get_config
 from ..model.workspace import normalize_path
 from ..utils.font_preview_renderer import render_font_preview_image
-from ..utils.resource_config_overlay import APP_RESOURCE_CONFIG_FILENAME, make_empty_resource_config
+from ..utils.resource_config_overlay import APP_RESOURCE_CONFIG_FILENAME, is_designer_resource_path, make_empty_resource_config
 from .resource_panel import (
     _GenerateCharsetDialog,
     _suggest_charset_filename_for_resource,
@@ -86,6 +86,16 @@ _DEFAULT_SIMPLE_PREVIEW_SPLITTER_SIZES = [460, 460]
 _DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS = [88, 220, 360, 280]
 _FONT_TEXT_PREVIEW_CHAR_LIMIT = 4096
 _FONT_TEXT_COMBINED_PREVIEW_CHAR_LIMIT = 8192
+
+
+def _reserved_resource_filename_error(name: str) -> str:
+    normalized = str(name or "").strip()
+    if not normalized or not is_designer_resource_path(normalized):
+        return ""
+    return (
+        f"'{normalized}' is reserved for Designer-generated files.\n"
+        "Choose a different filename."
+    )
 
 
 class _ClickableLabel(QLabel):
@@ -6326,6 +6336,10 @@ class ResourceGeneratorWindow(QDialog):
     def _normalize_selected_resource_path(self, field_spec, selected_path: str):
         source_dir = self._session.paths.source_dir
         selected_path = normalize_path(selected_path)
+        reserved_error = _reserved_resource_filename_error(os.path.basename(selected_path))
+        if reserved_error:
+            QMessageBox.warning(self, f"Choose {field_spec.label}", reserved_error)
+            return None
         if field_spec.name == "file" and self._active_section == "font":
             if not source_dir or _is_subpath(selected_path, source_dir):
                 return selected_path if not source_dir else os.path.relpath(selected_path, source_dir).replace("\\", "/")
@@ -6858,6 +6872,8 @@ def _discover_supported_assets(root_dir: str):
     discovered_texts: list[str] = []
     for current_root, _dirs, files in os.walk(root_dir):
         for filename in files:
+            if is_designer_resource_path(filename):
+                continue
             full_path = normalize_path(os.path.join(current_root, filename))
             extension = os.path.splitext(filename)[1].lower()
             if extension in _TEXT_FILE_EXTENSIONS:
@@ -6883,6 +6899,11 @@ def _classify_selected_asset_files(file_paths):
         seen_paths.add(full_path)
 
         if not os.path.isfile(full_path):
+            skipped_paths.append(full_path)
+            continue
+
+        filename = os.path.basename(full_path)
+        if is_designer_resource_path(filename):
             skipped_paths.append(full_path)
             continue
 

@@ -4091,6 +4091,40 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_normalize_selected_font_text_rejects_designer_reserved_filename(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        reserved_file = tmp_path / "imports" / "_generated_text_demo_16_4.txt"
+        reserved_file.parent.mkdir(parents=True)
+        reserved_file.write_text("demo\n", encoding="utf-8")
+
+        warnings = []
+        monkeypatch.setattr(
+            QMessageBox,
+            "warning",
+            lambda *args: warnings.append((args[1], args[2])) or QMessageBox.Ok,
+        )
+
+        text_field = next(field for field in RESOURCE_SECTION_SPECS["font"].fields if field.name == "text")
+
+        window = ResourceGeneratorWindow("")
+        window._session.paths.source_dir = str(source_dir)
+
+        result = window._normalize_selected_resource_path(text_field, str(reserved_file))
+
+        assert result is None
+        assert warnings == [
+            (
+                "Choose Text",
+                "'_generated_text_demo_16_4.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        assert not (source_dir / "_generated_text_demo_16_4.txt").exists()
+        _close_window(window)
+
+    @_skip_no_qt
     def test_normalize_selected_font_file_keeps_absolute_path_outside_source_dir(self, qapp, monkeypatch, tmp_path):
         from ui_designer.model.resource_generation_session import RESOURCE_SECTION_SPECS
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -4118,6 +4152,42 @@ class TestResourceGeneratorWindow:
         assert result == normalize_path(str(external_font))
         assert prompts == []
         _close_window(window)
+
+    @_skip_no_qt
+    def test_classify_selected_asset_files_ignores_designer_reserved_files(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _classify_selected_asset_files
+
+        asset_dir = tmp_path / "assets"
+        asset_dir.mkdir(parents=True)
+        normal_font = asset_dir / "display.ttf"
+        reserved_text = asset_dir / "_generated_text_display_16_4.txt"
+        normal_font.write_bytes(b"font")
+        reserved_text.write_text("demo\n", encoding="utf-8")
+
+        discovered_assets, discovered_texts, skipped_paths = _classify_selected_asset_files(
+            [str(normal_font), str(reserved_text)]
+        )
+
+        assert discovered_assets == [("font", str(normal_font.resolve()))]
+        assert discovered_texts == []
+        assert skipped_paths == [str(reserved_text.resolve())]
+
+    @_skip_no_qt
+    def test_discover_supported_assets_ignores_designer_reserved_files(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _discover_supported_assets
+
+        asset_dir = tmp_path / "assets"
+        designer_dir = asset_dir / ".designer"
+        asset_dir.mkdir(parents=True)
+        designer_dir.mkdir(parents=True)
+        (asset_dir / "display.ttf").write_bytes(b"font")
+        (designer_dir / "_generated_text_display_16_4.txt").write_text("demo\n", encoding="utf-8")
+        (asset_dir / "labels.txt").write_text("hello\n", encoding="utf-8")
+
+        discovered_assets, discovered_texts = _discover_supported_assets(str(asset_dir))
+
+        assert discovered_assets == [("font", str((asset_dir / "display.ttf").resolve()))]
+        assert discovered_texts == [str((asset_dir / "labels.txt").resolve())]
 
     @_skip_no_qt
     def test_browse_font_text_duplicate_keeps_clean_state(self, qapp, monkeypatch, tmp_path):
