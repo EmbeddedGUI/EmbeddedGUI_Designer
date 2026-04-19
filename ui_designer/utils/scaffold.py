@@ -508,6 +508,62 @@ def _copy_file_if_missing(src_path: str, dst_path: str) -> None:
     shutil.copy2(src_path, dst_path)
 
 
+def _normalize_build_mk_local_token(token: str) -> str:
+    normalized = str(token or "").strip().replace("\\", "/")
+    if not normalized:
+        return ""
+    normalized = normalized.replace("$(EGUI_APP_PATH)", "").replace("${EGUI_APP_PATH}", "")
+    normalized = normalized.lstrip("/")
+    if normalized.startswith("./"):
+        normalized = normalized[2:]
+    normalized = os.path.normpath(normalized).replace("\\", "/")
+    if normalized in ("", ".") or "$(" in normalized or "${" in normalized:
+        return ""
+    return normalized
+
+
+def project_build_local_roots(project_dir: str) -> tuple[str, ...]:
+    """Return top-level local paths explicitly referenced by the user build wrapper."""
+    project_dir = _normalize_project_copy_dir(project_dir)
+    if not project_dir or not os.path.isdir(project_dir):
+        return ()
+
+    build_mk_path = project_build_mk_path(project_dir)
+    if not os.path.isfile(build_mk_path):
+        return ()
+
+    try:
+        with open(build_mk_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except OSError:
+        return ()
+
+    roots = set()
+    for raw_line in content.splitlines():
+        line = raw_line.split("#", 1)[0].strip()
+        match = re.match(r"^(EGUI_CODE_SRC|EGUI_CODE_INCLUDE)\s*(?:\+?|\:)?=\s+(.+)$", line)
+        if not match:
+            continue
+        for token in match.group(2).split():
+            relpath = _normalize_build_mk_local_token(token)
+            if not relpath:
+                continue
+            root = relpath.split("/", 1)[0]
+            if root in {
+                DESIGNER_PROJECT_DIRNAME,
+                EGUIPROJECT_DIRNAME,
+                os.path.basename(RESOURCE_DIR_RELPATH),
+                os.path.basename(MOCKUP_DIR_RELPATH),
+                "widgets",
+                "custom_widgets",
+            }:
+                continue
+            candidate = os.path.join(project_dir, root)
+            if os.path.exists(candidate):
+                roots.add(root)
+    return tuple(sorted(roots))
+
+
 def _copy_project_resource_tree(src_dir: str, dst_dir: str) -> None:
     for walk_root, dir_names, file_names in os.walk(src_dir):
         dir_names[:] = [name for name in dir_names if not is_designer_resource_path(name)]
@@ -526,6 +582,14 @@ def _copy_project_resource_tree(src_dir: str, dst_dir: str) -> None:
 def _copy_tree_if_exists(src_dir: str, dst_dir: str) -> None:
     if os.path.isdir(src_dir):
         shutil.copytree(src_dir, dst_dir, dirs_exist_ok=True)
+
+
+def _copy_project_build_local_roots(src_dir: str, dst_dir: str) -> None:
+    for root in project_build_local_roots(src_dir):
+        src_path = os.path.join(src_dir, root)
+        dst_path = os.path.join(dst_dir, root)
+        if os.path.isdir(src_path):
+            _copy_tree_if_exists(src_path, dst_path)
 
 
 def _copy_project_root_user_sources(src_dir: str, dst_dir: str) -> None:
@@ -558,6 +622,7 @@ def copy_project_user_code_files(src_dir: str, dst_dir: str) -> None:
     if not src_dir or not os.path.isdir(src_dir) or not dst_dir or src_dir == dst_dir:
         return
     _copy_project_root_user_sources(src_dir, dst_dir)
+    _copy_project_build_local_roots(src_dir, dst_dir)
 
 
 def copy_project_sidecar_files(src_dir: str, dst_dir: str) -> None:

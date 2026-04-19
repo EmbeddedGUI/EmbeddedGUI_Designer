@@ -3175,7 +3175,12 @@ class TestMainWindowFileFlow:
         dst_dir = tmp_path / "DstDemo"
         project = _create_project(src_dir, "SaveAsDemo", sdk_root)
 
-        (src_dir / "build.mk").write_text("# custom build\n", encoding="utf-8")
+        feature_dir = src_dir / "feature"
+        feature_dir.mkdir(parents=True, exist_ok=True)
+        (src_dir / "build.mk").write_text(
+            "# custom build\nEGUI_CODE_SRC += feature\nEGUI_CODE_INCLUDE += feature\n",
+            encoding="utf-8",
+        )
         (src_dir / "app_egui_config.h").write_text("#define CUSTOM_CFG 1\n", encoding="utf-8")
         images_dir = src_dir / ".eguiproject" / "resources" / "images"
         images_dir.mkdir(parents=True, exist_ok=True)
@@ -3202,6 +3207,8 @@ class TestMainWindowFileFlow:
         (src_dir / "main_page.c").write_text("/* keep page source */\n", encoding="utf-8")
         (src_dir / "main_page_ext.h").write_text("#define KEEP_MAIN_EXT 1\n", encoding="utf-8")
         (src_dir / "legacy_logic.h").write_text("#define KEEP_LOGIC 1\n", encoding="utf-8")
+        (feature_dir / "helper.c").write_text("int helper(void) { return 1; }\n", encoding="utf-8")
+        (feature_dir / "helper.h").write_text("#define FEATURE_HELPER 1\n", encoding="utf-8")
         (src_dir / ".designer").mkdir(parents=True, exist_ok=True)
         (src_dir / ".designer" / "main_page.h").write_text("// designer page header\n", encoding="utf-8")
         (src_dir / "main_page.h").write_text("// stale legacy page header\n", encoding="utf-8")
@@ -3251,6 +3258,8 @@ class TestMainWindowFileFlow:
         assert (dst_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep page source */\n"
         assert (dst_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_MAIN_EXT 1\n"
         assert (dst_dir / "legacy_logic.h").read_text(encoding="utf-8") == "#define KEEP_LOGIC 1\n"
+        assert (dst_dir / "feature" / "helper.c").read_text(encoding="utf-8") == "int helper(void) { return 1; }\n"
+        assert (dst_dir / "feature" / "helper.h").read_text(encoding="utf-8") == "#define FEATURE_HELPER 1\n"
         assert not (dst_dir / "main_page.h").exists()
         assert (dst_dir / ".eguiproject" / "orphaned_user_code" / "main_page" / "main_page.c").read_text(
             encoding="utf-8"
@@ -3706,9 +3715,17 @@ class TestMainWindowFileFlow:
         export_dir.mkdir()
         project = _create_project(project_dir, "ExportCopyProjectUserDemo", sdk_root)
 
+        feature_dir = project_dir / "feature"
+        feature_dir.mkdir(parents=True, exist_ok=True)
+        (project_dir / "build.mk").write_text(
+            '# custom build\ninclude $(EGUI_APP_PATH)/.designer/build_designer.mk\nEGUI_CODE_SRC += feature\nEGUI_CODE_INCLUDE += feature\n',
+            encoding="utf-8",
+        )
         (project_dir / "main_page.c").write_text("/* keep project user source */\n", encoding="utf-8")
         (project_dir / "main_page_ext.h").write_text("#define KEEP_PROJECT_USER_EXT 1\n", encoding="utf-8")
         (project_dir / "legacy_logic.h").write_text("#define KEEP_PROJECT_LOGIC 1\n", encoding="utf-8")
+        (feature_dir / "helper.c").write_text("int helper(void) { return 1; }\n", encoding="utf-8")
+        (feature_dir / "helper.h").write_text("#define FEATURE_HELPER 1\n", encoding="utf-8")
         (project_dir / ".designer").mkdir(parents=True, exist_ok=True)
         (project_dir / ".designer" / "main_page.h").write_text("// designer page header\n", encoding="utf-8")
         (project_dir / "main_page.h").write_text("// stale legacy page header\n", encoding="utf-8")
@@ -3724,6 +3741,8 @@ class TestMainWindowFileFlow:
         assert (export_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep project user source */\n"
         assert (export_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_PROJECT_USER_EXT 1\n"
         assert (export_dir / "legacy_logic.h").read_text(encoding="utf-8") == "#define KEEP_PROJECT_LOGIC 1\n"
+        assert (export_dir / "feature" / "helper.c").read_text(encoding="utf-8") == "int helper(void) { return 1; }\n"
+        assert (export_dir / "feature" / "helper.h").read_text(encoding="utf-8") == "#define FEATURE_HELPER 1\n"
         assert not (export_dir / "main_page.h").exists()
         assert (export_dir / ".designer" / "main_page.h").is_file()
         assert (export_dir / ".designer" / "main_page_layout.c").is_file()

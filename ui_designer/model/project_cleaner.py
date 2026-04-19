@@ -23,6 +23,7 @@ from ..utils.scaffold import (
     RESOURCE_IMG_DIR_RELPATH,
     RESOURCE_SRC_DIR_RELPATH,
     SUPPORTED_TEXT_RELPATH,
+    project_build_local_roots,
 )
 from .workspace import normalize_path
 
@@ -219,6 +220,7 @@ def clean_project_for_reconstruct(project_dir: str) -> ProjectCleanReport:
     preserved_paths: list[str] = []
     removed_files = 0
     removed_dirs = 0
+    build_local_roots = set(project_build_local_roots(project_dir))
 
     for name in os.listdir(project_dir):
         child_path = os.path.join(project_dir, name)
@@ -247,6 +249,10 @@ def clean_project_for_reconstruct(project_dir: str) -> ProjectCleanReport:
             continue
 
         if os.path.isdir(child_path) and name in _PRESERVED_TOP_LEVEL_DIRS:
+            preserved_paths.append(rel_path)
+            continue
+
+        if os.path.isdir(child_path) and name in build_local_roots:
             preserved_paths.append(rel_path)
             continue
 

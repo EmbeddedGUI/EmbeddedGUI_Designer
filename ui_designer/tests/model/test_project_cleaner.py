@@ -70,6 +70,7 @@ class TestProjectCleaner:
         (project_dir / "resource" / "img").mkdir(parents=True)
         (project_dir / "widgets").mkdir()
         (project_dir / "custom_widgets").mkdir()
+        (project_dir / "feature").mkdir()
         (project_dir / "notes").mkdir()
 
         (project_dir / "CleanAllDemo.egui").write_text("<Project />\n", encoding="utf-8")
@@ -84,7 +85,10 @@ class TestProjectCleaner:
 
         (project_dir / "main_page.c").write_text("// generated\n", encoding="utf-8")
         (project_dir / "uicode.h").write_text("// generated\n", encoding="utf-8")
-        (project_dir / "build.mk").write_text("EGUI_CODE_SRC += main_page.c\n", encoding="utf-8")
+        (project_dir / "build.mk").write_text(
+            "EGUI_CODE_SRC += main_page.c\nEGUI_CODE_SRC += feature\nEGUI_CODE_INCLUDE += feature\n",
+            encoding="utf-8",
+        )
         (project_dir / "app_egui_config.h").write_text("#define EGUI_CONFIG_SCEEN_WIDTH 240\n", encoding="utf-8")
         (project_dir / ".designer").mkdir()
         (project_dir / ".designer" / "main_page.h").write_text("// generated\n", encoding="utf-8")
@@ -100,6 +104,8 @@ class TestProjectCleaner:
         (project_dir / "resource" / "img" / "generated.c").write_text("// generated\n", encoding="utf-8")
         (project_dir / ".eguiproject" / "backup" / "old" / "main_page.c").write_text("// backup\n", encoding="utf-8")
         (project_dir / ".eguiproject" / "orphaned_user_code" / "main_page" / "main_page.c").write_text("// orphan\n", encoding="utf-8")
+        (project_dir / "feature" / "helper.c").write_text("int helper(void) { return 1; }\n", encoding="utf-8")
+        (project_dir / "feature" / "helper.h").write_text("#define FEATURE_HELPER 1\n", encoding="utf-8")
         (project_dir / "notes" / "todo.txt").write_text("remove me\n", encoding="utf-8")
 
         report = clean_project_for_reconstruct(str(project_dir))
@@ -113,6 +119,8 @@ class TestProjectCleaner:
         assert (project_dir / "widgets" / "egui_view_chip.h").is_file()
         assert (project_dir / "widgets" / "egui_view_chip.c").is_file()
         assert (project_dir / "custom_widgets" / "chip.py").is_file()
+        assert (project_dir / "feature" / "helper.c").is_file()
+        assert (project_dir / "feature" / "helper.h").is_file()
         assert (project_dir / "build.mk").is_file()
         assert (project_dir / "app_egui_config.h").is_file()
         assert (project_dir / "resource").is_dir()
@@ -145,6 +153,7 @@ class TestProjectCleaner:
         assert "app_egui_config.h" in report.preserved_paths
         assert "widgets" in report.preserved_paths
         assert "custom_widgets" in report.preserved_paths
+        assert "feature" in report.preserved_paths
         assert "resource/img" in report.removed_paths
         assert ".designer" in report.removed_paths
         assert "resource/src/.designer" in report.removed_paths
