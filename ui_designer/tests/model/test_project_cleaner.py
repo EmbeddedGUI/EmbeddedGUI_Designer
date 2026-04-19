@@ -34,6 +34,7 @@ from ui_designer.utils.scaffold import (
 class TestProjectCleaner:
     def test_cleanup_summaries_stay_aligned_with_shared_scaffold_paths(self):
         assert f"{BUILD_MK_RELPATH} and {APP_CONFIG_RELPATH} user override wrappers" in DESIGNER_SOURCE_PRESERVE_SUMMARY
+        assert "project-root custom user code files outside Designer-managed page outputs" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{RESOURCE_CONFIG_RELPATH} user overlay config" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{SUPPORTED_TEXT_RELPATH} extracted charset text" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{RESOURCE_SRC_DIR_RELPATH}/** non-designer app resource sources" in DESIGNER_SOURCE_PRESERVE_SUMMARY
@@ -84,9 +85,12 @@ class TestProjectCleaner:
         (project_dir / "custom_widgets" / "chip.py").write_text("descriptor = {}\n", encoding="utf-8")
 
         (project_dir / "main_page.c").write_text("// generated\n", encoding="utf-8")
+        (project_dir / "local.c").write_text("int local(void) { return 1; }\n", encoding="utf-8")
+        (project_dir / "local.h").write_text("#define LOCAL_FLAG 1\n", encoding="utf-8")
+        (project_dir / "legacy_logic.h").write_text("#define LEGACY_LOGIC 1\n", encoding="utf-8")
         (project_dir / "uicode.h").write_text("// generated\n", encoding="utf-8")
         (project_dir / "build.mk").write_text(
-            "EGUI_CODE_SRC += main_page.c\nEGUI_CODE_SRC += feature\nEGUI_CODE_INCLUDE += feature\n",
+            "EGUI_CODE_SRC += main_page.c\nEGUI_CODE_SRC += local.c\nEGUI_CODE_SRC += feature\nEGUI_CODE_INCLUDE += feature\n",
             encoding="utf-8",
         )
         (project_dir / "app_egui_config.h").write_text("#define EGUI_CONFIG_SCEEN_WIDTH 240\n", encoding="utf-8")
@@ -123,6 +127,9 @@ class TestProjectCleaner:
         assert (project_dir / "feature" / "helper.h").is_file()
         assert (project_dir / "build.mk").is_file()
         assert (project_dir / "app_egui_config.h").is_file()
+        assert (project_dir / "local.c").is_file()
+        assert (project_dir / "local.h").is_file()
+        assert (project_dir / "legacy_logic.h").is_file()
         assert (project_dir / "resource").is_dir()
         assert (project_dir / "resource" / "src").is_dir()
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
@@ -151,6 +158,9 @@ class TestProjectCleaner:
         assert ".eguiproject/release.json" in report.preserved_paths
         assert "build.mk" in report.preserved_paths
         assert "app_egui_config.h" in report.preserved_paths
+        assert "local.c" in report.preserved_paths
+        assert "local.h" in report.preserved_paths
+        assert "legacy_logic.h" in report.preserved_paths
         assert "widgets" in report.preserved_paths
         assert "custom_widgets" in report.preserved_paths
         assert "feature" in report.preserved_paths

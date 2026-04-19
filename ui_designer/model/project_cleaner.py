@@ -8,11 +8,15 @@ from dataclasses import dataclass, field
 
 from ..utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME, is_designer_resource_path
 from ..utils.scaffold import (
+    APP_CONFIG_DESIGNER_RELPATH,
     APP_CONFIG_RELPATH,
     BACKUP_DIR_RELPATH,
+    BUILD_DESIGNER_RELPATH,
     BUILD_MK_RELPATH,
     DESIGNER_PROJECT_DIRNAME,
     EGUIPROJECT_DIRNAME,
+    EGUI_STRINGS_HEADER_FILENAME,
+    EGUI_STRINGS_SOURCE_FILENAME,
     LAYOUT_DIR_RELPATH,
     MOCKUP_DIR_RELPATH,
     ORPHANED_USER_CODE_DIR_RELPATH,
@@ -23,6 +27,8 @@ from ..utils.scaffold import (
     RESOURCE_IMG_DIR_RELPATH,
     RESOURCE_SRC_DIR_RELPATH,
     SUPPORTED_TEXT_RELPATH,
+    UICODE_HEADER_FILENAME,
+    UICODE_SOURCE_FILENAME,
     project_build_local_roots,
 )
 from .workspace import normalize_path
@@ -31,6 +37,7 @@ from .workspace import normalize_path
 DESIGNER_SOURCE_PRESERVE_SUMMARY = (
     "*.egui project metadata",
     f"{BUILD_MK_RELPATH} and {APP_CONFIG_RELPATH} user override wrappers",
+    "project-root custom user code files outside Designer-managed page outputs",
     f"{RESOURCE_CONFIG_RELPATH} user overlay config",
     f"{SUPPORTED_TEXT_RELPATH} extracted charset text",
     f"{RESOURCE_SRC_DIR_RELPATH}/** non-designer app resource sources",
@@ -62,6 +69,14 @@ _PRESERVED_EGUIPROJECT_FILES = {os.path.basename(RELEASE_CONFIG_RELPATH)}
 _PRESERVED_TOP_LEVEL_FILES = {
     os.path.basename(BUILD_MK_RELPATH),
     os.path.basename(APP_CONFIG_RELPATH),
+}
+_LEGACY_DESIGNER_ROOT_FILES = {
+    os.path.basename(BUILD_DESIGNER_RELPATH),
+    os.path.basename(APP_CONFIG_DESIGNER_RELPATH),
+    UICODE_HEADER_FILENAME,
+    UICODE_SOURCE_FILENAME,
+    EGUI_STRINGS_HEADER_FILENAME,
+    EGUI_STRINGS_SOURCE_FILENAME,
 }
 _RESOURCE_DIRNAME = os.path.basename(os.path.dirname(RESOURCE_SRC_DIR_RELPATH))
 _RESOURCE_SRC_DIRNAME = os.path.basename(RESOURCE_SRC_DIR_RELPATH)
@@ -207,6 +222,36 @@ def _clean_resource_dir(project_dir: str, resource_dir: str, removed_paths: list
     return removed_files, removed_dirs
 
 
+def _project_layout_page_names(project_dir: str) -> set[str]:
+    layout_dir = os.path.join(project_dir, LAYOUT_DIR_RELPATH.replace("/", os.sep))
+    if not os.path.isdir(layout_dir):
+        return set()
+    return {
+        os.path.splitext(name)[0]
+        for name in os.listdir(layout_dir)
+        if os.path.isfile(os.path.join(layout_dir, name)) and name.lower().endswith(".xml")
+    }
+
+
+def _is_preserved_root_user_file(project_dir: str, name: str, page_names: set[str]) -> bool:
+    if not name:
+        return False
+    if name in _LEGACY_DESIGNER_ROOT_FILES:
+        return False
+    designer_shadow = os.path.join(project_dir, DESIGNER_PROJECT_DIRNAME, name)
+    if os.path.isfile(designer_shadow):
+        return False
+    if name.endswith(".c"):
+        if name.endswith("_layout.c"):
+            return False
+        return os.path.splitext(name)[0] not in page_names
+    if name.endswith(".h"):
+        if name.endswith("_ext.h") and name[:-len("_ext.h")] in page_names:
+            return False
+        return True
+    return False
+
+
 def clean_project_for_reconstruct(project_dir: str) -> ProjectCleanReport:
     """Delete reconstructible project outputs while keeping designer-owned source state."""
 
@@ -221,6 +266,7 @@ def clean_project_for_reconstruct(project_dir: str) -> ProjectCleanReport:
     removed_files = 0
     removed_dirs = 0
     build_local_roots = set(project_build_local_roots(project_dir))
+    page_names = _project_layout_page_names(project_dir)
 
     for name in os.listdir(project_dir):
         child_path = os.path.join(project_dir, name)
@@ -231,6 +277,10 @@ def clean_project_for_reconstruct(project_dir: str) -> ProjectCleanReport:
             continue
 
         if os.path.isfile(child_path) and name in _PRESERVED_TOP_LEVEL_FILES:
+            preserved_paths.append(rel_path)
+            continue
+
+        if os.path.isfile(child_path) and _is_preserved_root_user_file(project_dir, name, page_names):
             preserved_paths.append(rel_path)
             continue
 
