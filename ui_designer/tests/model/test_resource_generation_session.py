@@ -188,6 +188,43 @@ def test_stage_workspace_copies_source_tree_and_writes_current_user_config(tmp_p
     assert json.loads((workspace_dir / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == session.user_data
 
 
+def test_stage_workspace_skips_legacy_designer_artifacts_outside_designer_dir(tmp_path):
+    source_dir = tmp_path / "source"
+    workspace_dir = tmp_path / "workspace"
+    designer_dir = source_dir / ".designer"
+    designer_dir.mkdir(parents=True)
+    (source_dir / "hero.png").write_bytes(b"PNG")
+    (source_dir / "app_resource_config_designer.json").write_text("{\"img\": [], \"font\": [], \"mp4\": []}\n", encoding="utf-8")
+    (source_dir / ".app_resource_config_merged.json").write_text("{\"img\": [], \"font\": [], \"mp4\": []}\n", encoding="utf-8")
+    (source_dir / "_generated_text_demo_16_4.txt").write_text("legacy\n", encoding="utf-8")
+    (designer_dir / "app_resource_config_designer.json").write_text("{\"img\": [], \"font\": [], \"mp4\": []}\n", encoding="utf-8")
+    (designer_dir / "_generated_text_demo_16_4.txt").write_text("designer\n", encoding="utf-8")
+
+    session = ResourceGenerationSession()
+    session.reset(
+        GenerationPaths(
+            config_path=str(source_dir / "app_resource_config.json"),
+            source_dir=str(source_dir),
+            workspace_dir=str(workspace_dir),
+            bin_output_dir=str(workspace_dir / "bin"),
+        ),
+        {
+            "img": [{"file": "hero.png", "format": "rgb565", "alpha": "4", "external": "0"}],
+            "font": [],
+            "mp4": [],
+        },
+    )
+
+    session.stage_workspace()
+
+    assert (workspace_dir / "src" / "hero.png").is_file()
+    assert not (workspace_dir / "src" / "app_resource_config_designer.json").exists()
+    assert not (workspace_dir / "src" / ".app_resource_config_merged.json").exists()
+    assert not (workspace_dir / "src" / "_generated_text_demo_16_4.txt").exists()
+    assert (workspace_dir / "src" / ".designer" / "app_resource_config_designer.json").is_file()
+    assert (workspace_dir / "src" / ".designer" / "_generated_text_demo_16_4.txt").read_text(encoding="utf-8") == "designer\n"
+
+
 def test_stage_generation_config_expands_multi_text_font_entries_from_merged_config(tmp_path):
     source_dir = tmp_path / "source"
     workspace_dir = tmp_path / "workspace"

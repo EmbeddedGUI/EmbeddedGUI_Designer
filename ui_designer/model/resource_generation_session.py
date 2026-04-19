@@ -830,6 +830,19 @@ def _resolved_existing_path(path: str) -> str:
     return normalize_path(os.path.realpath(normalized))
 
 
+def _should_stage_designer_resource_path(source_dir: str, path: str) -> bool:
+    normalized = normalize_path(path)
+    if not normalized:
+        return False
+    rel_path = os.path.relpath(normalized, source_dir).replace("\\", "/")
+    path_parts = [part for part in rel_path.split("/") if part and part != "."]
+    if not path_parts:
+        return True
+    if path_parts[0] == ".designer":
+        return True
+    return not is_designer_resource_path(rel_path)
+
+
 def _copy_source_tree(source_dir: str, target_dir: str, *, skip_roots: list[str] | None = None):
     source_dir = normalize_path(source_dir)
     target_dir = normalize_path(target_dir)
@@ -841,12 +854,15 @@ def _copy_source_tree(source_dir: str, target_dir: str, *, skip_roots: list[str]
             name
             for name in dirs
             if not any(_is_same_or_child(os.path.join(normalized_root, name), skip_root) for skip_root in skip_roots)
+            and _should_stage_designer_resource_path(source_dir, os.path.join(normalized_root, name))
         ]
         relative_root = os.path.relpath(normalized_root, source_dir)
         destination_root = target_dir if relative_root == "." else os.path.join(target_dir, relative_root)
         os.makedirs(destination_root, exist_ok=True)
         for file_name in files:
             src_path = os.path.join(normalized_root, file_name)
+            if not _should_stage_designer_resource_path(source_dir, src_path):
+                continue
             dst_path = os.path.join(destination_root, file_name)
             os.makedirs(os.path.dirname(dst_path), exist_ok=True)
             shutil.copy2(src_path, dst_path)
