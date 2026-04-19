@@ -13,6 +13,8 @@ from ui_designer.utils.scaffold import (
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     DESIGNER_CODEGEN_STALE_STRING_RELPATHS,
     EGUIPROJECT_DIRNAME,
+    LEGACY_DESIGNER_RESOURCE_CONFIG_RELPATH,
+    LEGACY_MERGED_RESOURCE_CONFIG_RELPATH,
     MOCKUP_DIR_RELPATH,
     ORPHANED_USER_CODE_DIR_RELPATH,
     REFERENCE_FRAMES_DIR_RELPATH,
@@ -465,6 +467,14 @@ class TestSyncProjectScaffoldSidecars:
             '{"img": [{"name": "user_asset"}], "font": []}\n',
             encoding="utf-8",
         )
+        (resource_src_dir / "app_resource_config_designer.json").write_text(
+            '{"img": [{"name": "legacy_asset"}], "font": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / ".app_resource_config_merged.json").write_text(
+            '{"img": [{"name": "merged_asset"}], "font": []}\n',
+            encoding="utf-8",
+        )
         (designer_resource_dir / "app_resource_config_designer.json").write_text(
             '{"img": [{"name": "stale_asset"}], "font": []}\n',
             encoding="utf-8",
@@ -488,6 +498,8 @@ class TestSyncProjectScaffoldSidecars:
         assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "updated"
         assert actions["build_designer.mk"] == "removed"
         assert actions["app_egui_config_designer.h"] == "removed"
+        assert actions[LEGACY_DESIGNER_RESOURCE_CONFIG_RELPATH] == "removed"
+        assert actions[LEGACY_MERGED_RESOURCE_CONFIG_RELPATH] == "removed"
         assert ".designer/build_designer.mk" in (project_dir / "build.mk").read_text(encoding="utf-8")
         assert "EGUI_CODE_SRC += local.c" in (project_dir / "build.mk").read_text(encoding="utf-8")
         assert '#include ".designer/app_egui_config_designer.h"' in (
@@ -496,6 +508,8 @@ class TestSyncProjectScaffoldSidecars:
         assert "#define USER_FLAG 1" in (project_dir / "app_egui_config.h").read_text(encoding="utf-8")
         assert (project_dir / "build_designer.mk").exists() is False
         assert (project_dir / "app_egui_config_designer.h").exists() is False
+        assert (resource_src_dir / "app_resource_config_designer.json").exists() is False
+        assert (resource_src_dir / ".app_resource_config_merged.json").exists() is False
         assert '"user_asset"' in (resource_src_dir / "app_resource_config.json").read_text(encoding="utf-8")
         assert (designer_resource_dir / "app_resource_config_designer.json").read_text(encoding="utf-8") == (
             '{\n    "img": [],\n    "font": [],\n    "mp4": []\n}\n'

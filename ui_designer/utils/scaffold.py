@@ -16,6 +16,7 @@ from ..model.workspace import sdk_example_app_dir
 from .resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
+    APP_RESOURCE_CONFIG_MERGED_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
     designer_resource_config_path,
     designer_resource_dir,
@@ -64,6 +65,8 @@ RESOURCE_CONFIG_RELPATH = f"{RESOURCE_SRC_DIR_RELPATH}/{APP_RESOURCE_CONFIG_FILE
 DESIGNER_RESOURCE_CONFIG_RELPATH = (
     f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}"
 )
+LEGACY_DESIGNER_RESOURCE_CONFIG_RELPATH = f"{RESOURCE_SRC_DIR_RELPATH}/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}"
+LEGACY_MERGED_RESOURCE_CONFIG_RELPATH = f"{RESOURCE_SRC_DIR_RELPATH}/{APP_RESOURCE_CONFIG_MERGED_FILENAME}"
 APP_LOCAL_WIDGET_CACHE_DIRNAMES = frozenset(
     {
         "__pycache__",
@@ -948,6 +951,14 @@ def legacy_app_config_designer_path(project_dir: str) -> str:
     return os.path.join(project_dir, LEGACY_APP_CONFIG_DESIGNER_RELPATH)
 
 
+def legacy_designer_resource_config_path(project_dir: str) -> str:
+    return os.path.join(project_resource_src_dir(project_dir), APP_RESOURCE_CONFIG_DESIGNER_FILENAME)
+
+
+def legacy_merged_resource_config_path(project_dir: str) -> str:
+    return os.path.join(project_resource_src_dir(project_dir), APP_RESOURCE_CONFIG_MERGED_FILENAME)
+
+
 def build_mk_designer_include_target(content: str) -> str:
     target = _split_make_include_target(content, BUILD_DESIGNER_FILENAME)
     return target if target.replace("\\", "/") == BUILD_DESIGNER_INCLUDE_TARGET else ""
@@ -1387,6 +1398,8 @@ def sync_project_scaffold_sidecars(
         for relpath, legacy_path in (
             (LEGACY_BUILD_DESIGNER_RELPATH, legacy_build_designer_path(project_dir)),
             (LEGACY_APP_CONFIG_DESIGNER_RELPATH, legacy_app_config_designer_path(project_dir)),
+            (LEGACY_DESIGNER_RESOURCE_CONFIG_RELPATH, legacy_designer_resource_config_path(project_dir)),
+            (LEGACY_MERGED_RESOURCE_CONFIG_RELPATH, legacy_merged_resource_config_path(project_dir)),
         ):
             if _remove_file_if_exists(legacy_path):
                 actions[relpath] = "removed"
