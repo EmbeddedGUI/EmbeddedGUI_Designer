@@ -36,6 +36,7 @@ DESIGNER_SOURCE_PRESERVE_SUMMARY = (
     f"{LAYOUT_DIR_RELPATH}/*.xml page layouts",
     f"{RESOURCE_DIR_RELPATH}/** source assets and resource metadata",
     f"{MOCKUP_DIR_RELPATH}/** preview mockups",
+    f"{ORPHANED_USER_CODE_DIR_RELPATH}/** archived user page code",
     f"{RELEASE_CONFIG_RELPATH} release packaging profiles",
     "widgets/** app-local widget sources",
     "custom_widgets/** app-local widget descriptors",
@@ -46,7 +47,7 @@ DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
     f"{RESOURCE_IMG_DIR_RELPATH}, {RESOURCE_FONT_DIR_RELPATH}, and other synced/generated resource outputs",
     f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata",
     f"{DESIGNER_PROJECT_DIRNAME}/** generated code and scaffold files (legacy root designer files also removed)",
-    f"{BACKUP_DIR_RELPATH}, {ORPHANED_USER_CODE_DIR_RELPATH}, and other generated caches",
+    f"{BACKUP_DIR_RELPATH} and other generated caches",
 )
 
 _PRESERVED_TOP_LEVEL_DIRS = {"widgets", "custom_widgets"}
@@ -54,6 +55,7 @@ _PRESERVED_EGUIPROJECT_DIRS = {
     os.path.basename(LAYOUT_DIR_RELPATH),
     os.path.basename(RESOURCE_DIR_RELPATH),
     os.path.basename(MOCKUP_DIR_RELPATH),
+    os.path.basename(ORPHANED_USER_CODE_DIR_RELPATH),
 }
 _PRESERVED_EGUIPROJECT_FILES = {os.path.basename(RELEASE_CONFIG_RELPATH)}
 _PRESERVED_TOP_LEVEL_FILES = {

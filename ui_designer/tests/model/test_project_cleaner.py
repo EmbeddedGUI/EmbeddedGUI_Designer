@@ -40,6 +40,7 @@ class TestProjectCleaner:
         assert f"{LAYOUT_DIR_RELPATH}/*.xml page layouts" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{RESOURCE_DIR_RELPATH}/** source assets and resource metadata" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{MOCKUP_DIR_RELPATH}/** preview mockups" in DESIGNER_SOURCE_PRESERVE_SUMMARY
+        assert f"{ORPHANED_USER_CODE_DIR_RELPATH}/** archived user page code" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{RELEASE_CONFIG_RELPATH} release packaging profiles" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert (
             f"{RESOURCE_IMG_DIR_RELPATH}, {RESOURCE_FONT_DIR_RELPATH}, and other synced/generated resource outputs"
@@ -54,7 +55,7 @@ class TestProjectCleaner:
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
         assert (
-            f"{BACKUP_DIR_RELPATH}, {ORPHANED_USER_CODE_DIR_RELPATH}, and other generated caches"
+            f"{BACKUP_DIR_RELPATH} and other generated caches"
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
 
@@ -118,6 +119,7 @@ class TestProjectCleaner:
         assert (project_dir / "resource" / "src").is_dir()
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
         assert (project_dir / "resource" / "src" / "supported_text.txt").is_file()
+        assert (project_dir / ".eguiproject" / "orphaned_user_code" / "main_page" / "main_page.c").is_file()
 
         assert not (project_dir / "main_page.c").exists()
         assert not (project_dir / "uicode.h").exists()
@@ -125,11 +127,10 @@ class TestProjectCleaner:
         assert not (project_dir / "resource" / "src" / ".designer").exists()
         assert not (project_dir / "resource" / "img").exists()
         assert not (project_dir / ".eguiproject" / "backup").exists()
-        assert not (project_dir / ".eguiproject" / "orphaned_user_code").exists()
         assert not (project_dir / "notes").exists()
 
         assert report.removed_files == 2
-        assert report.removed_dirs == 6
+        assert report.removed_dirs == 5
         assert "CleanAllDemo.egui" in report.preserved_paths
         assert "resource" in report.preserved_paths
         assert "resource/src" in report.preserved_paths
@@ -138,6 +139,7 @@ class TestProjectCleaner:
         assert ".eguiproject/layout" in report.preserved_paths
         assert ".eguiproject/resources" in report.preserved_paths
         assert ".eguiproject/mockup" in report.preserved_paths
+        assert ".eguiproject/orphaned_user_code" in report.preserved_paths
         assert ".eguiproject/release.json" in report.preserved_paths
         assert "build.mk" in report.preserved_paths
         assert "app_egui_config.h" in report.preserved_paths
@@ -147,7 +149,6 @@ class TestProjectCleaner:
         assert ".designer" in report.removed_paths
         assert "resource/src/.designer" in report.removed_paths
         assert ".eguiproject/backup" in report.removed_paths
-        assert ".eguiproject/orphaned_user_code" in report.removed_paths
         assert "main_page.c" in report.removed_paths
         assert "notes" in report.removed_paths
 
