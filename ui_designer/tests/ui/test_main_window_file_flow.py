@@ -130,6 +130,10 @@ def _context_submenu(menu, label):
     raise AssertionError(f"{label} submenu not found")
 
 
+def _actions_by_text(*actions):
+    return {action.text(): action for action in actions if action is not None}
+
+
 def test_resource_path_helpers_delegate_to_project_paths(qapp, isolated_config):
     from ui_designer.ui.main_window import MainWindow
 
@@ -6686,7 +6690,7 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
-        action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
+        action = window._generate_resources_action
 
         assert action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
@@ -6705,18 +6709,14 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "BuildHintsDemo", sdk_root)
 
         window = MainWindow("")
-        actions = {
-            action.text(): action
-            for action in window.findChildren(type(window._save_action))
-            if action.text() in {
-                "Build EXE && Run",
-                "Rebuild EGUI Project",
-                "Clean All && Reconstruct",
-                "Auto Compile",
-                "Stop Exe",
-                "Generate Resources",
-            }
-        }
+        actions = _actions_by_text(
+            window._compile_action,
+            window._rebuild_action,
+            window._clean_all_action,
+            window.auto_compile_action,
+            window._stop_action,
+            window._generate_resources_action,
+        )
         build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
 
         assert actions["Build EXE && Run"].toolTip() == (
@@ -6866,22 +6866,11 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
-        actions = {
-            action.text(): action
-            for action in window.findChildren(type(window._save_action))
-            if action.text() in {
-                "Project",
-                "Structure",
-                "Components",
-                "Assets",
-                "Properties",
-                "Animations",
-                "Page",
-                "Diagnostics",
-                "History",
-                "Debug Output",
-            }
-        }
+        actions = _actions_by_text(
+            *window._workspace_view_actions.values(),
+            *window._inspector_view_actions.values(),
+            *window._tools_view_actions.values(),
+        )
 
         assert actions["Project"].toolTip() == (
             "Currently showing the Project workspace panel. "
@@ -7060,22 +7049,16 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme, density="standard": None)
 
         window = MainWindow("")
-        actions = {
-            action.text(): action
-            for action in window.findChildren(type(window._save_action))
-            if action.text() in {
-                "Dark",
-                "Light",
-                "Font Size...",
-                "Vertical",
-                "Horizontal",
-                "Overlay Only",
-                "Swap Preview/Overlay",
-                "Zoom In",
-                "Zoom Out",
-                "Zoom Reset (100%)",
-            }
-        }
+        actions = _actions_by_text(
+            window.theme_dark_action,
+            window.theme_light_action,
+            window._font_size_action,
+            *window._overlay_mode_actions.values(),
+            window._swap_overlay_action,
+            window._zoom_in_action,
+            window._zoom_out_action,
+            window._zoom_reset_action,
+        )
 
         assert actions["Dark"].toolTip() == "Currently using the dark Designer theme."
         assert actions["Dark"].statusTip() == actions["Dark"].toolTip()
@@ -7206,28 +7189,14 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
-        actions = {
-            action.text(): action
-            for action in window.findChildren(type(window._save_action))
-            if action.text() in {
-                "Show Grid",
-                "No Snap",
-                "4px",
-                "8px",
-                "12px",
-                "16px",
-                "24px",
-                "Load Mockup Image...",
-                "Show Mockup",
-                "Clear Mockup Image",
-                "10%",
-                "20%",
-                "30%",
-                "50%",
-                "70%",
-                "100%",
-            }
-        }
+        actions = _actions_by_text(
+            window._show_grid_action,
+            *window._grid_size_actions.values(),
+            window._load_bg_action,
+            window._toggle_bg_action,
+            window._clear_bg_action,
+            *window._opacity_actions.values(),
+        )
 
         assert actions["Show Grid"].toolTip() == "Currently showing the preview grid overlay. Current snap: 8px."
         assert actions["Show Grid"].statusTip() == actions["Show Grid"].toolTip()
@@ -7319,16 +7288,12 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow("")
-        actions = {
-            action.text(): action
-            for action in window.findChildren(type(window._save_action))
-            if action.text() in {
-                "Select All",
-                "Cut",
-                "Duplicate",
-                "Delete",
-            }
-        }
+        actions = _actions_by_text(
+            window._select_all_action,
+            window._cut_action,
+            window._duplicate_action,
+            window._delete_action,
+        )
 
         assert actions["Select All"].toolTip() == (
             "Select all visible widgets on the current page or all text in the focused editor (Ctrl+A). "
@@ -7350,11 +7315,12 @@ class TestMainWindowFileFlow:
         window._set_selection([loaded_widget], primary=loaded_widget, sync_tree=True, sync_preview=True)
         window._update_edit_actions()
 
-        refreshed_actions = {
-            action.text(): action
-            for action in window.findChildren(type(window._save_action))
-            if action.text() in actions
-        }
+        refreshed_actions = _actions_by_text(
+            window._select_all_action,
+            window._cut_action,
+            window._duplicate_action,
+            window._delete_action,
+        )
         assert refreshed_actions["Select All"].toolTip() == (
             "Select all visible widgets on the current page or all text in the focused editor (Ctrl+A)."
         )
@@ -7848,16 +7814,12 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
-        actions = {
-            action.text(): action
-            for action in window.findChildren(type(window._save_action))
-            if action.text() in {
-                "New Project",
-                "Open Example...",
-                "Open Project...",
-                "Set SDK...",
-            }
-        }
+        actions = _actions_by_text(
+            window._new_project_action,
+            window._open_app_action,
+            window._open_project_action,
+            window._set_sdk_root_action,
+        )
 
         assert actions["New Project"].toolTip() == (
             "Create a new EmbeddedGUI Designer project. "
@@ -7892,10 +7854,7 @@ class TestMainWindowFileFlow:
         window.project_root = "C:/sdk"
         window._update_sdk_status_label()
 
-        action = next(
-            action for action in window.findChildren(type(window._save_action))
-            if action.text() == "Set SDK..."
-        )
+        action = window._set_sdk_root_action
         assert action.toolTip() == (
             "Choose the EmbeddedGUI SDK root used for compile preview. "
             f"Current binding: SDK: test-binding. Default selection: {window._active_sdk_root() or 'none'}."
@@ -7917,11 +7876,10 @@ class TestMainWindowFileFlow:
         window._update_sdk_status_label()
         window._update_recent_menu()
 
-        actions = {
-            action.text(): action
-            for action in window.findChildren(type(window._save_action))
-            if action.text() in {"Open Example...", "Open Project..."}
-        }
+        actions = _actions_by_text(
+            window._open_app_action,
+            window._open_project_action,
+        )
         assert actions["Open Example..."].toolTip() == (
             "Open a bundled example, SDK example project, or initialize a Designer project "
             "for an unmanaged SDK example. "
@@ -7944,10 +7902,7 @@ class TestMainWindowFileFlow:
         window.project_root = "C:/sdk"
         window._update_sdk_status_label()
 
-        action = next(
-            action for action in window.findChildren(type(window._save_action))
-            if action.text() == "Open Example..."
-        )
+        action = window._open_app_action
         assert action.toolTip() == (
             "Open a bundled example, SDK example project, or initialize a Designer project "
             "for an unmanaged SDK example. "
@@ -7967,10 +7922,7 @@ class TestMainWindowFileFlow:
         window._project_dir = str(project_dir)
         window._update_window_title()
 
-        action = next(
-            action for action in window.findChildren(type(window._save_action))
-            if action.text() == "Open Project..."
-        )
+        action = window._open_project_action
         assert action.toolTip() == (
             "Open an existing .egui project file. "
             f"Recent projects: none. Default directory: {os.path.normpath(os.path.abspath(project_dir))}."
@@ -8009,10 +7961,7 @@ class TestMainWindowFileFlow:
         window.project_root = "C:/sdk"
         window._update_sdk_status_label()
 
-        action = next(
-            action for action in window.findChildren(type(window._save_action))
-            if action.text() == "New Project"
-        )
+        action = window._new_project_action
         assert action.toolTip() == (
             "Create a new EmbeddedGUI Designer project. "
             f"Current binding: SDK: new-project. Default parent: {window._default_new_project_parent_dir()}."
@@ -8033,10 +7982,7 @@ class TestMainWindowFileFlow:
         window._project_dir = str(project_dir)
         window._update_window_title()
 
-        action = next(
-            action for action in window.findChildren(type(window._save_action))
-            if action.text() == "New Project"
-        )
+        action = window._new_project_action
         assert action.toolTip() == (
             "Create a new EmbeddedGUI Designer project. "
             f"Current binding: SDK: parent-dir. Default parent: {os.path.normpath(os.path.abspath(workspace_dir))}."
@@ -8048,17 +7994,13 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
-        actions = {
-            action.text(): action
-            for action in window.findChildren(type(window._save_action))
-            if action.text() in {
-                "Save As...",
-                "Reload Project From Disk",
-                "Close Project",
-                "Export C Code...",
-                "Quit",
-            }
-        }
+        actions = _actions_by_text(
+            window._save_as_action,
+            window._reload_project_action,
+            window._close_project_action,
+            window._export_action,
+            window._quit_action,
+        )
 
         assert actions["Save As..."].toolTip() == (
             "Save the current project to a new file (Ctrl+Shift+S). Unavailable: open a project first."
@@ -8087,11 +8029,13 @@ class TestMainWindowFileFlow:
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_compile_availability()
 
-        reloaded_actions = {
-            action.text(): action
-            for action in window.findChildren(type(window._save_action))
-            if action.text() in {"Save As...", "Reload Project From Disk", "Close Project", "Export C Code...", "Quit"}
-        }
+        reloaded_actions = _actions_by_text(
+            window._save_as_action,
+            window._reload_project_action,
+            window._close_project_action,
+            window._export_action,
+            window._quit_action,
+        )
         assert reloaded_actions["Save As..."].toolTip() == (
             "Save the current project to a new file (Ctrl+Shift+S). "
             f"Default parent: {window._default_save_project_as_dir()}."

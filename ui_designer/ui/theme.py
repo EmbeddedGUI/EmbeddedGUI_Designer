@@ -3437,21 +3437,32 @@ def apply_theme(app: QApplication, mode="dark", density="standard"):
     mode = "light" if mode == "light" else "dark"
     density = _normalize_density(density)
     font_size_pt = _normalize_font_size_pt(app.property("designer_font_size_pt") if app is not None else 0)
-    if HAS_FLUENT:
-        try:
-            setTheme(Theme.LIGHT if mode == "light" else Theme.DARK)
-        except RuntimeError as exc:
-            # qfluentwidgets keeps a process-global QConfig that can outlive a
-            # prior QApplication in tests; keep applying Designer theming even
-            # if Fluent's theme dispatcher is already invalid.
-            if "QConfig" not in str(exc):
-                raise
+    if HAS_FLUENT and app is not None:
+        fluent_mode = app.property("_designer_fluent_theme_mode")
+        if fluent_mode != mode:
+            platform_name = ""
+            try:
+                platform_name = str(app.platformName() or "").lower()
+            except Exception:
+                platform_name = ""
+            if platform_name != "offscreen":
+                try:
+                    setTheme(Theme.LIGHT if mode == "light" else Theme.DARK)
+                except RuntimeError as exc:
+                    # qfluentwidgets keeps a process-global QConfig that can outlive a
+                    # prior QApplication in tests; keep applying Designer theming even
+                    # if Fluent's theme dispatcher is already invalid.
+                    if "QConfig" not in str(exc):
+                        raise
+            app.setProperty("_designer_fluent_theme_mode", mode)
     app.setProperty("designer_theme_mode", mode)
     app.setProperty("designer_ui_density", density)
     app.setProperty("designer_font_size_pt", font_size_pt)
     tokens = theme_tokens(mode, density=density, font_size_pt=font_size_pt)
     _apply_app_base_font(app, tokens)
-    app.setStyleSheet(_build_stylesheet(mode, density=density, font_size_pt=font_size_pt))
+    stylesheet = _build_stylesheet(mode, density=density, font_size_pt=font_size_pt)
+    if app.styleSheet() != stylesheet:
+        app.setStyleSheet(stylesheet)
     chrome_manager = _ensure_window_chrome_sync_manager(app)
     manager = _ensure_fluent_engineering_style_manager(app)
     if manager is not None:

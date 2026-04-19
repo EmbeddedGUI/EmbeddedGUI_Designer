@@ -12,7 +12,7 @@ import shutil
 import subprocess
 
 from PyQt5.QtCore import QEvent, QTimer, Qt, QSignalBlocker, QUrl, pyqtSignal
-from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QKeySequence, QPainter, QPalette, QPen, QPixmap
+from PyQt5.QtGui import QColor, QDesktopServices, QFont, QImage, QKeySequence, QPainter, QPalette, QPen, QPixmap, QPixmapCache
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -91,6 +91,13 @@ _DEFAULT_SIMPLE_PREVIEW_SPLITTER_SIZES = [460, 460]
 _DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS = [88, 220, 360, 280]
 _FONT_TEXT_PREVIEW_CHAR_LIMIT = 4096
 _FONT_TEXT_COMBINED_PREVIEW_CHAR_LIMIT = 8192
+
+
+def _clear_qt_pixmap_cache():
+    try:
+        QPixmapCache.clear()
+    except Exception:
+        pass
 
 
 def _reserved_resource_filename_error(name: str) -> str:
@@ -6553,6 +6560,7 @@ class ResourceGeneratorWindow(QDialog):
 
     def _finalize_saved_image_output(self, entry: dict, index: int, output_filename: str, status_message: str):
         current_file = str(entry.get("file", "") or "").replace("\\", "/")
+        _clear_qt_pixmap_cache()
         if output_filename != current_file:
             new_entry = copy.deepcopy(entry if isinstance(entry, dict) else {})
             new_entry["file"] = output_filename
