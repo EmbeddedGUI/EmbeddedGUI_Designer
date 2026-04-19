@@ -222,6 +222,9 @@ def test_build_project_watch_snapshot_uses_project_level_path_helpers(
     build_mk = tmp_path / "delegated" / "build.mk"
     app_config = tmp_path / "delegated" / "app_egui_config.h"
     designer_dir = tmp_path / "delegated" / ".designer"
+    fallback_project_dir = tmp_path / "fallback"
+    legacy_designer_resource_config = fallback_project_dir / "resource" / "src" / "app_resource_config_designer.json"
+    legacy_merged_resource_config = fallback_project_dir / "resource" / "src" / ".app_resource_config_merged.json"
     user_resource_config = tmp_path / "delegated" / "resource" / "src" / "app_resource_config.json"
     designer_resource_dir = tmp_path / "delegated" / "resource" / "src" / ".designer"
     layout_dir = tmp_path / "delegated" / ".eguiproject" / "layout"
@@ -232,6 +235,8 @@ def test_build_project_watch_snapshot_uses_project_level_path_helpers(
         (project_file, "<Project />\n"),
         (build_mk, "include .designer/build_designer.mk\n"),
         (app_config, '#include ".designer/app_egui_config_designer.h"\n'),
+        (legacy_designer_resource_config, "{}\n"),
+        (legacy_merged_resource_config, "{}\n"),
         (user_resource_config, "{}\n"),
     ):
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -269,7 +274,7 @@ def test_build_project_watch_snapshot_uses_project_level_path_helpers(
 
     window = MainWindow("")
     window.project = _FakeProject()
-    window._project_dir = str(tmp_path / "fallback")
+    window._project_dir = str(fallback_project_dir)
     window.app_name = "FallbackDemo"
     monkeypatch.setattr("ui_designer.utils.header_parser.discover_widget_headers", lambda project_dir: [])
 
@@ -279,12 +284,22 @@ def test_build_project_watch_snapshot_uses_project_level_path_helpers(
     assert os.path.normpath(os.path.abspath(build_mk)) in snapshot
     assert os.path.normpath(os.path.abspath(app_config)) in snapshot
     assert os.path.normpath(os.path.abspath(designer_dir)) in snapshot
+    assert os.path.normpath(os.path.abspath(legacy_designer_resource_config)) in snapshot
+    assert os.path.normpath(os.path.abspath(legacy_merged_resource_config)) in snapshot
     assert os.path.normpath(os.path.abspath(user_resource_config)) in snapshot
     assert os.path.normpath(os.path.abspath(designer_resource_dir)) in snapshot
     assert os.path.normpath(os.path.abspath(layout_dir)) in snapshot
     assert os.path.normpath(os.path.abspath(resource_dir)) in snapshot
     assert os.path.normpath(os.path.abspath(mockup_dir)) in snapshot
     _close_window(window)
+
+
+def test_changed_paths_touch_resource_config_recognizes_legacy_merged_config():
+    from ui_designer.ui.main_window import MainWindow
+
+    assert MainWindow._changed_paths_touch_resource_config(
+        ["D:/demo/resource/src/.app_resource_config_merged.json"]
+    ) is True
 
 
 class _DisabledCompiler:

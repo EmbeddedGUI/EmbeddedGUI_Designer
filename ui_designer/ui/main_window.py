@@ -124,6 +124,7 @@ from ..engine.layout_engine import compute_layout, compute_page_layout
 from ..utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
+    APP_RESOURCE_CONFIG_MERGED_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
 )
 from ..utils.scaffold import (
@@ -139,6 +140,8 @@ from ..utils.scaffold import (
     designer_page_layout_relpath,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
+    legacy_designer_resource_config_path,
+    legacy_merged_resource_config_path,
     load_saved_project_model,
     materialize_project_codegen_outputs,
     prepare_project_codegen_outputs,
@@ -2925,6 +2928,8 @@ class MainWindow(QMainWindow):
             self._get_designer_dir(),
             legacy_build_designer_path(self._project_dir),
             legacy_app_config_designer_path(self._project_dir),
+            legacy_designer_resource_config_path(self._project_dir),
+            legacy_merged_resource_config_path(self._project_dir),
             self._get_user_resource_config_path(),
             self._get_designer_resource_dir(),
             self._get_eguiproject_layout_dir(),
@@ -2966,6 +2971,7 @@ class MainWindow(QMainWindow):
         watched_names = {
             APP_RESOURCE_CONFIG_FILENAME,
             APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
+            APP_RESOURCE_CONFIG_MERGED_FILENAME,
             DESIGNER_RESOURCE_DIRNAME,
         }
         return any(os.path.basename(path) in watched_names for path in paths or [])
