@@ -547,6 +547,15 @@ def _copy_project_root_user_sources(src_dir: str, dst_dir: str) -> None:
             _copy_file_if_missing(src_path, os.path.join(dst_dir, name))
 
 
+def copy_project_user_code_files(src_dir: str, dst_dir: str) -> None:
+    """Copy user-owned root C sources and extension headers into ``dst_dir``."""
+    src_dir = _normalize_project_copy_dir(src_dir)
+    dst_dir = _normalize_project_copy_dir(dst_dir)
+    if not src_dir or not os.path.isdir(src_dir) or not dst_dir or src_dir == dst_dir:
+        return
+    _copy_project_root_user_sources(src_dir, dst_dir)
+
+
 def copy_project_sidecar_files(src_dir: str, dst_dir: str) -> None:
     """Copy user-owned Save As sidecars while skipping Designer-reserved content."""
     src_dir = _normalize_project_copy_dir(src_dir)
@@ -568,7 +577,7 @@ def copy_project_sidecar_files(src_dir: str, dst_dir: str) -> None:
     ):
         _copy_file_if_missing(src_path, dst_path)
 
-    _copy_project_root_user_sources(src_dir, dst_dir)
+    copy_project_user_code_files(src_dir, dst_dir)
 
     src_resource_dir = project_config_resource_dir(src_dir)
     dst_resource_dir = project_config_resource_dir(dst_dir)

@@ -134,6 +134,7 @@ from ..utils.scaffold import (
     RESOURCE_SRC_DIR_RELPATH,
     bind_project_storage,
     copy_project_sidecar_files,
+    copy_project_user_code_files,
     designer_page_header_relpath,
     designer_page_layout_relpath,
     legacy_app_config_designer_path,
@@ -5037,6 +5038,7 @@ class MainWindow(QMainWindow):
         if not self._ensure_codegen_preflight("Export", show_dialog=True, switch_to_python_preview=False):
             return
         try:
+            copy_project_user_code_files(self._project_dir, path)
             materialized = materialize_project_codegen_outputs(
                 self.project,
                 path,

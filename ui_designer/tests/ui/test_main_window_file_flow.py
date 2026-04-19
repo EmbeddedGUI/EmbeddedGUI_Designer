@@ -3688,6 +3688,36 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_export_code_copies_project_user_owned_page_files_into_empty_directory(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ExportCopyProjectUserDemo"
+        export_dir = tmp_path / "export_copy_project_user_out"
+        export_dir.mkdir()
+        project = _create_project(project_dir, "ExportCopyProjectUserDemo", sdk_root)
+
+        (project_dir / "main_page.c").write_text("/* keep project user source */\n", encoding="utf-8")
+        (project_dir / "main_page_ext.h").write_text("#define KEEP_PROJECT_USER_EXT 1\n", encoding="utf-8")
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
+        monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
+        _disable_window_compile(window, _DisabledCompiler)
+
+        _open_project_window(window, project, project_dir, sdk_root)
+        window._export_code()
+
+        assert (export_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep project user source */\n"
+        assert (export_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_PROJECT_USER_EXT 1\n"
+        assert (export_dir / ".designer" / "main_page.h").is_file()
+        assert (export_dir / ".designer" / "main_page_layout.c").is_file()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_export_code_multi_page_mixed_directory_preserves_existing_and_generates_missing(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
