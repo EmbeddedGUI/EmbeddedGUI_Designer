@@ -15,6 +15,7 @@ from ..utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     designer_generated_text_relpath,
     designer_resource_config_path,
+    is_designer_resource_path,
 )
 
 
@@ -67,6 +68,10 @@ class ResourceConfigGenerator:
 
         config_path = designer_resource_config_path(src_dir)
         if filename != APP_RESOURCE_CONFIG_DESIGNER_FILENAME:
+            if not is_designer_resource_path(filename):
+                raise ValueError(
+                    f"Designer-generated resource config output must stay in Designer-managed paths: {filename}"
+                )
             config_path = os.path.join(src_dir, filename)
         os.makedirs(os.path.dirname(config_path), exist_ok=True)
         with open(config_path, "w", encoding="utf-8") as f:

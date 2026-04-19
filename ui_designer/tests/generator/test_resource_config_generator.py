@@ -261,6 +261,13 @@ class TestGenerateAndSave:
         assert len(data["img"]) == 1
         assert data["img"][0]["file"] == "star.png"
 
+    def test_rejects_user_owned_output_filename(self, tmp_path):
+        proj = build_test_project_only_with_widgets("ReservedOutput")
+        gen = ResourceConfigGenerator()
+
+        with pytest.raises(ValueError, match="Designer-generated resource config output must stay in Designer-managed paths"):
+            gen.generate_and_save(proj, str(tmp_path), filename="app_resource_config.json")
+
     def test_writes_generated_text_file(self, tmp_path):
         lbl = WidgetModel("label", name="title", x=0, y=0, width=100, height=30)
         lbl.properties["text"] = "Hello"
