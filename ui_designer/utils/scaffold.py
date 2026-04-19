@@ -1347,7 +1347,7 @@ def sync_project_scaffold_sidecars(
     extra_config_macros=None,
     refresh_user_wrappers=False,
     refresh_designer_resource_config=False,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Create or migrate split scaffold sidecar files for a project directory.
 
@@ -2121,7 +2121,7 @@ def _save_built_project_model(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Save a prebuilt project model through the shared project save entry point."""
     return save_project_model(
@@ -2151,7 +2151,7 @@ def _save_built_project_result(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Persist a built project result and append scaffold actions to its return value."""
     project = built[0] if isinstance(built, tuple) else built
@@ -2201,7 +2201,7 @@ def _save_built_project_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     newline=None,
@@ -2251,7 +2251,7 @@ def build_project_model_with_page_widgets_and_save(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build a multi-page project model, save it, and return the populated page roots."""
     return _save_built_project_result(
@@ -2296,7 +2296,7 @@ def build_project_model_with_page_widgets_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     extra_files_builder=None,
@@ -2358,7 +2358,7 @@ def build_project_model_only_with_page_widgets_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     extra_files_builder=None,
@@ -2415,7 +2415,7 @@ def build_project_model_with_widgets_and_save(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build a single-page project model, save it, and return the populated page and root."""
     return _save_built_project_result(
@@ -2460,7 +2460,7 @@ def build_project_model_with_widgets_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     extra_files_builder=None,
@@ -2522,7 +2522,7 @@ def build_project_model_and_page_with_widgets_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     extra_files_builder=None,
@@ -3024,7 +3024,7 @@ def build_empty_project_model_and_save(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build an empty project model, save it, and return the saved project with its scaffold actions."""
     project = build_empty_project_model(
@@ -3068,7 +3068,7 @@ def build_saved_project_model(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build and save a project model, returning only the project."""
     return _drop_result_tail(
@@ -3110,7 +3110,7 @@ def build_saved_project_model_with_widgets(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build and save a single-page project model, returning the populated page root."""
     return _drop_result_tail(
@@ -3154,7 +3154,7 @@ def build_saved_project_model_and_page_with_widgets(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build and save a single-page project model, returning the populated page."""
     return _pick_result_items(
@@ -3200,7 +3200,7 @@ def build_saved_project_model_and_root_with_widgets(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build and save a single-page project model, returning the populated root widget."""
     return _pick_result_items(
@@ -3246,7 +3246,7 @@ def build_saved_project_model_only_with_widgets(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build and save a single-page project model, returning only the project."""
     return _pick_result_items(
@@ -3290,7 +3290,7 @@ def build_saved_project_model_with_widgets_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     extra_files_builder=None,
@@ -3342,7 +3342,7 @@ def build_saved_project_model_and_page_with_widgets_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     extra_files_builder=None,
@@ -3399,7 +3399,7 @@ def build_saved_project_model_and_root_with_widgets_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     extra_files_builder=None,
@@ -3456,7 +3456,7 @@ def build_saved_project_model_only_with_widgets_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     extra_files_builder=None,
@@ -3512,7 +3512,7 @@ def build_saved_project_model_with_page_widgets_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     extra_files_builder=None,
@@ -3564,7 +3564,7 @@ def build_saved_project_model_only_with_page_widgets_and_materialize_codegen(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
     backup=True,
     extra_files=None,
     extra_files_builder=None,
@@ -3621,7 +3621,7 @@ def build_saved_project_model_with_page_widgets(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build and save a multi-page project model, returning only the project and page roots."""
     return _drop_result_tail(
@@ -3665,7 +3665,7 @@ def build_saved_project_model_only_with_page_widgets(
     circle_radius=None,
     extra_config_macros=None,
     refresh_designer_resource_config=None,
-    remove_legacy_designer_files=False,
+    remove_legacy_designer_files=True,
 ):
     """Build and save a multi-page project model, returning only the project."""
     return _pick_result_items(

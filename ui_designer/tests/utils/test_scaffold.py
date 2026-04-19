@@ -1375,6 +1375,36 @@ class TestCoreProjectScaffold:
         assert (project_dir / "BuiltSavedProjectOnlyHelperApp.egui").is_file()
         assert (project_dir / ".designer" / "build_designer.mk").is_file()
 
+    def test_build_saved_project_model_removes_legacy_resource_configs_by_default(self, tmp_path):
+        project_dir = tmp_path / "LegacyBuiltSavedProjectOnlyHelperApp"
+        resource_src_dir = project_dir / "resource" / "src"
+        resource_src_dir.mkdir(parents=True)
+        (resource_src_dir / "app_resource_config.json").write_text(
+            '{"img": [{"name": "user_asset"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / "app_resource_config_designer.json").write_text(
+            '{"img": [{"name": "legacy"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / ".app_resource_config_merged.json").write_text(
+            '{"img": [{"name": "merged"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+
+        build_saved_project_model(
+            "LegacyBuiltSavedProjectOnlyHelperApp",
+            str(project_dir),
+            320,
+            240,
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+        )
+
+        assert (resource_src_dir / "app_resource_config_designer.json").exists() is False
+        assert (resource_src_dir / ".app_resource_config_merged.json").exists() is False
+        assert '"user_asset"' in (resource_src_dir / "app_resource_config.json").read_text(encoding="utf-8")
+
     def test_build_saved_project_model_with_page_widgets_returns_project_and_roots_without_actions(self, tmp_path):
         from ui_designer.model.widget_model import WidgetModel
 
@@ -1641,6 +1671,46 @@ class TestCoreProjectScaffold:
         assert page.name == "home"
         assert root.children == [label]
         assert (project_dir / "BuiltSavedMaterializedHelperApp.egui").is_file()
+        assert "home_ext.h" in materialized.files
+
+    def test_build_saved_project_model_with_widgets_and_materialize_codegen_removes_legacy_resource_configs_by_default(
+        self, tmp_path
+    ):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "LegacyBuiltSavedMaterializedHelperApp"
+        resource_src_dir = project_dir / "resource" / "src"
+        resource_src_dir.mkdir(parents=True)
+        (resource_src_dir / "app_resource_config.json").write_text(
+            '{"img": [{"name": "user_asset"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / "app_resource_config_designer.json").write_text(
+            '{"img": [{"name": "legacy"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / ".app_resource_config_merged.json").write_text(
+            '{"img": [{"name": "merged"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, page, root, materialized = build_saved_project_model_with_widgets_and_materialize_codegen(
+            "LegacyBuiltSavedMaterializedHelperApp",
+            320,
+            240,
+            project_dir=str(project_dir),
+            page_name="home",
+            widgets=[label],
+            backup=False,
+        )
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert page.name == "home"
+        assert root.children == [label]
+        assert (resource_src_dir / "app_resource_config_designer.json").exists() is False
+        assert (resource_src_dir / ".app_resource_config_merged.json").exists() is False
+        assert '"user_asset"' in (resource_src_dir / "app_resource_config.json").read_text(encoding="utf-8")
         assert "home_ext.h" in materialized.files
 
     def test_build_saved_project_model_and_page_with_widgets_and_materialize_codegen_returns_project_page_and_outputs(self, tmp_path):
