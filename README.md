@@ -113,6 +113,7 @@ The `Build -> Resource Generator...` entry opens a standalone editor for `app_re
 - `Simple` mode also previews the selected asset, opens or exports a preview board for all imported assets, renders font samples directly in the window, auto-detects video fps and size, and can open asset folders plus duplicate, remove, open, resize, rotate, flip, or crop images for quick touch-up.
 - Generation uses an explicit path model: `Config`, `Source Dir`, `Workspace`, and `Bin Output`.
 - When `resource/src/.designer/app_resource_config_designer.json` exists next to the config, the window shows the merged effective view without modifying the designer-owned overlay.
+- The standalone generator may stage a temporary merged config at `resource/src/.designer/.app_resource_config_merged.json` while building resources, then removes it after generation finishes.
 
 More detail: [`docs/RESOURCE_GENERATOR.md`](docs/RESOURCE_GENERATOR.md)
 
