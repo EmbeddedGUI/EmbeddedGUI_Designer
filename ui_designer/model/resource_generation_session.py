@@ -184,6 +184,12 @@ def _staged_generation_src_dir(workspace_dir: str, source_dir: str) -> str:
     return workspace_src_dir
 
 
+def _uses_isolated_staged_generation_src_dir(workspace_dir: str, source_dir: str) -> bool:
+    staged_src_dir = _staged_generation_src_dir(workspace_dir, source_dir)
+    workspace_src_dir = _workspace_src_dir(workspace_dir)
+    return bool(staged_src_dir and workspace_src_dir and staged_src_dir != workspace_src_dir)
+
+
 def _require_user_config_path(config_path: str) -> str:
     normalized = normalize_path(config_path)
     if not normalized:
@@ -552,6 +558,8 @@ class ResourceGenerationSession:
                 os.remove(staged_config_path)
             except OSError:
                 pass
+            if _uses_isolated_staged_generation_src_dir(self.paths.workspace_dir, self.paths.source_dir):
+                _remove_empty_dirs_up_to(os.path.dirname(staged_config_path), self.paths.workspace_dir)
 
     def _run_generator_subprocess(self, command: list[str], *, timeout_seconds: int):
         preferred_cwd = _resolved_existing_path(self.sdk_root) or None
@@ -852,6 +860,17 @@ def _resolved_existing_path(path: str) -> str:
     if not os.path.exists(normalized):
         return normalized
     return normalize_path(os.path.realpath(normalized))
+
+
+def _remove_empty_dirs_up_to(path: str, stop_dir: str):
+    current = normalize_path(path)
+    stop_dir = normalize_path(stop_dir)
+    while current and current != stop_dir:
+        try:
+            os.rmdir(current)
+        except OSError:
+            return
+        current = normalize_path(os.path.dirname(current))
 
 
 def _should_stage_designer_resource_path(source_dir: str, path: str) -> bool:

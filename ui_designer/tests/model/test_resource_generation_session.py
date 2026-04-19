@@ -504,3 +504,4 @@ def test_run_generation_keeps_live_project_source_configs_unmodified(tmp_path, m
     }
     assert not (source_dir / ".designer" / ".app_resource_config_merged.json").exists()
     assert staged_generation_config.exists() is False
+    assert not (resource_dir / ".resource_workspace").exists()
