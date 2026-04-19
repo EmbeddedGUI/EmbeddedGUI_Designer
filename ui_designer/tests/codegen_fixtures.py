@@ -48,7 +48,7 @@ def build_fake_save_project_and_materialize_codegen(
             output_dir,
             with_designer_scaffold=True,
             overwrite_scaffold=kwargs.get("overwrite", False),
-            remove_legacy_designer_files=kwargs.get("remove_legacy_designer_files", False),
+            remove_legacy_designer_files=kwargs.get("remove_legacy_designer_files", True),
         )
         if capture is not None:
             capture.update(

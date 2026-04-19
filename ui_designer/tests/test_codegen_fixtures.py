@@ -64,6 +64,46 @@ class TestCodegenFixtures:
             "remove_legacy_designer_files": True,
         }
 
+    def test_build_fake_save_project_and_materialize_codegen_removes_legacy_resource_configs_by_default(
+        self, tmp_path
+    ):
+        project_dir = tmp_path / "FakeMaterializeLegacyDemo"
+        resource_src_dir = project_dir / "resource" / "src"
+        resource_src_dir.mkdir(parents=True)
+        (resource_src_dir / "app_resource_config.json").write_text(
+            '{"img": [{"name": "user_asset"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / "app_resource_config_designer.json").write_text(
+            '{"img": [{"name": "legacy"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        (resource_src_dir / ".app_resource_config_merged.json").write_text(
+            '{"img": [{"name": "merged"}], "font": [], "mp4": []}\n',
+            encoding="utf-8",
+        )
+        project = build_empty_project_model(
+            "FakeMaterializeLegacyDemo",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            pages=["home"],
+        )
+        fake_materialize = build_fake_save_project_and_materialize_codegen(
+            {"generated.c": "// generated\n"},
+        )
+
+        fake_materialize(
+            project,
+            str(project_dir),
+            overwrite=True,
+        )
+
+        assert (resource_src_dir / "app_resource_config_designer.json").exists() is False
+        assert (resource_src_dir / ".app_resource_config_merged.json").exists() is False
+        assert '"user_asset"' in (resource_src_dir / "app_resource_config.json").read_text(encoding="utf-8")
+
     def test_build_fake_prepare_project_codegen_outputs_runs_prepare_hook_and_captures_args(self):
         hook_calls = []
         seen = {}
