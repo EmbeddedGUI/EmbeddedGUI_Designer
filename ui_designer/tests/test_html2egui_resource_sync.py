@@ -243,6 +243,7 @@ class TestHelperResourceSync:
         existing_app_dir = sdk_root / "example" / "ExistingApp"
         existing_app_dir.mkdir(parents=True)
         calls = []
+        cleaned = []
 
         def fake_ensure(*args, **kwargs):
             calls.append((args, kwargs))
@@ -252,6 +253,7 @@ class TestHelperResourceSync:
             )
 
         monkeypatch.setattr(h, "ensure_sdk_example_conversion_paths", fake_ensure)
+        monkeypatch.setattr(h, "cleanup_legacy_designer_resource_artifacts", lambda path: cleaned.append(path))
 
         existing = h._ensure_app_scaffold_exists(str(sdk_root), "ExistingApp", 320, 240)
         created = h._ensure_app_scaffold_exists(str(sdk_root), "NewApp", 320, 240)
@@ -259,6 +261,10 @@ class TestHelperResourceSync:
         assert existing == str(existing_app_dir)
         assert created == str(sdk_root / "example" / "NewApp")
         assert len(calls) == 2
+        assert cleaned == [
+            str(sdk_root / "example" / "ExistingApp" / "resource" / "src"),
+            str(sdk_root / "example" / "NewApp" / "resource" / "src"),
+        ]
 
         existing_args, existing_kwargs = calls[0]
         assert existing_args == (
@@ -277,6 +283,25 @@ class TestHelperResourceSync:
             240,
         )
         assert created_kwargs == {}
+
+    def test_ensure_app_scaffold_exists_cleans_legacy_resource_artifacts_for_existing_app(self, tmp_path):
+        sdk_root = tmp_path / "sdk"
+        app_dir = sdk_root / "example" / "ExistingApp"
+        resource_src_dir = app_dir / "resource" / "src"
+        designer_dir = resource_src_dir / ".designer"
+        designer_dir.mkdir(parents=True)
+        (resource_src_dir / "app_resource_config.json").write_text('{"img": [{"name": "user_asset"}], "font": [], "mp4": []}\n', encoding="utf-8")
+        (resource_src_dir / "app_resource_config_designer.json").write_text('{"img": [{"name": "legacy"}], "font": [], "mp4": []}\n', encoding="utf-8")
+        (resource_src_dir / ".app_resource_config_merged.json").write_text('{"img": [{"name": "merged"}], "font": [], "mp4": []}\n', encoding="utf-8")
+        (designer_dir / "app_resource_config_designer.json").write_text('{"img": [], "font": [], "mp4": []}\n', encoding="utf-8")
+
+        app_path = h._ensure_app_scaffold_exists(str(sdk_root), "ExistingApp", 320, 240)
+
+        assert app_path == str(app_dir)
+        assert (resource_src_dir / "app_resource_config_designer.json").exists() is False
+        assert (resource_src_dir / ".app_resource_config_merged.json").exists() is False
+        assert '"user_asset"' in (resource_src_dir / "app_resource_config.json").read_text(encoding="utf-8")
+        assert (designer_dir / "app_resource_config_designer.json").is_file()
 
     def test_ensure_resource_config_file_uses_shared_default_content(self, tmp_path):
         config_path = tmp_path / "resource" / "src" / "app_resource_config.json"

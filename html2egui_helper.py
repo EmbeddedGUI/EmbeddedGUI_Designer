@@ -52,6 +52,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_IMAGES_DIR_RELPATH,
     RESOURCE_SRC_DIR_RELPATH,
     SUPPORTED_TEXT_RELPATH,
+    cleanup_legacy_designer_resource_artifacts,
     ensure_sdk_example_conversion_paths,
     load_saved_project_model,
     materialize_saved_project_codegen_outputs,
@@ -246,6 +247,7 @@ def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
         width,
         height,
     )
+    cleanup_legacy_designer_resource_artifacts(example_paths["resource_src_dir"])
     if created:
         print(f"Creating app scaffold: {app_name}")
     return example_paths["app_dir"]

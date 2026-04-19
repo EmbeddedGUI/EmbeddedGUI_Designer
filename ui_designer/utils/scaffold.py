@@ -1303,6 +1303,11 @@ def _cleanup_legacy_designer_resource_artifacts(src_dir):
                 _remove_file_if_exists(file_path)
 
 
+def cleanup_legacy_designer_resource_artifacts(src_dir):
+    """Remove legacy Designer-managed resource artifacts outside the reserved split layout."""
+    _cleanup_legacy_designer_resource_artifacts(src_dir)
+
+
 def generate_designer_resource_config(project, src_dir):
     """Ensure the user overlay exists and regenerate the Designer resource config."""
     _cleanup_legacy_designer_resource_artifacts(src_dir)
