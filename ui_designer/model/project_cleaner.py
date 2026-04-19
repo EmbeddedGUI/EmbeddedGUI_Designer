@@ -20,7 +20,10 @@ from ..utils.scaffold import (
     LAYOUT_DIR_RELPATH,
     MOCKUP_DIR_RELPATH,
     ORPHANED_USER_CODE_DIR_RELPATH,
+    REFERENCE_FRAMES_DIR_RELPATH,
     RELEASE_CONFIG_RELPATH,
+    REGRESSION_REPORT_RELPATH,
+    REGRESSION_RESULTS_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     RESOURCE_DIR_RELPATH,
     RESOURCE_FONT_DIR_RELPATH,
@@ -44,6 +47,7 @@ DESIGNER_SOURCE_PRESERVE_SUMMARY = (
     f"{LAYOUT_DIR_RELPATH}/*.xml page layouts",
     f"{RESOURCE_DIR_RELPATH}/** source assets and resource metadata",
     f"{MOCKUP_DIR_RELPATH}/** preview mockups",
+    f"{REFERENCE_FRAMES_DIR_RELPATH}/** regression baseline captures",
     f"{ORPHANED_USER_CODE_DIR_RELPATH}/** archived user page code",
     f"{RELEASE_CONFIG_RELPATH} release packaging profiles",
     "widgets/** app-local widget sources",
@@ -55,6 +59,7 @@ DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
     f"{RESOURCE_IMG_DIR_RELPATH}, {RESOURCE_FONT_DIR_RELPATH}, and other synced/generated resource outputs",
     f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata",
     f"{DESIGNER_PROJECT_DIRNAME}/** generated code and scaffold files (legacy root designer files also removed)",
+    f"{REGRESSION_REPORT_RELPATH} and {REGRESSION_RESULTS_RELPATH} generated regression reports",
     f"{BACKUP_DIR_RELPATH} and other generated caches",
 )
 
@@ -63,6 +68,7 @@ _PRESERVED_EGUIPROJECT_DIRS = {
     os.path.basename(LAYOUT_DIR_RELPATH),
     os.path.basename(RESOURCE_DIR_RELPATH),
     os.path.basename(MOCKUP_DIR_RELPATH),
+    os.path.basename(REFERENCE_FRAMES_DIR_RELPATH),
     os.path.basename(ORPHANED_USER_CODE_DIR_RELPATH),
 }
 _PRESERVED_EGUIPROJECT_FILES = {os.path.basename(RELEASE_CONFIG_RELPATH)}

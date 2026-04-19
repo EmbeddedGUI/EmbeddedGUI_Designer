@@ -663,6 +663,10 @@ def copy_project_sidecar_files(src_dir: str, dst_dir: str) -> None:
     _copy_tree_if_exists(src_mockup_dir, dst_mockup_dir)
 
     _copy_tree_if_exists(
+        project_config_reference_frames_dir(src_dir),
+        project_config_reference_frames_dir(dst_dir),
+    )
+    _copy_tree_if_exists(
         project_config_orphaned_user_code_dir(src_dir),
         project_config_orphaned_user_code_dir(dst_dir),
     )

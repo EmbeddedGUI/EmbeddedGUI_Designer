@@ -20,7 +20,10 @@ from ui_designer.utils.scaffold import (
     LAYOUT_DIR_RELPATH,
     MOCKUP_DIR_RELPATH,
     ORPHANED_USER_CODE_DIR_RELPATH,
+    REFERENCE_FRAMES_DIR_RELPATH,
     RELEASE_CONFIG_RELPATH,
+    REGRESSION_REPORT_RELPATH,
+    REGRESSION_RESULTS_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     RESOURCE_DIR_RELPATH,
     RESOURCE_FONT_DIR_RELPATH,
@@ -41,6 +44,7 @@ class TestProjectCleaner:
         assert f"{LAYOUT_DIR_RELPATH}/*.xml page layouts" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{RESOURCE_DIR_RELPATH}/** source assets and resource metadata" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{MOCKUP_DIR_RELPATH}/** preview mockups" in DESIGNER_SOURCE_PRESERVE_SUMMARY
+        assert f"{REFERENCE_FRAMES_DIR_RELPATH}/** regression baseline captures" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{ORPHANED_USER_CODE_DIR_RELPATH}/** archived user page code" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert f"{RELEASE_CONFIG_RELPATH} release packaging profiles" in DESIGNER_SOURCE_PRESERVE_SUMMARY
         assert (
@@ -56,6 +60,10 @@ class TestProjectCleaner:
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
         assert (
+            f"{REGRESSION_REPORT_RELPATH} and {REGRESSION_RESULTS_RELPATH} generated regression reports"
+            in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
+        )
+        assert (
             f"{BACKUP_DIR_RELPATH} and other generated caches"
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
@@ -65,6 +73,7 @@ class TestProjectCleaner:
         (project_dir / ".eguiproject" / "layout").mkdir(parents=True)
         (project_dir / ".eguiproject" / "resources" / "images").mkdir(parents=True)
         (project_dir / ".eguiproject" / "mockup").mkdir(parents=True)
+        (project_dir / ".eguiproject" / "reference_frames").mkdir(parents=True)
         (project_dir / ".eguiproject" / "backup" / "old").mkdir(parents=True)
         (project_dir / ".eguiproject" / "orphaned_user_code" / "main_page").mkdir(parents=True)
         (project_dir / "resource" / "src").mkdir(parents=True)
@@ -79,7 +88,10 @@ class TestProjectCleaner:
         Path(project_resource_catalog_path(str(project_dir))).write_text("<resources />\n", encoding="utf-8")
         (project_dir / ".eguiproject" / "resources" / "images" / "hero.png").write_bytes(b"PNG")
         (project_dir / ".eguiproject" / "mockup" / "screen.png").write_bytes(b"PNG")
+        (project_dir / ".eguiproject" / "reference_frames" / "frame_000.png").write_bytes(b"REF")
         (project_dir / ".eguiproject" / "release.json").write_text('{"schema_version": 1}\n', encoding="utf-8")
+        (project_dir / ".eguiproject" / "regression_report.html").write_text("<html>generated</html>\n", encoding="utf-8")
+        (project_dir / ".eguiproject" / "regression_results.json").write_text('{"passed": 1}\n', encoding="utf-8")
         (project_dir / "widgets" / "egui_view_chip.h").write_text("// header\n", encoding="utf-8")
         (project_dir / "widgets" / "egui_view_chip.c").write_text("// source\n", encoding="utf-8")
         (project_dir / "custom_widgets" / "chip.py").write_text("descriptor = {}\n", encoding="utf-8")
@@ -119,6 +131,7 @@ class TestProjectCleaner:
         assert Path(project_resource_catalog_path(str(project_dir))).is_file()
         assert (project_dir / ".eguiproject" / "resources" / "images" / "hero.png").is_file()
         assert (project_dir / ".eguiproject" / "mockup" / "screen.png").is_file()
+        assert (project_dir / ".eguiproject" / "reference_frames" / "frame_000.png").is_file()
         assert (project_dir / ".eguiproject" / "release.json").is_file()
         assert (project_dir / "widgets" / "egui_view_chip.h").is_file()
         assert (project_dir / "widgets" / "egui_view_chip.c").is_file()
@@ -142,9 +155,11 @@ class TestProjectCleaner:
         assert not (project_dir / "resource" / "src" / ".designer").exists()
         assert not (project_dir / "resource" / "img").exists()
         assert not (project_dir / ".eguiproject" / "backup").exists()
+        assert not (project_dir / ".eguiproject" / "regression_report.html").exists()
+        assert not (project_dir / ".eguiproject" / "regression_results.json").exists()
         assert not (project_dir / "notes").exists()
 
-        assert report.removed_files == 2
+        assert report.removed_files == 4
         assert report.removed_dirs == 5
         assert "CleanAllDemo.egui" in report.preserved_paths
         assert "resource" in report.preserved_paths
@@ -154,6 +169,7 @@ class TestProjectCleaner:
         assert ".eguiproject/layout" in report.preserved_paths
         assert ".eguiproject/resources" in report.preserved_paths
         assert ".eguiproject/mockup" in report.preserved_paths
+        assert ".eguiproject/reference_frames" in report.preserved_paths
         assert ".eguiproject/orphaned_user_code" in report.preserved_paths
         assert ".eguiproject/release.json" in report.preserved_paths
         assert "build.mk" in report.preserved_paths
@@ -168,6 +184,8 @@ class TestProjectCleaner:
         assert ".designer" in report.removed_paths
         assert "resource/src/.designer" in report.removed_paths
         assert ".eguiproject/backup" in report.removed_paths
+        assert ".eguiproject/regression_report.html" in report.removed_paths
+        assert ".eguiproject/regression_results.json" in report.removed_paths
         assert "main_page.c" in report.removed_paths
         assert "notes" in report.removed_paths
 

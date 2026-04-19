@@ -322,6 +322,7 @@ class TestProjectSidecarCopyHelpers:
         resource_dir = src_dir / ".eguiproject" / "resources"
         images_dir = resource_dir / "images"
         mockup_dir = src_dir / ".eguiproject" / "mockup"
+        reference_frames_dir = src_dir / ".eguiproject" / "reference_frames"
         orphaned_dir = src_dir / ".eguiproject" / "orphaned_user_code" / "main_page"
         resource_src_dir = src_dir / "resource" / "src"
         custom_resource_dir = resource_src_dir / "custom_assets"
@@ -331,6 +332,7 @@ class TestProjectSidecarCopyHelpers:
 
         images_dir.mkdir(parents=True)
         mockup_dir.mkdir(parents=True)
+        reference_frames_dir.mkdir(parents=True)
         orphaned_dir.mkdir(parents=True)
         resource_src_dir.mkdir(parents=True)
         custom_resource_dir.mkdir(parents=True)
@@ -368,8 +370,11 @@ class TestProjectSidecarCopyHelpers:
         (resource_dir / "_generated_text_demo_16_4.txt").write_text("designer\n", encoding="utf-8")
         (resource_dir / "keep.txt").write_text("keep\n", encoding="utf-8")
         (mockup_dir / "legacy.txt").write_text("mock\n", encoding="utf-8")
+        (reference_frames_dir / "frame_000.png").write_bytes(b"REF")
         (orphaned_dir / "main_page.c").write_text("// orphan\n", encoding="utf-8")
         (src_dir / ".eguiproject" / "release.json").write_text('{"profiles": ["pc"]}\n', encoding="utf-8")
+        (src_dir / ".eguiproject" / "regression_report.html").write_text("<html>generated</html>\n", encoding="utf-8")
+        (src_dir / ".eguiproject" / "regression_results.json").write_text('{"passed": 1}\n', encoding="utf-8")
         (widgets_dir / "demo_widget.py").write_text("WIDGET = 1\n", encoding="utf-8")
         (custom_widgets_dir / "demo_widget.json").write_text('{"name": "demo"}\n', encoding="utf-8")
 
@@ -399,10 +404,13 @@ class TestProjectSidecarCopyHelpers:
         assert not (dst_dir / ".eguiproject" / "resources" / "_generated_text_demo_16_4.txt").exists()
         assert (dst_dir / ".eguiproject" / "resources" / "keep.txt").read_text(encoding="utf-8") == "keep\n"
         assert (dst_dir / ".eguiproject" / "mockup" / "legacy.txt").read_text(encoding="utf-8") == "mock\n"
+        assert (dst_dir / ".eguiproject" / "reference_frames" / "frame_000.png").read_bytes() == b"REF"
         assert (dst_dir / ".eguiproject" / "orphaned_user_code" / "main_page" / "main_page.c").read_text(
             encoding="utf-8"
         ) == "// orphan\n"
         assert (dst_dir / ".eguiproject" / "release.json").read_text(encoding="utf-8") == '{"profiles": ["pc"]}\n'
+        assert not (dst_dir / ".eguiproject" / "regression_report.html").exists()
+        assert not (dst_dir / ".eguiproject" / "regression_results.json").exists()
         assert (dst_dir / "widgets" / "demo_widget.py").read_text(encoding="utf-8") == "WIDGET = 1\n"
         assert (dst_dir / "custom_widgets" / "demo_widget.json").read_text(encoding="utf-8") == '{"name": "demo"}\n'
 

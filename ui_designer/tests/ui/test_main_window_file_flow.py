@@ -3200,10 +3200,15 @@ class TestMainWindowFileFlow:
         mockup_dir = src_dir / ".eguiproject" / "mockup"
         mockup_dir.mkdir(parents=True, exist_ok=True)
         (mockup_dir / "legacy.txt").write_text("mock", encoding="utf-8")
+        reference_frames_dir = src_dir / ".eguiproject" / "reference_frames"
+        reference_frames_dir.mkdir(parents=True, exist_ok=True)
+        (reference_frames_dir / "frame_000.png").write_bytes(b"REF")
         orphaned_dir = src_dir / ".eguiproject" / "orphaned_user_code" / "main_page"
         orphaned_dir.mkdir(parents=True, exist_ok=True)
         (orphaned_dir / "main_page.c").write_text("// orphan\n", encoding="utf-8")
         (src_dir / ".eguiproject" / "release.json").write_text('{"profiles":["pc"]}\n', encoding="utf-8")
+        (src_dir / ".eguiproject" / "regression_report.html").write_text("<html>generated</html>\n", encoding="utf-8")
+        (src_dir / ".eguiproject" / "regression_results.json").write_text('{"passed":1}\n', encoding="utf-8")
         (src_dir / "main_page.c").write_text("/* keep page source */\n", encoding="utf-8")
         (src_dir / "main_page_ext.h").write_text("#define KEEP_MAIN_EXT 1\n", encoding="utf-8")
         (src_dir / "legacy_logic.h").write_text("#define KEEP_LOGIC 1\n", encoding="utf-8")
@@ -3247,6 +3252,9 @@ class TestMainWindowFileFlow:
         assert not (dst_dir / ".eguiproject" / "resources" / "images" / "_generated_text_preview.png").exists()
         assert not (dst_dir / ".eguiproject" / "resources" / "_generated_text_demo_16_4.txt").exists()
         assert (dst_dir / ".eguiproject" / "mockup" / "legacy.txt").is_file()
+        assert (dst_dir / ".eguiproject" / "reference_frames" / "frame_000.png").read_bytes() == b"REF"
+        assert not (dst_dir / ".eguiproject" / "regression_report.html").exists()
+        assert not (dst_dir / ".eguiproject" / "regression_results.json").exists()
         assert json.loads((dst_dir / "resource" / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == {
             "img": [{"file": "legacy.png"}],
             "font": [],
