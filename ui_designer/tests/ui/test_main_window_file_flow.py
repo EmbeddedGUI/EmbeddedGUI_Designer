@@ -11287,6 +11287,14 @@ class TestMainWindowFileFlow:
             "Workspace left shell: Project panel visible. View: List view. Active page: main_page. Startup page: main_page. "
             "Display target: Display 0 (primary only)."
         )
+        assert window._inspector_tabs.accessibleName() == (
+            "Inspector tabs: Properties selected. 3 tabs. Current page: main_page. Selection: none. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._page_tools_scroll.accessibleName() == (
+            "Page inspector: Fields and Timers sections. Scroll focus: Fields. Current page: main_page. "
+            "Display target: Display 0 (primary only)."
+        )
         assert window._editor_container.accessibleName() == (
             "Editor workspace. Left panel: Project. Current page: main_page. Mode: Design. Bottom tools hidden. "
             "Display target: Display 0 (primary only)."
@@ -11301,6 +11309,17 @@ class TestMainWindowFileFlow:
         )
         assert window._workspace_splitter.accessibleName() == (
             "Workspace rows. Editor area visible. Bottom tools hidden. Current section: Diagnostics. Current page: main_page. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._bottom_tabs.accessibleName() == (
+            "Bottom tools tabs: Diagnostics selected. 3 tabs. Current page: main_page. Panel hidden. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._bottom_header.accessibleName() == (
+            "Bottom tools header. Current section: Diagnostics. Panel hidden. Display target: Display 0 (primary only)."
+        )
+        assert window._bottom_shell.accessibleName() == (
+            "Workspace bottom shell. Current section: Diagnostics. Panel hidden. Current page: main_page. "
             "Display target: Display 0 (primary only)."
         )
         assert window._project_workspace._metrics_frame.isHidden() is False

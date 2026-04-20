@@ -2053,15 +2053,23 @@ class MainWindow(QMainWindow):
         return f"Selection: {len(widgets)} widgets."
 
     def _update_workspace_tab_metadata(self):
+        display_target = self._project_display_target_nav_text()
         if hasattr(self, "_inspector_tabs"):
             current = self._current_tab_text(self._inspector_tabs, "Properties")
             current_page = self._current_page_accessibility_text()
             selection_text = self._selection_accessibility_text()
             tooltip = f"Inspector tabs. Current section: {current}. Current page: {current_page}. {selection_text}"
+            accessible_name = (
+                f"Inspector tabs: {current} selected. {self._inspector_tabs.count()} tabs. "
+                f"Current page: {current_page}. {selection_text}"
+            )
+            if display_target:
+                tooltip = f"{tooltip} {display_target}"
+                accessible_name = f"{accessible_name} {display_target}"
             self._set_metadata_summary(
                 self._inspector_tabs,
                 tooltip,
-                f"Inspector tabs: {current} selected. {self._inspector_tabs.count()} tabs. Current page: {current_page}. {selection_text}",
+                accessible_name,
             )
         if hasattr(self, "_page_tools_scroll"):
             current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
@@ -2071,21 +2079,34 @@ class MainWindow(QMainWindow):
                 f"Page inspector (Fields and Timers). Scroll focus: {focus_label}. "
                 f"Current page: {current_page}."
             )
+            accessible_name = (
+                f"Page inspector: Fields and Timers sections. Scroll focus: {focus_label}. "
+                f"Current page: {current_page}."
+            )
+            if display_target:
+                tooltip = f"{tooltip} {display_target}"
+                accessible_name = f"{accessible_name} {display_target}"
             self._set_metadata_summary(
                 self._page_tools_scroll,
                 tooltip,
-                f"Page inspector: Fields and Timers sections. Scroll focus: {focus_label}. "
-                f"Current page: {current_page}.",
+                accessible_name,
             )
         if hasattr(self, "_bottom_tabs"):
             current = self._current_tab_text(self._bottom_tabs, "Diagnostics")
             current_page = self._current_page_accessibility_text()
             visibility = "visible" if self._bottom_panel_visible else "hidden"
             tooltip = f"Bottom tools tabs. Current section: {current}. Current page: {current_page}. Panel {visibility}."
+            accessible_name = (
+                f"Bottom tools tabs: {current} selected. {self._bottom_tabs.count()} tabs. "
+                f"Current page: {current_page}. Panel {visibility}."
+            )
+            if display_target:
+                tooltip = f"{tooltip} {display_target}"
+                accessible_name = f"{accessible_name} {display_target}"
             self._set_metadata_summary(
                 self._bottom_tabs,
                 tooltip,
-                f"Bottom tools tabs: {current} selected. {self._bottom_tabs.count()} tabs. Current page: {current_page}. Panel {visibility}.",
+                accessible_name,
             )
         self._update_workspace_layout_metadata()
 
@@ -2128,12 +2149,16 @@ class MainWindow(QMainWindow):
             self._set_metadata_summary(self._workspace_splitter, workspace_splitter_summary)
         if hasattr(self, "_bottom_header"):
             bottom_header_summary = f"Bottom tools header. Current section: {bottom_section}. Panel {visibility}."
+            if display_target:
+                bottom_header_summary = f"{bottom_header_summary} {display_target}"
             self._set_metadata_summary(self._bottom_header, bottom_header_summary)
         if hasattr(self, "_bottom_shell"):
             bottom_shell_summary = (
                 f"Workspace bottom shell. Current section: {bottom_section}. Panel {visibility}. "
                 f"Current page: {current_page}."
             )
+            if display_target:
+                bottom_shell_summary = f"{bottom_shell_summary} {display_target}"
             self._set_metadata_summary(self._bottom_shell, bottom_shell_summary)
         self._update_workspace_command_surface_metadata()
 
