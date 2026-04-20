@@ -895,18 +895,22 @@ class MainWindow(QMainWindow):
             selection_text = f"Selection: {widget_name} ({widget_type})."
         else:
             selection_text = f"Selection: {len(widgets)} widgets."
-        return f"Current page: {current_page}. {selection_text}"
+        display_target = self._project_display_target_context_suffix()
+        return f"Current page: {current_page}. {selection_text}{display_target}"
 
     def _components_workspace_nav_context(self):
         current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
         if self._current_page is None:
-            return "Current page: none. Insert target: unavailable."
+            display_target = self._project_display_target_context_suffix()
+            return f"Current page: none. Insert target: unavailable.{display_target}"
         target = self._insert_target_summary(self._pending_insert_parent or self._default_insert_parent())
-        return f"Current page: {current_page}. Insert target: {target}."
+        display_target = self._project_display_target_context_suffix()
+        return f"Current page: {current_page}. Insert target: {target}.{display_target}"
 
     def _assets_workspace_nav_context(self):
         current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
-        return f"Current page: {current_page}."
+        display_target = self._project_display_target_context_suffix()
+        return f"Current page: {current_page}.{display_target}"
 
     def _update_workspace_nav_button_metadata(self, current_panel):
         if not hasattr(self, "_left_panel_tab_index_by_key"):
@@ -940,6 +944,9 @@ class MainWindow(QMainWindow):
         current_context = self._workspace_menu_action_context(current_panel)
         if hasattr(self, "_workspace_nav_frame"):
             nav_summary = f"Workspace panel tabs. Current panel: {current_label}."
+            display_target = self._project_display_target_nav_text()
+            if display_target:
+                nav_summary = f"{nav_summary} {display_target}"
             self._set_metadata_summary(self._workspace_nav_frame, nav_summary)
         if hasattr(self, "_left_panel_stack"):
             stack_summary = f"Workspace panels: {current_label} visible."
@@ -974,19 +981,25 @@ class MainWindow(QMainWindow):
     def _inspector_menu_action_context(self):
         current_page = self._current_page_accessibility_text() if hasattr(self, "_current_page_accessibility_text") else "none"
         selection_text = self._selection_accessibility_text() if hasattr(self, "_selection_accessibility_text") else "Selection: none."
-        return f"Current page: {current_page}. {selection_text}"
+        display_target = self._project_display_target_context_suffix()
+        return f"Current page: {current_page}. {selection_text}{display_target}"
 
     def _tools_menu_action_context(self):
         current_page = self._current_page_accessibility_text() if hasattr(self, "_current_page_accessibility_text") else "none"
         visibility = "visible" if getattr(self, "_bottom_panel_visible", False) else "hidden"
-        return f"Current page: {current_page}. Panel {visibility}."
+        display_target = self._project_display_target_context_suffix()
+        return f"Current page: {current_page}. Panel {visibility}.{display_target}"
 
     def _update_view_panel_navigation_action_metadata(self):
+        display_target = self._project_display_target_context_suffix()
         if hasattr(self, "_workspace_menu"):
             current_panel = getattr(self, "_current_left_panel", "project")
+            menu_hint = f"Choose a workspace panel to show. Current panel: {self._workspace_panel_label(current_panel)}."
+            if display_target:
+                menu_hint = f"{menu_hint}{display_target}"
             self._apply_action_hint(
                 self._workspace_menu.menuAction(),
-                f"Choose a workspace panel to show. Current panel: {self._workspace_panel_label(current_panel)}.",
+                menu_hint,
             )
             for key, action in getattr(self, "_workspace_view_actions", {}).items():
                 label = self._workspace_panel_label(key)
@@ -999,9 +1012,12 @@ class MainWindow(QMainWindow):
                 self._apply_action_hint(action, f"{base} {context}".strip())
         if hasattr(self, "_inspector_menu"):
             current_section = self._current_tab_text(self._inspector_tabs, "Properties") if hasattr(self, "_inspector_tabs") else "Properties"
+            menu_hint = f"Choose an inspector section to show. Current section: {current_section}."
+            if display_target:
+                menu_hint = f"{menu_hint}{display_target}"
             self._apply_action_hint(
                 self._inspector_menu.menuAction(),
-                f"Choose an inspector section to show. Current section: {current_section}.",
+                menu_hint,
             )
             context = self._inspector_menu_action_context()
             for label, action in getattr(self, "_inspector_view_actions", {}).items():
@@ -1014,9 +1030,12 @@ class MainWindow(QMainWindow):
         if hasattr(self, "_tools_menu"):
             current_section = self._current_tab_text(self._bottom_tabs, "Diagnostics") if hasattr(self, "_bottom_tabs") else "Diagnostics"
             visibility = "visible" if getattr(self, "_bottom_panel_visible", False) else "hidden"
+            menu_hint = f"Choose a bottom tools panel to show. Current section: {current_section}. Panel {visibility}."
+            if display_target:
+                menu_hint = f"{menu_hint}{display_target}"
             self._apply_action_hint(
                 self._tools_menu.menuAction(),
-                f"Choose a bottom tools panel to show. Current section: {current_section}. Panel {visibility}.",
+                menu_hint,
             )
             context = self._tools_menu_action_context()
             for label, action in getattr(self, "_tools_view_actions", {}).items():

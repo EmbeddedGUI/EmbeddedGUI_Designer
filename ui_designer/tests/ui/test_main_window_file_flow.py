@@ -6921,6 +6921,90 @@ class TestMainWindowFileFlow:
         assert actions["History"].toolTip() == "Currently showing the History tools panel. Current page: none. Panel visible."
         _close_window(window)
 
+    def test_view_panel_navigation_actions_include_primary_display_scope_for_multi_display_projects(
+        self, qapp, isolated_config, tmp_path
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MultiDisplayViewHintDemo"
+        project = _create_project(
+            project_dir,
+            "MultiDisplayViewHintDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        project.displays = [
+            {"width": 320, "height": 240},
+            {"width": 128, "height": 64},
+        ]
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        view_menu = next(action.menu() for action in window.menuBar().actions() if action.text() == "View")
+        view_actions = {action.text(): action for action in view_menu.actions() if action.text()}
+        actions = _actions_by_text(
+            *window._workspace_view_actions.values(),
+            *window._inspector_view_actions.values(),
+            *window._tools_view_actions.values(),
+        )
+
+        assert view_actions["Workspace"].toolTip() == (
+            "Choose a workspace panel to show. Current panel: Project. Display target: Display 0 (primary only)."
+        )
+        assert view_actions["Inspector"].toolTip() == (
+            "Choose an inspector section to show. Current section: Properties. Display target: Display 0 (primary only)."
+        )
+        assert view_actions["Tools"].toolTip() == (
+            "Choose a bottom tools panel to show. Current section: Diagnostics. Panel hidden. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert actions["Project"].toolTip() == (
+            "Currently showing the Project workspace panel. "
+            "View: List view. Active page: main_page. Startup page: main_page. Display target: Display 0 (primary only)."
+        )
+        assert actions["Structure"].toolTip() == (
+            "Show the Structure workspace panel. Current page: main_page. Selection: none. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert actions["Components"].toolTip() == (
+            "Show the Components workspace panel. Current page: main_page. Insert target: root_group. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert actions["Assets"].toolTip() == (
+            "Show the Assets workspace panel. Current page: main_page. Display target: Display 0 (primary only)."
+        )
+        assert actions["Properties"].toolTip() == (
+            "Currently showing the Properties inspector section. Current page: main_page. Selection: none. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert actions["Animations"].toolTip() == (
+            "Show the Animations inspector section. Current page: main_page. Selection: none. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert actions["Page"].toolTip() == (
+            "Show the Page inspector section. Current page: main_page. Selection: none. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert actions["Diagnostics"].toolTip() == (
+            "Show the Diagnostics tools panel. Current page: main_page. Panel hidden. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert actions["History"].toolTip() == (
+            "Show the History tools panel. Current page: main_page. Panel hidden. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert actions["Debug Output"].toolTip() == (
+            "Show the Debug Output tools panel. Current page: main_page. Panel hidden. "
+            "Display target: Display 0 (primary only)."
+        )
+        for action in list(view_actions.values()) + list(actions.values()):
+            assert action.statusTip() == action.toolTip()
+        _close_window(window)
+
     def test_apply_action_hint_skips_no_op_rewrites(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -11229,6 +11313,9 @@ class TestMainWindowFileFlow:
         assert window._workspace_context_label.toolTip() == (
             "Current workspace context: MultiDisplayWorkspaceDemo. Current page: main_page. Project contains 2 pages. "
             "Multi-display project: editing and preview target the primary display."
+        )
+        assert window._workspace_nav_frame.accessibleName() == (
+            "Workspace panel tabs. Current panel: Project. Display target: Display 0 (primary only)."
         )
         assert window._compile_action.toolTip() == (
             "Compile the current project and run the preview (F5). "
