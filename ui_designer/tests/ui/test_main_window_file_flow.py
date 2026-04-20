@@ -11314,6 +11314,9 @@ class TestMainWindowFileFlow:
             "Current workspace context: MultiDisplayWorkspaceDemo. Current page: main_page. Project contains 2 pages. "
             "Multi-display project: editing and preview target the primary display."
         )
+        assert window._workspace_context_card.accessibleName() == (
+            "Workspace context card: MultiDisplayWorkspaceDemo / main_page. Display target: Display 0 (primary only)."
+        )
         assert window._workspace_nav_frame.accessibleName() == (
             "Workspace panel tabs. Current panel: Project. Display target: Display 0 (primary only)."
         )

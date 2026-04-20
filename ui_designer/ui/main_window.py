@@ -2328,10 +2328,14 @@ class MainWindow(QMainWindow):
             self._workspace_context_label.setText(text)
             self._set_metadata_summary(self._workspace_context_label, tooltip, text)
         if hasattr(self, "_workspace_context_card"):
+            card_accessible_name = f"Workspace context card: {text}."
+            display_target = self._project_display_target_nav_text()
+            if display_target:
+                card_accessible_name = f"{card_accessible_name} {display_target}"
             self._set_metadata_summary(
                 self._workspace_context_card,
                 tooltip,
-                f"Workspace context card: {text}.",
+                card_accessible_name,
             )
         if hasattr(self, "_workspace_context_eyebrow"):
             self._set_metadata_summary(
