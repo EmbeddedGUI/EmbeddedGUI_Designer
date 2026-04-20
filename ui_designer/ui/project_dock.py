@@ -209,6 +209,18 @@ class ProjectExplorerDock(QDockWidget):
         self._display_detail_label.setObjectName("project_dock_metric_value")
         self._display_detail_label.setWordWrap(True)
         settings_layout.addWidget(self._display_detail_label)
+
+        display_target_layout = QHBoxLayout()
+        display_target_layout.setContentsMargins(0, 0, 0, 0)
+        display_target_layout.setSpacing(2)
+        self._display_target_label = QLabel("Edit Target")
+        self._display_target_label.setObjectName("project_dock_field_label")
+        self._display_target_combo = QComboBox()
+        self._display_target_combo.setObjectName("project_dock_display_target_combo")
+        self._display_target_combo.setEnabled(False)
+        display_target_layout.addWidget(self._display_target_label)
+        display_target_layout.addWidget(self._display_target_combo, 1)
+        settings_layout.addLayout(display_target_layout)
         layout.addWidget(self._settings_group)
 
         # Page tree
@@ -243,18 +255,24 @@ class ProjectExplorerDock(QDockWidget):
         self.setWidget(container)
         self._update_accessibility_summary()
 
-    def _display_settings_summary(self):
+    def _project_displays(self):
         if not self._project:
-            return "No project", "Not set", "Load or create a project to inspect displays."
+            return []
 
         displays = list(getattr(self._project, "displays", None) or [])
+        if displays:
+            return displays
+        return [
+            {
+                "width": int(getattr(self._project, "screen_width", 240) or 240),
+                "height": int(getattr(self._project, "screen_height", 320) or 320),
+            }
+        ]
+
+    def _display_settings_summary(self):
+        displays = self._project_displays()
         if not displays:
-            displays = [
-                {
-                    "width": int(getattr(self._project, "screen_width", 240) or 240),
-                    "height": int(getattr(self._project, "screen_height", 320) or 320),
-                }
-            ]
+            return "No project", "Not set", "Load or create a project to inspect displays."
 
         display_count = len(displays)
         primary = displays[0]
@@ -272,6 +290,30 @@ class ProjectExplorerDock(QDockWidget):
                 "Editing/preview: primary display only."
             )
         return display_count_text, primary_text, detail_text
+
+    def _display_target_selector_summary(self):
+        displays = self._project_displays()
+        if not displays:
+            return ["No project"], 0, "Display target selector unavailable. Load or create a project to inspect displays."
+
+        items = []
+        for index, display in enumerate(displays):
+            display_id = int(display.get("id", index))
+            size_text = f"{int(display['width'])} x {int(display['height'])}"
+            suffix = " (Primary)" if index == 0 else ""
+            items.append(f"Display {display_id}: {size_text}{suffix}")
+
+        primary = displays[0]
+        primary_id = int(primary.get("id", 0))
+        primary_size = f"{int(primary['width'])} x {int(primary['height'])}"
+        if len(displays) == 1:
+            summary = f"Display target selector: Display {primary_id}: {primary_size} (Primary)."
+        else:
+            summary = (
+                f"Display target selector: Display {primary_id}: {primary_size} (Primary). "
+                "Editing and preview are fixed to the primary display."
+            )
+        return items, 0, summary
 
     def _update_accessibility_summary(self):
         page_count = len(getattr(self._project, "pages", []) or [])
@@ -295,6 +337,13 @@ class ProjectExplorerDock(QDockWidget):
         self._display_metric_value.setText(display_count_text)
         self._primary_metric_value.setText(primary_text)
         self._display_detail_label.setText(display_detail)
+        display_target_items, display_target_index, display_target_summary = self._display_target_selector_summary()
+        self._display_target_combo.blockSignals(True)
+        self._display_target_combo.clear()
+        self._display_target_combo.addItems(display_target_items)
+        self._display_target_combo.setCurrentIndex(max(int(display_target_index), 0))
+        self._display_target_combo.setEnabled(False)
+        self._display_target_combo.blockSignals(False)
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._header_frame,
@@ -360,6 +409,16 @@ class ProjectExplorerDock(QDockWidget):
             self._display_detail_label,
             tooltip=f"Display summary: {display_detail}",
             accessible_name=f"Display summary: {display_detail}",
+        )
+        _set_widget_metadata(
+            self._display_target_label,
+            tooltip="Edit target label.",
+            accessible_name="Edit target label.",
+        )
+        _set_widget_metadata(
+            self._display_target_combo,
+            tooltip=display_target_summary,
+            accessible_name=display_target_summary,
         )
         _set_widget_metadata(
             self._add_page_button,
