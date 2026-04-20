@@ -562,7 +562,10 @@ class MainWindow(QMainWindow):
         self._project_workspace.setObjectName("project_workspace_panel")
         saved_workspace_state = self._config.workspace_state if isinstance(self._config.workspace_state, dict) else {}
         self._project_workspace.set_view(saved_workspace_state.get("project_workspace_view", ProjectWorkspacePanel.VIEW_LIST))
+        self._project_workspace._metrics_frame.show()
         self._project_workspace._view_chip.show()
+        self._project_workspace._page_count_chip.show()
+        self._project_workspace._dirty_chip.show()
 
         self._left_panel_stack = QTabWidget()
         self._left_panel_stack.setObjectName("workspace_left_tabs")

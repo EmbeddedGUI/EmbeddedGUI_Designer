@@ -109,6 +109,11 @@ class ProjectWorkspacePanel(QWidget):
         self._dirty_chip.hide()
         metrics_layout.addWidget(self._dirty_chip)
 
+        self._display_target_chip = QLabel("Display 0", self._metrics_frame)
+        self._display_target_chip.setObjectName("workspace_status_chip")
+        self._display_target_chip.hide()
+        metrics_layout.addWidget(self._display_target_chip)
+
         self._summary_label = QLabel("0 pages. Active: none. Clean.", self._header)
         self._summary_label.setObjectName("workspace_section_subtitle")
         self._summary_label.hide()
@@ -183,6 +188,8 @@ class ProjectWorkspacePanel(QWidget):
             if multi_display
             else ""
         )
+        display_chip_text = "Display 0"
+        display_chip_summary = "Display target: Display 0. Editing and preview use the primary display."
         if dirty_count == 0 and not has_project_dirty:
             dirty_text = "No dirty pages"
             summary_dirty_text = "Clean"
@@ -230,6 +237,8 @@ class ProjectWorkspacePanel(QWidget):
         self._view_chip.setText(view_chip_text)
         self._page_count_chip.setText(page_label)
         self._dirty_chip.setText(chip_text)
+        self._display_target_chip.setText(display_chip_text)
+        self._display_target_chip.setVisible(multi_display)
         self._summary_label.setText(f"{page_label}. Active: {active_text}. {summary_dirty_text}.")
         self._meta_label.setText(" | ".join(meta_parts))
 
@@ -268,6 +277,11 @@ class ProjectWorkspacePanel(QWidget):
             self._dirty_chip,
             tooltip=f"Dirty state: {dirty_text}.",
             accessible_name=f"Dirty state: {dirty_text}.",
+        )
+        _set_widget_metadata(
+            self._display_target_chip,
+            tooltip=display_chip_summary,
+            accessible_name=display_chip_summary,
         )
         _set_widget_metadata(
             self._metrics_frame,

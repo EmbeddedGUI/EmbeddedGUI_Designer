@@ -11232,9 +11232,19 @@ class TestMainWindowFileFlow:
             "Page: main_page | Preview: Editing Only | Displays: 2 total, primary only | Selection: none "
             "| Warnings: 0 | Ready"
         )
+        assert window._project_workspace._metrics_frame.isHidden() is False
         assert window._project_workspace._view_chip.text() == "List view | Primary display"
         assert window._project_workspace._view_chip.accessibleName() == (
             "Workspace view: List view. Multi-display project: editing and preview use the primary display."
+        )
+        assert window._project_workspace._page_count_chip.isHidden() is False
+        assert window._project_workspace._page_count_chip.text() == "2 pages"
+        assert window._project_workspace._dirty_chip.isHidden() is False
+        assert window._project_workspace._dirty_chip.text() == "Clean"
+        assert window._project_workspace._display_target_chip.isHidden() is False
+        assert window._project_workspace._display_target_chip.text() == "Display 0"
+        assert window._project_workspace._display_target_chip.accessibleName() == (
+            "Display target: Display 0. Editing and preview use the primary display."
         )
         assert window._project_workspace._meta_label.text() == (
             "Startup: main_page | 2 displays | Editing/preview: primary display only"

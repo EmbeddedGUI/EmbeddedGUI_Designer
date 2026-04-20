@@ -34,6 +34,11 @@ class TestProjectWorkspacePanel:
         assert panel._view_chip.isHidden() is True
         assert panel._view_chip.text() == "List view"
         assert panel._view_chip.accessibleName() == "Workspace view: List view."
+        assert panel._display_target_chip.isHidden() is True
+        assert panel._display_target_chip.text() == "Display 0"
+        assert panel._display_target_chip.accessibleName() == (
+            "Display target: Display 0. Editing and preview use the primary display."
+        )
         assert panel._settings_btn.height() == 22
         assert panel._list_btn.height() == 22
         assert panel._thumb_btn.height() == 22
@@ -224,6 +229,11 @@ class TestProjectWorkspacePanel:
         assert panel._view_chip.accessibleName() == (
             "Workspace view: List view. Multi-display project: editing and preview use the primary display."
         )
+        assert panel._display_target_chip.isHidden() is False
+        assert panel._display_target_chip.text() == "Display 0"
+        assert panel._display_target_chip.accessibleName() == (
+            "Display target: Display 0. Editing and preview use the primary display."
+        )
         assert panel._summary_label.text() == "2 pages. Active: main_page. Clean."
         assert panel._meta_label.text() == "Startup: main_page | 2 displays | Editing/preview: primary display only"
         assert panel._meta_label.accessibleName() == (
@@ -244,6 +254,7 @@ class TestProjectWorkspacePanel:
         assert panel._view_chip.accessibleName() == (
             "Workspace view: Thumbnails. Multi-display project: editing and preview use the primary display."
         )
+        assert panel._display_target_chip.isHidden() is False
         panel.deleteLater()
 
     def test_workspace_snapshot_reports_project_level_and_page_dirty_reason_summary(self, qapp):
