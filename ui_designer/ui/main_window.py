@@ -2152,6 +2152,9 @@ class MainWindow(QMainWindow):
         else:
             dirty_label = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
         summary = f"Page tabs: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}."
+        display_target = self._project_display_target_nav_text()
+        if display_target:
+            summary = f"{summary} {display_target}"
         if getattr(self, "_page_tab_bar_metadata_snapshot", None) == summary:
             return
         self.page_tab_bar.setToolTip(summary)

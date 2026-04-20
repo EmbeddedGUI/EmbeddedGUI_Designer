@@ -11232,6 +11232,11 @@ class TestMainWindowFileFlow:
             "Currently showing Project panel. View: List view. Active page: main_page. Startup page: main_page. "
             "Display target: Display 0 (primary only)."
         )
+        assert window.page_tab_bar.accessibleName() == (
+            "Page tabs: 1 open page. Current page: main_page. Startup page: main_page. No dirty pages. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
         assert window._workspace_status_label.text() == (
             "Page: main_page | Preview: Editing Only | Displays: 2 total, primary only | Selection: none "
             "| Warnings: 0 | Ready"
