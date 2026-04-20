@@ -1789,7 +1789,8 @@ class MainWindow(QMainWindow):
         project_state = "open" if self.project is not None else "none"
         preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
         preview_state = "running" if preview_running else "stopped"
-        return f"Project: {project_state}. Preview: {preview_state}."
+        display_target = self._project_display_target_context_suffix()
+        return f"Project: {project_state}. Preview: {preview_state}.{display_target}"
 
     def _update_toolbar_action_metadata(self):
         command_bar_summary = "Workspace command bar with insert, save, build, mode, context, and runtime indicators."

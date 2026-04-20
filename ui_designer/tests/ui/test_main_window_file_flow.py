@@ -11251,6 +11251,10 @@ class TestMainWindowFileFlow:
             "Project: open. SDK: valid. Preview: editing only. Display target: Display 0 (primary only). "
             "Unavailable: preview disabled for test."
         )
+        assert window._stop_action.toolTip() == (
+            "Stop the running preview executable. Project: open. Preview: stopped. Display target: Display 0 (primary only). "
+            "Unavailable: preview is not running."
+        )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
             "Project: open. SDK: valid. Compile: unavailable. Rebuild: unavailable. Reconstruct: available (preview rerun skipped). "
