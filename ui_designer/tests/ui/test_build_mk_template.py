@@ -321,3 +321,36 @@ class TestAppConfigContent:
         )
 
         assert read_app_config_dimensions(str(config_h)) == (240, 320)
+
+    def test_read_displays_resolves_multi_display_macros_and_wrapper_overrides(self, tmp_path):
+        from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, read_app_config_displays
+
+        config_h = tmp_path / "app_egui_config.h"
+        config_h.write_text(
+            (
+                "#define EGUI_CONFIG_SCEEN_WIDTH  320\n"
+                "#define EGUI_CONFIG_PFB_1_WIDTH 10\n"
+                f'#include "{APP_CONFIG_DESIGNER_RELPATH}"\n'
+            ),
+            encoding="utf-8",
+        )
+        (tmp_path / ".designer").mkdir(exist_ok=True)
+        (tmp_path / APP_CONFIG_DESIGNER_RELPATH).write_text(
+            (
+                "#define EGUI_CONFIG_SCEEN_WIDTH  480\n"
+                "#define EGUI_CONFIG_SCEEN_HEIGHT 272\n"
+                "#define EGUI_CONFIG_PFB_WIDTH  (EGUI_CONFIG_SCEEN_WIDTH / 8)\n"
+                "#define EGUI_CONFIG_PFB_HEIGHT (EGUI_CONFIG_SCEEN_HEIGHT / 8)\n"
+                "#define EGUI_CONFIG_MAX_DISPLAY_COUNT 2\n"
+                "#define EGUI_CONFIG_SCEEN_1_WIDTH  128\n"
+                "#define EGUI_CONFIG_SCEEN_1_HEIGHT 64\n"
+                "#define EGUI_CONFIG_PFB_1_WIDTH    (EGUI_CONFIG_SCEEN_1_WIDTH / 8)\n"
+                "#define EGUI_CONFIG_PFB_1_HEIGHT   (EGUI_CONFIG_SCEEN_1_HEIGHT / 8)\n"
+            ),
+            encoding="utf-8",
+        )
+
+        assert read_app_config_displays(str(config_h)) == [
+            {"id": 0, "width": 320, "height": 272, "pfb_width": 40, "pfb_height": 34},
+            {"id": 1, "width": 128, "height": 64, "pfb_width": 10, "pfb_height": 8},
+        ]

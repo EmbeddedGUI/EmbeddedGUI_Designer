@@ -2154,6 +2154,32 @@ class TestApplyDesignerProjectScaffold:
         assert (project_dir / ".designer" / "build_designer.mk").is_file()
         assert (project_dir / ".designer" / "app_egui_config_designer.h").is_file()
 
+    def test_save_project_with_designer_scaffold_preserves_multi_display_sidecars(self, tmp_path):
+        project_dir = tmp_path / "SavedMultiDisplayHelperApp"
+        project = build_empty_project_model(
+            "SavedMultiDisplayHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            pages=["home"],
+        )
+        project.displays = [
+            {"width": 320, "height": 240},
+            {"width": 128, "height": 64, "pfb_width": 12, "pfb_height": 7},
+        ]
+
+        actions = save_project_with_designer_scaffold(project, str(project_dir))
+        designer_config = (project_dir / ".designer" / "app_egui_config_designer.h").read_text(encoding="utf-8")
+        project_xml = (project_dir / "SavedMultiDisplayHelperApp.egui").read_text(encoding="utf-8")
+
+        assert actions[APP_CONFIG_DESIGNER_RELPATH] == "created"
+        assert "#define EGUI_CONFIG_MAX_DISPLAY_COUNT 2" in designer_config
+        assert "#define EGUI_CONFIG_SCEEN_1_WIDTH  128" in designer_config
+        assert "#define EGUI_CONFIG_PFB_1_HEIGHT   7" in designer_config
+        assert "<Displays>" in project_xml
+        assert '<Display id="1" width="128" height="64" pfb_width="12" pfb_height="7" />' in project_xml
+
     def test_save_project_with_designer_scaffold_refreshes_designer_resource_config_on_overwrite(self, tmp_path):
         project_dir = tmp_path / "OverwriteHelperApp"
         designer_resource_path = (
@@ -2678,6 +2704,53 @@ class TestApplyDesignerProjectScaffold:
         assert project.screen_width == 240
         assert project.screen_height == 320
         assert project_path == os.path.normpath(str(app_dir / "LegacyWrappedApp.egui"))
+
+    def test_save_empty_sdk_example_project_with_designer_scaffold_preserves_multi_display_config(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        app_dir = sdk_root / "example" / "LegacyMultiDisplayApp"
+        designer_dir = app_dir / ".designer"
+        designer_dir.mkdir(parents=True)
+        (app_dir / "app_egui_config.h").write_text(
+            (
+                "#define EGUI_CONFIG_SCEEN_WIDTH  320\n"
+                f'#include "{APP_CONFIG_DESIGNER_RELPATH}"\n'
+            ),
+            encoding="utf-8",
+        )
+        (designer_dir / "app_egui_config_designer.h").write_text(
+            (
+                "#define EGUI_CONFIG_SCEEN_WIDTH  480\n"
+                "#define EGUI_CONFIG_SCEEN_HEIGHT 272\n"
+                "#define EGUI_CONFIG_PFB_WIDTH  (EGUI_CONFIG_SCEEN_WIDTH / 8)\n"
+                "#define EGUI_CONFIG_PFB_HEIGHT (EGUI_CONFIG_SCEEN_HEIGHT / 8)\n"
+                "#define EGUI_CONFIG_MAX_DISPLAY_COUNT 2\n"
+                "#define EGUI_CONFIG_SCEEN_1_WIDTH  128\n"
+                "#define EGUI_CONFIG_SCEEN_1_HEIGHT 64\n"
+                "#define EGUI_CONFIG_PFB_1_WIDTH    (EGUI_CONFIG_SCEEN_1_WIDTH / 8)\n"
+                "#define EGUI_CONFIG_PFB_1_HEIGHT   7\n"
+            ),
+            encoding="utf-8",
+        )
+
+        project, project_path = save_empty_sdk_example_project_with_designer_scaffold(
+            str(sdk_root),
+            "LegacyMultiDisplayApp",
+        )
+
+        assert project.project_dir == os.path.normpath(str(app_dir))
+        assert project.screen_width == 320
+        assert project.screen_height == 272
+        assert project.displays == [
+            {"id": 0, "width": 320, "height": 272, "pfb_width": 40, "pfb_height": 34},
+            {"id": 1, "width": 128, "height": 64, "pfb_width": 16, "pfb_height": 7},
+        ]
+        assert project_path == os.path.normpath(str(app_dir / "LegacyMultiDisplayApp.egui"))
+        assert '<Display id="1" width="128" height="64" pfb_width="16" pfb_height="7" />' in (
+            app_dir / "LegacyMultiDisplayApp.egui"
+        ).read_text(encoding="utf-8")
+        assert "#define EGUI_CONFIG_MAX_DISPLAY_COUNT 2" in (
+            designer_dir / "app_egui_config_designer.h"
+        ).read_text(encoding="utf-8")
 
     def test_scaffold_designer_project_combines_sidecars_and_core_templates(self, tmp_path):
         project_dir = tmp_path / "FullApp"

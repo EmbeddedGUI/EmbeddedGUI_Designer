@@ -7,6 +7,7 @@ Qt-free so both the GUI and CLI helpers can share the same behavior.
 
 from __future__ import annotations
 
+import ast
 import json
 import os
 import re
@@ -1061,36 +1062,206 @@ def parse_define_int(content: str, macro_name: str, default=None):
     return int(number_match.group(0))
 
 
-def read_app_config_dimensions(config_path: str, default_width=240, default_height=320):
-    """Read screen dimensions from a wrapper config and its designer include."""
-    width = None
-    height = None
+def _parse_define_map(content: str):
+    defines = {}
+    for match in re.finditer(
+        r"^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)\s+(.+?)\s*$",
+        content or "",
+        re.MULTILINE,
+    ):
+        value = match.group(2).split("//", 1)[0].strip()
+        if value:
+            defines[match.group(1)] = value
+    return defines
 
-    def _consume(path):
-        nonlocal width, height
-        if not path or not os.path.isfile(path):
-            return ""
+
+def _eval_define_int_expr(node, defines, cache, stack):
+    if isinstance(node, ast.Expression):
+        return _eval_define_int_expr(node.body, defines, cache, stack)
+    if isinstance(node, ast.Constant) and isinstance(node.value, int):
+        return int(node.value)
+    if isinstance(node, ast.Name):
+        return _resolve_define_int(defines, node.id, None, cache, stack)
+    if isinstance(node, ast.UnaryOp) and type(node.op) in {ast.UAdd, ast.USub, ast.Invert}:
+        value = _eval_define_int_expr(node.operand, defines, cache, stack)
+        if value is None:
+            return None
+        if isinstance(node.op, ast.UAdd):
+            return +value
+        if isinstance(node.op, ast.USub):
+            return -value
+        return ~value
+    if isinstance(node, ast.BinOp) and type(node.op) in {
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.FloorDiv,
+        ast.Mod,
+        ast.BitOr,
+        ast.BitAnd,
+        ast.BitXor,
+        ast.LShift,
+        ast.RShift,
+    }:
+        left = _eval_define_int_expr(node.left, defines, cache, stack)
+        right = _eval_define_int_expr(node.right, defines, cache, stack)
+        if left is None or right is None:
+            return None
+        if isinstance(node.op, ast.Add):
+            return left + right
+        if isinstance(node.op, ast.Sub):
+            return left - right
+        if isinstance(node.op, ast.Mult):
+            return left * right
+        if isinstance(node.op, (ast.Div, ast.FloorDiv)):
+            if right == 0:
+                return None
+            return left // right
+        if isinstance(node.op, ast.Mod):
+            if right == 0:
+                return None
+            return left % right
+        if isinstance(node.op, ast.BitOr):
+            return left | right
+        if isinstance(node.op, ast.BitAnd):
+            return left & right
+        if isinstance(node.op, ast.BitXor):
+            return left ^ right
+        if isinstance(node.op, ast.LShift):
+            return left << right
+        return left >> right
+    return None
+
+
+def _resolve_define_int(defines, macro_name: str, default=None, cache=None, stack=None):
+    cache = {} if cache is None else cache
+    stack = set() if stack is None else stack
+
+    if macro_name in cache:
+        return cache[macro_name]
+    if macro_name in stack:
+        return default
+
+    expr = str((defines or {}).get(macro_name, "") or "").strip()
+    if not expr:
+        return default
+
+    stack.add(macro_name)
+    try:
         try:
-            with open(path, "r", encoding="utf-8") as f:
-                content = f.read()
-        except OSError:
-            return ""
-        if width is None:
-            width = parse_define_int(content, "EGUI_CONFIG_SCEEN_WIDTH", None)
-        if height is None:
-            height = parse_define_int(content, "EGUI_CONFIG_SCEEN_HEIGHT", None)
-        return content
+            parsed = ast.parse(expr, mode="eval")
+        except SyntaxError:
+            value = default
+        else:
+            value = _eval_define_int_expr(parsed, defines, cache, stack)
+            if value is None:
+                number_match = re.fullmatch(r"[-+]?\d+", expr)
+                value = int(number_match.group(0)) if number_match else default
+    finally:
+        stack.remove(macro_name)
 
-    wrapper_content = _consume(config_path)
+    if value is not None:
+        cache[macro_name] = int(value)
+    return value
+
+
+def _read_app_config_define_map(config_path: str):
+    if not config_path or not os.path.isfile(config_path):
+        return {}
+
+    wrapper_content = _read_text_file(config_path) or ""
+    defines = {}
+
     include_target = app_config_designer_include_target(wrapper_content)
     if include_target:
         designer_path = os.path.normpath(os.path.join(os.path.dirname(config_path), include_target))
-        _consume(designer_path)
+        defines.update(_parse_define_map(_read_text_file(designer_path) or ""))
 
-    return (
-        width if width is not None else default_width,
-        height if height is not None else default_height,
+    defines.update(_parse_define_map(wrapper_content))
+    return defines
+
+
+def read_app_config_displays(config_path: str, default_width=240, default_height=320):
+    """Read normalized display configs from a wrapper config and its designer include."""
+    defines = _read_app_config_define_map(config_path)
+    cache = {}
+
+    primary_width = _resolve_define_int(defines, "EGUI_CONFIG_SCEEN_WIDTH", default_width, cache)
+    primary_height = _resolve_define_int(defines, "EGUI_CONFIG_SCEEN_HEIGHT", default_height, cache)
+    primary_width = int(primary_width if primary_width is not None else default_width)
+    primary_height = int(primary_height if primary_height is not None else default_height)
+
+    displays = [
+        {
+            "width": primary_width,
+            "height": primary_height,
+            "pfb_width": _resolve_define_int(
+                defines,
+                "EGUI_CONFIG_PFB_WIDTH",
+                default_display_pfb_dimension(primary_width),
+                cache,
+            ),
+            "pfb_height": _resolve_define_int(
+                defines,
+                "EGUI_CONFIG_PFB_HEIGHT",
+                default_display_pfb_dimension(primary_height),
+                cache,
+            ),
+        }
+    ]
+
+    explicit_count = _resolve_define_int(defines, "EGUI_CONFIG_MAX_DISPLAY_COUNT", None, cache)
+    display_ids = set()
+    for macro_name in defines:
+        match = re.match(r"^EGUI_CONFIG_(?:SCEEN|PFB)_(\d+)_(?:WIDTH|HEIGHT)$", macro_name)
+        if match:
+            display_ids.add(int(match.group(1)))
+    if explicit_count is not None and explicit_count > 1:
+        display_ids.update(range(1, int(explicit_count)))
+
+    for display_id in sorted(display_ids):
+        width = _resolve_define_int(defines, f"EGUI_CONFIG_SCEEN_{display_id}_WIDTH", None, cache)
+        height = _resolve_define_int(defines, f"EGUI_CONFIG_SCEEN_{display_id}_HEIGHT", None, cache)
+        if width is None and height is None:
+            continue
+        width = int(width if width is not None else primary_width)
+        height = int(height if height is not None else primary_height)
+        displays.append(
+            {
+                "width": width,
+                "height": height,
+                "pfb_width": _resolve_define_int(
+                    defines,
+                    f"EGUI_CONFIG_PFB_{display_id}_WIDTH",
+                    default_display_pfb_dimension(width),
+                    cache,
+                ),
+                "pfb_height": _resolve_define_int(
+                    defines,
+                    f"EGUI_CONFIG_PFB_{display_id}_HEIGHT",
+                    default_display_pfb_dimension(height),
+                    cache,
+                ),
+            }
+        )
+
+    return normalize_display_configs(
+        displays,
+        primary_width=primary_width,
+        primary_height=primary_height,
     )
+
+
+def read_app_config_dimensions(config_path: str, default_width=240, default_height=320):
+    """Read screen dimensions from a wrapper config and its designer include."""
+    displays = read_app_config_displays(
+        config_path,
+        default_width=default_width,
+        default_height=default_height,
+    )
+    primary = displays[0]
+    return int(primary["width"]), int(primary["height"])
 
 
 def build_mk_includes_designer(content: str) -> bool:
@@ -1480,6 +1651,7 @@ def sync_project_scaffold_sidecars(
     screen_width=240,
     screen_height=320,
     *,
+    displays=None,
     color_depth=16,
     circle_radius=None,
     extra_config_macros=None,
@@ -1532,6 +1704,7 @@ def sync_project_scaffold_sidecars(
                 app_name,
                 screen_width,
                 screen_height,
+                displays=displays,
                 color_depth=color_depth,
                 circle_radius=circle_radius,
             ),
@@ -1549,6 +1722,7 @@ def sync_project_scaffold_sidecars(
             app_name,
             screen_width,
             screen_height,
+            displays=displays,
             color_depth=color_depth,
             circle_radius=circle_radius,
             extra_macros=extra_config_macros,
@@ -1598,11 +1772,23 @@ def build_empty_project_model(
     sdk_root="",
     project_dir="",
     pages=None,
+    displays=None,
 ):
     """Build a minimal Designer project model with default empty pages."""
     from ..model.project import Project
 
-    project = Project(screen_width=screen_width, screen_height=screen_height, app_name=app_name)
+    normalized_displays = normalize_display_configs(
+        displays,
+        primary_width=screen_width,
+        primary_height=screen_height,
+    )
+    primary_display = normalized_displays[0]
+    project = Project(
+        screen_width=int(primary_display["width"]),
+        screen_height=int(primary_display["height"]),
+        app_name=app_name,
+    )
+    project.displays = normalized_displays
     bind_project_storage(project, project_dir, sdk_root=sdk_root)
 
     normalized_pages = normalize_scaffold_pages(pages)
@@ -2821,13 +3007,14 @@ def build_project_model_only_with_widget(
     )
 
 
-def build_empty_project_xml(app_name, screen_width=240, screen_height=320, *, stored_sdk_root="", pages=None):
+def build_empty_project_xml(app_name, screen_width=240, screen_height=320, *, stored_sdk_root="", pages=None, displays=None):
     """Build an empty ``.egui`` project XML using the shared project model."""
     project = build_empty_project_model(
         app_name,
         screen_width,
         screen_height,
         pages=pages,
+        displays=displays,
     )
     return project.to_xml_string(stored_sdk_root=stored_sdk_root)
 
@@ -2859,6 +3046,7 @@ def sync_project_scaffold_core_files(
     *,
     stored_sdk_root="",
     pages=None,
+    displays=None,
 ):
     """Create or refresh the core scaffold files for a Designer project."""
     project_dir = os.path.normpath(project_dir)
@@ -2884,6 +3072,7 @@ def sync_project_scaffold_core_files(
             screen_height,
             stored_sdk_root=stored_sdk_root,
             pages=normalized_pages,
+            displays=displays,
         ),
     )
     actions[RESOURCE_CATALOG_RELPATH] = _write_text_if_missing(
@@ -2905,6 +3094,7 @@ def apply_designer_project_scaffold(
     screen_width=240,
     screen_height=320,
     *,
+    displays=None,
     overwrite=False,
     color_depth=16,
     circle_radius=None,
@@ -2921,6 +3111,7 @@ def apply_designer_project_scaffold(
         app_name,
         screen_width,
         screen_height,
+        displays=displays,
         color_depth=color_depth,
         circle_radius=circle_radius,
         extra_config_macros=extra_config_macros,
@@ -2971,6 +3162,7 @@ def save_project_with_designer_scaffold(
         project.app_name,
         project.screen_width,
         project.screen_height,
+        displays=getattr(project, "displays", None),
         overwrite=overwrite,
         color_depth=color_depth,
         circle_radius=circle_radius,
@@ -3154,6 +3346,7 @@ def build_empty_project_model_and_save(
     *,
     sdk_root="",
     pages=None,
+    displays=None,
     project_customizer=None,
     before_save=None,
     with_designer_scaffold=False,
@@ -3172,6 +3365,7 @@ def build_empty_project_model_and_save(
         sdk_root=sdk_root,
         project_dir=project_dir,
         pages=pages,
+        displays=displays,
     )
     if callable(project_customizer):
         project_customizer(project)
@@ -3198,6 +3392,7 @@ def build_saved_project_model(
     *,
     sdk_root="",
     pages=None,
+    displays=None,
     project_customizer=None,
     before_save=None,
     with_designer_scaffold=False,
@@ -3217,6 +3412,7 @@ def build_saved_project_model(
             screen_height,
             sdk_root=sdk_root,
             pages=pages,
+            displays=displays,
             project_customizer=project_customizer,
             before_save=before_save,
             with_designer_scaffold=with_designer_scaffold,
@@ -3838,6 +4034,7 @@ def save_empty_project_with_designer_scaffold(
     *,
     sdk_root="",
     pages=None,
+    displays=None,
     project_customizer=None,
     overwrite_scaffold=False,
     color_depth=16,
@@ -3854,6 +4051,7 @@ def save_empty_project_with_designer_scaffold(
         screen_height,
         sdk_root=sdk_root,
         pages=pages,
+        displays=displays,
         project_customizer=project_customizer,
         with_designer_scaffold=True,
         overwrite_scaffold=overwrite_scaffold,
@@ -3887,11 +4085,20 @@ def save_empty_sdk_example_project_with_designer_scaffold(
     if not app_dir or not project_path:
         raise ValueError("sdk_root and app_name are required")
 
-    screen_width, screen_height = read_app_config_dimensions(
+    displays = read_app_config_displays(
         paths["app_config_path"],
         default_width,
         default_height,
     )
+    primary_display = displays[0]
+    screen_width = int(primary_display["width"])
+    screen_height = int(primary_display["height"])
+
+    def _combined_project_customizer(project):
+        project.displays = displays
+        if callable(project_customizer):
+            project_customizer(project)
+
     project = save_empty_project_with_designer_scaffold(
         app_name,
         app_dir,
@@ -3899,7 +4106,8 @@ def save_empty_sdk_example_project_with_designer_scaffold(
         screen_height,
         sdk_root=sdk_root,
         pages=pages,
-        project_customizer=project_customizer,
+        displays=displays,
+        project_customizer=_combined_project_customizer,
         overwrite_scaffold=overwrite_scaffold,
         color_depth=color_depth,
         circle_radius=circle_radius,
@@ -3918,6 +4126,7 @@ def scaffold_designer_project(
     *,
     stored_sdk_root="",
     pages=None,
+    displays=None,
     overwrite=False,
     color_depth=16,
     circle_radius=None,
@@ -3931,6 +4140,7 @@ def scaffold_designer_project(
         app_name,
         screen_width,
         screen_height,
+        displays=displays,
         overwrite=overwrite,
         color_depth=color_depth,
         circle_radius=circle_radius,
@@ -3946,6 +4156,7 @@ def scaffold_designer_project(
             screen_height,
             stored_sdk_root=stored_sdk_root,
             pages=pages,
+            displays=displays,
         )
     )
     return actions
@@ -3959,6 +4170,7 @@ def scaffold_designer_project_with_sdk_root(
     screen_height=320,
     *,
     pages=None,
+    displays=None,
     overwrite=False,
     color_depth=16,
     circle_radius=None,
@@ -3976,6 +4188,7 @@ def scaffold_designer_project_with_sdk_root(
         screen_height,
         stored_sdk_root=serialize_sdk_root(project_dir, sdk_root),
         pages=pages,
+        displays=displays,
         overwrite=overwrite,
         color_depth=color_depth,
         circle_radius=circle_radius,
@@ -3993,6 +4206,7 @@ def scaffold_conversion_project_with_sdk_root(
     screen_height=320,
     *,
     pages=None,
+    displays=None,
     color_depth=16,
 ):
     """Apply the shared conversion/import scaffold defaults using a relative SDK root."""
@@ -4003,6 +4217,7 @@ def scaffold_conversion_project_with_sdk_root(
         screen_width,
         screen_height,
         pages=pages,
+        displays=displays,
         **designer_conversion_scaffold_kwargs(
             screen_width,
             screen_height,
@@ -4018,6 +4233,7 @@ def scaffold_sdk_example_conversion_project(
     screen_height=320,
     *,
     pages=None,
+    displays=None,
     color_depth=16,
 ):
     """Apply conversion/import scaffold defaults to an SDK example app."""
@@ -4031,6 +4247,7 @@ def scaffold_sdk_example_conversion_project(
         screen_width,
         screen_height,
         pages=pages,
+        displays=displays,
         color_depth=color_depth,
     )
 
@@ -4042,6 +4259,7 @@ def scaffold_sdk_example_conversion_project_context(
     screen_height=320,
     *,
     pages=None,
+    displays=None,
     color_depth=16,
 ):
     """Apply conversion/import scaffold defaults and return the SDK example path bundle."""
@@ -4051,6 +4269,7 @@ def scaffold_sdk_example_conversion_project_context(
         screen_width,
         screen_height,
         pages=pages,
+        displays=displays,
         color_depth=color_depth,
     )
     return sdk_example_paths(sdk_root, app_name), actions
@@ -4063,6 +4282,7 @@ def scaffold_sdk_example_conversion_paths(
     screen_height=320,
     *,
     pages=None,
+    displays=None,
     color_depth=16,
 ):
     """Apply conversion/import scaffold defaults and return only the SDK example path bundle."""
@@ -4073,6 +4293,7 @@ def scaffold_sdk_example_conversion_paths(
             screen_width,
             screen_height,
             pages=pages,
+            displays=displays,
             color_depth=color_depth,
         )
     )
@@ -4110,6 +4331,7 @@ def ensure_conversion_project_scaffold_with_sdk_root(
     screen_height=320,
     *,
     pages=None,
+    displays=None,
     color_depth=16,
 ):
     """Create a conversion/import scaffold only when the target directory is missing."""
@@ -4120,6 +4342,7 @@ def ensure_conversion_project_scaffold_with_sdk_root(
         screen_width,
         screen_height,
         pages=pages,
+        displays=displays,
         **designer_conversion_scaffold_kwargs(
             screen_width,
             screen_height,
@@ -4135,6 +4358,7 @@ def ensure_sdk_example_conversion_project_scaffold(
     screen_height=320,
     *,
     pages=None,
+    displays=None,
     color_depth=16,
 ):
     """Create a conversion/import scaffold for an SDK example app when missing."""
@@ -4148,6 +4372,7 @@ def ensure_sdk_example_conversion_project_scaffold(
         screen_width,
         screen_height,
         pages=pages,
+        displays=displays,
         color_depth=color_depth,
     )
     return app_dir, created, actions
@@ -4160,6 +4385,7 @@ def ensure_sdk_example_conversion_project_context(
     screen_height=320,
     *,
     pages=None,
+    displays=None,
     color_depth=16,
 ):
     """Ensure conversion/import scaffold and return the SDK example path bundle."""
@@ -4169,6 +4395,7 @@ def ensure_sdk_example_conversion_project_context(
         screen_width,
         screen_height,
         pages=pages,
+        displays=displays,
         color_depth=color_depth,
     )
     return sdk_example_paths(sdk_root, app_name), created, actions
@@ -4181,6 +4408,7 @@ def ensure_sdk_example_conversion_paths(
     screen_height=320,
     *,
     pages=None,
+    displays=None,
     color_depth=16,
 ):
     """Ensure conversion/import scaffold and return the SDK example path bundle plus create state."""
@@ -4191,6 +4419,7 @@ def ensure_sdk_example_conversion_paths(
             screen_width,
             screen_height,
             pages=pages,
+            displays=displays,
             color_depth=color_depth,
         )
     )
