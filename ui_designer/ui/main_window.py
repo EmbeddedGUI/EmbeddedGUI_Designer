@@ -1619,6 +1619,10 @@ class MainWindow(QMainWindow):
             target = self._insert_target_summary(parent)
             tooltip = f"Open the Components panel and insert a component into {target}."
             accessible_name = f"Insert component target: {target}."
+        display_target = self._project_display_target_nav_text()
+        if display_target:
+            tooltip = f"{tooltip} {display_target}"
+            accessible_name = f"{accessible_name} {display_target}"
         self._set_metadata_summary(self._insert_widget_button, tooltip, accessible_name)
 
     def _action_hint(self, base_text, enabled, blocked_reason=""):
@@ -2047,6 +2051,10 @@ class MainWindow(QMainWindow):
         else:
             tooltip = "Show the bottom tools panel."
             accessible_name = "Bottom tools toggle: hidden. Activate to show."
+        display_target = self._project_display_target_nav_text()
+        if display_target:
+            tooltip = f"{tooltip} {display_target}"
+            accessible_name = f"{accessible_name} {display_target}"
         self._set_metadata_summary(self._bottom_toggle_button, tooltip, accessible_name)
 
     def _current_tab_text(self, tab_widget, fallback):
@@ -2127,6 +2135,7 @@ class MainWindow(QMainWindow):
                 tooltip,
                 accessible_name,
             )
+        self._update_bottom_toggle_button_metadata()
         self._update_workspace_layout_metadata()
 
     def _update_workspace_layout_metadata(self):
@@ -5921,6 +5930,7 @@ class MainWindow(QMainWindow):
         self.widget_tree.set_project(self._page_shim)
         self.page_fields_panel.set_page(page)
         self.page_timers_panel.set_page(page)
+        self._update_widget_browser_target()
 
         # Update preview & XML
         self._update_preview_overlay()

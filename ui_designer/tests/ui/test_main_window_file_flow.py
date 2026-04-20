@@ -11317,6 +11317,12 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_frame.accessibleName() == (
             "Workspace panel tabs. Current panel: Project. Display target: Display 0 (primary only)."
         )
+        assert window._insert_widget_button.toolTip() == (
+            "Open the Components panel and insert a component into root_group. Display target: Display 0 (primary only)."
+        )
+        assert window._insert_widget_button.accessibleName() == (
+            "Insert component target: root_group. Display target: Display 0 (primary only)."
+        )
         assert window._compile_action.toolTip() == (
             "Compile the current project and run the preview (F5). "
             "Project: open. SDK: valid. Preview: editing only. Display target: Display 0 (primary only). "
@@ -11404,6 +11410,12 @@ class TestMainWindowFileFlow:
         )
         assert window._bottom_header.accessibleName() == (
             "Bottom tools header. Current section: Diagnostics. Panel hidden. Display target: Display 0 (primary only)."
+        )
+        assert window._bottom_toggle_button.toolTip() == (
+            "Show the bottom tools panel. Display target: Display 0 (primary only)."
+        )
+        assert window._bottom_toggle_button.accessibleName() == (
+            "Bottom tools toggle: hidden. Activate to show. Display target: Display 0 (primary only)."
         )
         assert window._bottom_shell.accessibleName() == (
             "Workspace bottom shell. Current section: Diagnostics. Panel hidden. Current page: main_page. "
