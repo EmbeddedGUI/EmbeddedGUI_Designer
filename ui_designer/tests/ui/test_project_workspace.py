@@ -208,6 +208,44 @@ class TestProjectWorkspacePanel:
         )
         panel.deleteLater()
 
+    def test_workspace_snapshot_reports_multi_display_primary_scope(self, qapp):
+        from ui_designer.ui.project_workspace import ProjectWorkspacePanel
+
+        panel = ProjectWorkspacePanel(QWidget(), QWidget())
+
+        panel.set_workspace_snapshot(
+            page_count=2,
+            active_page="main_page",
+            startup_page="main_page",
+            display_count=2,
+        )
+
+        assert panel._view_chip.text() == "List view | Primary display"
+        assert panel._view_chip.accessibleName() == (
+            "Workspace view: List view. Multi-display project: editing and preview use the primary display."
+        )
+        assert panel._summary_label.text() == "2 pages. Active: main_page. Clean."
+        assert panel._meta_label.text() == "Startup: main_page | 2 displays | Editing/preview: primary display only"
+        assert panel._meta_label.accessibleName() == (
+            "Pages startup summary: Startup: main_page | 2 displays | Editing/preview: primary display only"
+        )
+        assert panel._metrics_frame.accessibleName() == (
+            "Project workspace metrics: 2 pages. No dirty pages. Display scope: 2 displays; "
+            "editing and preview target the primary display."
+        )
+        assert panel.accessibleName() == (
+            "Project workspace: List view. Pages: 2 pages. Active page: main_page. Startup page: main_page. "
+            "Dirty state: No dirty pages. Display scope: 2 displays; editing and preview target the primary display."
+        )
+
+        panel.set_view(ProjectWorkspacePanel.VIEW_THUMBNAILS)
+
+        assert panel._view_chip.text() == "Thumbnails | Primary display"
+        assert panel._view_chip.accessibleName() == (
+            "Workspace view: Thumbnails. Multi-display project: editing and preview use the primary display."
+        )
+        panel.deleteLater()
+
     def test_workspace_snapshot_reports_project_level_and_page_dirty_reason_summary(self, qapp):
         from ui_designer.ui.project_workspace import ProjectWorkspacePanel
 
@@ -261,6 +299,30 @@ class TestProjectWorkspacePanel:
             project_dirty=True,
             project_dirty_reason="startup page, resources",
         )
+        assert metadata_updates == 2
+        panel.deleteLater()
+
+    def test_workspace_snapshot_refreshes_when_display_count_changes(self, qapp, monkeypatch):
+        from ui_designer.ui.project_workspace import ProjectWorkspacePanel
+
+        panel = ProjectWorkspacePanel(QWidget(), QWidget())
+        metadata_updates = 0
+        original_update_panel_metadata = panel._update_panel_metadata
+
+        def counted_update_panel_metadata():
+            nonlocal metadata_updates
+            metadata_updates += 1
+            return original_update_panel_metadata()
+
+        monkeypatch.setattr(panel, "_update_panel_metadata", counted_update_panel_metadata)
+
+        panel.set_workspace_snapshot(page_count=2, active_page="main_page", display_count=1)
+        assert metadata_updates == 1
+
+        panel.set_workspace_snapshot(page_count=2, active_page="main_page", display_count=1)
+        assert metadata_updates == 1
+
+        panel.set_workspace_snapshot(page_count=2, active_page="main_page", display_count=2)
         assert metadata_updates == 2
         panel.deleteLater()
 

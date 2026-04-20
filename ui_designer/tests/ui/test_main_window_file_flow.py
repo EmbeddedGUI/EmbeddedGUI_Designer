@@ -11202,6 +11202,49 @@ class TestMainWindowFileFlow:
         assert window._center_shell.accessibleName() == "Workspace center shell. Current page: detail_page. Mode: Design."
         _close_window(window)
 
+    def test_workspace_status_reports_multi_display_primary_scope(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MultiDisplayWorkspaceDemo"
+        project = _create_project(
+            project_dir,
+            "MultiDisplayWorkspaceDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        project.displays = [
+            {"width": 320, "height": 240},
+            {"width": 128, "height": 64},
+        ]
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        assert window._workspace_context_label.toolTip() == (
+            "Current workspace context: MultiDisplayWorkspaceDemo. Current page: main_page. Project contains 2 pages. "
+            "Multi-display project: editing and preview target the primary display."
+        )
+        assert window._workspace_status_label.text() == (
+            "Page: main_page | Preview: Editing Only | Displays: 2 total, primary only | Selection: none "
+            "| Warnings: 0 | Ready"
+        )
+        assert window._project_workspace._view_chip.text() == "List view | Primary display"
+        assert window._project_workspace._view_chip.accessibleName() == (
+            "Workspace view: List view. Multi-display project: editing and preview use the primary display."
+        )
+        assert window._project_workspace._meta_label.text() == (
+            "Startup: main_page | 2 displays | Editing/preview: primary display only"
+        )
+        assert window._project_workspace.accessibleName() == (
+            "Project workspace: List view. Pages: 2 pages. Active page: main_page. Startup page: main_page. "
+            "Dirty state: No dirty pages. Display scope: 2 displays; editing and preview target the primary display."
+        )
+        _close_window(window)
+
     def test_page_navigator_copy_and_template_add_keep_pages_in_sync(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 

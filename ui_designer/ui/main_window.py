@@ -2203,6 +2203,25 @@ class MainWindow(QMainWindow):
         widget._metadata_summary_snapshot = snapshot
         return True
 
+    def _project_display_count(self):
+        project = getattr(self, "project", None)
+        if project is None:
+            return 0
+        displays = list(getattr(project, "displays", None) or [])
+        return len(displays) if displays else 1
+
+    def _multi_display_scope_note(self):
+        display_count = self._project_display_count()
+        if display_count <= 1:
+            return ""
+        return "Multi-display project: editing and preview target the primary display."
+
+    def _multi_display_status_text(self):
+        display_count = self._project_display_count()
+        if display_count <= 1:
+            return ""
+        return f"{display_count} total, primary only"
+
     def _update_workspace_context_label(self, *, page_count=0):
         if getattr(self, "project", None) is None:
             text = "No project open"
@@ -2213,6 +2232,9 @@ class MainWindow(QMainWindow):
             text = f"{project_label} / {current_page}"
             page_label = f"{page_count} page" if page_count == 1 else f"{page_count} pages"
             tooltip = f"Current workspace context: {project_label}. Current page: {current_page}. Project contains {page_label}."
+            multi_display_note = self._multi_display_scope_note()
+            if multi_display_note:
+                tooltip = f"{tooltip} {multi_display_note}"
         self._workspace_context_summary = {"text": text, "tooltip": tooltip}
         if hasattr(self, "_workspace_context_label"):
             self._workspace_context_label.setText(text)
@@ -2330,8 +2352,10 @@ class MainWindow(QMainWindow):
             selection_count=selection_count,
         )
         preview_text = self._preview_mode_text()
+        multi_display_text = self._multi_display_status_text()
+        display_segment = f" | Displays: {multi_display_text}" if multi_display_text else ""
         summary = (
-            f"Page: {current_page} | Preview: {preview_text} | Selection: {selection_text} "
+            f"Page: {current_page} | Preview: {preview_text}{display_segment} | Selection: {selection_text} "
             f"| Warnings: {warning_count} | {hint}"
         )
         self._workspace_status_label.setText(summary)
@@ -2399,6 +2423,7 @@ class MainWindow(QMainWindow):
                 active_page=active_page_name,
                 startup_page=startup_page_name,
                 dirty_pages=dirty_count,
+                display_count=self._project_display_count(),
                 project_dirty=self._project_dirty,
                 project_dirty_reason=self._project_dirty_reason_text(),
             )

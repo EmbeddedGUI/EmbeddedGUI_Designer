@@ -52,6 +52,7 @@ class ProjectWorkspacePanel(QWidget):
         self._current_active_page = ""
         self._current_startup_page = ""
         self._current_dirty_pages = 0
+        self._current_display_count = 0
         self._has_project_dirty = False
         self._project_dirty_reason = ""
         self._current_view_name = ""
@@ -171,9 +172,17 @@ class ProjectWorkspacePanel(QWidget):
         active_text = self._current_active_page or "none"
         startup_text = self._current_startup_page or "none"
         dirty_count = int(self._current_dirty_pages or 0)
+        display_count = max(int(self._current_display_count or 0), 0)
         has_project_dirty = bool(self._has_project_dirty)
         project_dirty_reason = str(self._project_dirty_reason or "").strip()
         project_dirty_suffix = f" ({project_dirty_reason})" if project_dirty_reason else ""
+        multi_display = display_count > 1
+        display_count_text = f"{display_count} display" if display_count == 1 else f"{display_count} displays"
+        display_scope_text = (
+            f"{display_count_text}; editing and preview target the primary display"
+            if multi_display
+            else ""
+        )
         if dirty_count == 0 and not has_project_dirty:
             dirty_text = "No dirty pages"
             summary_dirty_text = "Clean"
@@ -191,15 +200,38 @@ class ProjectWorkspacePanel(QWidget):
             dirty_text = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
             summary_dirty_text = dirty_text
             chip_text = dirty_text
-        summary = (
-            f"Project workspace: {view_label}. "
-            f"Pages: {page_label}. Active page: {active_text}. Startup page: {startup_text}. Dirty state: {dirty_text}."
-        )
-        self._view_chip.setText(view_label)
+        if multi_display:
+            summary = (
+                f"Project workspace: {view_label}. "
+                f"Pages: {page_label}. Active page: {active_text}. Startup page: {startup_text}. "
+                f"Dirty state: {dirty_text}. Display scope: {display_scope_text}."
+            )
+            view_chip_text = f"{view_label} | Primary display"
+            view_chip_summary = (
+                f"Workspace view: {view_label}. Multi-display project: editing and preview use the primary display."
+            )
+            metrics_summary = (
+                f"Project workspace metrics: {page_label}. {dirty_text}. Display scope: {display_scope_text}."
+            )
+            meta_parts = [
+                f"Startup: {startup_text}",
+                display_count_text,
+                "Editing/preview: primary display only",
+            ]
+        else:
+            summary = (
+                f"Project workspace: {view_label}. "
+                f"Pages: {page_label}. Active page: {active_text}. Startup page: {startup_text}. Dirty state: {dirty_text}."
+            )
+            view_chip_text = view_label
+            view_chip_summary = f"Workspace view: {view_label}."
+            metrics_summary = f"Project workspace metrics: {page_label}. {dirty_text}."
+            meta_parts = [f"Startup: {startup_text}"]
+        self._view_chip.setText(view_chip_text)
         self._page_count_chip.setText(page_label)
         self._dirty_chip.setText(chip_text)
         self._summary_label.setText(f"{page_label}. Active: {active_text}. {summary_dirty_text}.")
-        self._meta_label.setText(f"Startup: {startup_text}")
+        self._meta_label.setText(" | ".join(meta_parts))
 
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
@@ -224,8 +256,8 @@ class ProjectWorkspacePanel(QWidget):
         )
         _set_widget_metadata(
             self._view_chip,
-            tooltip=f"Workspace view: {view_label}.",
-            accessible_name=f"Workspace view: {view_label}.",
+            tooltip=view_chip_summary,
+            accessible_name=view_chip_summary,
         )
         _set_widget_metadata(
             self._page_count_chip,
@@ -239,8 +271,8 @@ class ProjectWorkspacePanel(QWidget):
         )
         _set_widget_metadata(
             self._metrics_frame,
-            tooltip=f"Project workspace metrics: {page_label}. {dirty_text}.",
-            accessible_name=f"Project workspace metrics: {page_label}. {dirty_text}.",
+            tooltip=metrics_summary,
+            accessible_name=metrics_summary,
         )
         _set_widget_metadata(
             self._summary_label,
@@ -325,11 +357,13 @@ class ProjectWorkspacePanel(QWidget):
         active_page="",
         startup_page="",
         dirty_pages=0,
+        display_count=0,
         project_dirty=False,
         project_dirty_reason="",
     ):
         pages = max(int(page_count or 0), 0)
         dirty = max(int(dirty_pages or 0), 0)
+        displays = max(int(display_count or 0), 0)
         has_project_dirty = bool(project_dirty)
         dirty_reason = str(project_dirty_reason or "").strip()
         active = str(active_page or "").strip() or "None"
@@ -342,6 +376,7 @@ class ProjectWorkspacePanel(QWidget):
             and self._current_active_page == normalized_active
             and self._current_startup_page == normalized_startup
             and self._current_dirty_pages == dirty
+            and self._current_display_count == displays
             and self._has_project_dirty == has_project_dirty
             and self._project_dirty_reason == dirty_reason
         ):
@@ -350,6 +385,7 @@ class ProjectWorkspacePanel(QWidget):
         self._current_active_page = normalized_active
         self._current_startup_page = normalized_startup
         self._current_dirty_pages = dirty
+        self._current_display_count = displays
         self._has_project_dirty = has_project_dirty
         self._project_dirty_reason = dirty_reason
         self._workspace_snapshot_initialized = True
