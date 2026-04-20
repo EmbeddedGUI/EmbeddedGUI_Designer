@@ -37,6 +37,7 @@ from ..model.string_resource import parse_string_ref
 from ..utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
     BUILD_DESIGNER_RELPATH,
+    UICODE_DISP_HEADER_RELPATH,
     UICODE_HEADER_RELPATH,
     UICODE_SOURCE_RELPATH,
     designer_page_header_relpath,
@@ -398,7 +399,7 @@ def _emit_property_code(widget, prop_name, prop_def, cg, cast, indent):
     return None
 
 
-def _gen_widget_init_lines(widget, indent="    "):
+def _gen_widget_init_lines(widget, indent="    ", *, core_expr="core"):
     """Generate explicit API calls to init a single widget.
 
     Uses ``local->{name}`` as the widget reference (inside on_open).
@@ -418,7 +419,7 @@ def _gen_widget_init_lines(widget, indent="    "):
     # Init
     init_func = _simple_init_func(wt)
     if init_func:
-        lines.append(f"{indent}{init_func}({cast});")
+        lines.append(f"{indent}{init_func}({cast}, {core_expr});")
 
     # Position & Size
     lines.append(f"{indent}egui_view_set_position({cast}, {widget.x}, {widget.y});")
@@ -831,7 +832,7 @@ def generate_page_header(page, project):
     lines.append(
         f"// Page init (auto-generated in {designer_page_layout_relpath(name)})"
     )
-    lines.append(f"void {struct_name}_init(egui_page_base_t *self);")
+    lines.append(f"void {struct_name}_init(egui_page_base_t *self, egui_core_t *core);")
     lines.append("")
     if generated_timers:
         lines.append(
@@ -948,6 +949,7 @@ def generate_page_layout_source(page, project):
         lines.extend(anim_decl_lines)
         lines.append("")
 
+    auto_start_timers = [timer for timer in generated_timers if timer.get("auto_start")]
     if generated_timers:
         callback_names = sorted({timer["callback"] for timer in generated_timers if timer.get("callback")})
         if callback_names:
@@ -955,8 +957,6 @@ def generate_page_layout_source(page, project):
             for callback_name in callback_names:
                 lines.append(f"extern void {callback_name}(egui_timer_t *timer);")
             lines.append("")
-
-        auto_start_timers = [timer for timer in generated_timers if timer.get("auto_start")]
 
         lines.append(f"void {helper_names['init']}(egui_page_base_t *self)")
         lines.append("{")
@@ -974,7 +974,7 @@ def generate_page_layout_source(page, project):
         if auto_start_timers:
             for timer in auto_start_timers:
                 lines.append(
-                    f"    egui_timer_start_timer(&local->{timer['name']}, {timer['delay_ms']}, {timer['period_ms']});"
+                    f"    egui_page_base_start_timer(self, &local->{timer['name']}, {timer['delay_ms']}, {timer['period_ms']});"
                 )
         else:
             lines.append("    EGUI_UNUSED(local);")
@@ -985,7 +985,7 @@ def generate_page_layout_source(page, project):
         lines.append("{")
         lines.append(f"    {struct_type} *local = ({struct_type} *)self;")
         for timer in generated_timers:
-            lines.append(f"    egui_timer_stop_timer(&local->{timer['name']});")
+            lines.append(f"    egui_page_base_stop_timer(self, &local->{timer['name']});")
         lines.append("}")
         lines.append("")
 
@@ -993,6 +993,8 @@ def generate_page_layout_source(page, project):
     lines.append(f"void {prefix}_layout_init(egui_page_base_t *self)")
     lines.append("{")
     lines.append(f"    {struct_type} *local = ({struct_type} *)self;")
+    lines.append("    egui_core_t *core = egui_page_base_get_core(self);")
+    lines.append("    EGUI_UNUSED(core);")
     lines.append("")
 
     field_init_lines = []
@@ -1009,7 +1011,7 @@ def generate_page_layout_source(page, project):
         # Init each widget
         lines.append("    // Init views")
         for w in all_widgets:
-            lines.extend(_gen_widget_init_lines(w))
+            lines.extend(_gen_widget_init_lines(w, core_expr="core"))
             lines.append("")
 
         # Set backgrounds
@@ -1149,11 +1151,11 @@ def generate_page_layout_source(page, project):
     lines.append("};")
     lines.append("")
 
-    lines.append(f"void {prefix}_init(egui_page_base_t *self)")
+    lines.append(f"void {prefix}_init(egui_page_base_t *self, egui_core_t *core)")
     lines.append("{")
     lines.append(f"    {struct_type} *local = ({struct_type} *)self;")
     lines.append("    EGUI_UNUSED(local);")
-    lines.append("    egui_page_base_init(self);")
+    lines.append("    egui_page_base_init(self, core);")
     lines.append(f"    self->api = &EGUI_VIEW_API_TABLE_NAME({struct_type});")
     if has_timers:
         lines.append(f"    {helper_names['init']}(self);")
@@ -1396,6 +1398,7 @@ def generate_uicode_header(project):
     lines.append("void uicode_switch_page(int page_index);")
     lines.append("int uicode_start_next_page(void);")
     lines.append("int uicode_start_prev_page(void);")
+    lines.append("void uicode_disp0_init(egui_core_t *core);")
     lines.append("void uicode_create_ui(void);")
     lines.append("")
     lines.append("/* Ends C function definitions when using C++ */")
@@ -1406,6 +1409,20 @@ def generate_uicode_header(project):
     lines.append("#endif /* _UICODE_H_ */")
     lines.append("")
 
+    return "\n".join(lines)
+
+
+def generate_uicode_disp0_header(project):
+    """Generate a compatibility header for the new SDK display entrypoint."""
+    _ = project
+    lines = []
+    lines.append("#ifndef _UICODE_DISP0_H_")
+    lines.append("#define _UICODE_DISP0_H_")
+    lines.append("")
+    lines.append('#include "uicode.h"')
+    lines.append("")
+    lines.append("#endif /* _UICODE_DISP0_H_ */")
+    lines.append("")
     return "\n".join(lines)
 
 
@@ -1433,6 +1450,7 @@ def _gen_uicode_easy_page(project):
     # Toast
     lines.append("static egui_toast_std_t toast;")
     lines.append("static egui_page_base_t *current_page = NULL;")
+    lines.append("static egui_core_t *s_uicode_core = NULL;")
     lines.append("")
 
     # Page union
@@ -1456,10 +1474,16 @@ def _gen_uicode_easy_page(project):
     # uicode_switch_page
     lines.append("void uicode_switch_page(int page_index)")
     lines.append("{")
+    lines.append("    egui_core_t *core = egui_toast_get_core((egui_toast_t *)&toast);")
+    lines.append("    if (core == NULL)")
+    lines.append("    {")
+    lines.append("        return;")
+    lines.append("    }")
+    lines.append("")
     lines.append("    current_index = page_index;")
     lines.append("")
     lines.append('    egui_api_sprintf(toast_str, "Start page %d", page_index);')
-    lines.append("    egui_core_toast_show_info(toast_str);")
+    lines.append("    egui_toast_show_info((egui_toast_t *)&toast, toast_str);")
     lines.append("")
     lines.append("    if (current_page)")
     lines.append("    {")
@@ -1472,7 +1496,7 @@ def _gen_uicode_easy_page(project):
         lines.append(f"    case {i}:")
         lines.append(
             f"        egui_{page.name}_init("
-            f"(egui_page_base_t *)&g_page_array.{page.name});"
+            f"(egui_page_base_t *)&g_page_array.{page.name}, core);"
         )
         lines.append(
             f"        current_page = "
@@ -1493,7 +1517,7 @@ def _gen_uicode_easy_page(project):
     lines.append("    int page_index = current_index + 1;")
     lines.append("    if (page_index >= PAGE_COUNT)")
     lines.append("    {")
-    lines.append('        egui_core_toast_show_info("No more next page");')
+    lines.append('        egui_toast_show_info((egui_toast_t *)&toast, "No more next page");')
     lines.append("        return -1;")
     lines.append("    }")
     lines.append("")
@@ -1508,7 +1532,7 @@ def _gen_uicode_easy_page(project):
     lines.append("    int page_index = current_index - 1;")
     lines.append("    if (page_index < 0)")
     lines.append("    {")
-    lines.append('        egui_core_toast_show_info("No more previous page");')
+    lines.append('        egui_toast_show_info((egui_toast_t *)&toast, "No more previous page");')
     lines.append("        return -1;")
     lines.append("    }")
     lines.append("")
@@ -1533,26 +1557,42 @@ def _gen_uicode_easy_page(project):
     lines.append("")
 
     # uicode_init_ui
-    lines.append("void uicode_init_ui(void)")
+    lines.append("static void uicode_init_ui(egui_core_t *core)")
     lines.append("{")
+    lines.append("    if (core == NULL)")
+    lines.append("    {")
+    lines.append("        return;")
+    lines.append("    }")
+    lines.append("")
+    lines.append("    s_uicode_core = core;")
     if has_i18n:
         lines.append("    // Initialize i18n string tables")
         lines.append("    egui_strings_init();")
         lines.append("")
+    lines.append("    // Init toast")
+    lines.append("    egui_toast_std_init((egui_toast_t *)&toast, core);")
+    lines.append("    egui_toast_set_as_default((egui_toast_t *)&toast);")
+    lines.append("")
     lines.append("    // Start with startup page")
+    lines.append("    current_page = NULL;")
     lines.append(f"    current_index = {startup_index};")
     lines.append(f"    uicode_switch_page({startup_index});")
+    lines.append("}")
     lines.append("")
-    lines.append("    // Init toast")
-    lines.append("    egui_toast_std_init((egui_toast_t *)&toast);")
-    lines.append("    egui_core_toast_set((egui_toast_t *)&toast);")
+
+    lines.append("void uicode_disp0_init(egui_core_t *core)")
+    lines.append("{")
+    lines.append("    uicode_init_ui(core);")
     lines.append("}")
     lines.append("")
 
     # uicode_create_ui
     lines.append("void uicode_create_ui(void)")
     lines.append("{")
-    lines.append("    uicode_init_ui();")
+    lines.append("    if (s_uicode_core != NULL)")
+    lines.append("    {")
+    lines.append("        uicode_init_ui(s_uicode_core);")
+    lines.append("    }")
     lines.append("}")
     lines.append("")
 
@@ -1662,7 +1702,7 @@ def _gen_uicode_activity(project):
         lines.append("{")
         lines.append(f"    egui_activity_on_create(self);")
         lines.append(f"    {adapter}_t *w = ({adapter}_t *)self;")
-        lines.append(f"    egui_{page.name}_init((egui_page_base_t *)&w->page_data);")
+        lines.append(f"    egui_{page.name}_init((egui_page_base_t *)&w->page_data, egui_activity_get_core(self));")
         lines.append(f"    egui_page_base_open((egui_page_base_t *)&w->page_data);")
         lines.append("}")
         lines.append("")
@@ -1688,9 +1728,9 @@ def _gen_uicode_activity(project):
         lines.append("")
 
         # init
-        lines.append(f"static void {adapter}_init(egui_activity_t *self)")
+        lines.append(f"static void {adapter}_init(egui_activity_t *self, egui_core_t *core)")
         lines.append("{")
-        lines.append(f"    egui_activity_init(self);")
+        lines.append(f"    egui_activity_init(self, core);")
         lines.append(f"    self->api = &{adapter}_api;")
         lines.append("}")
         lines.append("")
@@ -1705,6 +1745,7 @@ def _gen_uicode_activity(project):
     lines.append("static union page_array g_page_array;")
     lines.append("static int current_index = 0;")
     lines.append("static egui_toast_std_t toast;")
+    lines.append("static egui_core_t *s_uicode_core = NULL;")
     lines.append("static char toast_str[50];")
     lines.append("")
 
@@ -1717,11 +1758,24 @@ def _gen_uicode_activity(project):
     # uicode_switch_page
     lines.append("void uicode_switch_page(int page_index)")
     lines.append("{")
+    lines.append("    egui_activity_t *current_activity = NULL;")
+    lines.append("    if (s_uicode_core == NULL)")
+    lines.append("    {")
+    lines.append("        return;")
+    lines.append("    }")
+    lines.append("")
+    lines.append("    current_activity = egui_core_activity_get_current(s_uicode_core);")
     lines.append("    current_index = page_index;")
     lines.append('    egui_api_sprintf(toast_str, "Start page %d", page_index);')
-    lines.append("    egui_core_toast_show_info(toast_str);")
-    lines.append("")
-    lines.append("    egui_core_activity_back();")
+    lines.append("    if (current_activity != NULL)")
+    lines.append("    {")
+    lines.append("        egui_activity_show_toast_info(current_activity, toast_str);")
+    lines.append("        egui_activity_finish(current_activity);")
+    lines.append("    }")
+    lines.append("    else")
+    lines.append("    {")
+    lines.append("        egui_toast_show_info((egui_toast_t *)&toast, toast_str);")
+    lines.append("    }")
     lines.append("")
     lines.append("    switch (page_index)")
     lines.append("    {")
@@ -1730,11 +1784,11 @@ def _gen_uicode_activity(project):
         lines.append(f"    case {i}:")
         lines.append(
             f"        {adapter}_init("
-            f"(egui_activity_t *)&g_page_array.{page.name});"
+            f"(egui_activity_t *)&g_page_array.{page.name}, s_uicode_core);"
         )
         lines.append(
-            f"        egui_core_activity_start("
-            f"(egui_activity_t *)&g_page_array.{page.name});"
+            f"        egui_activity_start("
+            f"(egui_activity_t *)&g_page_array.{page.name}, NULL);"
         )
         lines.append("        break;")
     lines.append("    default:")
@@ -1749,7 +1803,15 @@ def _gen_uicode_activity(project):
     lines.append("    int page_index = current_index + 1;")
     lines.append("    if (page_index >= PAGE_COUNT)")
     lines.append("    {")
-    lines.append('        egui_core_toast_show_info("No more next page");')
+    lines.append("        egui_activity_t *current_activity = egui_core_activity_get_current(s_uicode_core);")
+    lines.append("        if (current_activity != NULL)")
+    lines.append("        {")
+    lines.append('            egui_activity_show_toast_info(current_activity, "No more next page");')
+    lines.append("        }")
+    lines.append("        else")
+    lines.append("        {")
+    lines.append('            egui_toast_show_info((egui_toast_t *)&toast, "No more next page");')
+    lines.append("        }")
     lines.append("        return -1;")
     lines.append("    }")
     lines.append("    uicode_switch_page(page_index);")
@@ -1761,7 +1823,15 @@ def _gen_uicode_activity(project):
     lines.append("    int page_index = current_index - 1;")
     lines.append("    if (page_index < 0)")
     lines.append("    {")
-    lines.append('        egui_core_toast_show_info("No more previous page");')
+    lines.append("        egui_activity_t *current_activity = egui_core_activity_get_current(s_uicode_core);")
+    lines.append("        if (current_activity != NULL)")
+    lines.append("        {")
+    lines.append('            egui_activity_show_toast_info(current_activity, "No more previous page");')
+    lines.append("        }")
+    lines.append("        else")
+    lines.append("        {")
+    lines.append('            egui_toast_show_info((egui_toast_t *)&toast, "No more previous page");')
+    lines.append("        }")
     lines.append("        return -1;")
     lines.append("    }")
     lines.append("    uicode_switch_page(page_index);")
@@ -1770,22 +1840,36 @@ def _gen_uicode_activity(project):
     lines.append("")
 
     # uicode_init_ui / create_ui
-    lines.append("void uicode_init_ui(void)")
+    lines.append("static void uicode_init_ui(egui_core_t *core)")
     lines.append("{")
+    lines.append("    if (core == NULL)")
+    lines.append("    {")
+    lines.append("        return;")
+    lines.append("    }")
+    lines.append("")
+    lines.append("    s_uicode_core = core;")
     if has_i18n:
         lines.append("    // Initialize i18n string tables")
         lines.append("    egui_strings_init();")
         lines.append("")
+    lines.append("    egui_toast_std_init((egui_toast_t *)&toast, core);")
+    lines.append("    egui_toast_set_as_default((egui_toast_t *)&toast);")
+    lines.append("")
     lines.append(f"    current_index = {startup_index};")
     lines.append(f"    uicode_switch_page({startup_index});")
+    lines.append("}")
     lines.append("")
-    lines.append("    egui_toast_std_init((egui_toast_t *)&toast);")
-    lines.append("    egui_core_toast_set((egui_toast_t *)&toast);")
+    lines.append("void uicode_disp0_init(egui_core_t *core)")
+    lines.append("{")
+    lines.append("    uicode_init_ui(core);")
     lines.append("}")
     lines.append("")
     lines.append("void uicode_create_ui(void)")
     lines.append("{")
-    lines.append("    uicode_init_ui();")
+    lines.append("    if (s_uicode_core != NULL)")
+    lines.append("    {")
+    lines.append("        uicode_init_ui(s_uicode_core);")
+    lines.append("    }")
     lines.append("}")
     lines.append("")
 
@@ -1871,6 +1955,7 @@ def generate_all_files(project):
         )
 
     files[UICODE_HEADER_RELPATH] = (generate_uicode_header(project), GENERATED_ALWAYS)
+    files[UICODE_DISP_HEADER_RELPATH] = (generate_uicode_disp0_header(project), GENERATED_ALWAYS)
     files[UICODE_SOURCE_RELPATH] = (generate_uicode_source(project), GENERATED_ALWAYS)
     files[BUILD_DESIGNER_RELPATH] = (
         make_app_build_designer_mk_content(project.app_name),
@@ -2071,6 +2156,7 @@ def generate_uicode(project):
         '#include "egui.h"\n'
         '#include "uicode.h"\n'
         "\n"
-        "void uicode_init_ui(void) {}\n"
-        "void uicode_create_ui(void) { uicode_init_ui(); }\n"
+        "static void uicode_init_ui(egui_core_t *core) { EGUI_UNUSED(core); }\n"
+        "void uicode_disp0_init(egui_core_t *core) { uicode_init_ui(core); }\n"
+        "void uicode_create_ui(void) {}\n"
     )

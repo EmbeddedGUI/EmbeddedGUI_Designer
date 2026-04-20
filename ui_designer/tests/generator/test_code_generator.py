@@ -521,9 +521,9 @@ class TestGeneratePageLayoutSource:
         assert "void egui_main_page_timers_init(egui_page_base_t *self)" in output
         assert "egui_timer_init_timer(&local->refresh_timer, (void *)local, tick_refresh);" in output
         assert "void egui_main_page_timers_start_auto(egui_page_base_t *self)" in output
-        assert "egui_timer_start_timer(&local->refresh_timer, 500, 1000);" in output
+        assert "egui_page_base_start_timer(self, &local->refresh_timer, 500, 1000);" in output
         assert "void egui_main_page_timers_stop(egui_page_base_t *self)" in output
-        assert "egui_timer_stop_timer(&local->refresh_timer);" in output
+        assert "egui_page_base_stop_timer(self, &local->refresh_timer);" in output
 
     def test_layout_source_lifecycle_wrappers_call_page_hook_macros(self):
         page, proj = self._make_page_with_children()

@@ -17,9 +17,11 @@ RE_TYPEDEF = re.compile(
     r'typedef\s+struct\s+(egui_view_\w+)\s+\1_t\s*;'
 )
 
-# void egui_view_xxx_init(egui_view_t *self);
+# void egui_view_xxx_init(egui_view_t *self, egui_core_t *core);
 RE_INIT = re.compile(
-    r'void\s+(egui_view_\w+_init)\s*\(\s*egui_view_t\s*\*\s*self\s*\)\s*;'
+    r'void\s+(egui_view_\w+_init)\s*\('
+    r'\s*egui_view_t\s*\*\s*self\s*'
+    r'(?:,\s*egui_core_t\s*\*\s*core\s*)?\)\s*;'
 )
 
 # void egui_view_xxx_init_with_params(egui_view_t *self, const xxx_params_t *params);
