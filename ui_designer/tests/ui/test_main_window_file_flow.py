@@ -11237,6 +11237,11 @@ class TestMainWindowFileFlow:
             "Display target: Display 0 (primary only)."
         )
         assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
+        assert window._toolbar_meta_label.text() == (
+            "Design mode. Project panel. Current page: main_page. "
+            "Display target: Display 0 (primary only). Use commands to insert, save, build, and check runtime."
+        )
+        assert window._toolbar_meta_label.accessibleName() == window._toolbar_meta_label.text()
         assert window._workspace_status_label.text() == (
             "Page: main_page | Preview: Editing Only | Displays: 2 total, primary only | Selection: none "
             "| Warnings: 0 | Ready"

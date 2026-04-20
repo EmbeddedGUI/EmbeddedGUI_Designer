@@ -2394,13 +2394,14 @@ class MainWindow(QMainWindow):
         current_panel = self._workspace_panel_label(getattr(self, "_current_left_panel", "project"))
         current_mode = self._editor_mode_label(getattr(getattr(self, "editor_tabs", None), "mode", MODE_DESIGN))
         current_page = self._current_page_accessibility_text()
+        display_target = self._project_display_target_nav_text()
         if getattr(self, "project", None) is None:
             summary = "Open a project to enable insert, save, preview, and mode controls."
         else:
-            summary = (
-                f"{current_mode} mode. {current_panel} panel. Current page: {current_page}. "
-                "Use commands to insert, save, build, and check runtime."
-            )
+            summary = f"{current_mode} mode. {current_panel} panel. Current page: {current_page}. "
+            if display_target:
+                summary = f"{summary}{display_target} "
+            summary = f"{summary}Use commands to insert, save, build, and check runtime."
         if hasattr(self, "_toolbar_command_row"):
             self._set_metadata_summary(
                 self._toolbar_command_row,
