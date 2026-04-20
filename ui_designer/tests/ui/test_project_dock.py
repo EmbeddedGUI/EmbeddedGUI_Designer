@@ -88,6 +88,9 @@ class TestProjectExplorerDock:
         assert dock._header_frame.accessibleName() == (
             "Project explorer header. Project Explorer: 0 pages. Current page: none. Startup page: none. No dirty pages."
         )
+        assert dock._display_metric_value.text() == "No project"
+        assert dock._primary_metric_value.text() == "Not set"
+        assert dock._display_detail_label.text() == "Load or create a project to inspect displays."
         assert dock._title_label.accessibleName() == "Project panel title."
         assert dock._subtitle_label.accessibleName() == dock._subtitle_label.text()
         assert dock._subtitle_label.isHidden() is True
@@ -102,6 +105,9 @@ class TestProjectExplorerDock:
         assert dock._header_frame.accessibleName() == (
             "Project explorer header. Project Explorer: 2 pages. Current page: main_page. Startup page: main_page. 1 dirty page."
         )
+        assert dock._display_metric_value.text() == "1 display"
+        assert dock._primary_metric_value.text() == "240 x 320"
+        assert dock._display_detail_label.text() == "Primary display only."
         assert dock._status_label.accessibleName() == "Project explorer status: mode easy_page. Current page: main_page"
         dock.deleteLater()
 
@@ -111,15 +117,24 @@ class TestProjectExplorerDock:
         dock = ProjectExplorerDock()
 
         assert dock.accessibleName() == "Project Explorer: 0 pages. Current page: none. Startup page: none. No dirty pages."
-        assert dock._settings_group.toolTip() == "Project settings: 0 pages. Current mode: easy_page."
+        assert dock._settings_group.toolTip() == (
+            "Project settings: 0 pages. Current mode: easy_page. Displays: No project. "
+            "Primary canvas: Not set. Load or create a project to inspect displays."
+        )
         assert dock._settings_group.statusTip() == dock._settings_group.toolTip()
-        assert dock._settings_group.accessibleName() == "Project settings: 0 pages. Current mode: easy_page."
+        assert dock._settings_group.accessibleName() == dock._settings_group.toolTip()
         assert dock._mode_label.toolTip() == "Choose how pages are generated for the current project. Current mode: easy_page."
         assert dock._mode_label.statusTip() == dock._mode_label.toolTip()
         assert dock._mode_label.accessibleName() == (
             "Page mode label. Current mode: easy_page. "
             "Choose how pages are generated for the current project. Current mode: easy_page."
         )
+        assert dock._display_metric_value.toolTip() == "Displays: No project."
+        assert dock._display_metric_value.accessibleName() == "Displays: No project."
+        assert dock._primary_metric_value.toolTip() == "Primary canvas: Not set."
+        assert dock._primary_metric_value.accessibleName() == "Primary canvas: Not set."
+        assert dock._display_detail_label.toolTip() == "Display summary: Load or create a project to inspect displays."
+        assert dock._display_detail_label.accessibleName() == "Display summary: Load or create a project to inspect displays."
         assert dock._page_tree.accessibleName() == "Project pages: 0 pages. Current page: none. Startup page: none. No dirty pages."
         assert dock._mode_combo.toolTip() == "Choose how pages are generated for the current project. Current mode: easy_page."
         assert dock._mode_combo.statusTip() == dock._mode_combo.toolTip()
@@ -139,12 +154,21 @@ class TestProjectExplorerDock:
         dock.set_dirty_pages({"detail_page"})
 
         assert dock.accessibleName() == "Project Explorer: 2 pages. Current page: main_page. Startup page: main_page. 1 dirty page."
-        assert dock._settings_group.toolTip() == "Project settings: 2 pages. Current mode: easy_page."
-        assert dock._settings_group.accessibleName() == "Project settings: 2 pages. Current mode: easy_page."
+        assert dock._settings_group.toolTip() == (
+            "Project settings: 2 pages. Current mode: easy_page. Displays: 1 display. "
+            "Primary canvas: 240 x 320. Primary display only."
+        )
+        assert dock._settings_group.accessibleName() == dock._settings_group.toolTip()
         assert dock._mode_label.accessibleName() == (
             "Page mode label. Current mode: easy_page. "
             "Choose how pages are generated for the current project. Current mode: easy_page."
         )
+        assert dock._display_metric_value.toolTip() == "Displays: 1 display."
+        assert dock._display_metric_value.accessibleName() == "Displays: 1 display."
+        assert dock._primary_metric_value.toolTip() == "Primary canvas: 240 x 320."
+        assert dock._primary_metric_value.accessibleName() == "Primary canvas: 240 x 320."
+        assert dock._display_detail_label.toolTip() == "Display summary: Primary display only."
+        assert dock._display_detail_label.accessibleName() == "Display summary: Primary display only."
         assert dock._pages_label.toolTip() == dock.accessibleName()
         assert dock._pages_label.accessibleName() == "Pages: 2 pages. Current page: main_page. Startup page: main_page."
         assert dock._page_tree.toolTip() == dock.accessibleName()
@@ -162,8 +186,11 @@ class TestProjectExplorerDock:
             "Project page mode: activity. "
             "Choose how pages are generated for the current project. Current mode: activity."
         )
-        assert dock._settings_group.toolTip() == "Project settings: 2 pages. Current mode: activity."
-        assert dock._settings_group.accessibleName() == "Project settings: 2 pages. Current mode: activity."
+        assert dock._settings_group.toolTip() == (
+            "Project settings: 2 pages. Current mode: activity. Displays: 1 display. "
+            "Primary canvas: 240 x 320. Primary display only."
+        )
+        assert dock._settings_group.accessibleName() == dock._settings_group.toolTip()
         assert dock._mode_label.toolTip() == "Choose how pages are generated for the current project. Current mode: activity."
         assert dock._mode_label.accessibleName() == (
             "Page mode label. Current mode: activity. "
@@ -181,6 +208,30 @@ class TestProjectExplorerDock:
         assert second.toolTip(0) == "Page: detail_page. Unsaved changes."
         assert first.data(0, Qt.AccessibleTextRole) == first.toolTip(0)
         assert second.data(0, Qt.AccessibleTextRole) == second.toolTip(0)
+        dock.deleteLater()
+
+    def test_display_metrics_summarize_multi_display_projects(self, qapp):
+        from ui_designer.ui.project_dock import ProjectExplorerDock
+
+        dock = ProjectExplorerDock()
+        project = build_test_project(pages=["main_page", "detail_page"])
+        project.displays = [
+            {"width": 320, "height": 240},
+            {"width": 128, "height": 64, "pfb_width": 16, "pfb_height": 7},
+        ]
+
+        dock.set_project(project)
+
+        assert dock._display_metric_value.text() == "2 displays"
+        assert dock._display_metric_value.accessibleName() == "Displays: 2 displays."
+        assert dock._primary_metric_value.text() == "320 x 240"
+        assert dock._primary_metric_value.accessibleName() == "Primary canvas: 320 x 240."
+        assert dock._display_detail_label.text() == "Secondary displays: 1: 128 x 64."
+        assert dock._display_detail_label.accessibleName() == "Display summary: Secondary displays: 1: 128 x 64."
+        assert dock._settings_group.toolTip() == (
+            "Project settings: 2 pages. Current mode: easy_page. Displays: 2 displays. "
+            "Primary canvas: 320 x 240. Secondary displays: 1: 128 x 64."
+        )
         dock.deleteLater()
 
     def test_page_context_menu_actions_expose_dynamic_hints(self, qapp):

@@ -170,6 +170,45 @@ class ProjectExplorerDock(QDockWidget):
         self._mode_combo.currentTextChanged.connect(self._on_mode_changed)
         mode_layout.addWidget(self._mode_combo)
         settings_layout.addLayout(mode_layout)
+
+        metrics_row = QHBoxLayout()
+        metrics_row.setContentsMargins(0, 0, 0, 0)
+        metrics_row.setSpacing(2)
+
+        self._display_metric_card = QFrame()
+        self._display_metric_card.setObjectName("project_dock_metric_card")
+        display_metric_layout = QVBoxLayout(self._display_metric_card)
+        display_metric_layout.setContentsMargins(0, 0, 0, 0)
+        display_metric_layout.setSpacing(2)
+        self._display_metric_label = QLabel("Displays")
+        self._display_metric_label.setObjectName("project_dock_field_label")
+        self._display_metric_value = QLabel("No project")
+        self._display_metric_value.setObjectName("project_dock_metric_value")
+        self._display_metric_value.setWordWrap(True)
+        display_metric_layout.addWidget(self._display_metric_label)
+        display_metric_layout.addWidget(self._display_metric_value)
+        metrics_row.addWidget(self._display_metric_card, 1)
+
+        self._primary_metric_card = QFrame()
+        self._primary_metric_card.setObjectName("project_dock_metric_card")
+        primary_metric_layout = QVBoxLayout(self._primary_metric_card)
+        primary_metric_layout.setContentsMargins(0, 0, 0, 0)
+        primary_metric_layout.setSpacing(2)
+        self._primary_metric_label = QLabel("Primary")
+        self._primary_metric_label.setObjectName("project_dock_field_label")
+        self._primary_metric_value = QLabel("Not set")
+        self._primary_metric_value.setObjectName("project_dock_metric_value")
+        self._primary_metric_value.setWordWrap(True)
+        primary_metric_layout.addWidget(self._primary_metric_label)
+        primary_metric_layout.addWidget(self._primary_metric_value)
+        metrics_row.addWidget(self._primary_metric_card, 1)
+
+        settings_layout.addLayout(metrics_row)
+
+        self._display_detail_label = QLabel("Load or create a project to inspect displays.")
+        self._display_detail_label.setObjectName("project_dock_metric_value")
+        self._display_detail_label.setWordWrap(True)
+        settings_layout.addWidget(self._display_detail_label)
         layout.addWidget(self._settings_group)
 
         # Page tree
@@ -204,6 +243,33 @@ class ProjectExplorerDock(QDockWidget):
         self.setWidget(container)
         self._update_accessibility_summary()
 
+    def _display_settings_summary(self):
+        if not self._project:
+            return "No project", "Not set", "Load or create a project to inspect displays."
+
+        displays = list(getattr(self._project, "displays", None) or [])
+        if not displays:
+            displays = [
+                {
+                    "width": int(getattr(self._project, "screen_width", 240) or 240),
+                    "height": int(getattr(self._project, "screen_height", 320) or 320),
+                }
+            ]
+
+        display_count = len(displays)
+        primary = displays[0]
+        display_count_text = f"{display_count} display" if display_count == 1 else f"{display_count} displays"
+        primary_text = f"{int(primary['width'])} x {int(primary['height'])}"
+        if display_count == 1:
+            detail_text = "Primary display only."
+        else:
+            secondary_parts = [
+                f"{int(display.get('id', index))}: {int(display['width'])} x {int(display['height'])}"
+                for index, display in enumerate(displays[1:], start=1)
+            ]
+            detail_text = f"Secondary displays: {', '.join(secondary_parts)}."
+        return display_count_text, primary_text, detail_text
+
     def _update_accessibility_summary(self):
         page_count = len(getattr(self._project, "pages", []) or [])
         page_label = f"{page_count} page" if page_count == 1 else f"{page_count} pages"
@@ -214,11 +280,18 @@ class ProjectExplorerDock(QDockWidget):
         dirty_count = len(self._dirty_pages)
         dirty_label = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
         mode = str(self._mode_combo.currentText() or "easy_page").strip() or "easy_page"
+        display_count_text, primary_text, display_detail = self._display_settings_summary()
         summary = f"Project Explorer: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}."
-        settings_summary = f"Project settings: {page_label}. Current mode: {mode}."
+        settings_summary = (
+            f"Project settings: {page_label}. Current mode: {mode}. "
+            f"Displays: {display_count_text}. Primary canvas: {primary_text}. {display_detail}"
+        )
         mode_hint = f"Choose how pages are generated for the current project. Current mode: {mode}."
         add_page_hint = self._new_page_action_hint()
         self._status_label.setText(f"Mode {mode} | Current {current_page}")
+        self._display_metric_value.setText(display_count_text)
+        self._primary_metric_value.setText(primary_text)
+        self._display_detail_label.setText(display_detail)
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._header_frame,
@@ -249,6 +322,41 @@ class ProjectExplorerDock(QDockWidget):
             self._mode_combo,
             tooltip=mode_hint,
             accessible_name=f"Project page mode: {mode}. {mode_hint}",
+        )
+        _set_widget_metadata(
+            self._display_metric_label,
+            tooltip="Display count label.",
+            accessible_name="Display count label.",
+        )
+        _set_widget_metadata(
+            self._display_metric_value,
+            tooltip=f"Displays: {display_count_text}.",
+            accessible_name=f"Displays: {display_count_text}.",
+        )
+        _set_widget_metadata(
+            self._display_metric_card,
+            tooltip=f"Display count: {display_count_text}.",
+            accessible_name=f"Display count: {display_count_text}.",
+        )
+        _set_widget_metadata(
+            self._primary_metric_label,
+            tooltip="Primary display label.",
+            accessible_name="Primary display label.",
+        )
+        _set_widget_metadata(
+            self._primary_metric_value,
+            tooltip=f"Primary canvas: {primary_text}.",
+            accessible_name=f"Primary canvas: {primary_text}.",
+        )
+        _set_widget_metadata(
+            self._primary_metric_card,
+            tooltip=f"Primary canvas: {primary_text}.",
+            accessible_name=f"Primary canvas: {primary_text}.",
+        )
+        _set_widget_metadata(
+            self._display_detail_label,
+            tooltip=f"Display summary: {display_detail}",
+            accessible_name=f"Display summary: {display_detail}",
         )
         _set_widget_metadata(
             self._add_page_button,
