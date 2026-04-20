@@ -1180,6 +1180,7 @@ class MainWindow(QMainWindow):
         preview_state = self._build_preview_state_text()
         project_state = "open" if getattr(self, "project", None) is not None else "none"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
+        display_target = self._project_display_target_context_suffix()
         resources_dir = self._get_eguiproject_resource_dir()
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
         self._apply_action_hint(
@@ -1188,7 +1189,7 @@ class MainWindow(QMainWindow):
                 "Compile previews, generate resources, or reconstruct a project from Designer sources. "
                 f"Project: {project_state}. SDK: {sdk_state}. Compile: {compile_state}. Rebuild: {rebuild_state}. Reconstruct: {reconstruct_state}. "
                 f"Auto compile: {auto_compile_state}. "
-                f"Preview: {preview_state}. Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}."
+                f"Preview: {preview_state}.{display_target} Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}."
             ),
         )
 
@@ -1770,14 +1771,16 @@ class MainWindow(QMainWindow):
         project_state = "open" if self.project is not None else "none"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         preview_state = self._build_preview_state_text()
-        return f"Project: {project_state}. SDK: {sdk_state}. Preview: {preview_state}."
+        display_target = self._project_display_target_context_suffix()
+        return f"Project: {project_state}. SDK: {sdk_state}. Preview: {preview_state}.{display_target}"
 
     def _clean_all_action_context_summary(self):
         project_state = "open" if self.project is not None else "none"
         saved_state = "saved" if self._project_dir else "unsaved"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         preview_state = self._build_preview_state_text()
-        return f"Project: {project_state}. Saved project: {saved_state}. SDK: {sdk_state}. Preview: {preview_state}."
+        display_target = self._project_display_target_context_suffix()
+        return f"Project: {project_state}. Saved project: {saved_state}. SDK: {sdk_state}. Preview: {preview_state}.{display_target}"
 
     def _auto_compile_action_context_summary(self):
         return self._compile_action_context_summary()
@@ -2246,6 +2249,12 @@ class MainWindow(QMainWindow):
         if display_count <= 1:
             return ""
         return "Display target: Display 0 (primary only)."
+
+    def _project_display_target_context_suffix(self):
+        display_target = self._project_display_target_nav_text()
+        if not display_target:
+            return ""
+        return f" {display_target}"
 
     def _update_workspace_context_label(self, *, page_count=0):
         if getattr(self, "project", None) is None:

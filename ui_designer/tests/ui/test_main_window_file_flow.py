@@ -11223,10 +11223,39 @@ class TestMainWindowFileFlow:
         _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
+        build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
+        project_resources_dir = window._get_eguiproject_resource_dir()
 
         assert window._workspace_context_label.toolTip() == (
             "Current workspace context: MultiDisplayWorkspaceDemo. Current page: main_page. Project contains 2 pages. "
             "Multi-display project: editing and preview target the primary display."
+        )
+        assert window._compile_action.toolTip() == (
+            "Compile the current project and run the preview (F5). "
+            "Project: open. SDK: valid. Preview: editing only. Display target: Display 0 (primary only). "
+            "Unavailable: preview disabled for test."
+        )
+        assert window._rebuild_action.toolTip() == (
+            "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5). "
+            "Project: open. SDK: valid. Preview: editing only. Display target: Display 0 (primary only). "
+            "Unavailable: preview disabled for test."
+        )
+        assert window._clean_all_action.toolTip() == (
+            "Destructive recovery: delete project-side generated/code files outside the preserved "
+            "Designer source set and reconstruct the project (Ctrl+Shift+F5). "
+            "Project: open. Saved project: saved. SDK: valid. Preview: editing only. Display target: Display 0 (primary only). "
+            "Preview rerun will be skipped: preview disabled for test."
+        )
+        assert window.auto_compile_action.toolTip() == (
+            "Automatically compile and rerun the preview after changes. "
+            "Project: open. SDK: valid. Preview: editing only. Display target: Display 0 (primary only). "
+            "Unavailable: preview disabled for test."
+        )
+        assert build_action.toolTip() == (
+            "Compile previews, generate resources, or reconstruct a project from Designer sources. "
+            "Project: open. SDK: valid. Compile: unavailable. Rebuild: unavailable. Reconstruct: available (preview rerun skipped). "
+            "Auto compile: on. Preview: editing only. Display target: Display 0 (primary only). "
+            f"Source resources: available. Resource directory: {project_resources_dir}."
         )
         assert _left_panel_tab_tooltip(window, "project") == (
             "Currently showing Project panel. View: List view. Active page: main_page. Startup page: main_page. "
