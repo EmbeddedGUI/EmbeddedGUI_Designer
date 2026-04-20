@@ -226,11 +226,15 @@ class TestProjectExplorerDock:
         assert dock._display_metric_value.accessibleName() == "Displays: 2 displays."
         assert dock._primary_metric_value.text() == "320 x 240"
         assert dock._primary_metric_value.accessibleName() == "Primary canvas: 320 x 240."
-        assert dock._display_detail_label.text() == "Secondary displays: 1: 128 x 64."
-        assert dock._display_detail_label.accessibleName() == "Display summary: Secondary displays: 1: 128 x 64."
+        assert dock._display_detail_label.text() == (
+            "Secondary displays: 1: 128 x 64. Editing/preview: primary display only."
+        )
+        assert dock._display_detail_label.accessibleName() == (
+            "Display summary: Secondary displays: 1: 128 x 64. Editing/preview: primary display only."
+        )
         assert dock._settings_group.toolTip() == (
             "Project settings: 2 pages. Current mode: easy_page. Displays: 2 displays. "
-            "Primary canvas: 320 x 240. Secondary displays: 1: 128 x 64."
+            "Primary canvas: 320 x 240. Secondary displays: 1: 128 x 64. Editing/preview: primary display only."
         )
         dock.deleteLater()
 

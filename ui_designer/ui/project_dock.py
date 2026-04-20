@@ -267,7 +267,10 @@ class ProjectExplorerDock(QDockWidget):
                 f"{int(display.get('id', index))}: {int(display['width'])} x {int(display['height'])}"
                 for index, display in enumerate(displays[1:], start=1)
             ]
-            detail_text = f"Secondary displays: {', '.join(secondary_parts)}."
+            detail_text = (
+                f"Secondary displays: {', '.join(secondary_parts)}. "
+                "Editing/preview: primary display only."
+            )
         return display_count_text, primary_text, detail_text
 
     def _update_accessibility_summary(self):
