@@ -877,7 +877,11 @@ class MainWindow(QMainWindow):
             startup_value = str(getattr(project, "startup_page", "") or "").strip()
             if any(getattr(page, "name", None) == startup_value for page in getattr(project, "pages", []) or []):
                 startup_page = startup_value
-        return f"View: {view_label}. Active page: {current_page}. Startup page: {startup_page}."
+        summary = f"View: {view_label}. Active page: {current_page}. Startup page: {startup_page}."
+        display_target = self._project_display_target_nav_text()
+        if display_target:
+            summary = f"{summary} {display_target}"
+        return summary
 
     def _structure_workspace_nav_context(self):
         current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
@@ -2224,6 +2228,12 @@ class MainWindow(QMainWindow):
         if display_count <= 1:
             return ""
         return f"{display_count} total, primary only"
+
+    def _project_display_target_nav_text(self):
+        display_count = self._project_display_count()
+        if display_count <= 1:
+            return ""
+        return "Display target: Display 0 (primary only)."
 
     def _update_workspace_context_label(self, *, page_count=0):
         if getattr(self, "project", None) is None:

@@ -11228,9 +11228,21 @@ class TestMainWindowFileFlow:
             "Current workspace context: MultiDisplayWorkspaceDemo. Current page: main_page. Project contains 2 pages. "
             "Multi-display project: editing and preview target the primary display."
         )
+        assert _left_panel_tab_tooltip(window, "project") == (
+            "Currently showing Project panel. View: List view. Active page: main_page. Startup page: main_page. "
+            "Display target: Display 0 (primary only)."
+        )
         assert window._workspace_status_label.text() == (
             "Page: main_page | Preview: Editing Only | Displays: 2 total, primary only | Selection: none "
             "| Warnings: 0 | Ready"
+        )
+        assert window._left_panel_stack.accessibleName() == (
+            "Workspace panels: Project visible. View: List view. Active page: main_page. Startup page: main_page. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._left_shell.accessibleName() == (
+            "Workspace left shell: Project panel visible. View: List view. Active page: main_page. Startup page: main_page. "
+            "Display target: Display 0 (primary only)."
         )
         assert window._project_workspace._metrics_frame.isHidden() is False
         assert window._project_workspace._view_chip.text() == "List view | Primary display"
