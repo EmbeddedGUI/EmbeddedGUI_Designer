@@ -125,6 +125,41 @@ def _normalize_macro_value(value: str) -> str:
     return re.sub(r"\s+", "", str(value or ""))
 
 
+def default_display_pfb_dimension(size: int) -> int:
+    return int(size or 0) // 8
+
+
+def normalize_display_configs(displays=None, *, primary_width=240, primary_height=320):
+    normalized = []
+    source_displays = list(displays or []) or [{"width": primary_width, "height": primary_height}]
+
+    for index, display in enumerate(source_displays):
+        raw = dict(display or {})
+        width = int(raw.get("width", raw.get("screen_width", primary_width)) or primary_width)
+        height = int(raw.get("height", raw.get("screen_height", primary_height)) or primary_height)
+        pfb_width = raw.get("pfb_width")
+        pfb_height = raw.get("pfb_height")
+        normalized.append(
+            {
+                "id": index,
+                "width": width,
+                "height": height,
+                "pfb_width": (
+                    int(pfb_width)
+                    if pfb_width not in (None, "")
+                    else default_display_pfb_dimension(width)
+                ),
+                "pfb_height": (
+                    int(pfb_height)
+                    if pfb_height not in (None, "")
+                    else default_display_pfb_dimension(height)
+                ),
+            }
+        )
+
+    return normalized
+
+
 def _compact_preserved_lines(lines):
     compacted = []
     pending_blank = False
@@ -146,8 +181,8 @@ def _designer_build_line_keys():
     return {_normalize_make_line(line) for line in _BUILD_DESIGNER_LINES if line.strip()}
 
 
-def _designer_config_equivalent_values(screen_width, screen_height, color_depth, circle_radius):
-    return {
+def _designer_config_equivalent_values(screen_width, screen_height, color_depth, circle_radius, *, displays=None):
+    values = {
         "EGUI_CONFIG_SCEEN_WIDTH": {
             _normalize_macro_value(screen_width),
         },
@@ -178,6 +213,43 @@ def _designer_config_equivalent_values(screen_width, screen_height, color_depth,
             _normalize_macro_value(circle_radius),
         },
     }
+
+    normalized_displays = normalize_display_configs(
+        displays,
+        primary_width=screen_width,
+        primary_height=screen_height,
+    )
+    if len(normalized_displays) > 1:
+        values["EGUI_CONFIG_MAX_DISPLAY_COUNT"] = {
+            _normalize_macro_value(len(normalized_displays)),
+        }
+        for display in normalized_displays[1:]:
+            display_id = int(display["id"])
+            width = int(display["width"])
+            height = int(display["height"])
+            pfb_width = int(display["pfb_width"])
+            pfb_height = int(display["pfb_height"])
+            values[f"EGUI_CONFIG_SCEEN_{display_id}_WIDTH"] = {
+                _normalize_macro_value(width),
+            }
+            values[f"EGUI_CONFIG_SCEEN_{display_id}_HEIGHT"] = {
+                _normalize_macro_value(height),
+            }
+            values[f"EGUI_CONFIG_PFB_{display_id}_WIDTH"] = {
+                _normalize_macro_value(pfb_width),
+                _normalize_macro_value(f"({width} / 8)"),
+                _normalize_macro_value(f"({width}/8)"),
+                _normalize_macro_value(f"(EGUI_CONFIG_SCEEN_{display_id}_WIDTH / 8)"),
+                _normalize_macro_value(f"(EGUI_CONFIG_SCEEN_{display_id}_WIDTH/8)"),
+            }
+            values[f"EGUI_CONFIG_PFB_{display_id}_HEIGHT"] = {
+                _normalize_macro_value(pfb_height),
+                _normalize_macro_value(f"({height} / 8)"),
+                _normalize_macro_value(f"({height}/8)"),
+                _normalize_macro_value(f"(EGUI_CONFIG_SCEEN_{display_id}_HEIGHT / 8)"),
+                _normalize_macro_value(f"(EGUI_CONFIG_SCEEN_{display_id}_HEIGHT/8)"),
+            }
+    return values
 
 
 def _split_local_include_target(content: str, include_name: str) -> str:
@@ -1083,6 +1155,7 @@ def make_app_config_designer_h_content(
     screen_width=240,
     screen_height=320,
     *,
+    displays=None,
     color_depth=16,
     circle_radius=None,
     extra_macros=None,
@@ -1090,6 +1163,24 @@ def make_app_config_designer_h_content(
     """Return Designer-managed ``app_egui_config_designer.h`` content."""
     if circle_radius is None:
         circle_radius = 20
+    normalized_displays = normalize_display_configs(
+        displays,
+        primary_width=screen_width,
+        primary_height=screen_height,
+    )
+    primary_display = normalized_displays[0]
+    primary_pfb_width = int(primary_display["pfb_width"])
+    primary_pfb_height = int(primary_display["pfb_height"])
+    primary_pfb_width_define = (
+        "(EGUI_CONFIG_SCEEN_WIDTH / 8)"
+        if primary_pfb_width == default_display_pfb_dimension(primary_display["width"])
+        else str(primary_pfb_width)
+    )
+    primary_pfb_height_define = (
+        "(EGUI_CONFIG_SCEEN_HEIGHT / 8)"
+        if primary_pfb_height == default_display_pfb_dimension(primary_display["height"])
+        else str(primary_pfb_height)
+    )
 
     lines = [
         f"#ifndef {APP_CONFIG_DESIGNER_GUARD}",
@@ -1098,19 +1189,19 @@ def make_app_config_designer_h_content(
         f"/* Designer-managed defaults for {app_name} */",
         "",
         "#ifndef EGUI_CONFIG_SCEEN_WIDTH",
-        f"#define EGUI_CONFIG_SCEEN_WIDTH  {screen_width}",
+        f"#define EGUI_CONFIG_SCEEN_WIDTH  {primary_display['width']}",
         "#endif",
         "",
         "#ifndef EGUI_CONFIG_SCEEN_HEIGHT",
-        f"#define EGUI_CONFIG_SCEEN_HEIGHT {screen_height}",
+        f"#define EGUI_CONFIG_SCEEN_HEIGHT {primary_display['height']}",
         "#endif",
         "",
         "#ifndef EGUI_CONFIG_PFB_WIDTH",
-        "#define EGUI_CONFIG_PFB_WIDTH  (EGUI_CONFIG_SCEEN_WIDTH / 8)",
+        f"#define EGUI_CONFIG_PFB_WIDTH  {primary_pfb_width_define}",
         "#endif",
         "",
         "#ifndef EGUI_CONFIG_PFB_HEIGHT",
-        "#define EGUI_CONFIG_PFB_HEIGHT (EGUI_CONFIG_SCEEN_HEIGHT / 8)",
+        f"#define EGUI_CONFIG_PFB_HEIGHT {primary_pfb_height_define}",
         "#endif",
         "",
         "#ifndef EGUI_CONFIG_COLOR_DEPTH",
@@ -1125,6 +1216,48 @@ def make_app_config_designer_h_content(
         f"#define EGUI_CONFIG_CIRCLE_SUPPORT_RADIUS_BASIC_RANGE {circle_radius}",
         "#endif",
     ]
+
+    if len(normalized_displays) > 1:
+        lines.extend(
+            [
+                "",
+                "#ifndef EGUI_CONFIG_MAX_DISPLAY_COUNT",
+                f"#define EGUI_CONFIG_MAX_DISPLAY_COUNT {len(normalized_displays)}",
+                "#endif",
+            ]
+        )
+        for display in normalized_displays[1:]:
+            display_id = int(display["id"])
+            pfb_width_define = (
+                f"(EGUI_CONFIG_SCEEN_{display_id}_WIDTH / 8)"
+                if int(display["pfb_width"]) == default_display_pfb_dimension(display["width"])
+                else str(int(display["pfb_width"]))
+            )
+            pfb_height_define = (
+                f"(EGUI_CONFIG_SCEEN_{display_id}_HEIGHT / 8)"
+                if int(display["pfb_height"]) == default_display_pfb_dimension(display["height"])
+                else str(int(display["pfb_height"]))
+            )
+            lines.extend(
+                [
+                    "",
+                    f"#ifndef EGUI_CONFIG_SCEEN_{display_id}_WIDTH",
+                    f"#define EGUI_CONFIG_SCEEN_{display_id}_WIDTH  {int(display['width'])}",
+                    "#endif",
+                    "",
+                    f"#ifndef EGUI_CONFIG_SCEEN_{display_id}_HEIGHT",
+                    f"#define EGUI_CONFIG_SCEEN_{display_id}_HEIGHT {int(display['height'])}",
+                    "#endif",
+                    "",
+                    f"#ifndef EGUI_CONFIG_PFB_{display_id}_WIDTH",
+                    f"#define EGUI_CONFIG_PFB_{display_id}_WIDTH    {pfb_width_define}",
+                    "#endif",
+                    "",
+                    f"#ifndef EGUI_CONFIG_PFB_{display_id}_HEIGHT",
+                    f"#define EGUI_CONFIG_PFB_{display_id}_HEIGHT   {pfb_height_define}",
+                    "#endif",
+                ]
+            )
 
     for macro_name, macro_value in extra_macros or []:
         lines.extend(
@@ -1174,6 +1307,7 @@ def migrate_app_config_h_content(
     screen_width=240,
     screen_height=320,
     *,
+    displays=None,
     color_depth=16,
     circle_radius=None,
 ):
@@ -1186,6 +1320,7 @@ def migrate_app_config_h_content(
         screen_height,
         color_depth,
         circle_radius,
+        displays=displays,
     )
     preserved = []
     conditional_depth = 0

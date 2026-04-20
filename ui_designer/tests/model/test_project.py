@@ -45,6 +45,15 @@ class TestProjectDefaults:
         proj = Project()
         assert proj.screen_width == 240
         assert proj.screen_height == 320
+        assert proj.displays == [
+            {
+                "id": 0,
+                "width": 240,
+                "height": 320,
+                "pfb_width": 30,
+                "pfb_height": 40,
+            }
+        ]
         assert proj.app_name == "HelloDesigner"
         assert proj.sdk_root == ""
         assert proj.project_dir == ""
@@ -416,6 +425,30 @@ class TestSaveLoad:
         assert '<PageRef file="layout/detail.xml"' in xml
         assert 'startup="home"' in xml
 
+    def test_to_xml_string_serializes_multi_display_metadata(self):
+        proj = Project(screen_width=240, screen_height=320, app_name="XmlDemo")
+        proj.displays = [
+            {"width": 240, "height": 320},
+            {"width": 128, "height": 64, "pfb_width": 16, "pfb_height": 8},
+        ]
+
+        xml = proj.to_xml_string()
+
+        assert "<Displays>" in xml
+        assert '<Display id="0" width="240" height="320" pfb_width="30" pfb_height="40" />' in xml
+        assert '<Display id="1" width="128" height="64" pfb_width="16" pfb_height="8" />' in xml
+
+    def test_to_xml_string_serializes_primary_custom_pfb_metadata_only_when_needed(self):
+        proj = Project(screen_width=240, screen_height=320, app_name="XmlDemo")
+        proj.displays = [
+            {"width": 240, "height": 320, "pfb_width": 20, "pfb_height": 24},
+        ]
+
+        xml = proj.to_xml_string()
+
+        assert "<Displays>" in xml
+        assert '<Display id="0" width="240" height="320" pfb_width="20" pfb_height="24" />' in xml
+
     @pytest.mark.integration
     def test_save_load_round_trip_preserves_sdk_version_metadata(self, tmp_path, monkeypatch):
         proj = build_test_project(
@@ -509,6 +542,54 @@ class TestSaveLoad:
         home_root = require_page_root(home_page, "home")
         assert len(home_root.children) == 1
         assert home_root.children[0].properties["text"] == "Home Page"
+
+    @pytest.mark.integration
+    def test_save_load_round_trip_preserves_multi_display_metadata(self, tmp_path):
+        proj = build_test_project(
+            "MultiDisplayApp",
+            240,
+            320,
+            sdk_root=str(tmp_path / "sdk"),
+            pages=["main_page"],
+        )
+        proj.displays = [
+            {"width": 240, "height": 320},
+            {"width": 128, "height": 64, "pfb_width": 16, "pfb_height": 8},
+        ]
+
+        project_dir = str(tmp_path / "MultiDisplayApp")
+        proj.save(project_dir)
+
+        loaded = Project.load(project_dir)
+
+        assert loaded.screen_width == 240
+        assert loaded.screen_height == 320
+        assert loaded.displays == [
+            {"id": 0, "width": 240, "height": 320, "pfb_width": 30, "pfb_height": 40},
+            {"id": 1, "width": 128, "height": 64, "pfb_width": 16, "pfb_height": 8},
+        ]
+
+    @pytest.mark.integration
+    def test_save_load_round_trip_preserves_primary_custom_pfb_metadata(self, tmp_path):
+        proj = build_test_project(
+            "PrimaryCustomPfbApp",
+            240,
+            320,
+            sdk_root=str(tmp_path / "sdk"),
+            pages=["main_page"],
+        )
+        proj.displays = [
+            {"width": 240, "height": 320, "pfb_width": 20, "pfb_height": 24},
+        ]
+
+        project_dir = str(tmp_path / "PrimaryCustomPfbApp")
+        proj.save(project_dir)
+
+        loaded = Project.load(project_dir)
+
+        assert loaded.displays == [
+            {"id": 0, "width": 240, "height": 320, "pfb_width": 20, "pfb_height": 24},
+        ]
 
     @pytest.mark.integration
     def test_save_writes_only_canonical_sdk_root_attribute(self, tmp_path):

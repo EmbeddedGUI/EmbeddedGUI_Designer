@@ -219,6 +219,32 @@ class TestAppEguiConfigContent:
         assert "EGUI_CONFIG_PFB_WIDTH" in c
         assert "EGUI_CONFIG_PFB_HEIGHT" in c
 
+    def test_config_has_multi_display_macros(self):
+        proj = build_test_project_only_with_widgets("App")
+        proj.displays = [
+            {"width": 240, "height": 320},
+            {"width": 128, "height": 64, "pfb_width": 12, "pfb_height": 7},
+        ]
+
+        files = generate_all_files(proj)
+        c, _ = files[APP_CONFIG_DESIGNER_RELPATH]
+
+        assert "EGUI_CONFIG_MAX_DISPLAY_COUNT 2" in c
+        assert "EGUI_CONFIG_SCEEN_1_WIDTH  128" in c
+        assert "EGUI_CONFIG_PFB_1_HEIGHT   7" in c
+
+    def test_config_uses_custom_primary_pfb_from_project_displays(self):
+        proj = build_test_project_only_with_widgets("App")
+        proj.displays = [
+            {"width": 240, "height": 320, "pfb_width": 20, "pfb_height": 24},
+        ]
+
+        files = generate_all_files(proj)
+        c, _ = files[APP_CONFIG_DESIGNER_RELPATH]
+
+        assert "EGUI_CONFIG_PFB_WIDTH  20" in c
+        assert "EGUI_CONFIG_PFB_HEIGHT 24" in c
+
 
 # ======================================================================
 # TestOnClickForNonButton

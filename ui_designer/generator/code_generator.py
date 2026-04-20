@@ -1904,6 +1904,7 @@ def generate_app_config_designer(project):
         project.app_name,
         w,
         h,
+        displays=getattr(project, "displays", None),
         circle_radius=max_radius,
     )
 

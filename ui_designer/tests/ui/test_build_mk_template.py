@@ -113,6 +113,40 @@ class TestAppConfigContent:
         assert "EGUI_CONFIG_PFB_HEIGHT (EGUI_CONFIG_SCEEN_HEIGHT / 8)" in designer
         assert "EGUI_CONFIG_FUNCTION_SUPPORT_MASK 1" in designer
 
+    def test_designer_file_emits_multi_display_macros(self):
+        from ui_designer.utils.scaffold import make_app_config_designer_h_content
+
+        designer = make_app_config_designer_h_content(
+            "TestApp",
+            240,
+            320,
+            displays=[
+                {"width": 240, "height": 320},
+                {"width": 128, "height": 64, "pfb_width": 12, "pfb_height": 7},
+            ],
+        )
+
+        assert "EGUI_CONFIG_MAX_DISPLAY_COUNT 2" in designer
+        assert "EGUI_CONFIG_SCEEN_1_WIDTH  128" in designer
+        assert "EGUI_CONFIG_SCEEN_1_HEIGHT 64" in designer
+        assert "EGUI_CONFIG_PFB_1_WIDTH    12" in designer
+        assert "EGUI_CONFIG_PFB_1_HEIGHT   7" in designer
+
+    def test_designer_file_emits_custom_primary_pfb_macros(self):
+        from ui_designer.utils.scaffold import make_app_config_designer_h_content
+
+        designer = make_app_config_designer_h_content(
+            "TestApp",
+            240,
+            320,
+            displays=[
+                {"width": 240, "height": 320, "pfb_width": 20, "pfb_height": 24},
+            ],
+        )
+
+        assert "EGUI_CONFIG_PFB_WIDTH  20" in designer
+        assert "EGUI_CONFIG_PFB_HEIGHT 24" in designer
+
     def test_migrate_legacy_config_preserves_custom_override_only(self):
         from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, migrate_app_config_h_content
 
@@ -138,6 +172,40 @@ class TestAppConfigContent:
         assert "EGUI_CONFIG_SCEEN_HEIGHT" not in migrated
         assert "EGUI_CONFIG_PFB_WIDTH" not in migrated
         assert "EGUI_CONFIG_PFB_HEIGHT" not in migrated
+
+    def test_migrate_legacy_multi_display_config_preserves_only_user_overrides(self):
+        from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, migrate_app_config_h_content
+
+        migrated = migrate_app_config_h_content(
+            (
+                "#ifndef _APP_EGUI_CONFIG_H_\n"
+                "#define _APP_EGUI_CONFIG_H_\n"
+                "#define EGUI_CONFIG_MAX_DISPLAY_COUNT 2\n"
+                "#define EGUI_CONFIG_SCEEN_WIDTH  240\n"
+                "#define EGUI_CONFIG_SCEEN_HEIGHT 320\n"
+                "#define EGUI_CONFIG_PFB_WIDTH    30\n"
+                "#define EGUI_CONFIG_PFB_HEIGHT   40\n"
+                "#define EGUI_CONFIG_SCEEN_1_WIDTH  128\n"
+                "#define EGUI_CONFIG_SCEEN_1_HEIGHT 64\n"
+                "#define EGUI_CONFIG_PFB_1_WIDTH    12\n"
+                "#define EGUI_CONFIG_PFB_1_HEIGHT   7\n"
+                "#define CUSTOM_FLAG 1\n"
+                "#endif\n"
+            ),
+            "LegacyApp",
+            240,
+            320,
+            displays=[
+                {"width": 240, "height": 320},
+                {"width": 128, "height": 64, "pfb_width": 12, "pfb_height": 7},
+            ],
+        )
+
+        assert f'#include "{APP_CONFIG_DESIGNER_RELPATH}"' in migrated
+        assert "#define CUSTOM_FLAG 1" in migrated
+        assert "EGUI_CONFIG_MAX_DISPLAY_COUNT" not in migrated
+        assert "EGUI_CONFIG_SCEEN_1_WIDTH" not in migrated
+        assert "EGUI_CONFIG_PFB_1_HEIGHT" not in migrated
 
     def test_migrate_legacy_config_keeps_user_conditional_blocks(self):
         from ui_designer.utils.scaffold import migrate_app_config_h_content

@@ -33,6 +33,8 @@ from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
 from ..utils.scaffold import (
     RESOURCE_CATALOG_FILENAME,
+    default_display_pfb_dimension,
+    normalize_display_configs,
     project_app_config_path,
     project_build_mk_path,
     project_config_dir,
@@ -59,6 +61,7 @@ from .sdk_fingerprint import SdkFingerprint
 
 
 _SDK_VERSION_ELEMENT = "SdkVersion"
+_DISPLAYS_ELEMENT = "Displays"
 
 
 def _sdk_revision_text(fingerprint) -> str:
@@ -103,6 +106,58 @@ def _parse_sdk_fingerprint(root) -> SdkFingerprint:
     )
 
 
+def _should_serialize_displays(displays) -> bool:
+    normalized = normalize_display_configs(displays)
+    if len(normalized) > 1:
+        return True
+    primary = normalized[0]
+    return (
+        int(primary["pfb_width"]) != default_display_pfb_dimension(primary["width"])
+        or int(primary["pfb_height"]) != default_display_pfb_dimension(primary["height"])
+    )
+
+
+def _serialize_project_displays(root, displays) -> None:
+    normalized = normalize_display_configs(displays)
+    if not _should_serialize_displays(normalized):
+        return
+
+    displays_elem = ET.SubElement(root, _DISPLAYS_ELEMENT)
+    for display in normalized:
+        display_elem = ET.SubElement(displays_elem, "Display")
+        display_elem.set("id", str(int(display["id"])))
+        display_elem.set("width", str(int(display["width"])))
+        display_elem.set("height", str(int(display["height"])))
+        display_elem.set("pfb_width", str(int(display["pfb_width"])))
+        display_elem.set("pfb_height", str(int(display["pfb_height"])))
+
+
+def _parse_project_displays(root, primary_width: int, primary_height: int):
+    displays_elem = root.find(_DISPLAYS_ELEMENT)
+    if displays_elem is None:
+        return normalize_display_configs(
+            None,
+            primary_width=primary_width,
+            primary_height=primary_height,
+        )
+
+    parsed = []
+    for display_elem in displays_elem.findall("Display"):
+        parsed.append(
+            {
+                "width": display_elem.get("width", display_elem.get("screen_width", primary_width)),
+                "height": display_elem.get("height", display_elem.get("screen_height", primary_height)),
+                "pfb_width": display_elem.get("pfb_width", ""),
+                "pfb_height": display_elem.get("pfb_height", ""),
+            }
+        )
+    return normalize_display_configs(
+        parsed,
+        primary_width=primary_width,
+        primary_height=primary_height,
+    )
+
+
 class Project:
     """Represents a designer project with multiple pages.
 
@@ -110,8 +165,11 @@ class Project:
     """
 
     def __init__(self, screen_width=240, screen_height=320, app_name="HelloDesigner"):
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+        self._displays = normalize_display_configs(
+            None,
+            primary_width=screen_width,
+            primary_height=screen_height,
+        )
         self.app_name = app_name
         self._sdk_root = ""  # Path to EmbeddedGUI SDK root directory
         self.sdk_fingerprint = SdkFingerprint()  # Project scaffold SDK baseline
@@ -129,6 +187,40 @@ class Project:
     @sdk_root.setter
     def sdk_root(self, value):
         self._sdk_root = normalize_path(value)
+
+    @property
+    def displays(self):
+        return self._displays
+
+    @displays.setter
+    def displays(self, value):
+        primary_width = self._displays[0]["width"] if self._displays else 240
+        primary_height = self._displays[0]["height"] if self._displays else 320
+        self._displays = normalize_display_configs(
+            value,
+            primary_width=primary_width,
+            primary_height=primary_height,
+        )
+
+    @property
+    def screen_width(self):
+        return int(self._displays[0]["width"])
+
+    @screen_width.setter
+    def screen_width(self, value):
+        width = int(value)
+        self._displays[0]["width"] = width
+        self._displays[0]["pfb_width"] = default_display_pfb_dimension(width)
+
+    @property
+    def screen_height(self):
+        return int(self._displays[0]["height"])
+
+    @screen_height.setter
+    def screen_height(self, value):
+        height = int(value)
+        self._displays[0]["height"] = height
+        self._displays[0]["pfb_height"] = default_display_pfb_dimension(height)
 
     @property
     def root_widgets(self):
@@ -313,6 +405,7 @@ class Project:
         if sdk_value:
             root.set("sdk_root", sdk_value)
         _serialize_sdk_fingerprint(root, self.sdk_fingerprint)
+        _serialize_project_displays(root, self.displays)
 
         pages_elem = ET.SubElement(root, "Pages")
         for page in self.pages:
@@ -397,11 +490,14 @@ class Project:
         tree = ET.parse(project_file)
         root = tree.getroot()
 
+        primary_width = int(root.get("screen_width", "240"))
+        primary_height = int(root.get("screen_height", "320"))
         proj = cls(
-            screen_width=int(root.get("screen_width", "240")),
-            screen_height=int(root.get("screen_height", "320")),
+            screen_width=primary_width,
+            screen_height=primary_height,
             app_name=root.get("app_name", "HelloDesigner"),
         )
+        proj.displays = _parse_project_displays(root, primary_width, primary_height)
         proj.project_dir = project_dir
         proj.sdk_root = resolve_project_sdk_root(project_dir, root.get("sdk_root", ""))
         proj.sdk_fingerprint = _parse_sdk_fingerprint(root)
