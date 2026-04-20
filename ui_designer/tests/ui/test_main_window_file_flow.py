@@ -11249,6 +11249,22 @@ class TestMainWindowFileFlow:
             "Workspace left shell: Project panel visible. View: List view. Active page: main_page. Startup page: main_page. "
             "Display target: Display 0 (primary only)."
         )
+        assert window._editor_container.accessibleName() == (
+            "Editor workspace. Left panel: Project. Current page: main_page. Mode: Design. Bottom tools hidden. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._center_shell.accessibleName() == (
+            "Workspace center shell. Current page: main_page. Mode: Design. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._top_splitter.accessibleName() == (
+            "Workspace columns. Left panel: Project. Editor mode: Design. Inspector section: Properties. Current page: main_page. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._workspace_splitter.accessibleName() == (
+            "Workspace rows. Editor area visible. Bottom tools hidden. Current section: Diagnostics. Current page: main_page. "
+            "Display target: Display 0 (primary only)."
+        )
         assert window._project_workspace._metrics_frame.isHidden() is False
         assert window._project_workspace._view_chip.text() == "List view | Primary display"
         assert window._project_workspace._view_chip.accessibleName() == (

@@ -2092,26 +2092,35 @@ class MainWindow(QMainWindow):
         inspector_section = self._current_tab_text(getattr(self, "_inspector_tabs", None), "Properties")
         bottom_section = self._current_tab_text(getattr(self, "_bottom_tabs", None), "Diagnostics")
         visibility = "visible" if getattr(self, "_bottom_panel_visible", False) else "hidden"
+        display_target = self._project_display_target_nav_text()
         if hasattr(self, "_editor_container"):
             editor_summary = (
                 f"Editor workspace. Left panel: {current_panel}. Current page: {current_page}. "
                 f"Mode: {current_mode}. Bottom tools {visibility}."
             )
+            if display_target:
+                editor_summary = f"{editor_summary} {display_target}"
             self._set_metadata_summary(self._editor_container, editor_summary)
         if hasattr(self, "_center_shell"):
             center_summary = f"Workspace center shell. Current page: {current_page}. Mode: {current_mode}."
+            if display_target:
+                center_summary = f"{center_summary} {display_target}"
             self._set_metadata_summary(self._center_shell, center_summary)
         if hasattr(self, "_top_splitter"):
             top_splitter_summary = (
                 f"Workspace columns. Left panel: {current_panel}. Editor mode: {current_mode}. "
                 f"Inspector section: {inspector_section}. Current page: {current_page}."
             )
+            if display_target:
+                top_splitter_summary = f"{top_splitter_summary} {display_target}"
             self._set_metadata_summary(self._top_splitter, top_splitter_summary)
         if hasattr(self, "_workspace_splitter"):
             workspace_splitter_summary = (
                 f"Workspace rows. Editor area visible. Bottom tools {visibility}. "
                 f"Current section: {bottom_section}. Current page: {current_page}."
             )
+            if display_target:
+                workspace_splitter_summary = f"{workspace_splitter_summary} {display_target}"
             self._set_metadata_summary(self._workspace_splitter, workspace_splitter_summary)
         if hasattr(self, "_bottom_header"):
             bottom_header_summary = f"Bottom tools header. Current section: {bottom_section}. Panel {visibility}."
