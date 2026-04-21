@@ -1273,15 +1273,13 @@ class MainWindow(QMainWindow):
         distribute_state = "available" if getattr(getattr(self, "_distribute_h_action", None), "isEnabled", lambda: False)() else "unavailable"
         reorder_state = "available" if selectable_widgets else "unavailable"
         lock_hide_state = "available" if selected_widgets else "unavailable"
-        self._apply_action_hint(
-            self._arrange_menu.menuAction(),
-            (
-                "Align, distribute, reorder, lock, and hide selected widgets. "
-                f"{self._selection_accessibility_text()} "
-                f"Align: {align_state}. Distribute: {distribute_state}. "
-                f"Reorder: {reorder_state}. Lock/Hide: {lock_hide_state}."
-            ),
+        hint = (
+            "Align, distribute, reorder, lock, and hide selected widgets. "
+            f"{self._selection_accessibility_text()} "
+            f"Align: {align_state}. Distribute: {distribute_state}. "
+            f"Reorder: {reorder_state}. Lock/Hide: {lock_hide_state}."
         )
+        self._apply_action_hint(self._arrange_menu.menuAction(), self._with_display_target_hint(hint))
 
     def _update_structure_menu_metadata(self):
         if not hasattr(self, "_structure_menu"):
@@ -1302,15 +1300,13 @@ class MainWindow(QMainWindow):
             )
             if action is not None
         ) else "unavailable"
-        self._apply_action_hint(
-            self._structure_menu.menuAction(),
-            (
-                "Group, move, and reorder widgets in the page hierarchy. "
-                f"{self._selection_accessibility_text()} "
-                f"Group/Ungroup: {group_state}. Move Into: {move_into_state}. "
-                f"Reorder/Lift: {reorder_lift_state}."
-            ),
+        hint = (
+            "Group, move, and reorder widgets in the page hierarchy. "
+            f"{self._selection_accessibility_text()} "
+            f"Group/Ungroup: {group_state}. Move Into: {move_into_state}. "
+            f"Reorder/Lift: {reorder_lift_state}."
         )
+        self._apply_action_hint(self._structure_menu.menuAction(), self._with_display_target_hint(hint))
 
     def _update_file_project_action_metadata(self):
         has_project = getattr(self, "project", None) is not None
@@ -7111,7 +7107,7 @@ class MainWindow(QMainWindow):
         return describe_structure_actions(self._structure_project_context(), selection)
 
     def _structure_action_hint(self, base_text, enabled, blocked_reason=""):
-        return self._action_hint(base_text, enabled, blocked_reason)
+        return self._with_display_target_hint(self._action_hint(base_text, enabled, blocked_reason))
 
     def _structure_action_reason(self, state, reason_attr=""):
         if reason_attr:
@@ -7561,7 +7557,7 @@ class MainWindow(QMainWindow):
         ):
             self._apply_action_hint(
                 action,
-                self._action_hint(base_text, action.isEnabled(), align_blocked_reason),
+                self._with_display_target_hint(self._action_hint(base_text, action.isEnabled(), align_blocked_reason)),
             )
         for action, base_text in (
             (
@@ -7575,40 +7571,48 @@ class MainWindow(QMainWindow):
         ):
             self._apply_action_hint(
                 action,
-                self._action_hint(base_text, action.isEnabled(), distribute_blocked_reason),
+                self._with_display_target_hint(self._action_hint(base_text, action.isEnabled(), distribute_blocked_reason)),
             )
         self._apply_action_hint(
             self._bring_front_action,
-            self._editable_selection_action_hint(
-                "Bring the current selection to the front of its parent stack.",
-                selected_widgets,
-                selectable_widgets,
-                "Locked widgets remain in place.",
+            self._with_display_target_hint(
+                self._editable_selection_action_hint(
+                    "Bring the current selection to the front of its parent stack.",
+                    selected_widgets,
+                    selectable_widgets,
+                    "Locked widgets remain in place.",
+                )
             ),
         )
         self._apply_action_hint(
             self._send_back_action,
-            self._editable_selection_action_hint(
-                "Send the current selection to the back of its parent stack.",
-                selected_widgets,
-                selectable_widgets,
-                "Locked widgets remain in place.",
+            self._with_display_target_hint(
+                self._editable_selection_action_hint(
+                    "Send the current selection to the back of its parent stack.",
+                    selected_widgets,
+                    selectable_widgets,
+                    "Locked widgets remain in place.",
+                )
             ),
         )
         self._apply_action_hint(
             self._toggle_lock_action,
-            self._action_hint(
-                "Toggle the designer lock state for the current selection.",
-                self._toggle_lock_action.isEnabled(),
-                "select at least 1 widget",
+            self._with_display_target_hint(
+                self._action_hint(
+                    "Toggle the designer lock state for the current selection.",
+                    self._toggle_lock_action.isEnabled(),
+                    "select at least 1 widget",
+                )
             ),
         )
         self._apply_action_hint(
             self._toggle_hide_action,
-            self._action_hint(
-                "Toggle the designer visibility state for the current selection.",
-                self._toggle_hide_action.isEnabled(),
-                "select at least 1 widget",
+            self._with_display_target_hint(
+                self._action_hint(
+                    "Toggle the designer visibility state for the current selection.",
+                    self._toggle_hide_action.isEnabled(),
+                    "select at least 1 widget",
+                )
             ),
         )
         self._apply_action_hint(

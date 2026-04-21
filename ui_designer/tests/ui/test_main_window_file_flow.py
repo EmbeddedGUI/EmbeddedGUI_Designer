@@ -8016,6 +8016,95 @@ class TestMainWindowFileFlow:
         assert structure_action.statusTip() == structure_action.toolTip()
         _close_window(window)
 
+    def test_arrange_and_structure_actions_include_primary_display_scope_for_multi_display_projects(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MultiDisplayArrangeStructureHintsDemo"
+        first = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
+        second = WidgetModel("button", name="action", x=132, y=16, width=100, height=24)
+        target = WidgetModel("group", name="target_group", x=24, y=72, width=200, height=120)
+        project = _create_project_only_with_widgets(
+            project_dir,
+            "MultiDisplayArrangeStructureHintsDemo",
+            sdk_root,
+            widgets=[first, second, target],
+        )
+        project.displays = [
+            {"width": 320, "height": 240},
+            {"width": 128, "height": 64},
+        ]
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        arrange_action = next(action for action in window.menuBar().actions() if action.text() == "Arrange")
+        structure_action = next(action for action in window.menuBar().actions() if action.text() == "Structure")
+        assert arrange_action.toolTip() == (
+            "Align, distribute, reorder, lock, and hide selected widgets. "
+            "Selection: none. Align: unavailable. Distribute: unavailable. Reorder: unavailable. "
+            "Lock/Hide: unavailable. Display target: Display 0 (primary only)."
+        )
+        assert structure_action.toolTip() == (
+            "Group, move, and reorder widgets in the page hierarchy. "
+            "Selection: none. Group/Ungroup: unavailable. Move Into: unavailable. "
+            "Reorder/Lift: unavailable. Display target: Display 0 (primary only)."
+        )
+        assert window._align_left_action.toolTip() == (
+            "Align the current selection to the left edge of the primary widget. "
+            "Unavailable: select at least 2 widgets. Display target: Display 0 (primary only)."
+        )
+        assert window._bring_front_action.toolTip() == (
+            "Bring the current selection to the front of its parent stack. "
+            "Unavailable: select at least 1 widget. Display target: Display 0 (primary only)."
+        )
+
+        loaded_first, loaded_second = window._current_page.root_widget.children[:2]
+        window._set_selection([loaded_first, loaded_second], primary=loaded_first, sync_tree=True, sync_preview=True)
+
+        assert arrange_action.toolTip() == (
+            "Align, distribute, reorder, lock, and hide selected widgets. "
+            "Selection: 2 widgets. Align: available. Distribute: unavailable. Reorder: available. "
+            "Lock/Hide: available. Display target: Display 0 (primary only)."
+        )
+        assert structure_action.toolTip() == (
+            "Group, move, and reorder widgets in the page hierarchy. "
+            "Selection: 2 widgets. Group/Ungroup: available. Move Into: available. "
+            "Reorder/Lift: available. Display target: Display 0 (primary only)."
+        )
+        assert window._align_left_action.toolTip() == (
+            "Align the current selection to the left edge of the primary widget. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._bring_front_action.toolTip() == (
+            "Bring the current selection to the front of its parent stack. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._group_selection_action.toolTip() == (
+            "Group the current selection (Ctrl+G) Display target: Display 0 (primary only)."
+        )
+        assert window._move_into_container_action.toolTip() == (
+            "Move the current selection into another container (Ctrl+Shift+I) Display target: Display 0 (primary only)."
+        )
+
+        for action in (
+            arrange_action,
+            structure_action,
+            window._align_left_action,
+            window._bring_front_action,
+            window._group_selection_action,
+            window._move_into_container_action,
+        ):
+            assert action.statusTip() == action.toolTip()
+        _close_window(window)
+
     @pytest.mark.skip(reason="removed quick-move history feature")
     def test_quick_move_submenu_exposes_available_and_history_state(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
