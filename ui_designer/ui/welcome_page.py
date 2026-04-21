@@ -189,7 +189,6 @@ class WelcomePage(QWidget):
             accessible_name=self._subtitle_label.text(),
         )
         hero_copy.addWidget(self._subtitle_label)
-        self._subtitle_label.hide()
 
         self._hero_hint_label = QLabel(
             "Pick an action below: new project, open project, or open recent."
@@ -197,8 +196,6 @@ class WelcomePage(QWidget):
         self._hero_hint_label.setObjectName("welcome_hero_hint")
         self._hero_hint_label.setWordWrap(True)
         hero_copy.addWidget(self._hero_hint_label)
-        self._eyebrow_label.hide()
-        self._hero_hint_label.hide()
         hero_copy.addStretch(1)
         hero_layout.addLayout(hero_copy, 3)
 
@@ -230,7 +227,6 @@ class WelcomePage(QWidget):
         self._start_hint_label.setObjectName("workspace_section_subtitle")
         self._start_hint_label.setWordWrap(True)
         left_col.addWidget(self._start_hint_label)
-        self._start_hint_label.hide()
 
         self._new_project_btn = PrimaryPushButton("New Project...")
         self._new_project_btn.clicked.connect(self.new_project.emit)
@@ -276,7 +272,6 @@ class WelcomePage(QWidget):
         self._sdk_hint_label.setWordWrap(True)
         self._sdk_hint_label.setObjectName("workspace_section_subtitle")
         sdk_layout.addWidget(self._sdk_hint_label)
-        self._sdk_hint_label.hide()
 
         left_col.addSpacing(4)
         left_col.addWidget(self._sdk_card)
@@ -297,7 +292,6 @@ class WelcomePage(QWidget):
         self._recent_hint_label.setObjectName("workspace_section_subtitle")
         self._recent_hint_label.setWordWrap(True)
         right_col.addWidget(self._recent_hint_label)
-        self._recent_hint_label.hide()
 
         self._recent_list = QVBoxLayout()
         self._recent_list.setSpacing(4)
@@ -311,7 +305,6 @@ class WelcomePage(QWidget):
         self._footer_label.setObjectName("workspace_section_subtitle")
         self._footer_label.setAlignment(Qt.AlignCenter)
         center_layout.addWidget(self._footer_label)
-        self._footer_label.hide()
 
         shell_layout.addWidget(center_widget, 0, Qt.AlignCenter)
         main_layout.addStretch()
@@ -344,7 +337,6 @@ class WelcomePage(QWidget):
         )
         _set_widget_metadata(self._set_sdk_root_btn, tooltip="Choose the EmbeddedGUI SDK root used for compile preview.", accessible_name="Set SDK root")
 
-        self._overview_metrics_frame.hide()
         self._refresh_sdk_status()
         self._refresh_recent_list()
 
@@ -477,7 +469,6 @@ class WelcomePage(QWidget):
             sub.setWordWrap(True)
             el.addWidget(no_recent)
             el.addWidget(sub)
-            sub.hide()
             summary = "No recent projects. Open a project to see it listed here."
             _set_widget_metadata(empty, tooltip=summary, accessible_name=summary)
             self._recent_list.addWidget(empty)
