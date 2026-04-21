@@ -3,7 +3,17 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QButtonGroup, QFrame, QLabel, QPushButton, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget
+from PyQt5.QtWidgets import (
+    QButtonGroup,
+    QFrame,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QStackedWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QWidget,
+)
 
 from .theme import theme_tokens
 
@@ -13,6 +23,10 @@ _SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
 _PROJECT_WORKSPACE_BUTTON_HEIGHT = 22
+_PROJECT_WORKSPACE_METRICS_SPACING = 1
+_PROJECT_WORKSPACE_PREFS_BUTTON_WIDTH = 44
+_PROJECT_WORKSPACE_LIST_BUTTON_WIDTH = 36
+_PROJECT_WORKSPACE_THUMBS_BUTTON_WIDTH = 54
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -31,8 +45,11 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
             widget.setProperty("_workspace_metadata_accessible_snapshot", resolved_accessible_name)
 
 
-def _set_compact_button_height(button):
+def _set_compact_button_chrome(button, *, width=0):
     button.setFixedHeight(_PROJECT_WORKSPACE_BUTTON_HEIGHT)
+    if width:
+        button.setFixedWidth(int(width))
+    button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
     return button
 
 
@@ -81,7 +98,8 @@ class ProjectWorkspacePanel(QWidget):
 
         self._title_label = QLabel("Pages")
         self._title_label.setObjectName("workspace_section_title")
-        header_layout.addWidget(self._title_label, 1)
+        self._title_label.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        header_layout.addWidget(self._title_label)
 
         self._subtitle_label = QLabel("Page navigation, startup flow, and visual scan.", self._header)
         self._subtitle_label.setObjectName("workspace_section_subtitle")
@@ -90,27 +108,32 @@ class ProjectWorkspacePanel(QWidget):
         self._metrics_frame = QFrame(self._header)
         self._metrics_frame.setObjectName("project_workspace_metrics_strip")
         self._metrics_frame.hide()
+        self._metrics_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         metrics_layout = QHBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(2)
+        metrics_layout.setSpacing(_PROJECT_WORKSPACE_METRICS_SPACING)
 
         self._view_chip = QLabel("List view", self._metrics_frame)
         self._view_chip.setObjectName("workspace_status_chip")
+        self._view_chip.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self._view_chip.hide()
         metrics_layout.addWidget(self._view_chip)
 
         self._page_count_chip = QLabel("0 pages", self._metrics_frame)
         self._page_count_chip.setObjectName("workspace_status_chip")
+        self._page_count_chip.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self._page_count_chip.hide()
         metrics_layout.addWidget(self._page_count_chip)
 
         self._dirty_chip = QLabel("Clean", self._metrics_frame)
         self._dirty_chip.setObjectName("workspace_status_chip")
+        self._dirty_chip.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self._dirty_chip.hide()
         metrics_layout.addWidget(self._dirty_chip)
 
         self._display_target_chip = QLabel("Display 0", self._metrics_frame)
         self._display_target_chip.setObjectName("workspace_status_chip")
+        self._display_target_chip.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self._display_target_chip.hide()
         metrics_layout.addWidget(self._display_target_chip)
 
@@ -129,7 +152,10 @@ class ProjectWorkspacePanel(QWidget):
 
         self._button_group = QButtonGroup(self)
         self._button_group.setExclusive(True)
-        self._settings_btn = _set_compact_button_height(QPushButton("Settings"))
+        self._settings_btn = _set_compact_button_chrome(
+            QPushButton("Prefs"),
+            width=_PROJECT_WORKSPACE_PREFS_BUTTON_WIDTH,
+        )
         self._settings_btn.setObjectName("project_workspace_view_button")
         self._settings_btn.clicked.connect(self._toggle_project_settings)
         _set_widget_metadata(
@@ -137,7 +163,10 @@ class ProjectWorkspacePanel(QWidget):
             tooltip="Show or hide low-frequency project settings.",
             accessible_name="Project settings button",
         )
-        self._list_btn = _set_compact_button_height(QPushButton("List"))
+        self._list_btn = _set_compact_button_chrome(
+            QPushButton("List"),
+            width=_PROJECT_WORKSPACE_LIST_BUTTON_WIDTH,
+        )
         self._list_btn.setObjectName("project_workspace_view_button")
         self._list_btn.setCheckable(True)
         _set_widget_metadata(
@@ -145,7 +174,10 @@ class ProjectWorkspacePanel(QWidget):
             tooltip="Show the page list for structure-first editing.",
             accessible_name="Workspace view button: List. Structure first.",
         )
-        self._thumb_btn = _set_compact_button_height(QPushButton("Thumbs"))
+        self._thumb_btn = _set_compact_button_chrome(
+            QPushButton("Thumbs"),
+            width=_PROJECT_WORKSPACE_THUMBS_BUTTON_WIDTH,
+        )
         self._thumb_btn.setObjectName("project_workspace_view_button")
         self._thumb_btn.setCheckable(True)
         _set_widget_metadata(
@@ -157,6 +189,7 @@ class ProjectWorkspacePanel(QWidget):
         self._button_group.addButton(self._thumb_btn)
         self._list_btn.clicked.connect(lambda: self.set_view(self.VIEW_LIST))
         self._thumb_btn.clicked.connect(lambda: self.set_view(self.VIEW_THUMBNAILS))
+        header_layout.addWidget(self._metrics_frame, 1)
         toggle_row.addWidget(self._settings_btn)
         toggle_row.addWidget(self._list_btn)
         toggle_row.addWidget(self._thumb_btn)
@@ -172,7 +205,9 @@ class ProjectWorkspacePanel(QWidget):
         self.set_workspace_snapshot()
 
     def _update_panel_metadata(self):
-        view_label = "Thumbnails" if self._current_view_name == self.VIEW_THUMBNAILS else "List view"
+        is_thumbnail_view = self._current_view_name == self.VIEW_THUMBNAILS
+        view_summary_label = "Thumbnails" if is_thumbnail_view else "List view"
+        view_chip_label = "Thumbs" if is_thumbnail_view else "List"
         page_label = f"{self._current_page_count} page" if self._current_page_count == 1 else f"{self._current_page_count} pages"
         active_text = self._current_active_page or "none"
         startup_text = self._current_startup_page or "none"
@@ -188,7 +223,7 @@ class ProjectWorkspacePanel(QWidget):
             if multi_display
             else ""
         )
-        display_chip_text = "Display 0"
+        display_chip_text = "Primary" if multi_display else "Display 0"
         display_chip_summary = "Display target: Display 0. Editing and preview use the primary display."
         if dirty_count == 0 and not has_project_dirty:
             dirty_text = "No dirty pages"
@@ -197,25 +232,25 @@ class ProjectWorkspacePanel(QWidget):
         elif dirty_count == 0:
             dirty_text = f"Project changes pending{project_dirty_suffix}"
             summary_dirty_text = dirty_text
-            chip_text = dirty_text
+            chip_text = "Project"
         elif has_project_dirty:
             dirty_pages_text = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
             dirty_text = f"{dirty_pages_text} + project changes{project_dirty_suffix}"
             summary_dirty_text = dirty_text
-            chip_text = dirty_text
+            chip_text = f"{dirty_count} dirty + proj"
         else:
             dirty_text = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
             summary_dirty_text = dirty_text
-            chip_text = dirty_text
+            chip_text = f"{dirty_count} dirty"
         if multi_display:
             summary = (
-                f"Project workspace: {view_label}. "
+                f"Project workspace: {view_summary_label}. "
                 f"Pages: {page_label}. Active page: {active_text}. Startup page: {startup_text}. "
                 f"Dirty state: {dirty_text}. Display scope: {display_scope_text}."
             )
-            view_chip_text = f"{view_label} | Primary display"
+            view_chip_text = view_chip_label
             view_chip_summary = (
-                f"Workspace view: {view_label}. Multi-display project: editing and preview use the primary display."
+                f"Workspace view: {view_summary_label}. Multi-display project: editing and preview use the primary display."
             )
             metrics_summary = (
                 f"Project workspace metrics: {page_label}. {dirty_text}. Display scope: {display_scope_text}."
@@ -227,11 +262,11 @@ class ProjectWorkspacePanel(QWidget):
             ]
         else:
             summary = (
-                f"Project workspace: {view_label}. "
+                f"Project workspace: {view_summary_label}. "
                 f"Pages: {page_label}. Active page: {active_text}. Startup page: {startup_text}. Dirty state: {dirty_text}."
             )
-            view_chip_text = view_label
-            view_chip_summary = f"Workspace view: {view_label}."
+            view_chip_text = view_chip_label
+            view_chip_summary = f"Workspace view: {view_summary_label}."
             metrics_summary = f"Project workspace metrics: {page_label}. {dirty_text}."
             meta_parts = [f"Startup: {startup_text}"]
         self._view_chip.setText(view_chip_text)
@@ -251,7 +286,7 @@ class ProjectWorkspacePanel(QWidget):
         _set_widget_metadata(
             self._title_label,
             tooltip=summary,
-            accessible_name=f"Project Workspace. {view_label}.",
+            accessible_name=f"Project Workspace. {view_summary_label}.",
         )
         _set_widget_metadata(
             self._header_eyebrow,

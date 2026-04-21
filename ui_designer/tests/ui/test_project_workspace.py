@@ -29,10 +29,10 @@ class TestProjectWorkspacePanel:
         assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (2, 2, 2, 2)
         assert header_layout.spacing() == 2
         assert (metrics_margins.left(), metrics_margins.top(), metrics_margins.right(), metrics_margins.bottom()) == (0, 0, 0, 0)
-        assert panel._metrics_frame.layout().spacing() == 2
+        assert panel._metrics_frame.layout().spacing() == 1
         assert panel._view_toggle_row.spacing() == 2
         assert panel._view_chip.isHidden() is True
-        assert panel._view_chip.text() == "List view"
+        assert panel._view_chip.text() == "List"
         assert panel._view_chip.accessibleName() == "Workspace view: List view."
         assert panel._display_target_chip.isHidden() is True
         assert panel._display_target_chip.text() == "Display 0"
@@ -40,8 +40,12 @@ class TestProjectWorkspacePanel:
             "Display target: Display 0. Editing and preview use the primary display."
         )
         assert panel._settings_btn.height() == 22
+        assert panel._settings_btn.width() == 44
+        assert panel._settings_btn.text() == "Prefs"
         assert panel._list_btn.height() == 22
+        assert panel._list_btn.width() == 36
         assert panel._thumb_btn.height() == 22
+        assert panel._thumb_btn.width() == 54
         assert panel._header_eyebrow.accessibleName() == "Project navigation workspace surface."
         assert panel._header_eyebrow.isHidden() is True
         assert panel._page_count_chip.text() == "0 pages"
@@ -77,12 +81,30 @@ class TestProjectWorkspacePanel:
             "Project workspace: List view. Pages: 0 pages. Active page: none. Startup page: none. Dirty state: No dirty pages."
         )
 
+        panel.set_workspace_snapshot(page_count=2, active_page="main_page", dirty_pages=1)
+        panel.resize(360, 200)
+        panel._metrics_frame.show()
+        panel._view_chip.show()
+        panel._page_count_chip.show()
+        panel._dirty_chip.show()
+        panel.show()
+        qapp.processEvents()
+
+        assert panel._metrics_frame.geometry().left() >= panel._title_label.geometry().right()
+        assert panel._settings_btn.geometry().left() >= panel._metrics_frame.geometry().right()
+        panel.hide()
+        panel._metrics_frame.hide()
+        panel._view_chip.hide()
+        panel._page_count_chip.hide()
+        panel._dirty_chip.hide()
+        panel.set_workspace_snapshot()
+
         panel.set_view(ProjectWorkspacePanel.VIEW_THUMBNAILS)
 
         assert panel.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
         assert panel._stack.currentWidget() is thumb_view
         assert panel._view_chip.isHidden() is True
-        assert panel._view_chip.text() == "Thumbnails"
+        assert panel._view_chip.text() == "Thumbs"
         assert panel._view_chip.accessibleName() == "Workspace view: Thumbnails."
         assert panel._view_chip.statusTip() == panel._view_chip.toolTip()
         assert panel._list_btn.toolTip() == "Switch to the page list for structure-first editing."
@@ -109,7 +131,7 @@ class TestProjectWorkspacePanel:
         assert panel.current_view() == ProjectWorkspacePanel.VIEW_LIST
         assert panel._stack.currentWidget() is list_view
         assert panel._view_chip.isHidden() is True
-        assert panel._view_chip.text() == "List view"
+        assert panel._view_chip.text() == "List"
         assert panel._view_chip.accessibleName() == "Workspace view: List view."
         assert panel._list_btn.toolTip() == "Currently showing the page list for structure-first editing."
         assert panel._thumb_btn.toolTip() == "Switch to page thumbnails for a visual scan."
@@ -136,7 +158,7 @@ class TestProjectWorkspacePanel:
         assert panel._meta_label.text() == "Startup: detail_page"
         assert panel._meta_label.accessibleName() == "Pages startup summary: Startup: detail_page"
         assert panel._page_count_chip.text() == "3 pages"
-        assert panel._dirty_chip.text() == "2 dirty pages"
+        assert panel._dirty_chip.text() == "2 dirty"
         assert panel._metrics_frame.accessibleName() == "Project workspace metrics: 3 pages. 2 dirty pages."
         assert panel._header.accessibleName() == f"Project workspace header. {panel.accessibleName()}"
         assert panel._title_label.accessibleName() == "Project Workspace. List view."
@@ -198,7 +220,7 @@ class TestProjectWorkspacePanel:
             project_dirty_reason="startup page",
         )
 
-        assert panel._dirty_chip.text() == "Project changes pending (startup page)"
+        assert panel._dirty_chip.text() == "Project"
         assert panel._dirty_chip.accessibleName() == "Dirty state: Project changes pending (startup page)."
         assert panel._summary_label.text() == "2 pages. Active: main_page. Project changes pending (startup page)."
         assert panel._summary_label.accessibleName() == (
@@ -225,12 +247,12 @@ class TestProjectWorkspacePanel:
             display_count=2,
         )
 
-        assert panel._view_chip.text() == "List view | Primary display"
+        assert panel._view_chip.text() == "List"
         assert panel._view_chip.accessibleName() == (
             "Workspace view: List view. Multi-display project: editing and preview use the primary display."
         )
         assert panel._display_target_chip.isHidden() is False
-        assert panel._display_target_chip.text() == "Display 0"
+        assert panel._display_target_chip.text() == "Primary"
         assert panel._display_target_chip.accessibleName() == (
             "Display target: Display 0. Editing and preview use the primary display."
         )
@@ -250,7 +272,7 @@ class TestProjectWorkspacePanel:
 
         panel.set_view(ProjectWorkspacePanel.VIEW_THUMBNAILS)
 
-        assert panel._view_chip.text() == "Thumbnails | Primary display"
+        assert panel._view_chip.text() == "Thumbs"
         assert panel._view_chip.accessibleName() == (
             "Workspace view: Thumbnails. Multi-display project: editing and preview use the primary display."
         )
@@ -271,7 +293,7 @@ class TestProjectWorkspacePanel:
             project_dirty_reason="startup page, page mode (+1)",
         )
 
-        assert panel._dirty_chip.text() == "2 dirty pages + project changes (startup page, page mode (+1))"
+        assert panel._dirty_chip.text() == "2 dirty + proj"
         assert panel._summary_label.text() == (
             "3 pages. Active: detail_page. 2 dirty pages + project changes (startup page, page mode (+1))."
         )
@@ -349,7 +371,7 @@ class TestProjectWorkspacePanel:
             project_dirty=True,
             project_dirty_reason="startup page, page mode",
         )
-        assert panel._dirty_chip.text() == "Project changes pending (startup page, page mode)"
+        assert panel._dirty_chip.text() == "Project"
 
         panel.set_workspace_snapshot(
             page_count=2,

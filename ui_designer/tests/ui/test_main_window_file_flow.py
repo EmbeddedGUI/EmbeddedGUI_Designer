@@ -11149,7 +11149,7 @@ class TestMainWindowFileFlow:
             "Project changes pending (startup page)."
         )
         assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
-        assert window._project_workspace._dirty_chip.text() == "Project changes pending (startup page)"
+        assert window._project_workspace._dirty_chip.text() == "Project"
         assert window._project_workspace._summary_label.text() == (
             "2 pages. Active: detail_page. Project changes pending (startup page)."
         )
@@ -11191,9 +11191,7 @@ class TestMainWindowFileFlow:
             "Page tabs: 2 open pages. Current page: detail_page. Startup page: detail_page. "
             "Project changes pending (startup page, page mode (+1))."
         )
-        assert window._project_workspace._dirty_chip.text() == (
-            "Project changes pending (startup page, page mode (+1))"
-        )
+        assert window._project_workspace._dirty_chip.text() == "Project"
         assert window._project_workspace._summary_label.text() == (
             "2 pages. Active: detail_page. Project changes pending (startup page, page mode (+1))."
         )
@@ -11235,7 +11233,7 @@ class TestMainWindowFileFlow:
             "Page tabs: 2 open pages. Current page: detail_page. Startup page: detail_page. "
             "1 dirty page + project changes (startup page)."
         )
-        assert window._project_workspace._dirty_chip.text() == "1 dirty page + project changes (startup page)"
+        assert window._project_workspace._dirty_chip.text() == "1 dirty + proj"
         assert window._project_workspace._summary_label.text() == (
             "2 pages. Active: detail_page. 1 dirty page + project changes (startup page)."
         )
@@ -11682,7 +11680,7 @@ class TestMainWindowFileFlow:
             "Display target: Display 0 (primary only)."
         )
         assert window._project_workspace._metrics_frame.isHidden() is False
-        assert window._project_workspace._view_chip.text() == "List view | Primary display"
+        assert window._project_workspace._view_chip.text() == "List"
         assert window._project_workspace._view_chip.accessibleName() == (
             "Workspace view: List view. Multi-display project: editing and preview use the primary display."
         )
@@ -11691,7 +11689,7 @@ class TestMainWindowFileFlow:
         assert window._project_workspace._dirty_chip.isHidden() is False
         assert window._project_workspace._dirty_chip.text() == "Clean"
         assert window._project_workspace._display_target_chip.isHidden() is False
-        assert window._project_workspace._display_target_chip.text() == "Display 0"
+        assert window._project_workspace._display_target_chip.text() == "Primary"
         assert window._project_workspace._display_target_chip.accessibleName() == (
             "Display target: Display 0. Editing and preview use the primary display."
         )
@@ -13882,7 +13880,7 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "widgets"
         assert window._left_panel_stack.currentWidget() is window.widget_browser
         assert window._project_workspace.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
-        assert window._project_workspace._view_chip.text() == "Thumbnails"
+        assert window._project_workspace._view_chip.text() == "Thumbs"
         assert window._project_workspace._view_chip.isHidden() is False
         assert window._project_workspace._summary_label.text() == "0 pages. Active: none. Clean."
         assert window._project_workspace._meta_label.text() == "Startup: none"

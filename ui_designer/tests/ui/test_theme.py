@@ -1210,8 +1210,9 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         assert "border: none;" in metrics
         assert "border-radius: 0px;" in metrics
         assert "border-radius: 0px;" in buttons
-        assert f"font-size: {t['fs_body']}px;" in buttons
-        assert "padding: 0px 6px;" in buttons
+        assert f"font-size: {t['fs_body_sm']}px;" in buttons
+        assert "padding: 0px 4px;" in buttons
+        assert "text-align: center;" in buttons
         assert "min-height: 20px;" in buttons
         assert "max-height: 20px;" in buttons
         assert f"background-color: {t['shell_bg']};" in add_page_disabled

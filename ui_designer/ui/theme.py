@@ -1673,9 +1673,9 @@ QPushButton#project_workspace_view_button {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    font-size: {t['fs_body']}px;
-    padding: 0px 6px;
-    text-align: left;
+    font-size: {t['fs_body_sm']}px;
+    padding: 0px 4px;
+    text-align: center;
     min-height: 20px;
     max-height: 20px;
 }}
