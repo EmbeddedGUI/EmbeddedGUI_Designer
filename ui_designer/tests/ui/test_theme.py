@@ -223,12 +223,21 @@ def test_compact_typography_scale_stays_consistent():
         welcome_subtitle = css.split("#welcome_hero_subtitle {", 1)[1].split("}", 1)[0]
         preview_title = css.split("#preview_title {", 1)[1].split("}", 1)[0]
 
-        assert int(t["fs_h1"]) == 14
-        assert int(t["fs_h2"]) == 13
-        assert int(t["fs_panel_title"]) == 13
-        assert int(t["fs_body"]) == 13
-        assert int(t["fs_body_sm"]) == 12
-        assert int(t["fs_caption"]) == 12
+        # IDE-style redesign 2026-04-21: dark uses compact scale; light unchanged.
+        if mode == "dark":
+            assert int(t["fs_h1"]) == 13
+            assert int(t["fs_h2"]) == 12
+            assert int(t["fs_panel_title"]) == 12
+            assert int(t["fs_body"]) == 12
+            assert int(t["fs_body_sm"]) == 11
+            assert int(t["fs_caption"]) == 10
+        else:
+            assert int(t["fs_h1"]) == 14
+            assert int(t["fs_h2"]) == 13
+            assert int(t["fs_panel_title"]) == 13
+            assert int(t["fs_body"]) == 13
+            assert int(t["fs_body_sm"]) == 12
+            assert int(t["fs_caption"]) == 12
         assert int(roomy["fs_h1"]) == int(t["fs_h1"]) + 1
         assert int(roomy_plus["fs_h1"]) == int(t["fs_h1"]) + 2
 
@@ -360,8 +369,13 @@ def test_engineering_theme_radii_remove_pill_shapes():
         css = _build_stylesheet(mode)
 
         assert int(tokens["r_sm"]) == 4
-        assert int(tokens["r_md"]) == 6
-        assert int(tokens["r_xl"]) == 8
+        # IDE-style redesign: dark uses 4/4/6 compact radii; light retains 4/6/8.
+        if mode == "dark":
+            assert int(tokens["r_md"]) == 4
+            assert int(tokens["r_xl"]) == 6
+        else:
+            assert int(tokens["r_md"]) == 6
+            assert int(tokens["r_xl"]) == 8
         assert "999px" not in css
 
         chip = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]

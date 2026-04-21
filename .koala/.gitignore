@@ -1,0 +1,5 @@
+# Koala AI Assistant - local files (not for version control)
+memory.local.md
+auto-memory/
+session/
+*.local.*
