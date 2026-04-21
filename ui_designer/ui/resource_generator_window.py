@@ -2375,7 +2375,7 @@ class ResourceGeneratorWindow(QDialog):
     def _build_simple_asset_empty_state(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.setContentsMargins(24, 20, 24, 20)
+        layout.setContentsMargins(20, 16, 20, 16)
         layout.setSpacing(8)
         layout.addStretch(1)
 

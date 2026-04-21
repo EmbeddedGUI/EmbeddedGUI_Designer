@@ -141,7 +141,7 @@ class TestResourceGeneratorWindow:
             assert window.layout().spacing() == 8
             assert window._simple_page.layout().spacing() == 8
             assert window._professional_page.layout().spacing() == 8
-            assert _layout_margins_tuple(window._simple_asset_empty_state.layout()) == (24, 20, 24, 20)
+            assert _layout_margins_tuple(window._simple_asset_empty_state.layout()) == (20, 16, 20, 16)
             assert window._simple_asset_empty_state.layout().spacing() == 8
         finally:
             _close_window(window)
