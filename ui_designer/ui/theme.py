@@ -1523,8 +1523,8 @@ QGroupBox#inspector_collapsible_group {{
     background-color: transparent;
     border: 1px solid transparent;
     border-radius: 0px;
-    margin-top: 14px;
-    padding-top: 4px;
+    margin-top: 12px;
+    padding-top: 2px;
     font-size: {t['fs_panel_title']}px;
     font-weight: {t['fw_medium']};
 }}
@@ -1534,7 +1534,7 @@ QGroupBox#inspector_collapsible_group::title {{
     subcontrol-position: top left;
     left: 0px;
     color: {t['text']};
-    padding: 0px 0px 2px 0px;
+    padding: 0px 0px 1px 0px;
 }}
 
 QGroupBox#inspector_collapsible_group::indicator {{
@@ -1546,7 +1546,7 @@ QFrame#inspector_group_body {{
     background-color: transparent;
     border: none;
     border-left: 1px solid {t['border_strong']};
-    margin-top: 2px;
+    margin-top: 1px;
 }}
 
 #workspace_panel_header,
@@ -1922,7 +1922,7 @@ QTabWidget#workspace_inspector_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
     min-height: 24px;
-    padding: 2px 6px;
+    padding: 1px 5px;
 }}
 
 QTabWidget#workspace_bottom_tabs::pane {{

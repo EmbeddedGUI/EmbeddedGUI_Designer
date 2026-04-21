@@ -670,7 +670,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in inspector_tabs_tab
         assert "margin-right: 0px;" in inspector_tabs_tab
         assert "min-height: 24px;" in inspector_tabs_tab
-        assert "padding: 2px 6px;" in inspector_tabs_tab
+        assert "padding: 1px 5px;" in inspector_tabs_tab
         assert "background-color: transparent;" in bottom_tabs_pane
         assert "border: none;" in bottom_tabs_pane
         assert "border-radius: 0px;" in bottom_tabs_pane
@@ -807,10 +807,10 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in inspector_group
         assert "border: 1px solid transparent;" in inspector_group
         assert "border-radius: 0px;" in inspector_group
-        assert "margin-top: 14px;" in inspector_group
-        assert "padding-top: 4px;" in inspector_group
+        assert "margin-top: 12px;" in inspector_group
+        assert "padding-top: 2px;" in inspector_group
         assert "left: 0px;" in inspector_group_title
-        assert "padding: 0px 0px 2px 0px;" in inspector_group_title
+        assert "padding: 0px 0px 1px 0px;" in inspector_group_title
         assert "width: 0px;" in inspector_group_indicator
         assert "height: 0px;" in inspector_group_indicator
 

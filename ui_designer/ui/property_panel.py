@@ -679,14 +679,14 @@ class PropertyPanel(QWidget):
     def _init_ui(self):
         self.setObjectName("property_panel_root")
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(6, 6, 6, 6)
-        outer.setSpacing(4)
+        outer.setContentsMargins(4, 4, 4, 4)
+        outer.setSpacing(3)
 
         self._context_frame = QWidget()
         self._context_frame.setObjectName("property_panel_context")
         context_layout = QVBoxLayout(self._context_frame)
         context_layout.setContentsMargins(0, 0, 0, 0)
-        context_layout.setSpacing(2)
+        context_layout.setSpacing(1)
 
         self._overview_eyebrow = QLabel("Inspector")
         self._overview_eyebrow.setObjectName("property_panel_eyebrow")
@@ -733,8 +733,8 @@ class PropertyPanel(QWidget):
 
         self._container = QWidget()
         self._layout = QVBoxLayout(self._container)
-        self._layout.setContentsMargins(2, 4, 2, 4)
-        self._layout.setSpacing(4)
+        self._layout.setContentsMargins(1, 2, 1, 2)
+        self._layout.setSpacing(3)
         scroll.setWidget(self._container)
 
         self._property_tree = QTreeWidget(self._container)
@@ -1370,7 +1370,7 @@ class PropertyPanel(QWidget):
         frame = QWidget()
         frame.setObjectName("property_panel_empty_state")
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(6, 8, 6, 8)
+        layout.setContentsMargins(4, 6, 4, 6)
         layout.setSpacing(2)
         eyebrow = QLabel("Inspector")
         eyebrow.setObjectName("property_panel_eyebrow")
@@ -1624,8 +1624,8 @@ class PropertyPanel(QWidget):
         header.setObjectName("workspace_panel_header")
         header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(4)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(3)
         header.setLayout(layout)
 
         eyebrow = QLabel("Widget Profile")
@@ -1727,8 +1727,8 @@ class PropertyPanel(QWidget):
         header.setObjectName("workspace_panel_header")
         header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(4)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(3)
         header.setLayout(layout)
 
         eyebrow = QLabel("Batch Inspector")
@@ -1843,7 +1843,7 @@ class PropertyPanel(QWidget):
         frame.setObjectName("workspace_hint_strip")
         frame.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setContentsMargins(3, 3, 3, 3)
         layout.setSpacing(1)
         frame.setLayout(layout)
 

@@ -212,17 +212,17 @@ class TestPropertyPanelFileFlow:
         assert panel.accessibleName() == "Property panel: no widget selected. Search: none."
         assert panel.toolTip() == panel.accessibleName()
         assert panel._context_frame.isHidden() is True
-        assert (root_layout.contentsMargins().left(), root_layout.contentsMargins().top()) == (6, 6)
-        assert (root_layout.contentsMargins().right(), root_layout.contentsMargins().bottom()) == (6, 6)
-        assert root_layout.spacing() == 4
+        assert (root_layout.contentsMargins().left(), root_layout.contentsMargins().top()) == (4, 4)
+        assert (root_layout.contentsMargins().right(), root_layout.contentsMargins().bottom()) == (4, 4)
+        assert root_layout.spacing() == 3
         assert (context_layout.contentsMargins().left(), context_layout.contentsMargins().top()) == (0, 0)
         assert (context_layout.contentsMargins().right(), context_layout.contentsMargins().bottom()) == (0, 0)
-        assert context_layout.spacing() == 2
-        assert (content_layout.contentsMargins().left(), content_layout.contentsMargins().top()) == (2, 4)
-        assert (content_layout.contentsMargins().right(), content_layout.contentsMargins().bottom()) == (2, 4)
-        assert content_layout.spacing() == 4
-        assert (empty_layout.contentsMargins().left(), empty_layout.contentsMargins().top()) == (6, 8)
-        assert (empty_layout.contentsMargins().right(), empty_layout.contentsMargins().bottom()) == (6, 8)
+        assert context_layout.spacing() == 1
+        assert (content_layout.contentsMargins().left(), content_layout.contentsMargins().top()) == (1, 2)
+        assert (content_layout.contentsMargins().right(), content_layout.contentsMargins().bottom()) == (1, 2)
+        assert content_layout.spacing() == 3
+        assert (empty_layout.contentsMargins().left(), empty_layout.contentsMargins().top()) == (4, 6)
+        assert (empty_layout.contentsMargins().right(), empty_layout.contentsMargins().bottom()) == (4, 6)
         assert empty_layout.spacing() == 2
         assert panel._search_edit.toolTip() == "Filter visible property rows by label. Current filter: none."
         assert panel._search_edit.statusTip() == panel._search_edit.toolTip()
@@ -273,8 +273,8 @@ class TestPropertyPanelFileFlow:
         chips_row = header_layout.itemAt(4).layout()
 
         assert header.objectName() == "workspace_panel_header"
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
-        assert header_layout.spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert header_layout.spacing() == 3
         assert chips_row.spacing() == 2
         assert panel._context_frame.isHidden() is True
         assert header.accessibleName() == f"Property header: title. {subtitle.text()}."
@@ -1178,12 +1178,12 @@ class TestPropertyPanelFileFlow:
         chips_row = chips_frame.layout()
         hint_layout = hint_strip.layout()
 
-        assert (summary_margins.left(), summary_margins.top(), summary_margins.right(), summary_margins.bottom()) == (6, 6, 6, 6)
-        assert summary_layout.spacing() == 4
+        assert (summary_margins.left(), summary_margins.top(), summary_margins.right(), summary_margins.bottom()) == (4, 4, 4, 4)
+        assert summary_layout.spacing() == 3
         assert chips_row.spacing() == 2
         assert panel._context_frame.isHidden() is True
-        assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (4, 4)
-        assert (hint_layout.contentsMargins().right(), hint_layout.contentsMargins().bottom()) == (4, 4)
+        assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (3, 3)
+        assert (hint_layout.contentsMargins().right(), hint_layout.contentsMargins().bottom()) == (3, 3)
         assert hint_layout.spacing() == 1
         assert summary_header.accessibleName() == "Property batch header: 2 widgets selected. Primary: second. 2 types."
         assert eyebrow.accessibleName() == "Batch property inspection surface."
