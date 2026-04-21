@@ -75,7 +75,7 @@ from .resource_panel import (
     _suggest_charset_filename_for_resource,
     _suggest_charset_presets_for_resource,
 )
-from .theme import app_theme_tokens, sync_window_chrome_theme
+from .theme import app_theme_tokens, designer_ui_font, sync_window_chrome_theme
 
 
 _IMAGE_FILE_EXTENSIONS = {".png", ".bmp", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
@@ -1611,26 +1611,33 @@ class ResourceGeneratorWindow(QDialog):
         self._pending_simple_workspace_splitter_sizes: list[int] | None = None
         self._pending_simple_preview_splitter_sizes: list[int] | None = None
         self._pending_simple_asset_column_widths: list[int] | None = None
+        self._suppress_window_chrome_theme_changes = False
 
         self._build_ui()
         self._configure_drop_targets()
         self._configure_shortcuts()
         self._restore_view_state()
         self._apply_paths_and_data(GenerationPaths(), make_empty_resource_config(), dirty=False)
+        self._apply_simple_asset_table_header_style()
         self._view_state_updates_enabled = True
         QTimer.singleShot(0, self._apply_pending_view_state_layouts)
 
     def showEvent(self, event):
         super().showEvent(event)
+        self._suppress_window_chrome_theme_changes = True
+        QTimer.singleShot(0, self._clear_window_chrome_theme_change_suppression)
         self._apply_pending_view_state_layouts()
+        self._apply_simple_asset_table_header_style()
         self._sync_window_chrome_theme()
 
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange}:
-            self._sync_window_chrome_theme()
+            if self.isVisible() and not getattr(self, "_suppress_window_chrome_theme_changes", False):
+                self._sync_window_chrome_theme()
             self._apply_resource_table_palettes()
             if getattr(self, "_simple_asset_table", None) is not None:
+                self._apply_simple_asset_table_header_style()
                 self._refresh_simple_page()
 
     def dragEnterEvent(self, event):
@@ -1673,6 +1680,12 @@ class ResourceGeneratorWindow(QDialog):
 
     def _sync_window_chrome_theme(self):
         sync_window_chrome_theme(self)
+
+    def _clear_window_chrome_theme_change_suppression(self):
+        self._suppress_window_chrome_theme_changes = False
+
+    def _simple_mode_is_active(self) -> bool:
+        return getattr(self, "_workspace_stack", None) is not None and self._workspace_stack.currentWidget() is self._simple_page
 
     # -- Public API -----------------------------------------------------
 
@@ -2289,10 +2302,7 @@ class ResourceGeneratorWindow(QDialog):
         vertical_header.setMinimumSectionSize(row_height)
 
         simple_header = self._simple_asset_table.horizontalHeader()
-        header_font = QFont(simple_header.font())
-        header_font.setPointSize(10)
-        simple_header.setFont(header_font)
-        simple_header.setMinimumHeight(max(24, simple_header.fontMetrics().height() + 10))
+        self._apply_simple_asset_table_header_style()
         simple_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         simple_header.setStretchLastSection(False)
         simple_header.setSectionsClickable(True)
@@ -2303,6 +2313,16 @@ class ResourceGeneratorWindow(QDialog):
         for column, width in enumerate(_DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS):
             simple_header.resizeSection(column, width)
         self._apply_simple_asset_sort_indicator()
+
+    def _apply_simple_asset_table_header_style(self):
+        if getattr(self, "_simple_asset_table", None) is None:
+            return
+        simple_header = self._simple_asset_table.horizontalHeader()
+        header_font = designer_ui_font(point_size=10)
+        header_font.setWeight(simple_header.font().weight())
+        header_font.setItalic(simple_header.font().italic())
+        simple_header.setFont(header_font)
+        simple_header.setMinimumHeight(max(24, simple_header.fontMetrics().height() + 10))
 
     def _apply_resource_table_palette(self, table: QTableWidget | None, *, use_alt_background: bool):
         if table is None:
@@ -3848,6 +3868,8 @@ class ResourceGeneratorWindow(QDialog):
                 self._active_section = selected_section
                 self._active_entry_index = selected_index
             else:
+                if self._simple_mode_is_active():
+                    self._active_entry_index = -1
                 self._simple_asset_table.clearSelection()
         self._update_simple_asset_empty_state(total_assets=total_assets, visible_assets=len(rows), has_filters=has_filters)
         self._update_simple_action_button_states()
@@ -4004,6 +4026,8 @@ class ResourceGeneratorWindow(QDialog):
         if section:
             self._active_section = section
             self._active_entry_index = index
+        elif self._simple_mode_is_active():
+            self._active_entry_index = -1
         self._update_simple_action_button_states()
         self._update_simple_asset_preview()
 
