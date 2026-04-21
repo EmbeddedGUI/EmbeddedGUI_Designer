@@ -151,7 +151,7 @@ class TestResourcePanelFileFlow:
             metric_margins.top(),
             metric_margins.right(),
             metric_margins.bottom(),
-        ) == (6, 4, 6, 4)
+        ) == (4, 3, 4, 3)
         preview_layout = panel._details_tabs.widget(0).layout()
         usage_layout = panel._details_tabs.widget(1).layout()
         usage_filter_layout = usage_layout.itemAt(1).layout()

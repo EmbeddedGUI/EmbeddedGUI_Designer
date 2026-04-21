@@ -238,7 +238,7 @@ def _create_resource_panel_metric_card(layout, label_text):
     card = QFrame()
     card.setObjectName("resource_panel_metric_card")
     card_layout = QVBoxLayout(card)
-    card_layout.setContentsMargins(6, 4, 6, 4)
+    card_layout.setContentsMargins(4, 3, 4, 3)
     card_layout.setSpacing(2)
 
     label = QLabel(label_text)
