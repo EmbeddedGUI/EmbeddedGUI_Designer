@@ -371,6 +371,73 @@ class TestWidgetOverlaySelection:
             _dispose_widget(overlay)
             qapp.setProperty("designer_font_size_pt", 0)
 
+    def test_overlay_paint_palette_tracks_theme_tokens(self, qapp):
+        from ui_designer.ui.theme import app_theme_tokens
+
+        overlay, root, first, second, third = self._make_overlay()
+        overlay.set_selection([first, second], primary=first)
+        overlay._set_hovered_widget(third)
+
+        try:
+            tokens = app_theme_tokens(qapp)
+            palette = overlay._paint_palette()
+            selected_pen, selected_fill = overlay._widget_bounds_style(first, 1.0, palette=palette)
+            multi_pen, multi_fill = overlay._widget_bounds_style(second, 1.0, palette=palette)
+            hover_pen, hover_fill = overlay._widget_bounds_style(third, 1.0, palette=palette)
+
+            assert selected_pen.color().name().lower() == tokens["danger"].lower()
+            assert selected_fill.name().lower() == tokens["danger"].lower()
+            assert multi_pen.color().name().lower() == tokens["warning"].lower()
+            assert multi_fill.name().lower() == tokens["warning"].lower()
+            assert hover_pen.color().name().lower() == tokens["accent"].lower()
+            assert hover_fill.name().lower() == tokens["accent"].lower()
+            assert palette["grid"].name().lower() == tokens["border"].lower()
+            assert palette["tooltip_border"].name().lower() == tokens["accent"].lower()
+            assert palette["tooltip_text"].name().lower() == tokens["text"].lower()
+
+            overlay.set_solid_background(True)
+            passive_pen, passive_fill = overlay._widget_bounds_style(root, 1.0, passive_only=True)
+            assert passive_pen.color().name().lower() == tokens["text_soft"].lower()
+            assert passive_fill.name().lower() == tokens["accent"].lower()
+        finally:
+            _dispose_widget(overlay)
+
+    def test_overlay_theme_change_updates_palette_and_requests_repaint(self, qapp, monkeypatch):
+        from ui_designer.ui.preview_panel import WidgetOverlay
+        from ui_designer.ui.theme import app_theme_tokens
+
+        overlay = WidgetOverlay()
+        update_calls = 0
+        original_update = overlay.update
+
+        def counted_update():
+            nonlocal update_calls
+            update_calls += 1
+            return original_update()
+
+        monkeypatch.setattr(overlay, "update", counted_update)
+
+        try:
+            dark_palette = overlay._paint_palette()
+
+            qapp.setProperty("designer_theme_mode", "light")
+            overlay.changeEvent(QEvent(QEvent.StyleChange))
+
+            light_tokens = app_theme_tokens(qapp)
+            light_palette = overlay._paint_palette()
+
+            assert update_calls == 1
+            assert light_palette["hover_border"].name().lower() == light_tokens["accent"].lower()
+            assert light_palette["selected_border"].name().lower() == light_tokens["danger"].lower()
+            assert light_palette["tooltip_bg"].name().lower() == light_tokens["panel"].lower()
+            assert light_palette["hover_border"].name().lower() != dark_palette["hover_border"].name().lower()
+
+            overlay.changeEvent(QEvent(QEvent.FontChange))
+            assert update_calls == 1
+        finally:
+            _dispose_widget(overlay)
+            qapp.setProperty("designer_theme_mode", None)
+
     def test_overlay_keeps_full_feedback_during_drag_states(self, qapp):
         from ui_designer.ui.preview_panel import WidgetOverlay
 

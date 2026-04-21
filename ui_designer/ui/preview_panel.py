@@ -13,7 +13,7 @@ from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF,
 from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage, QRegion
 
 
-from .theme import designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size, theme_tokens
+from .theme import app_theme_tokens, designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size, theme_tokens
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_registry import WidgetRegistry
 from ..engine.python_renderer import render_page
@@ -81,6 +81,13 @@ _SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
 _DEFAULT_PREVIEW_FONT_PT = 9
+
+
+def _theme_color(color_value, alpha=None):
+    color = QColor(str(color_value or "").strip())
+    if alpha is not None:
+        color.setAlpha(int(alpha))
+    return color
 
 
 class WidgetOverlay(QWidget):
@@ -199,6 +206,40 @@ class WidgetOverlay(QWidget):
         self._rubber_base_selection = []
         self._rubber_base_primary = None
         self.setFocusPolicy(Qt.StrongFocus)  # Enable keyboard events
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
+            self.update()
+
+    def _paint_palette(self):
+        tokens = app_theme_tokens()
+        return {
+            "selected_border": _theme_color(tokens["danger"], 200),
+            "selected_fill": _theme_color(tokens["danger"], 40),
+            "multi_border": _theme_color(tokens["warning"], 200),
+            "multi_fill": _theme_color(tokens["warning"], 40),
+            "hover_border": _theme_color(tokens["accent"], 180),
+            "hover_fill": _theme_color(tokens["accent"], 30),
+            "passive_border_solid": _theme_color(tokens["text_soft"], 180),
+            "passive_fill_solid": _theme_color(tokens["accent"], 28),
+            "passive_border_clear": _theme_color(tokens["text_soft"], 100),
+            "passive_fill_clear": _theme_color(tokens["accent"], 20),
+            "grid": _theme_color(tokens["border"], 100),
+            "label_bg_full": _theme_color(tokens["panel"], 180),
+            "label_text_full": _theme_color(tokens["text"]),
+            "label_bg_focus": _theme_color(tokens["panel_raised"], 200),
+            "label_text_focus": _theme_color(tokens["text"], 240),
+            "snap_guide": _theme_color(tokens["danger"], 180),
+            "insert_line": _theme_color(tokens["accent"], 200),
+            "rubber_band_border": _theme_color(tokens["accent"], 200),
+            "rubber_band_fill": _theme_color(tokens["accent"], 40),
+            "handle_border": _theme_color(tokens["text"]),
+            "handle_fill": _theme_color(tokens["accent"]),
+            "tooltip_bg": _theme_color(tokens["panel"], 240),
+            "tooltip_border": _theme_color(tokens["accent"]),
+            "tooltip_text": _theme_color(tokens["text"]),
+        }
 
     def _ui_font_scale(self):
         app = QApplication.instance()
@@ -568,35 +609,37 @@ class WidgetOverlay(QWidget):
             self._widget_label_font_point_size(),
         )
 
-    def _widget_bounds_style(self, widget, z, *, passive_only=False):
+    def _widget_bounds_style(self, widget, z, *, passive_only=False, palette=None):
+        palette = self._paint_palette() if palette is None else palette
         if not passive_only:
             if widget == self._selected:
                 return (
-                    QPen(QColor(255, 100, 100, 200), 2.0 / z, Qt.SolidLine),
-                    QColor(255, 120, 100, 40),
+                    QPen(palette["selected_border"], 2.0 / z, Qt.SolidLine),
+                    QColor(palette["selected_fill"]),
                 )
             if widget in self._multi_selected:
                 return (
-                    QPen(QColor(255, 180, 80, 200), 2.0 / z, Qt.SolidLine),
-                    QColor(255, 180, 80, 40),
+                    QPen(palette["multi_border"], 2.0 / z, Qt.SolidLine),
+                    QColor(palette["multi_fill"]),
                 )
             if widget == self._hovered:
                 return (
-                    QPen(QColor(100, 200, 255, 180), 1.5 / z, Qt.DashLine),
-                    QColor(100, 200, 255, 30),
+                    QPen(palette["hover_border"], 1.5 / z, Qt.DashLine),
+                    QColor(palette["hover_fill"]),
                 )
 
         if self._solid_background:
             return (
-                QPen(QColor(140, 140, 140, 180), 1.0 / z, Qt.DotLine),
-                QColor(160, 180, 210, 28),
+                QPen(palette["passive_border_solid"], 1.0 / z, Qt.DotLine),
+                QColor(palette["passive_fill_solid"]),
             )
         return (
-            QPen(QColor(100, 100, 100, 100), 1.0 / z, Qt.DotLine),
-            QColor(150, 170, 200, 20),
+            QPen(palette["passive_border_clear"], 1.0 / z, Qt.DotLine),
+            QColor(palette["passive_fill_clear"]),
         )
 
-    def _draw_widget_bounds(self, painter, widgets, z, *, visible_logical_rect=None, passive_only=False):
+    def _draw_widget_bounds(self, painter, widgets, z, *, visible_logical_rect=None, passive_only=False, palette=None):
+        palette = self._paint_palette() if palette is None else palette
         widget_ids = None
         if widgets is self._passive_cache_widget_list:
             widget_ids = self._passive_cache_widget_ids
@@ -606,7 +649,7 @@ class WidgetOverlay(QWidget):
             if not self._widget_intersects_visible_rect(widget, visible_logical_rect):
                 continue
             rect = QRect(widget.display_x, widget.display_y, widget.width, widget.height)
-            pen, fill = self._widget_bounds_style(widget, z, passive_only=passive_only)
+            pen, fill = self._widget_bounds_style(widget, z, passive_only=passive_only, palette=palette)
             painter.setPen(pen)
             painter.setBrush(fill)
             painter.drawRect(rect)
@@ -625,7 +668,8 @@ class WidgetOverlay(QWidget):
             end = min(limit, int(math.ceil(end_value / grid_size)) * grid_size + grid_size)
         return range(start, max(start, end), grid_size)
 
-    def _draw_background_and_grid(self, painter, z, bw, bh, *, visible_logical_rect=None):
+    def _draw_background_and_grid(self, painter, z, bw, bh, *, visible_logical_rect=None, palette=None):
+        palette = self._paint_palette() if palette is None else palette
         if self._bg_image is not None and self._bg_image_visible:
             painter.save()
             painter.setOpacity(self._bg_image_opacity)
@@ -634,7 +678,7 @@ class WidgetOverlay(QWidget):
 
         eff_grid = self._effective_grid_size()
         if self._show_grid and eff_grid >= 1 and self._solid_background:
-            painter.setPen(QPen(QColor(60, 60, 60, 100), 1.0 / z, Qt.DotLine))
+            painter.setPen(QPen(palette["grid"], 1.0 / z, Qt.DotLine))
             for x in self._grid_line_positions(bw, eff_grid, visible_logical_rect, "x"):
                 painter.drawLine(x, 0, x, bh)
             for y in self._grid_line_positions(bh, eff_grid, visible_logical_rect, "y"):
@@ -649,7 +693,9 @@ class WidgetOverlay(QWidget):
         event_rect,
         visible_logical_rect=None,
         show_full_labels=None,
+        palette=None,
     ):
+        palette = self._paint_palette() if palette is None else palette
         painter.setFont(self._widget_label_font())
         fm = painter.fontMetrics()
         lh = fm.height() + 2
@@ -677,8 +723,8 @@ class WidgetOverlay(QWidget):
                 label_rect = QRect(sx, sy, sw, lh)
                 if not event_rect.intersects(label_rect):
                     continue
-                painter.fillRect(label_rect, QColor(30, 30, 30, 180))
-                painter.setPen(QColor(220, 220, 220))
+                painter.fillRect(label_rect, palette["label_bg_full"])
+                painter.setPen(palette["label_text_full"])
                 text_rect = QRect(sx + 3, sy, max(sw - 6, 0), lh)
                 painter.drawText(text_rect, Qt.AlignLeft | Qt.AlignVCenter, label_text)
             elif w == self._selected or w == self._hovered:
@@ -686,8 +732,8 @@ class WidgetOverlay(QWidget):
                 label_rect = QRect(sx, sy - lh, lw, lh)
                 if not event_rect.intersects(label_rect):
                     continue
-                painter.fillRect(label_rect, QColor(50, 50, 50, 200))
-                painter.setPen(QColor(255, 255, 255, 240))
+                painter.fillRect(label_rect, palette["label_bg_focus"])
+                painter.setPen(palette["label_text_focus"])
                 painter.drawText(label_rect, Qt.AlignCenter, label_text)
 
     def _ensure_passive_bounds_cache(self):
@@ -1296,6 +1342,7 @@ class WidgetOverlay(QWidget):
         bw, bh = self._base_width, self._base_height
         visible_logical_rect = self._logical_visible_rect(event.rect(), z)
         use_passive_bounds_cache = self._should_use_passive_bounds_cache()
+        palette = self._paint_palette()
 
         # ── Phase 1: Scaled space (geometry) ──────────────────────
         painter.scale(z, z)
@@ -1311,18 +1358,26 @@ class WidgetOverlay(QWidget):
                     painter.drawPixmap(target_rect, passive_cache, source_rect)
             painter.scale(z, z)
         else:
-            self._draw_background_and_grid(painter, z, bw, bh, visible_logical_rect=visible_logical_rect)
+            self._draw_background_and_grid(
+                painter,
+                z,
+                bw,
+                bh,
+                visible_logical_rect=visible_logical_rect,
+                palette=palette,
+            )
 
         self._draw_widget_bounds(
             painter,
             self._paint_candidate_widgets(),
             z,
             visible_logical_rect=visible_logical_rect,
+            palette=palette,
         )
 
         # Draw snap guide lines (in logical space)
         if self._snap_guides:
-            painter.setPen(QPen(QColor(255, 100, 100, 180), 1.0 / z, Qt.DashLine))
+            painter.setPen(QPen(palette["snap_guide"], 1.0 / z, Qt.DashLine))
             for orientation, pos in self._snap_guides:
                 if orientation == 'v':
                     painter.drawLine(pos, 0, pos, bh)
@@ -1332,13 +1387,13 @@ class WidgetOverlay(QWidget):
         # Draw insertion indicator line for reorder mode
         if self._reorder_mode and self._insert_line_rect is not None:
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(QColor(80, 160, 255, 200)))
+            painter.setBrush(QBrush(palette["insert_line"]))
             painter.drawRect(self._insert_line_rect)
 
         # Draw rubber-band selection rectangle
         if self._rubber_band and not self._rubber_rect.isNull():
-            painter.setPen(QPen(QColor(100, 180, 255, 200), 1.0 / z, Qt.DashLine))
-            painter.setBrush(QBrush(QColor(100, 180, 255, 40)))
+            painter.setPen(QPen(palette["rubber_band_border"], 1.0 / z, Qt.DashLine))
+            painter.setBrush(QBrush(palette["rubber_band_fill"]))
             painter.drawRect(self._rubber_rect)
 
         # ── Phase 2: Screen space (text, handles, tooltips) ──────
@@ -1355,6 +1410,7 @@ class WidgetOverlay(QWidget):
             z,
             event_rect=event.rect(),
             visible_logical_rect=visible_logical_rect,
+            palette=palette,
         )
 
         # Draw resize handles in screen space (constant pixel size)
@@ -1374,8 +1430,8 @@ class WidgetOverlay(QWidget):
                 QRect(sx - hh, sy + sh - hh, hs, hs),                # bottom-left
                 QRect(sx - hh, sy + sh // 2 - hh, hs, hs),           # left
             ]
-            painter.setPen(QPen(QColor(255, 255, 255), 1))
-            painter.setBrush(QBrush(QColor(100, 150, 255)))
+            painter.setPen(QPen(palette["handle_border"], 1))
+            painter.setBrush(QBrush(palette["handle_fill"]))
             for r in screen_handles:
                 painter.drawRect(r)
 
@@ -1394,11 +1450,10 @@ class WidgetOverlay(QWidget):
                 tip_sy = _s(w.display_y + w.height) + 4
 
             tip_rect = QRect(tip_sx, tip_sy, tw, th)
-            # Dark background with blue accent border for better visibility
-            painter.fillRect(tip_rect, QColor(30, 30, 35, 240))
-            painter.setPen(QPen(QColor(0, 120, 212), 1))
+            painter.fillRect(tip_rect, palette["tooltip_bg"])
+            painter.setPen(QPen(palette["tooltip_border"], 1))
             painter.drawRect(tip_rect)
-            painter.setPen(QColor(255, 255, 255))
+            painter.setPen(palette["tooltip_text"])
             painter.drawText(tip_rect, Qt.AlignCenter, coord_text)
 
 
