@@ -3486,6 +3486,12 @@ def apply_theme(app: QApplication, mode="dark", density="standard"):
     stylesheet = _build_stylesheet(mode, density=density, font_size_pt=font_size_pt)
     if app.styleSheet() != stylesheet:
         app.setStyleSheet(stylesheet)
+    try:
+        from .iconography import _load_lucide_icon_cached
+
+        _load_lucide_icon_cached.cache_clear()
+    except Exception:
+        pass
     chrome_manager = _ensure_window_chrome_sync_manager(app)
     manager = _ensure_fluent_engineering_style_manager(app)
     if manager is not None:

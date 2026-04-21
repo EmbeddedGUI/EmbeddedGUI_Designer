@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import QPointF, QRectF, Qt
+import os
+from functools import lru_cache
+from pathlib import Path
+
+from PyQt5.QtCore import QByteArray, QPointF, QRectF, Qt
 from PyQt5.QtGui import QColor, QFont, QFontDatabase, QIcon, QPainter, QPainterPath, QPen, QPixmap
 from PyQt5.QtWidgets import QApplication
+try:
+    from PyQt5.QtSvg import QSvgRenderer
+except Exception:  # optional runtime dependency path
+    QSvgRenderer = None
 
 try:
     from qfluentwidgets import FluentIcon as FIF
@@ -263,6 +271,98 @@ _FLUENT_ICON_MAP = {
     "canvas.guides": "LAYOUT",
 }
 
+_LUCIDE_DIR = Path(__file__).resolve().parent.parent / "assets" / "icons" / "lucide"
+
+_LUCIDE_KEY_MAP = {
+    # Toolbar / command semantics
+    "toolbar.new": "plus",
+    "toolbar.open": "folder-open",
+    "toolbar.save": "save",
+    "toolbar.undo": "undo-2",
+    "toolbar.redo": "redo-2",
+    "toolbar.copy": "copy",
+    "toolbar.paste": "clipboard-paste",
+    "toolbar.delete": "trash-2",
+    "toolbar.preview": "view",
+    "toolbar.compile": "play",
+    "toolbar.stop": "square",
+    "toolbar.export": "upload",
+    "toolbar.settings.project": "wrench",
+    "toolbar.settings.global": "settings-2",
+
+    # Navigation / dock semantics
+    "nav.project": "folder-tree",
+    "nav.structure": "workflow",
+    "nav.page": "file-text",
+    "nav.page_group": "folder-root",
+    "nav.template": "layout-template",
+    "nav.component_library": "component",
+    "nav.resource": "image",
+    "nav.expand": "chevron-right",
+    "nav.collapse": "chevron-down",
+
+    # Inspector / layout commands
+    "layout.align.left": "align-left",
+    "layout.align.center": "align-center-horizontal",
+    "layout.align.right": "align-right",
+    "layout.align.top": "align-start-vertical",
+    "layout.align.middle": "align-center-vertical",
+    "layout.align.bottom": "align-end-vertical",
+    "layout.distribute.h": "align-horizontal-distribute-center",
+    "layout.distribute.v": "align-vertical-distribute-center",
+    "edit.visible": "eye",
+    "edit.hidden": "eye-off",
+    "edit.lock": "lock",
+    "edit.unlock": "unlock",
+
+    # Status / state
+    "state.success": "circle-check-big",
+    "state.warn": "triangle-alert",
+    "state.error": "circle-alert",
+    "state.info": "info",
+    "state.progress": "loader-circle",
+
+    # Canvas operations
+    "canvas.select": "mouse-pointer-click",
+    "canvas.drag": "move",
+    "canvas.zoom_in": "zoom-in",
+    "canvas.zoom_out": "zoom-out",
+    "canvas.rotate": "rotate-cw",
+    "canvas.layer.up": "arrow-up",
+    "canvas.layer.down": "arrow-down",
+    "canvas.layer.top": "arrow-up-to-line",
+    "canvas.layer.bottom": "arrow-down-to-line",
+    "canvas.grid": "grid-3x3",
+    "canvas.snap": "crosshair",
+    "canvas.ruler": "ruler",
+    "canvas.guides": "layout-panel-left",
+
+    # Widget semantic groups
+    "button": "square-minus",
+    "calendar": "calendar",
+    "card": "square-stack",
+    "chart": "activity",
+    "display": "monitor",
+    "divider": "separator-horizontal",
+    "grid": "grid-3x3",
+    "image": "image",
+    "input": "text-cursor-input",
+    "layout": "layout-panel-top",
+    "list": "list",
+    "media": "play",
+    "navigation": "waypoints",
+    "page": "file-text",
+    "progress": "loader-circle",
+    "security": "shield",
+    "status": "badge-info",
+    "table": "table",
+    "tag": "tag",
+    "text": "type",
+    "time": "clock",
+    "toggle": "toggle-left",
+    "window": "app-window",
+}
+
 _MATERIAL_FONT_FAMILY = "Material Symbols Rounded"
 _MATERIAL_FONT_FALLBACKS = (
     "Material Symbols Rounded",
@@ -280,32 +380,24 @@ def _theme_mode() -> str:
 
 
 def _palette_for_mode(mode: str) -> dict:
-    if mode == "light":
-        return {
-            "ink": QColor("#1F2329"),
-            "muted": QColor("#5C6675"),
-            "accent": QColor("#1E6FD9"),
-            "accent_soft": QColor("#D9E8FF"),
-            "danger": QColor("#C14A3A"),
-            "success": QColor("#227A49"),
-            "surface": QColor("#FFFFFF"),
-            "surface_alt": QColor("#EEF3FA"),
-            "stroke": QColor("#CDD8E6"),
-            "warn": QColor("#9A6B18"),
-            "info": QColor("#1E6FD9"),
-        }
+    from .theme import theme_tokens
+
+    tokens = theme_tokens("light" if mode == "light" else "dark")
+    accent = QColor(tokens["accent"])
+    accent_soft = QColor(accent)
+    accent_soft.setAlphaF(0.15)
     return {
-        "ink": QColor("#E7EDF7"),
-        "muted": QColor("#93A4BA"),
-        "accent": QColor("#63A5FF"),
-        "accent_soft": QColor("#133A6C"),
-        "danger": QColor("#FF7B72"),
-        "success": QColor("#4CC38A"),
-        "surface": QColor("#17202B"),
-        "surface_alt": QColor("#223041"),
-        "stroke": QColor("#314355"),
-        "warn": QColor("#F4C47A"),
-        "info": QColor("#63A5FF"),
+        "ink": QColor(tokens["text"]),
+        "muted": QColor(tokens["text_soft"]),
+        "accent": accent,
+        "accent_soft": accent_soft,
+        "danger": QColor(tokens["danger"]),
+        "success": QColor(tokens["success"]),
+        "surface": QColor(tokens["panel"]),
+        "surface_alt": QColor(tokens["panel_alt"]),
+        "stroke": QColor(tokens["border"]),
+        "warn": QColor(tokens["warning"]),
+        "info": QColor(tokens["accent"]),
     }
 
 
@@ -426,6 +518,81 @@ def widget_icon_key(type_name: str) -> str:
     return _WIDGET_ICON_KEYS.get(str(type_name or "").strip(), "widget")
 
 
+def _legacy_icon_mode_enabled() -> bool:
+    return os.environ.get("EMBEDDEDGUI_LEGACY_ICONS", "0") == "1"
+
+
+def _normalize_icon_color(color) -> str:
+    qcolor = color if isinstance(color, QColor) else QColor(str(color or "").strip())
+    if isinstance(qcolor, QColor) and qcolor.isValid():
+        return qcolor.name(QColor.HexArgb) if qcolor.alpha() != 255 else qcolor.name().upper()
+    return str(color or "").strip()
+
+
+def _widget_semantic_key(icon_key: str) -> str | None:
+    key = str(icon_key or "").strip()
+    if not key:
+        return None
+    if key in _WIDGET_ICON_KEYS.values():
+        return key
+    return _WIDGET_ICON_KEYS.get(key)
+
+
+def _lucide_name_for_key(icon_key: str) -> str | None:
+    key = str(icon_key or "").strip()
+    if not key:
+        return None
+    widget_semantic = _widget_semantic_key(key)
+    if widget_semantic:
+        lucide_name = _LUCIDE_KEY_MAP.get(widget_semantic)
+        if lucide_name:
+            return lucide_name
+    canonical = _ICON_ALIASES.get(key, key)
+    return _LUCIDE_KEY_MAP.get(canonical) or _LUCIDE_KEY_MAP.get(key)
+
+
+def _icon_color_value(icon_key: str, mode: str | None = None, color=None) -> str:
+    if color is not None:
+        return _normalize_icon_color(color)
+    palette = _palette_for_mode(mode or _theme_mode())
+    token = _icon_token_for_key(icon_key)
+    return _normalize_icon_color(_icon_color_for_token(palette, token))
+
+
+@lru_cache(maxsize=512)
+def _load_lucide_icon_cached(name: str, color: str, size: int) -> QIcon:
+    if QSvgRenderer is None:
+        return QIcon()
+    svg_path = _LUCIDE_DIR / f"{name}.svg"
+    if not svg_path.is_file():
+        return QIcon()
+
+    svg = svg_path.read_text(encoding="utf-8")
+    svg = svg.replace('stroke="currentColor"', f'stroke="{color}"')
+    svg = svg.replace('fill="currentColor"', f'fill="{color}"')
+    renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))
+    if not renderer.isValid():
+        return QIcon()
+
+    pixmap = QPixmap(int(size), int(size))
+    pixmap.fill(Qt.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.Antialiasing)
+    painter.setRenderHint(QPainter.TextAntialiasing)
+    renderer.render(painter)
+    painter.end()
+    return QIcon(pixmap)
+
+
+def load_lucide_icon(name: str, color=None, size: int = 16) -> QIcon:
+    """Load a Lucide SVG icon tinted to the requested color."""
+    if color is None:
+        from .theme import app_theme_tokens
+
+        color = app_theme_tokens().get("text_soft", "#71717A")
+    return _load_lucide_icon_cached(str(name), _normalize_icon_color(color), int(size))
+
+
 def _fluent_icon_for_key(icon_key: str) -> QIcon | None:
     if FIF is None:
         return None
@@ -451,7 +618,7 @@ def _fluent_icon_for_key(icon_key: str) -> QIcon | None:
         return None
 
 
-def make_icon(icon_key: str, size: int = 20, mode: str | None = None) -> QIcon:
+def _legacy_make_icon(icon_key: str, size: int = 20, mode: str | None = None) -> QIcon:
     spec = _resolve_icon_spec(icon_key)
     if spec is not None:
         # Full modern replacement: semantic keys do NOT fall back to legacy painter path.
@@ -459,15 +626,15 @@ def make_icon(icon_key: str, size: int = 20, mode: str | None = None) -> QIcon:
         if fluent_icon is not None:
             return fluent_icon
         # If Fluent is unavailable at runtime, use Material as a modern second choice.
-        pixmap = make_pixmap(icon_key, size=size, mode=mode)
+        pixmap = _legacy_make_pixmap(icon_key, size=size, mode=mode)
         return QIcon(pixmap)
 
     # Non-semantic or custom keys keep compatibility behavior.
-    pixmap = make_pixmap(icon_key, size=size, mode=mode)
+    pixmap = _legacy_make_pixmap(icon_key, size=size, mode=mode)
     return QIcon(pixmap)
 
 
-def make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixmap:
+def _legacy_make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixmap:
     mode = mode or _theme_mode()
     palette = _palette_for_mode(mode)
     pixmap = QPixmap(size, size)
@@ -498,6 +665,34 @@ def make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixm
 
     painter.end()
     return pixmap
+
+
+def icon_for_semantic(icon_key: str, *, color=None, size: int = 20, mode: str | None = None) -> QIcon:
+    lucide_name = None if _legacy_icon_mode_enabled() else _lucide_name_for_key(icon_key)
+    if lucide_name:
+        icon = load_lucide_icon(lucide_name, color=_icon_color_value(icon_key, mode=mode, color=color), size=size)
+        if not icon.isNull():
+            return icon
+    return _legacy_make_icon(icon_key, size=size, mode=mode)
+
+
+def icon_for_widget(widget_key: str, *, color=None, size: int = 16, mode: str | None = None) -> QIcon:
+    key = str(widget_key or "").strip()
+    semantic = _WIDGET_ICON_KEYS.get(key, key)
+    return icon_for_semantic(semantic, color=color, size=size, mode=mode)
+
+
+def make_icon(icon_key: str, size: int = 20, mode: str | None = None) -> QIcon:
+    return icon_for_semantic(icon_key, size=size, mode=mode)
+
+
+def make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixmap:
+    icon = icon_for_semantic(icon_key, size=size, mode=mode)
+    if not icon.isNull():
+        pixmap = icon.pixmap(size, size)
+        if not pixmap.isNull():
+            return pixmap
+    return _legacy_make_pixmap(icon_key, size=size, mode=mode)
 
 
 def make_widget_preview(preview_kind: str, size=(180, 120), mode: str | None = None) -> QPixmap:
