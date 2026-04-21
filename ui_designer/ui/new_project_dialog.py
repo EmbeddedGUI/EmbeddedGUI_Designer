@@ -80,7 +80,7 @@ class NewProjectDialog(QDialog):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(12)
+        layout.setSpacing(10)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("new_project_header")
@@ -138,13 +138,13 @@ class NewProjectDialog(QDialog):
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(12)
+        content_layout.setSpacing(10)
 
         workspace_card = QFrame()
         workspace_card.setObjectName("new_project_form_card")
         workspace_layout = QVBoxLayout(workspace_card)
         workspace_layout.setContentsMargins(0, 0, 0, 0)
-        workspace_layout.setSpacing(10)
+        workspace_layout.setSpacing(8)
 
         workspace_title = QLabel("Workspace Binding")
         workspace_title.setObjectName("workspace_section_title")
@@ -164,7 +164,7 @@ class NewProjectDialog(QDialog):
         self._sdk_edit.setReadOnly(True)
         self._sdk_edit.setText(self._sdk_root)
         sdk_row = QHBoxLayout()
-        sdk_row.setSpacing(8)
+        sdk_row.setSpacing(6)
         sdk_row.addWidget(self._sdk_edit, 1)
         self._sdk_browse_btn = PushButton("Browse...")
         self._sdk_browse_btn.clicked.connect(self._browse_sdk_root)
@@ -188,7 +188,7 @@ class NewProjectDialog(QDialog):
         self._parent_edit.setReadOnly(True)
         self._parent_edit.setText(self._parent_dir)
         parent_row = QHBoxLayout()
-        parent_row.setSpacing(8)
+        parent_row.setSpacing(6)
         parent_row.addWidget(self._parent_edit, 1)
         self._parent_browse_btn = PushButton("Browse...")
         self._parent_browse_btn.clicked.connect(self._browse_parent_dir)
@@ -199,13 +199,13 @@ class NewProjectDialog(QDialog):
 
         right_column = QVBoxLayout()
         right_column.setContentsMargins(0, 0, 0, 0)
-        right_column.setSpacing(12)
+        right_column.setSpacing(10)
 
         project_card = QFrame()
         project_card.setObjectName("new_project_form_card")
         project_layout = QVBoxLayout(project_card)
         project_layout.setContentsMargins(0, 0, 0, 0)
-        project_layout.setSpacing(10)
+        project_layout.setSpacing(8)
 
         project_title = QLabel("Project Profile")
         project_title.setObjectName("workspace_section_title")
@@ -237,7 +237,7 @@ class NewProjectDialog(QDialog):
         self._height_spin.valueChanged.connect(self._update_accessibility_summary)
 
         dimensions_layout = QHBoxLayout()
-        dimensions_layout.setSpacing(8)
+        dimensions_layout.setSpacing(6)
         dimensions_layout.addWidget(self._create_dimension_editor("Width", self._width_spin))
         dimensions_layout.addWidget(self._create_dimension_editor("Height", self._height_spin))
         project_layout.addLayout(dimensions_layout)
@@ -247,7 +247,7 @@ class NewProjectDialog(QDialog):
         self._summary_card.setObjectName("new_project_summary_card")
         summary_layout = QVBoxLayout(self._summary_card)
         summary_layout.setContentsMargins(0, 0, 0, 0)
-        summary_layout.setSpacing(8)
+        summary_layout.setSpacing(6)
 
         summary_title = QLabel("Create Target")
         summary_title.setObjectName("workspace_section_title")

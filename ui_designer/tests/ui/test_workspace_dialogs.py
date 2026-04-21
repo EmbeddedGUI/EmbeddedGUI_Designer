@@ -75,11 +75,20 @@ class TestAppSelectorDialog:
         dialog = AppSelectorDialog(sdk_root="")
         header_layout = dialog._header_frame.layout()
         header_margins = header_layout.contentsMargins()
+        root_layout = dialog.layout()
+        content_layout = root_layout.itemAt(1).layout()
+        left_column = content_layout.itemAt(0).layout()
+        right_column = content_layout.itemAt(1).layout()
+        root_card_layout = left_column.itemAt(0).widget().layout()
+        options_layout = left_column.itemAt(1).widget().layout()
+        browser_layout = right_column.itemAt(0).widget().layout()
+        selection_layout = right_column.itemAt(1).widget().layout()
 
         assert dialog._header_frame.accessibleName() == (
             "Example header. Open Example dialog: SDK root none. Search none. "
             "Unmanaged SDK examples off. Examples list: 1 entry. Selection: none."
         )
+        assert root_layout.spacing() == 10
         assert (
             header_margins.left(),
             header_margins.top(),
@@ -87,6 +96,14 @@ class TestAppSelectorDialog:
             header_margins.bottom(),
         ) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
+        assert content_layout.spacing() == 10
+        assert left_column.spacing() == 10
+        assert right_column.spacing() == 10
+        assert root_card_layout.spacing() == 8
+        assert options_layout.spacing() == 8
+        assert browser_layout.spacing() == 8
+        assert selection_layout.spacing() == 6
+        assert dialog._app_list.spacing() == 6
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()
         assert dialog._metrics_frame.isHidden()
@@ -592,12 +609,19 @@ class TestNewProjectDialog:
             dialog = NewProjectDialog(sdk_root="", default_parent_dir=str(tmp_path))
         header_layout = dialog._header_frame.layout()
         header_margins = header_layout.contentsMargins()
+        root_layout = dialog.layout()
+        content_layout = root_layout.itemAt(1).layout()
+        workspace_layout = content_layout.itemAt(0).widget().layout()
+        right_column = content_layout.itemAt(1).layout()
+        project_layout = right_column.itemAt(0).widget().layout()
+        summary_layout = dialog._summary_card.layout()
 
         normalized_parent = os.path.normpath(os.path.abspath(tmp_path))
         assert dialog._header_frame.accessibleName() == (
             f"New project header. New Project dialog: SDK root none. Parent directory {normalized_parent}. "
             "App name none. Size 240 by 320."
         )
+        assert root_layout.spacing() == 10
         assert (
             header_margins.left(),
             header_margins.top(),
@@ -605,6 +629,11 @@ class TestNewProjectDialog:
             header_margins.bottom(),
         ) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
+        assert content_layout.spacing() == 10
+        assert workspace_layout.spacing() == 8
+        assert right_column.spacing() == 10
+        assert project_layout.spacing() == 8
+        assert summary_layout.spacing() == 6
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "New project scaffold workspace."

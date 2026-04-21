@@ -175,7 +175,7 @@ class AppSelectorDialog(QDialog):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(12)
+        layout.setSpacing(10)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("app_selector_header")
@@ -233,17 +233,17 @@ class AppSelectorDialog(QDialog):
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(12)
+        content_layout.setSpacing(10)
 
         left_column = QVBoxLayout()
         left_column.setContentsMargins(0, 0, 0, 0)
-        left_column.setSpacing(12)
+        left_column.setSpacing(10)
 
         root_card = QFrame()
         root_card.setObjectName("app_selector_root_card")
         root_layout = QVBoxLayout(root_card)
         root_layout.setContentsMargins(0, 0, 0, 0)
-        root_layout.setSpacing(10)
+        root_layout.setSpacing(8)
 
         root_title = QLabel("SDK")
         root_title.setObjectName("workspace_section_title")
@@ -265,7 +265,7 @@ class AppSelectorDialog(QDialog):
         root_layout.addWidget(self._root_edit)
 
         actions_row = QHBoxLayout()
-        actions_row.setSpacing(8)
+        actions_row.setSpacing(6)
 
         self._browse_btn = PushButton("Browse...")
         self._browse_btn.clicked.connect(self._browse_root)
@@ -287,7 +287,7 @@ class AppSelectorDialog(QDialog):
         options_card.setObjectName("app_selector_options_card")
         options_layout = QVBoxLayout(options_card)
         options_layout.setContentsMargins(0, 0, 0, 0)
-        options_layout.setSpacing(10)
+        options_layout.setSpacing(8)
 
         options_title = QLabel("Filters")
         options_title.setObjectName("workspace_section_title")
@@ -318,13 +318,13 @@ class AppSelectorDialog(QDialog):
 
         right_column = QVBoxLayout()
         right_column.setContentsMargins(0, 0, 0, 0)
-        right_column.setSpacing(12)
+        right_column.setSpacing(10)
 
         browser_card = QFrame()
         browser_card.setObjectName("app_selector_browser_card")
         browser_layout = QVBoxLayout(browser_card)
         browser_layout.setContentsMargins(0, 0, 0, 0)
-        browser_layout.setSpacing(10)
+        browser_layout.setSpacing(8)
 
         browser_title = QLabel("Examples")
         browser_title.setObjectName("workspace_section_title")
@@ -344,7 +344,7 @@ class AppSelectorDialog(QDialog):
 
         self._app_list = QListWidget()
         self._app_list.setObjectName("app_selector_list")
-        self._app_list.setSpacing(8)
+        self._app_list.setSpacing(6)
         self._app_list.itemDoubleClicked.connect(self._on_item_double_clicked)
         self._app_list.currentItemChanged.connect(self._on_selection_changed)
         self._app_list.setAccessibleName("Examples")
@@ -355,7 +355,7 @@ class AppSelectorDialog(QDialog):
         selection_card.setObjectName("app_selector_selection_card")
         selection_layout = QVBoxLayout(selection_card)
         selection_layout.setContentsMargins(0, 0, 0, 0)
-        selection_layout.setSpacing(8)
+        selection_layout.setSpacing(6)
 
         selection_title = QLabel("Selection")
         selection_title.setObjectName("workspace_section_title")
