@@ -2231,6 +2231,8 @@ class TestResourcePanelFileFlow:
             ["missing.png", "icon.png"],
             [source_a, source_b],
         )
+        header_layout = dialog._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
 
         first_combo = dialog._combos[0][1]
         second_combo = dialog._combos[1][1]
@@ -2238,6 +2240,13 @@ class TestResourcePanelFileFlow:
         assert "2 missing resources." in dialog.accessibleName()
         assert "2 candidate files available." in dialog.accessibleName()
         assert "1 replacement selected." in dialog.accessibleName()
+        assert (
+            header_margins.left(),
+            header_margins.top(),
+            header_margins.right(),
+            header_margins.bottom(),
+        ) == (12, 10, 12, 10)
+        assert header_layout.spacing() == 12
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Replace missing resources: 2 missing resources. "
             "2 candidate files available. 1 replacement selected."
@@ -2376,8 +2385,17 @@ class TestResourcePanelFileFlow:
             usages,
             "Delete",
         )
+        header_layout = dialog._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
 
         assert dialog.accessibleName() == "Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
+        assert (
+            header_margins.left(),
+            header_margins.top(),
+            header_margins.right(),
+            header_margins.bottom(),
+        ) == (12, 10, 12, 10)
+        assert header_layout.spacing() == 12
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
         )
@@ -2462,9 +2480,18 @@ class TestResourcePanelFileFlow:
             "Replace",
             current_page_name="detail_page",
         )
+        header_layout = dialog._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
 
         assert "2 visible rename impacts." in dialog.accessibleName()
         assert "Current rename: missing_a.png -> renamed_a.png." in dialog.accessibleName()
+        assert (
+            header_margins.left(),
+            header_margins.top(),
+            header_margins.right(),
+            header_margins.bottom(),
+        ) == (12, 10, 12, 10)
+        assert header_layout.spacing() == 12
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Replace Missing Resources: 2 visible rename impacts. 2 visible usages shown. "
             "Current page only: off. Current rename: missing_a.png -> renamed_a.png. "
@@ -3161,7 +3188,17 @@ class TestResourcePanelFileFlow:
             dialog._preset_checks["ascii_printable"].setChecked(True)
             dialog._custom_input.setPlainText("中")
 
+            header_layout = dialog._header_frame.layout()
+            header_margins = header_layout.contentsMargins()
+
             assert dialog.accessibleName().startswith("Generate Charset: 1 preset selected.")
+            assert (
+                header_margins.left(),
+                header_margins.top(),
+                header_margins.right(),
+                header_margins.bottom(),
+            ) == (12, 10, 12, 10)
+            assert header_layout.spacing() == 12
             assert dialog._header_frame.accessibleName() == (
                 "Font charset dialog header: 1 preset selected. 96 chars. File: charset_ascii_printable_custom.txt."
             )
