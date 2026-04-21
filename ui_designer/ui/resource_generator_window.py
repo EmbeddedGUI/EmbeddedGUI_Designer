@@ -97,6 +97,34 @@ _FONT_TEXT_PREVIEW_CHAR_LIMIT = 4096
 _FONT_TEXT_COMBINED_PREVIEW_CHAR_LIMIT = 8192
 
 
+def _best_contrast_color(background: QColor, *candidates) -> QColor:
+    best_color = QColor()
+    best_distance = -1
+    for candidate in candidates:
+        color = candidate if isinstance(candidate, QColor) else QColor(str(candidate or "").strip())
+        distance = abs(int(background.lightness()) - int(color.lightness()))
+        if distance > best_distance:
+            best_color = QColor(color)
+            best_distance = distance
+    return best_color
+
+
+def _quick_preview_board_palette():
+    tokens = app_theme_tokens()
+    return {
+        "page_bg": QColor(tokens["bg"]),
+        "title_text": QColor(tokens["text"]),
+        "subtitle_text": QColor(tokens["text_muted"]),
+        "card_border": QColor(tokens["border"]),
+        "card_fill": QColor(tokens["panel_raised"]),
+        "card_title": QColor(tokens["text"]),
+        "preview_border": QColor(tokens["border_strong"]),
+        "preview_fill": QColor(tokens["panel_alt"]),
+        "preview_text": QColor(tokens["text_muted"]),
+        "meta_text": QColor(tokens["text_soft"]),
+    }
+
+
 def _clear_qt_pixmap_cache():
     try:
         QPixmapCache.clear()
@@ -4143,9 +4171,10 @@ class ResourceGeneratorWindow(QDialog):
         rows = max(1, int(math.ceil(len(payloads) / float(columns))))
         image_width = (page_margin * 2) + (card_width * columns) + (gap * (columns - 1))
         image_height = (page_margin * 2) + header_height + (card_height * rows) + (gap * max(rows - 1, 0))
+        palette = _quick_preview_board_palette()
 
         image = QImage(image_width, image_height, QImage.Format_ARGB32)
-        image.fill(QColor(246, 244, 238))
+        image.fill(palette["page_bg"])
 
         painter = QPainter(image)
         try:
@@ -4156,13 +4185,13 @@ class ResourceGeneratorWindow(QDialog):
             title_font.setPointSize(18)
             title_font.setBold(True)
             painter.setFont(title_font)
-            painter.setPen(QColor(39, 39, 39))
+            painter.setPen(palette["title_text"])
             painter.drawText(page_margin, page_margin + 28, "Quick Preview Board")
 
             subtitle_font = QFont()
             subtitle_font.setPointSize(10)
             painter.setFont(subtitle_font)
-            painter.setPen(QColor(96, 96, 96))
+            painter.setPen(palette["subtitle_text"])
             painter.drawText(
                 page_margin,
                 page_margin + 48,
@@ -4181,6 +4210,7 @@ class ResourceGeneratorWindow(QDialog):
                     card_width,
                     card_height,
                     payload,
+                    palette=palette,
                 )
         finally:
             painter.end()
@@ -4208,26 +4238,37 @@ class ResourceGeneratorWindow(QDialog):
         layout.addWidget(meta_label)
         return card
 
-    def _paint_quick_preview_card(self, painter: QPainter, x: int, y: int, width: int, height: int, payload: dict):
+    def _paint_quick_preview_card(
+        self,
+        painter: QPainter,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        payload: dict,
+        *,
+        palette=None,
+    ):
+        palette = _quick_preview_board_palette() if palette is None else palette
         painter.save()
         try:
-            painter.setPen(QPen(QColor(214, 208, 196), 1))
-            painter.setBrush(QColor(255, 252, 247))
+            painter.setPen(QPen(palette["card_border"], 1))
+            painter.setBrush(palette["card_fill"])
             painter.drawRoundedRect(x, y, width, height, 12, 12)
 
             title_font = QFont()
             title_font.setPointSize(11)
             title_font.setBold(True)
             painter.setFont(title_font)
-            painter.setPen(QColor(45, 45, 45))
+            painter.setPen(palette["card_title"])
             title_rect = painter.boundingRect(x + 14, y + 12, width - 28, 40, Qt.TextWordWrap, payload["title"])
             painter.drawText(title_rect, Qt.TextWordWrap, payload["title"])
 
             preview_rect_top = title_rect.bottom() + 12
             preview_rect_height = 138
             preview_rect = (x + 14, preview_rect_top, width - 28, preview_rect_height)
-            painter.setPen(QPen(QColor(226, 220, 210), 1))
-            painter.setBrush(QColor(248, 246, 241))
+            painter.setPen(QPen(palette["preview_border"], 1))
+            painter.setBrush(palette["preview_fill"])
             painter.drawRoundedRect(preview_rect[0], preview_rect[1], preview_rect[2], preview_rect[3], 10, 10)
 
             pixmap = payload.get("pixmap")
@@ -4237,7 +4278,7 @@ class ResourceGeneratorWindow(QDialog):
                 py = preview_rect[1] + max(0, (preview_rect[3] - scaled.height()) // 2)
                 painter.drawPixmap(px, py, scaled)
             else:
-                painter.setPen(QColor(106, 106, 106))
+                painter.setPen(palette["preview_text"])
                 preview_font = QFont()
                 preview_font.setPointSize(9)
                 painter.setFont(preview_font)
@@ -4253,7 +4294,7 @@ class ResourceGeneratorWindow(QDialog):
             meta_font = QFont()
             meta_font.setPointSize(8)
             painter.setFont(meta_font)
-            painter.setPen(QColor(78, 78, 78))
+            painter.setPen(palette["meta_text"])
             meta_top = preview_rect[1] + preview_rect[3] + 10
             painter.drawText(
                 x + 14,
@@ -7585,12 +7626,11 @@ def _build_quick_placeholder_pixmap(label: str, *, width: int, height: int) -> Q
     safe_width = max(int(width or 0), 16)
     safe_height = max(int(height or 0), 16)
     text = str(label or "").strip() or "Placeholder"
-    seed = sum((index + 1) * ord(character) for index, character in enumerate(text))
-    hue = seed % 360
-
-    background = QColor.fromHsv(hue, 48, 232)
-    border = QColor.fromHsv(hue, 92, 150)
-    accent = QColor.fromHsv((hue + 28) % 360, 64, 246)
+    palette = _quick_placeholder_palette(text)
+    background = palette["background"]
+    border = palette["border"]
+    accent = palette["accent"]
+    text_color = palette["text"]
 
     pixmap = QPixmap(safe_width, safe_height)
     pixmap.fill(background)
@@ -7610,7 +7650,7 @@ def _build_quick_placeholder_pixmap(label: str, *, width: int, height: int) -> Q
         font.setBold(True)
         font.setPointSize(max(10, min(safe_width // 11, safe_height // 5)))
         painter.setFont(font)
-        painter.setPen(QColor(48, 45, 40))
+        painter.setPen(text_color)
         painter.drawText(
             pixmap.rect().adjusted(10, max(12, safe_height // 5), -10, -10),
             Qt.AlignCenter | Qt.TextWordWrap,
@@ -7620,6 +7660,24 @@ def _build_quick_placeholder_pixmap(label: str, *, width: int, height: int) -> Q
         painter.end()
 
     return pixmap
+
+
+def _quick_placeholder_palette(label: str):
+    text = str(label or "").strip() or "Placeholder"
+    seed = sum((index + 1) * ord(character) for index, character in enumerate(text))
+    hue = seed % 360
+
+    background = QColor.fromHsv(hue, 48, 232)
+    border = QColor.fromHsv(hue, 92, 150)
+    accent = QColor.fromHsv((hue + 28) % 360, 64, 246)
+    tokens = app_theme_tokens()
+    text_color = _best_contrast_color(background, QColor(tokens["text"]), QColor(tokens["bg"]))
+    return {
+        "background": background,
+        "border": border,
+        "accent": accent,
+        "text": text_color,
+    }
 
 
 def _is_quick_generated_helper_path(file_name) -> bool:

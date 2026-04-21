@@ -1239,6 +1239,50 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_quick_preview_board_palette_uses_active_theme_tokens(self, qapp):
+        from ui_designer.ui.resource_generator_window import _quick_preview_board_palette
+        from ui_designer.ui.theme import app_theme_tokens
+
+        tokens = app_theme_tokens(qapp)
+        palette = _quick_preview_board_palette()
+
+        assert palette["page_bg"].name().lower() == tokens["bg"].lower()
+        assert palette["title_text"].name().lower() == tokens["text"].lower()
+        assert palette["subtitle_text"].name().lower() == tokens["text_muted"].lower()
+        assert palette["card_border"].name().lower() == tokens["border"].lower()
+        assert palette["card_fill"].name().lower() == tokens["panel_raised"].lower()
+        assert palette["preview_border"].name().lower() == tokens["border_strong"].lower()
+        assert palette["preview_fill"].name().lower() == tokens["panel_alt"].lower()
+        assert palette["meta_text"].name().lower() == tokens["text_soft"].lower()
+
+    @_skip_no_qt
+    def test_quick_placeholder_palette_chooses_theme_aware_contrast_text(self, qapp):
+        from PyQt5.QtGui import QColor
+
+        from ui_designer.ui.resource_generator_window import _quick_placeholder_palette
+        from ui_designer.ui.theme import app_theme_tokens
+
+        dark_palette = _quick_placeholder_palette("Hero Banner")
+        dark_tokens = app_theme_tokens(qapp)
+        dark_expected = max(
+            (QColor(dark_tokens["text"]), QColor(dark_tokens["bg"])),
+            key=lambda color: abs(int(dark_palette["background"].lightness()) - int(color.lightness())),
+        )
+        assert dark_palette["text"].name().lower() == dark_expected.name().lower()
+
+        qapp.setProperty("designer_theme_mode", "light")
+        try:
+            light_palette = _quick_placeholder_palette("Hero Banner")
+            light_tokens = app_theme_tokens(qapp)
+            light_expected = max(
+                (QColor(light_tokens["text"]), QColor(light_tokens["bg"])),
+                key=lambda color: abs(int(light_palette["background"].lightness()) - int(color.lightness())),
+            )
+            assert light_palette["text"].name().lower() == light_expected.name().lower()
+        finally:
+            qapp.setProperty("designer_theme_mode", None)
+
+    @_skip_no_qt
     def test_export_quick_preview_board_image_writes_png(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QImage, QPixmap
 
