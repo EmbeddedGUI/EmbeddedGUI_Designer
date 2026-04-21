@@ -983,13 +983,19 @@ class TestWelcomePage:
         center_widget = shell_layout.itemAt(0).widget()
         center_layout = center_widget.layout()
         hero_layout = page._hero.layout()
+        content_layout = center_layout.itemAt(1).layout()
+        left_col = content_layout.itemAt(0).widget().layout()
+        right_col = content_layout.itemAt(1).widget().layout()
 
         assert page.accessibleName() == (
             f"Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. No recent projects."
         )
-        assert (shell_layout.contentsMargins().left(), shell_layout.contentsMargins().top(), shell_layout.contentsMargins().right(), shell_layout.contentsMargins().bottom()) == (16, 16, 16, 16)
-        assert shell_layout.spacing() == 10
-        assert center_layout.spacing() == 10
+        assert (shell_layout.contentsMargins().left(), shell_layout.contentsMargins().top(), shell_layout.contentsMargins().right(), shell_layout.contentsMargins().bottom()) == (12, 12, 12, 12)
+        assert shell_layout.spacing() == 8
+        assert center_layout.spacing() == 8
+        assert content_layout.spacing() == 8
+        assert left_col.spacing() == 6
+        assert right_col.spacing() == 6
         assert (hero_layout.contentsMargins().left(), hero_layout.contentsMargins().top(), hero_layout.contentsMargins().right(), hero_layout.contentsMargins().bottom()) == (12, 10, 12, 10)
         assert hero_layout.spacing() == 12
         assert page._hero.accessibleName() == (
@@ -1171,7 +1177,7 @@ class TestWelcomePage:
         recent_margins = widget.layout().contentsMargins()
         assert widget.minimumHeight() == 84
         assert (recent_margins.left(), recent_margins.top(), recent_margins.right(), recent_margins.bottom()) == (0, 0, 0, 0)
-        assert widget.layout().spacing() == 8
+        assert widget.layout().spacing() == 6
         assert page._recent_list.spacing() == 4
         assert widget.accessibleName() == (
             f"Recent project: DemoApp. Project ready. SDK ready. Path: {project_path}."

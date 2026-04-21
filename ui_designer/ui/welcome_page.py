@@ -51,7 +51,7 @@ class RecentProjectItem(QWidget):
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(6)
 
         text_layout = QVBoxLayout()
         text_layout.setSpacing(2)
@@ -141,8 +141,8 @@ class WelcomePage(QWidget):
         shell.setAttribute(Qt.WA_StyledBackground, True)
         shell.setObjectName("welcome_shell")
         shell_layout = QVBoxLayout(shell)
-        shell_layout.setContentsMargins(16, 16, 16, 16)
-        shell_layout.setSpacing(10)
+        shell_layout.setContentsMargins(12, 12, 12, 12)
+        shell_layout.setSpacing(8)
 
         center_widget = QWidget()
         center_widget.setAttribute(Qt.WA_StyledBackground, True)
@@ -150,7 +150,7 @@ class WelcomePage(QWidget):
         center_widget.setMaximumWidth(1180)
         center_layout = QVBoxLayout(center_widget)
         center_layout.setContentsMargins(0, 0, 0, 0)
-        center_layout.setSpacing(10)
+        center_layout.setSpacing(8)
 
         self._hero = QFrame()
         self._hero.setObjectName("welcome_hero")
@@ -211,13 +211,13 @@ class WelcomePage(QWidget):
         center_layout.addWidget(self._hero)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(10)
+        content_layout.setSpacing(8)
 
         left_card = QFrame()
         left_card.setObjectName("welcome_action_panel")
         left_col = QVBoxLayout(left_card)
         left_col.setContentsMargins(0, 0, 0, 0)
-        left_col.setSpacing(8)
+        left_col.setSpacing(6)
 
         self._start_label = QLabel("Start")
         self._start_label.setObjectName("workspace_section_title")
@@ -282,7 +282,7 @@ class WelcomePage(QWidget):
         right_card.setObjectName("welcome_recent_panel")
         right_col = QVBoxLayout(right_card)
         right_col.setContentsMargins(0, 0, 0, 0)
-        right_col.setSpacing(8)
+        right_col.setSpacing(6)
 
         self._recent_label = QLabel("Recent")
         self._recent_label.setObjectName("workspace_section_title")
