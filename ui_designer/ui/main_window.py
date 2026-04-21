@@ -1063,6 +1063,7 @@ class MainWindow(QMainWindow):
 
     def _preview_appearance_action_context(self):
         mode = getattr(self.preview_panel, "overlay_mode", MODE_HORIZONTAL)
+        display_target = self._project_display_target_context_suffix()
         mode_label = {
             MODE_VERTICAL: "Vertical",
             MODE_HORIZONTAL: "Horizontal",
@@ -1071,14 +1072,15 @@ class MainWindow(QMainWindow):
         zoom_label = getattr(getattr(self, "preview_panel", None), "_zoom_label", None)
         zoom_text = str(zoom_label.text() if zoom_label is not None else "100% (4px)")
         if mode == MODE_HIDDEN:
-            return f"Current layout: {mode_label}. Zoom: {zoom_text}."
+            return f"Current layout: {mode_label}. Zoom: {zoom_text}.{display_target}"
         order_text = "overlay first" if getattr(self.preview_panel, "_flipped", False) else "preview first"
-        return f"Current layout: {mode_label}, {order_text}. Zoom: {zoom_text}."
+        return f"Current layout: {mode_label}, {order_text}. Zoom: {zoom_text}.{display_target}"
 
     def _update_preview_appearance_action_metadata(self):
         if not hasattr(self, "preview_panel"):
             return
         current_mode = getattr(self.preview_panel, "overlay_mode", MODE_HORIZONTAL)
+        display_target = self._project_display_target_context_suffix()
         context = self._preview_appearance_action_context()
         for mode, action in getattr(self, "_overlay_mode_actions", {}).items():
             hint = self._overlay_mode_action_hint(mode, is_current=(mode == current_mode))
@@ -1094,18 +1096,24 @@ class MainWindow(QMainWindow):
             zoom_in_hint = f"Zoom in on the preview overlay (Ctrl+=). Current zoom: {zoom_text}."
             if self.preview_panel.overlay._zoom >= (self.preview_panel.overlay._zoom_max - 1e-9):
                 zoom_in_hint += " Unavailable: already at maximum zoom."
+            if display_target:
+                zoom_in_hint = f"{zoom_in_hint}{display_target}"
             self._apply_action_hint(self._zoom_in_action, zoom_in_hint)
         if hasattr(self, "_zoom_out_action"):
             zoom_text = str(self.preview_panel._zoom_label.text() or "100% (4px)")
             zoom_out_hint = f"Zoom out on the preview overlay (Ctrl+-). Current zoom: {zoom_text}."
             if self.preview_panel.overlay._zoom <= (self.preview_panel.overlay._zoom_min + 1e-9):
                 zoom_out_hint += " Unavailable: already at minimum zoom."
+            if display_target:
+                zoom_out_hint = f"{zoom_out_hint}{display_target}"
             self._apply_action_hint(self._zoom_out_action, zoom_out_hint)
         if hasattr(self, "_zoom_reset_action"):
             zoom_text = str(self.preview_panel._zoom_label.text() or "100% (4px)")
             zoom_reset_hint = f"Reset the preview overlay zoom to 100% (Ctrl+0). Current zoom: {zoom_text}."
             if abs(self.preview_panel.overlay._zoom - 1.0) <= 1e-9:
                 zoom_reset_hint += " Unavailable: already at 100% zoom."
+            if display_target:
+                zoom_reset_hint = f"{zoom_reset_hint}{display_target}"
             self._apply_action_hint(self._zoom_reset_action, zoom_reset_hint)
         self._update_view_and_theme_action_metadata()
 
@@ -1143,6 +1151,7 @@ class MainWindow(QMainWindow):
     def _update_view_and_theme_action_metadata(self):
         if not hasattr(self, "preview_panel"):
             return
+        display_target = self._project_display_target_context_suffix()
         theme_label = self._current_theme_label()
         layout_label = self._preview_layout_menu_label()
         grid_state = "visible" if self.preview_panel.show_grid() else "hidden"
@@ -1159,7 +1168,7 @@ class MainWindow(QMainWindow):
                 (
                     "Change workspace layout, themes, preview modes, and mockup options. "
                     f"Theme: {theme_label}. Density: {density_label}. Font size: {font_label}. Layout: {layout_label}. "
-                    f"Grid: {grid_state}. Snap: {snap_label}. Mockup: {mockup_state}."
+                    f"Grid: {grid_state}. Snap: {snap_label}. Mockup: {mockup_state}.{display_target}"
                 ),
             )
         if hasattr(self, "_theme_menu"):
@@ -1506,6 +1515,7 @@ class MainWindow(QMainWindow):
     def _update_preview_grid_and_mockup_action_metadata(self):
         if not hasattr(self, "preview_panel"):
             return
+        display_target = self._project_display_target_context_suffix()
         grid_visible = bool(self.preview_panel.show_grid())
         current_snap = self._current_grid_snap_label()
         grid_visibility = "visible" if grid_visible else "hidden"
@@ -1515,11 +1525,13 @@ class MainWindow(QMainWindow):
                 if grid_visible
                 else f"Show the preview grid overlay. Current snap: {current_snap}."
             )
+            if display_target:
+                grid_hint = f"{grid_hint}{display_target}"
             self._apply_action_hint(self._show_grid_action, grid_hint)
         if hasattr(self, "_grid_menu"):
             self._apply_action_hint(
                 self._grid_menu.menuAction(),
-                f"Choose the grid snap size. Current snap: {current_snap}. Grid {grid_visibility}.",
+                f"Choose the grid snap size. Current snap: {current_snap}. Grid {grid_visibility}.{display_target}",
             )
         for size, action in getattr(self, "_grid_size_actions", {}).items():
             if size <= 0:
@@ -1534,15 +1546,17 @@ class MainWindow(QMainWindow):
                     if current_snap == f"{size}px"
                     else f"Snap the overlay grid to {size}px. Current snap: {current_snap}. Grid {grid_visibility}."
                 )
+            if display_target:
+                hint = f"{hint}{display_target}"
             self._apply_action_hint(action, hint)
 
         has_mockup, mockup_visible, opacity, mockup_context = self._preview_mockup_action_context()
         if hasattr(self, "_bg_menu"):
-            self._apply_action_hint(self._bg_menu.menuAction(), f"Manage the preview background mockup image. {mockup_context}")
+            self._apply_action_hint(self._bg_menu.menuAction(), f"Manage the preview background mockup image. {mockup_context}{display_target}")
         if hasattr(self, "_opacity_menu"):
-            self._apply_action_hint(self._opacity_menu.menuAction(), f"Choose the mockup image opacity. {mockup_context}")
+            self._apply_action_hint(self._opacity_menu.menuAction(), f"Choose the mockup image opacity. {mockup_context}{display_target}")
         if hasattr(self, "_load_bg_action"):
-            self._apply_action_hint(self._load_bg_action, f"Load a mockup image behind the preview. {mockup_context}")
+            self._apply_action_hint(self._load_bg_action, f"Load a mockup image behind the preview. {mockup_context}{display_target}")
         if hasattr(self, "_toggle_bg_action"):
             if has_mockup:
                 toggle_hint = (
@@ -1552,11 +1566,15 @@ class MainWindow(QMainWindow):
                 )
             else:
                 toggle_hint = f"Toggle the background mockup image (Ctrl+M). {mockup_context}"
+            if display_target:
+                toggle_hint = f"{toggle_hint}{display_target}"
             self._apply_action_hint(self._toggle_bg_action, toggle_hint)
         if hasattr(self, "_clear_bg_action"):
             clear_hint = f"Remove the current background mockup image. {mockup_context}"
             if not has_mockup:
                 clear_hint = f"Remove the current background mockup image. Unavailable: no mockup image loaded. {mockup_context}"
+            if display_target:
+                clear_hint = f"{clear_hint}{display_target}"
             self._apply_action_hint(self._clear_bg_action, clear_hint)
         for pct, action in getattr(self, "_opacity_actions", {}).items():
             hint = (
@@ -1564,6 +1582,8 @@ class MainWindow(QMainWindow):
                 if pct == opacity
                 else f"Set the mockup image opacity to {pct}%. {mockup_context}"
             )
+            if display_target:
+                hint = f"{hint}{display_target}"
             self._apply_action_hint(action, hint)
         self._update_view_and_theme_action_metadata()
 
@@ -2524,6 +2544,8 @@ class MainWindow(QMainWindow):
         self._update_status_bar_summary()
         self._update_workspace_tab_metadata()
         self._update_workspace_nav_button_metadata(getattr(self, "_current_left_panel", "project"))
+        self._update_preview_appearance_action_metadata()
+        self._update_preview_grid_and_mockup_action_metadata()
         self._update_view_panel_navigation_action_metadata()
 
     def _apply_saved_window_state(self):

@@ -6946,12 +6946,22 @@ class TestMainWindowFileFlow:
 
         view_menu = next(action.menu() for action in window.menuBar().actions() if action.text() == "View")
         view_actions = {action.text(): action for action in view_menu.actions() if action.text()}
+        background_menu = next(action.menu() for action in view_menu.actions() if action.text() == "Background Mockup")
+        background_actions = {action.text(): action for action in background_menu.actions() if action.text()}
+        opacity_menu = next(action.menu() for action in background_menu.actions() if action.text() == "Opacity")
+        opacity_actions = {action.text(): action for action in opacity_menu.actions() if action.text()}
         actions = _actions_by_text(
             *window._workspace_view_actions.values(),
             *window._inspector_view_actions.values(),
             *window._tools_view_actions.values(),
         )
+        current_zoom = window.preview_panel._zoom_label.text()
 
+        assert view_menu.menuAction().toolTip() == (
+            "Change workspace layout, themes, preview modes, and mockup options. "
+            "Theme: Dark. Density: Standard. Font size: app default. Layout: Horizontal, overlay first. "
+            "Grid: visible. Snap: 8px. Mockup: none loaded. Display target: Display 0 (primary only)."
+        )
         assert view_actions["Workspace"].toolTip() == (
             "Choose a workspace panel to show. Current panel: Project. Display target: Display 0 (primary only)."
         )
@@ -7001,7 +7011,53 @@ class TestMainWindowFileFlow:
             "Show the Debug Output tools panel. Current page: main_page. Panel hidden. "
             "Display target: Display 0 (primary only)."
         )
-        for action in list(view_actions.values()) + list(actions.values()):
+        assert view_actions["Vertical"].toolTip() == (
+            f"Show preview and overlay stacked vertically (Ctrl+1). Current layout: Horizontal, overlay first. "
+            f"Zoom: {current_zoom}. Display target: Display 0 (primary only)."
+        )
+        assert view_actions["Horizontal"].toolTip() == (
+            f"Currently showing preview and overlay side by side (Ctrl+2). Current layout: Horizontal, overlay first. "
+            f"Zoom: {current_zoom}. Display target: Display 0 (primary only)."
+        )
+        assert view_actions["Zoom In"].toolTip() == (
+            f"Zoom in on the preview overlay (Ctrl+=). Current zoom: {current_zoom}. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert view_actions["Zoom Reset (100%)"].toolTip() == (
+            f"Reset the preview overlay zoom to 100% (Ctrl+0). Current zoom: {current_zoom}. "
+            "Unavailable: already at 100% zoom. Display target: Display 0 (primary only)."
+        )
+        assert view_actions["Show Grid"].toolTip() == (
+            "Currently showing the preview grid overlay. Current snap: 8px. Display target: Display 0 (primary only)."
+        )
+        assert view_actions["Grid Size"].toolTip() == (
+            "Choose the grid snap size. Current snap: 8px. Grid visible. Display target: Display 0 (primary only)."
+        )
+        assert view_actions["Background Mockup"].toolTip() == (
+            "Manage the preview background mockup image. Current mockup: none loaded. Opacity: 30%. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert background_actions["Load Mockup Image..."].toolTip() == (
+            "Load a mockup image behind the preview. Current mockup: none loaded. Opacity: 30%. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert background_actions["Show Mockup"].toolTip() == (
+            "Toggle the background mockup image (Ctrl+M). Current mockup: none loaded. Opacity: 30%. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert background_actions["Clear Mockup Image"].toolTip() == (
+            "Remove the current background mockup image. Unavailable: no mockup image loaded. "
+            "Current mockup: none loaded. Opacity: 30%. Display target: Display 0 (primary only)."
+        )
+        assert background_actions["Opacity"].toolTip() == (
+            "Choose the mockup image opacity. Current mockup: none loaded. Opacity: 30%. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert opacity_actions["30%"].toolTip() == (
+            "Currently showing mockup opacity at 30%. Current mockup: none loaded. Opacity: 30%. "
+            "Display target: Display 0 (primary only)."
+        )
+        for action in [view_menu.menuAction()] + list(view_actions.values()) + list(actions.values()) + list(background_actions.values()) + list(opacity_actions.values()):
             assert action.statusTip() == action.toolTip()
         _close_window(window)
 
