@@ -2100,12 +2100,12 @@ class ResourceGeneratorWindow(QDialog):
 
         asset_preview_group = QGroupBox("Asset Preview")
         asset_preview_layout = QVBoxLayout(asset_preview_group)
-        asset_preview_layout.setContentsMargins(8, 8, 8, 8)
-        asset_preview_layout.setSpacing(8)
+        asset_preview_layout.setContentsMargins(6, 6, 6, 6)
+        asset_preview_layout.setSpacing(6)
 
         preview_header = QHBoxLayout()
         preview_header.setContentsMargins(0, 0, 0, 0)
-        preview_header.setSpacing(8)
+        preview_header.setSpacing(6)
         self._simple_asset_preview_title = QLabel("No asset selected.")
         preview_header.addWidget(self._simple_asset_preview_title, 1)
 
@@ -2134,7 +2134,8 @@ class ResourceGeneratorWindow(QDialog):
 
         preview_group = QGroupBox("Merged Preview")
         preview_layout = QVBoxLayout(preview_group)
-        preview_layout.setContentsMargins(8, 8, 8, 8)
+        preview_layout.setContentsMargins(6, 6, 6, 6)
+        preview_layout.setSpacing(6)
         self._simple_preview = QPlainTextEdit()
         self._simple_preview.setReadOnly(True)
         preview_layout.addWidget(self._simple_preview)

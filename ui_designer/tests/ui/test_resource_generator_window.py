@@ -139,9 +139,12 @@ class TestResourceGeneratorWindow:
         try:
             assets_group = next(group for group in window._simple_page.findChildren(QGroupBox) if group.title() == "Assets")
             action_group = next(group for group in window._simple_page.findChildren(QGroupBox) if group.title() == "Import & Setup")
+            asset_preview_group = next(group for group in window._simple_page.findChildren(QGroupBox) if group.title() == "Asset Preview")
+            merged_preview_group = next(group for group in window._simple_page.findChildren(QGroupBox) if group.title() == "Merged Preview")
             sections_group = next(group for group in window._professional_page.findChildren(QGroupBox) if group.title() == "Sections")
             entries_group = next(group for group in window._professional_page.findChildren(QGroupBox) if group.title() == "Entries")
             editor_group = next(group for group in window._professional_page.findChildren(QGroupBox) if group.title() == "Entry Editor")
+            preview_header = asset_preview_group.layout().itemAt(0).layout()
 
             assert _layout_margins_tuple(window.layout()) == (12, 12, 12, 12)
             assert window.layout().spacing() == 8
@@ -154,6 +157,11 @@ class TestResourceGeneratorWindow:
             assert _layout_margins_tuple(action_group.layout()) == (8, 8, 8, 8)
             assert action_group.layout().horizontalSpacing() == 8
             assert action_group.layout().verticalSpacing() == 8
+            assert _layout_margins_tuple(asset_preview_group.layout()) == (6, 6, 6, 6)
+            assert asset_preview_group.layout().spacing() == 6
+            assert preview_header.spacing() == 6
+            assert _layout_margins_tuple(merged_preview_group.layout()) == (6, 6, 6, 6)
+            assert merged_preview_group.layout().spacing() == 6
             assert _layout_margins_tuple(sections_group.layout()) == (6, 6, 6, 6)
             assert _layout_margins_tuple(entries_group.layout()) == (6, 6, 6, 6)
             assert entries_group.layout().spacing() == 6
