@@ -153,6 +153,36 @@ class TestPageNavigator:
         assert navigator._dirty_chip.accessibleName() == "Dirty pages: 1 dirty page."
         navigator.deleteLater()
 
+    def test_page_navigator_can_annotate_primary_display_scope(self, qapp):
+        from ui_designer.ui.widgets.page_navigator import PageNavigator
+
+        navigator = PageNavigator()
+        navigator.set_pages({"main_page": object(), "detail_page": object()})
+        navigator.set_startup_page("main_page")
+        navigator.set_current_page("detail_page")
+        navigator.set_display_scope_note("Display target: Display 0 (primary only).")
+
+        assert navigator.accessibleName() == (
+            "Page navigator: 2 pages. Current page: detail_page. Startup page: main_page. No dirty pages. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert navigator._title_label.accessibleName() == (
+            "Pages: 2 pages. Current page: detail_page. Startup page: main_page. Display target: Display 0 (primary only)."
+        )
+        assert navigator._header_meta_label.accessibleName() == (
+            "Current page: detail_page. Startup page: main_page. Display target: Display 0 (primary only). "
+            "Use the rail to scan visual state and jump between pages."
+        )
+        assert navigator._scroll_area.accessibleName() == (
+            "Page thumbnails view: 2 pages. Current page: detail_page. Startup page: main_page. No dirty pages. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert navigator._container.accessibleName() == (
+            "Page thumbnail list: 2 pages. Current page: detail_page. Startup page: main_page. No dirty pages. "
+            "Display target: Display 0 (primary only)."
+        )
+        navigator.deleteLater()
+
     def test_page_navigator_empty_state_uses_remaining_vertical_space(self, qapp):
         from ui_designer.ui.widgets.page_navigator import PageNavigator
 

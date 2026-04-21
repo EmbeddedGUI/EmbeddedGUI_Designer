@@ -11366,6 +11366,14 @@ class TestMainWindowFileFlow:
             "Display target: Display 0 (primary only)."
         )
         assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
+        assert window.page_navigator.accessibleName() == (
+            "Page navigator: 2 pages. Current page: main_page. Startup page: main_page. No dirty pages. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window.page_navigator._header_meta_label.accessibleName() == (
+            "Current page: main_page. Startup page: main_page. Display target: Display 0 (primary only). "
+            "Use the rail to scan visual state and jump between pages."
+        )
         assert window._toolbar_meta_label.text() == (
             "Design mode. Project panel. Current page: main_page. "
             "Display target: Display 0 (primary only). Use commands to insert, save, build, and check runtime."

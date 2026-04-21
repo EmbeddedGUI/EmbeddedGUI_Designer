@@ -290,6 +290,7 @@ class PageNavigator(QWidget):
         self._current_page = None
         self._startup_page = ""
         self._dirty_pages = set()
+        self._display_scope_note = ""
         self._screen_width = 240
         self._screen_height = 320
         self._init_ui()
@@ -412,7 +413,9 @@ class PageNavigator(QWidget):
         startup_page = self._startup_page if self._startup_page in self._pages else "none"
         dirty_count = len(self._dirty_pages)
         dirty_label = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
-        summary = f"Page navigator: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}."
+        display_scope_note = str(self._display_scope_note or "").strip()
+        display_scope_suffix = f" {display_scope_note}" if display_scope_note else ""
+        summary = f"Page navigator: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.{display_scope_suffix}"
         self._set_status_chip_state(self._count_chip, page_label, "accent" if page_count else "warning")
         self._set_status_chip_state(
             self._startup_chip,
@@ -424,9 +427,11 @@ class PageNavigator(QWidget):
             "Clean" if dirty_count == 0 else (f"{dirty_count} dirty" if dirty_count == 1 else f"{dirty_count} dirty pages"),
             "success" if dirty_count == 0 else "warning",
         )
-        self._header_meta_label.setText(
-            f"Current page: {current_page}. Startup page: {startup_page}. Use the rail to scan visual state and jump between pages."
-        )
+        header_meta_text = f"Current page: {current_page}. Startup page: {startup_page}."
+        if display_scope_note:
+            header_meta_text = f"{header_meta_text} {display_scope_note}"
+        header_meta_text = f"{header_meta_text} Use the rail to scan visual state and jump between pages."
+        self._header_meta_label.setText(header_meta_text)
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._header_frame,
@@ -436,7 +441,7 @@ class PageNavigator(QWidget):
         _set_widget_metadata(
             self._title_label,
             tooltip=summary,
-            accessible_name=f"Pages: {page_label}. Current page: {current_page}. Startup page: {startup_page}.",
+            accessible_name=f"Pages: {page_label}. Current page: {current_page}. Startup page: {startup_page}.{display_scope_suffix}",
         )
         _set_widget_metadata(
             self._header_meta_label,
@@ -460,13 +465,13 @@ class PageNavigator(QWidget):
         )
         _set_widget_metadata(
             self._scroll_area,
-            tooltip=f"Page thumbnails view: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
-            accessible_name=f"Page thumbnails view: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
+            tooltip=f"Page thumbnails view: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.{display_scope_suffix}",
+            accessible_name=f"Page thumbnails view: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.{display_scope_suffix}",
         )
         _set_widget_metadata(
             self._container,
-            tooltip=f"Page thumbnail list: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
-            accessible_name=f"Page thumbnail list: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
+            tooltip=f"Page thumbnail list: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.{display_scope_suffix}",
+            accessible_name=f"Page thumbnail list: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.{display_scope_suffix}",
         )
         _set_widget_metadata(
             self._guidance_frame,
@@ -482,6 +487,10 @@ class PageNavigator(QWidget):
     def set_screen_size(self, w, h):
         self._screen_width = w
         self._screen_height = h
+
+    def set_display_scope_note(self, note):
+        self._display_scope_note = str(note or "").strip()
+        self._update_accessibility_summary()
 
     def set_pages(self, pages_dict):
         """Set all pages. pages_dict: {page_name: Page}."""

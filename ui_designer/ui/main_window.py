@@ -5450,6 +5450,7 @@ class MainWindow(QMainWindow):
 
     def _refresh_page_navigator(self):
         if not self.project:
+            self.page_navigator.set_display_scope_note("")
             self.page_navigator.set_pages({})
             self.page_navigator.set_startup_page("")
             self.page_navigator.set_current_page("")
@@ -5463,6 +5464,7 @@ class MainWindow(QMainWindow):
         if self._current_page and self.project.get_page_by_name(self._current_page.name):
             current_name = self._current_page.name
         self.page_navigator.set_current_page(current_name)
+        self.page_navigator.set_display_scope_note(self._project_display_target_nav_text())
 
     def _make_unique_page_name(self, base_name):
         candidate = (base_name or "page").strip().replace(" ", "_").replace(".xml", "")
