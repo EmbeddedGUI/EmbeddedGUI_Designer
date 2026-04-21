@@ -4306,7 +4306,7 @@ class TestMainWindowFileFlow:
         compiler.force_rebuild = None
         preview_reasons.clear()
 
-        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
+        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom")
 
         assert preview_reasons == ["boom"]
         assert window.debug_panel._rebuild_btn.isHidden() is False
@@ -4343,7 +4343,6 @@ class TestMainWindowFileFlow:
             False,
             False,
             "Compilation failed:\nmake: *** No rule to make target 'main.exe'.  Stop.",
-            None,
         )
 
         assert preview_reasons == ["make: *** No rule to make target 'main.exe'.  Stop."]
@@ -4384,7 +4383,6 @@ class TestMainWindowFileFlow:
             True,
             False,
             "Rebuild failed:\nmake: *** No rule to make target 'clean'.  Stop.",
-            None,
         )
 
         assert preview_reasons[-1] == "make: *** No rule to make target 'clean'.  Stop."
@@ -4433,7 +4431,6 @@ class TestMainWindowFileFlow:
             True,
             False,
             "Rebuild failed:\nmake: *** No rule to make target 'clean'.  Stop.",
-            None,
         )
 
         window.debug_panel._output.clear()
@@ -4443,7 +4440,6 @@ class TestMainWindowFileFlow:
             False,
             False,
             "Compilation failed:\nboom",
-            None,
         )
 
         assert "Rebuild-based recovery is unavailable" in window.statusBar().currentMessage()
@@ -5400,7 +5396,7 @@ class TestMainWindowFileFlow:
         window._compile_timer.stop()
         window._compile_timer.setInterval(0)
 
-        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
+        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom")
 
         layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
         layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- blocked compile retry -->\n", encoding="utf-8")
@@ -5446,7 +5442,7 @@ class TestMainWindowFileFlow:
             lambda: [os.path.normpath(os.path.abspath(layout_file))],
         )
         current_generation = window._async_generation
-        window._on_compile_finished(None, current_generation, False, False, "Compilation failed:\nboom", None)
+        window._on_compile_finished(None, current_generation, False, False, "Compilation failed:\nboom")
 
         assert reload_calls == [
             {
@@ -5478,7 +5474,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_trigger_compile", lambda *args, **kwargs: trigger_calls.append("compile"))
         window._pending_compile = True
         window._pending_rebuild = False
-        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
+        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom")
 
         assert trigger_calls == []
         assert window._pending_compile is False
@@ -5510,7 +5506,7 @@ class TestMainWindowFileFlow:
 
         window._pending_compile = False
         window._pending_rebuild = True
-        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
+        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom")
 
         assert compile_cycle_calls == []
         assert window._pending_compile is False
@@ -5562,7 +5558,7 @@ class TestMainWindowFileFlow:
         window._pending_compile = True
         window._pending_rebuild = True
         current_generation = window._async_generation
-        window._on_compile_finished(None, current_generation, False, True, "ok", None)
+        window._on_compile_finished(None, current_generation, False, True, "ok")
 
         assert reload_calls == [
             {
@@ -5611,7 +5607,7 @@ class TestMainWindowFileFlow:
             lambda: [os.path.normpath(os.path.abspath(layout_file))],
         )
         current_generation = window._async_generation
-        window._on_compile_finished(None, current_generation, False, True, "ok", None)
+        window._on_compile_finished(None, current_generation, False, True, "ok")
 
         assert reload_calls == [
             {
@@ -5648,7 +5644,7 @@ class TestMainWindowFileFlow:
 
         _open_project_window(window, project, project_dir, sdk_root)
 
-        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
+        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom")
 
         assert window._is_auto_compile_retry_blocked() is True
 
@@ -5679,7 +5675,7 @@ class TestMainWindowFileFlow:
         compiler.precompile_calls = 0
         window._precompile_worker = None
 
-        window._on_compile_finished(None, window._async_generation, True, False, "Rebuild failed:\nboom", None)
+        window._on_compile_finished(None, window._async_generation, True, False, "Rebuild failed:\nboom")
 
         layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
         layout_file.write_text(

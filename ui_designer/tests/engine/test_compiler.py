@@ -359,26 +359,26 @@ class TestCompilerFastPath:
         assert "build failed" in output
         assert mock_run.call_count == 1
 
-    def test_write_uicode_sets_changed(self, tmp_path):
+    def test_write_project_files_tracks_uicode_source_changes(self, tmp_path):
         engine = self._make_engine(tmp_path)
         os.makedirs(engine.app_dir, exist_ok=True)
-        engine.write_uicode("int main() {}")
+        engine.write_project_files({".designer/uicode.c": "int main() {}"})
         assert engine._last_changed_files == ["uicode.c"]
         assert os.path.isfile(os.path.join(engine.app_dir, ".designer", "uicode.c"))
 
-    def test_write_uicode_removes_legacy_root_copy(self, tmp_path):
+    def test_write_project_files_removes_legacy_root_uicode_copy(self, tmp_path):
         engine = self._make_engine(tmp_path)
         os.makedirs(engine.app_dir, exist_ok=True)
         legacy_uicode = os.path.join(engine.app_dir, "uicode.c")
         with open(legacy_uicode, "w", encoding="utf-8") as f:
             f.write("legacy root copy\n")
 
-        engine.write_uicode("int main() {}")
+        engine.write_project_files({".designer/uicode.c": "int main() {}"})
 
         assert not os.path.exists(legacy_uicode)
         assert os.path.isfile(os.path.join(engine.app_dir, ".designer", "uicode.c"))
 
-    def test_write_uicode_removes_legacy_root_copies_for_existing_designer_outputs(self, tmp_path):
+    def test_write_project_files_removes_legacy_root_copies_for_existing_designer_outputs(self, tmp_path):
         engine = self._make_engine(tmp_path)
         designer_dir = tmp_path / "example" / "TestApp" / ".designer"
         designer_dir.mkdir(parents=True)
@@ -398,7 +398,17 @@ class TestCompilerFastPath:
         for relpath in legacy_root_files:
             (tmp_path / "example" / "TestApp" / relpath).write_text("// legacy root copy\n", encoding="utf-8")
 
-        engine.write_uicode("int main() {}")
+        engine.write_project_files(
+            {".designer/uicode.c": "int main() {}"},
+            generated_relpaths=[
+                ".designer/uicode.c",
+                ".designer/uicode.h",
+                ".designer/egui_strings.h",
+                ".designer/egui_strings.c",
+                ".designer/main_page.h",
+                ".designer/main_page_layout.c",
+            ],
+        )
 
         for relpath in legacy_root_files:
             assert not os.path.exists(os.path.join(engine.app_dir, relpath))

@@ -405,8 +405,8 @@ def _gen_widget_init_lines(widget, indent="    ", *, core_expr="core"):
     Uses ``local->{name}`` as the widget reference (inside on_open).
     Returns a list of lines (without leading newlines).
 
-    Property-specific code is driven by the ``code_gen`` descriptors
-    in WIDGET_TYPES, so new widget types need no changes here.
+    Property-specific code is driven by widget registry ``code_gen``
+    descriptors, so new widget types need no changes here.
     """
     lines = []
     wt = widget.widget_type
@@ -1896,11 +1896,7 @@ def generate_app_config_designer(project):
 #   USER_OWNED – created once as skeleton, then owned by the user
 
 GENERATED_ALWAYS = "generated_always"
-GENERATED_PRESERVED = "generated_preserved"
 USER_OWNED = "user_owned"
-
-# Active generation flow now uses GENERATED_ALWAYS and USER_OWNED.
-# GENERATED_PRESERVED remains as a compatibility constant for older callers/tests.
 
 
 @dataclass(frozen=True)
@@ -2122,20 +2118,3 @@ def _legacy_page_header_has_user_code(existing_content):
 
 # ── Legacy single-file generator (backward compatibility) ────────
 
-def generate_uicode(project):
-    """Generate uicode.c content.
-
-    For multi-page projects (MFC mode), returns the uicode.c only.
-    Full project generation should use generate_all_files() instead.
-    """
-    if project.pages:
-        return generate_uicode_source(project)
-
-    # Fallback for empty projects
-    return (
-        '#include "egui.h"\n'
-        '#include "uicode.h"\n'
-        "\n"
-        "static void uicode_init_ui(egui_core_t *core) { EGUI_UNUSED(core); }\n"
-        "void uicode_disp0_init(egui_core_t *core) { uicode_init_ui(core); }\n"
-    )

@@ -350,7 +350,7 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
             raise RuntimeError(f"designer compile failed:\n{output}")
         print_status(True, "compiled preview app")
 
-        ok, message, _ = compiler._copy_and_start()
+        ok, message = compiler._copy_and_start()
         if not ok:
             raise RuntimeError(message)
         ready, err = compiler.validate_preview()

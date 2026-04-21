@@ -111,7 +111,6 @@ from ..model.undo_manager import UndoManager
 from ..generator.code_generator import (
     collect_page_callback_stubs,
     generate_page_user_source,
-    generate_uicode,
     render_page_callback_stub,
 )
 from ..generator.user_code_preserver import (
@@ -8521,9 +8520,8 @@ class MainWindow(QMainWindow):
 
         generation = self._async_generation
         worker = self.compiler.compile_and_run_async(
-            code=None,
-            callback=lambda success, message, old_process: self._on_compile_finished(
-                worker, generation, force_rebuild, success, message, old_process
+            callback=lambda success, message: self._on_compile_finished(
+                worker, generation, force_rebuild, success, message
             ),
             files_dict=files,
             generated_relpaths=list(all_generated_files.keys()),
@@ -8539,9 +8537,8 @@ class MainWindow(QMainWindow):
             return
         self.debug_panel.log(message, msg_type)
 
-    def _on_compile_finished(self, worker, generation, force_rebuild, success, message, old_process):
+    def _on_compile_finished(self, worker, generation, force_rebuild, success, message):
         """Callback when background compilation completes."""
-        del old_process
         self._cleanup_worker_ref(worker, "_compile_worker")
         if self._is_closing or generation != self._async_generation:
             return

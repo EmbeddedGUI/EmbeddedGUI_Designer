@@ -4,14 +4,6 @@ import os
 import re
 import xml.etree.ElementTree as ET
 
-# XML tag to widget_type mapping (legacy, kept empty for backward compat)
-TAG_TO_TYPE = {}
-TYPE_TO_TAG = {}
-
-# Widget type descriptors are now defined in custom_widgets/*.py plugin files.
-# This dict is kept empty for backward compatibility with imports.
-WIDGET_TYPES = {}
-
 # Color constants
 COLORS = [
     "EGUI_COLOR_BLACK",
@@ -736,10 +728,9 @@ class WidgetModel:
         Args:
             elem: XML element to parse.
         """
-        widget_type = TAG_TO_TYPE.get(elem.tag, None)
-        if widget_type is None:
-            from .widget_registry import WidgetRegistry
-            widget_type = WidgetRegistry.instance().tag_to_type(elem.tag)
+        from .widget_registry import WidgetRegistry
+
+        widget_type = WidgetRegistry.instance().tag_to_type(elem.tag)
         w = cls(
             widget_type=widget_type,
             name=elem.get("id", None),

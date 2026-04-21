@@ -207,17 +207,16 @@ class CompileWorker(QThread):
     """Background worker thread for compilation.
 
     Signals:
-        finished(success, message, old_process): Emitted when compile+start completes
+        finished(success, message): Emitted when compile+start completes
         log(message): Emitted for logging during compile
     """
 
-    finished = pyqtSignal(bool, str, object)  # success, message, old_process
+    finished = pyqtSignal(bool, str)  # success, message
     log = pyqtSignal(str, str)  # message, msg_type
 
     def __init__(
         self,
         compiler,
-        code=None,
         files_dict=None,
         generated_relpaths=None,
         force_rebuild=False,
@@ -225,11 +224,9 @@ class CompileWorker(QThread):
     ):
         super().__init__(parent)
         self.compiler = compiler
-        self.code = code
         self.files_dict = files_dict
         self.generated_relpaths = generated_relpaths
         self.force_rebuild = bool(force_rebuild)
-        self._old_process = None
 
     def run(self):
         """Execute compile_and_run in background thread."""
@@ -244,9 +241,6 @@ class CompileWorker(QThread):
                 self.files_dict,
                 generated_relpaths=self.generated_relpaths,
             )
-        elif self.code:
-            self.compiler.write_uicode(self.code)
-            written = ["uicode.c"]
         t2 = time.time()
         if written:
             self.log.emit(f"Write files: {(t2-t1)*1000:.0f}ms ({len(written)} changed: {', '.join(written)})", "info")
@@ -265,28 +259,28 @@ class CompileWorker(QThread):
 
         if not success:
             failed_label = "Rebuild failed" if self.force_rebuild else "Compilation failed"
-            self.finished.emit(False, f"{failed_label}:\n{output}", None)
+            self.finished.emit(False, f"{failed_label}:\n{output}")
             return
 
         # Copy and start new exe via bridge
         self.log.emit("Starting headless preview...", "info")
-        ok, msg, _ = self.compiler._copy_and_start()
+        ok, msg = self.compiler._copy_and_start()
         t4 = time.time()
         self.log.emit(f"Copy and start: {(t4-t3)*1000:.0f}ms", "info")
 
         if not ok:
-            self.finished.emit(False, msg, None)
+            self.finished.emit(False, msg)
             return
 
         ready, err = self.compiler.validate_preview()
         if not ready:
             self.compiler.stop_exe()
-            self.finished.emit(False, err, None)
+            self.finished.emit(False, err)
             return
 
         self.log.emit(f"Total compile time: {(t4-t0)*1000:.0f}ms", "success")
         success_label = "Rebuild" if self.force_rebuild else "Build"
-        self.finished.emit(True, f"{success_label} #{self.compiler._compile_count} OK", None)
+        self.finished.emit(True, f"{success_label} #{self.compiler._compile_count} OK")
 
 
 class PrecompileWorker(QThread):
@@ -327,7 +321,6 @@ class CompilerEngine:
             self.app_root_arg = self._resolve_make_app_root_arg(raw_app_root_arg)
         except (ValueError, OSError, RuntimeError) as exc:
             self._app_root_error = str(exc)
-        self.process = None  # kept for backward compat, not used by bridge
         self.bridge = DesignerBridge()
         self._compile_count = 0
         self._run_index = 0  # alternates 0/1 for double buffering
@@ -458,27 +451,6 @@ class CompilerEngine:
         except OSError:
             shutil.rmtree(alias_dir, ignore_errors=True)
 
-    def write_uicode(self, code):
-        """Write generated C code to uicode.c."""
-        os.makedirs(os.path.dirname(self.uicode_path), exist_ok=True)
-        with open(self.uicode_path, "w", encoding="utf-8") as f:
-            f.write(code)
-        self._cleanup_legacy_designer_root_copies(self._designer_output_relpaths_on_disk())
-        self._last_changed_files = ["uicode.c"]
-
-    def _designer_output_relpaths_on_disk(self):
-        """List designer-managed output files currently present in ``.designer/``."""
-        designer_dir = os.path.join(self.app_dir, DESIGNER_PROJECT_DIRNAME)
-        if not os.path.isdir(designer_dir):
-            return ()
-
-        relpaths = []
-        for current_root, _, filenames in os.walk(designer_dir):
-            for filename in filenames:
-                full_path = os.path.join(current_root, filename)
-                relpaths.append(os.path.relpath(full_path, self.app_dir).replace("\\", "/"))
-        return tuple(sorted(relpaths))
-
     def _cleanup_legacy_designer_root_copies(self, generated_relpaths):
         """Remove legacy root copies for any designer-owned files."""
         cleanup_legacy_designer_codegen_files(self.app_dir, generated_relpaths)
@@ -486,20 +458,11 @@ class CompilerEngine:
     def write_project_files(self, files_dict, generated_relpaths=None):
         """Write multiple generated C files to the app directory.
 
-        Respects file ownership categories:
-          - GENERATED_ALWAYS / GENERATED_PRESERVED: always write (with
-            user code preservation for preserved files)
-          - USER_OWNED: only write if file does not exist (skeleton)
-
-        Handles both old-style dict[str, str] and new-style
-        dict[str, tuple[str, str]] (content, category) formats.
-
         Only writes files if content has changed, to avoid triggering
         unnecessary recompilation due to timestamp changes.
 
         Args:
-            files_dict: dict[str, str | tuple[str, str]] mapping
-                filename to content (or (content, category))
+            files_dict: dict[str, str] mapping filename to content
             generated_relpaths: iterable of all current designer-managed output
                 relpaths so legacy root duplicates can be removed even when a
                 nested file was unchanged and skipped this round.
@@ -507,38 +470,16 @@ class CompilerEngine:
         Returns:
             list[str]: List of filenames that were actually written (changed)
         """
-        from ..generator.user_code_preserver import preserve_user_code
-        from ..generator.code_generator import (
-            GENERATED_ALWAYS, GENERATED_PRESERVED, USER_OWNED,
-        )
-
         app_dir = self.app_dir
         os.makedirs(app_dir, exist_ok=True)
         written = []
         cleanup_sources = generated_relpaths if generated_relpaths is not None else files_dict.keys()
 
-        for filename, value in files_dict.items():
-            normalized = str(filename or "").replace("\\", "/")
-
-            # Support both (content, category) tuples and plain strings
-            if isinstance(value, tuple):
-                content, category = value
-            else:
-                content = value
-                category = GENERATED_ALWAYS
-
+        for filename, content in files_dict.items():
             filepath = os.path.join(app_dir, filename)
             parent_dir = os.path.dirname(filepath)
             if parent_dir:
                 os.makedirs(parent_dir, exist_ok=True)
-
-            # User-owned files: skip if already exists
-            if category == USER_OWNED and os.path.isfile(filepath):
-                continue
-
-            # Preserve USER CODE regions for preserved files
-            if category == GENERATED_PRESERVED:
-                content = preserve_user_code(filepath, content)
 
             # Only write if content changed (preserve timestamp for unchanged)
             if os.path.exists(filepath):
@@ -766,17 +707,16 @@ class CompilerEngine:
     def stop_exe(self):
         """Stop the running exe process."""
         self.bridge.stop()
-        self.process = None
 
     def _copy_and_start(self):
         """Copy main.exe to a run slot and start it via bridge.
-        Returns (success, message, None).
+        Returns (success, message).
 
         Uses seamless swap: starts the new process first (old bridge still
         serves frames during startup), then stops the old one.
         """
         if not os.path.exists(self.exe_path):
-            return False, f"Exe not found: {self.exe_path}", None
+            return False, f"Exe not found: {self.exe_path}"
 
         # Pick the OTHER slot (not the one currently running)
         new_index = 1 - self._run_index
@@ -792,7 +732,7 @@ class CompilerEngine:
                 # Fall back to copy if hard link fails (cross-device, etc.)
                 shutil.copy2(self.exe_path, new_path)
         except OSError as e:
-            return False, f"Failed to copy exe: {e}", None
+            return False, f"Failed to copy exe: {e}"
 
         try:
             resource_path = sdk_output_path(self.project_root, "app_egui_resource_merge.bin")
@@ -805,9 +745,9 @@ class CompilerEngine:
             self.bridge = new_bridge
             self._run_index = new_index
             old_bridge.stop()
-            return True, "Started headless preview", None
+            return True, "Started headless preview"
         except Exception as e:
-            return False, f"Failed to start bridge: {e}", None
+            return False, f"Failed to start bridge: {e}"
 
     def validate_preview(self):
         """Render one frame to confirm the headless bridge is usable."""
@@ -873,38 +813,8 @@ class CompilerEngine:
                 self._last_runtime_error = str(exc)
                 pass
 
-    def compile_and_run(self, code, force_rebuild=False):
-        """Full cycle: write code -> compile -> start bridge -> return.
-
-        Returns (success, message, None).
-        """
-        if getattr(self, "_app_root_error", ""):
-            return False, self._app_root_error, None
-
-        # Write code
-        self.write_uicode(code)
-
-        # Compile
-        success, output = self.compile(force_rebuild=force_rebuild)
-        if not success:
-            failed_label = "Rebuild failed" if force_rebuild else "Compilation failed"
-            return False, f"{failed_label}:\n{output}", None
-
-        # Copy new exe and start bridge
-        ok, msg, _ = self._copy_and_start()
-        if not ok:
-            return False, msg, None
-
-        ok, err = self.validate_preview()
-        if not ok:
-            self.stop_exe()
-            return False, err, None
-
-        return True, f"Build #{self._compile_count} OK", None
-
     def compile_and_run_async(
         self,
-        code,
         callback,
         files_dict=None,
         generated_relpaths=None,
@@ -913,9 +823,8 @@ class CompilerEngine:
         """Asynchronous version - runs compile in background thread.
 
         Args:
-            code: Generated C code to compile (single-file mode, can be None)
-            callback: Function(success, message, old_process) called when done
-            files_dict: dict of filename->content (multi-file mode)
+            callback: Function(success, message) called when done
+            files_dict: dict of filename->content
             generated_relpaths: iterable of all current generated relpaths
             force_rebuild: when True, run a full clean rebuild before preview
 
@@ -924,7 +833,6 @@ class CompilerEngine:
         """
         worker = CompileWorker(
             self,
-            code=code,
             files_dict=files_dict,
             generated_relpaths=generated_relpaths,
             force_rebuild=force_rebuild,

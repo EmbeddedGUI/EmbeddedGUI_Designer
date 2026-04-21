@@ -368,8 +368,3 @@ class DebugPanel(QWidget):
                 self.append_text(line, "info")
             else:
                 self.append_text(line, "info")
-
-    # Keep old method for compatibility
-    def set_compile_output(self, success, output):
-        """Set compile output (clears first, for backward compatibility)."""
-        self.log_compile_output(success, output)
