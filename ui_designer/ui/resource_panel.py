@@ -761,7 +761,7 @@ class _GenerateCharsetDialog(QDialog):
 
         metrics_layout = QVBoxLayout()
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(8)
+        metrics_layout.setSpacing(6)
         self._selection_metric = _create_dialog_metric_card(metrics_layout, "Selection")
         self._char_metric = _create_dialog_metric_card(metrics_layout, "Chars")
         self._file_metric = _create_dialog_metric_card(metrics_layout, "File")
@@ -772,7 +772,7 @@ class _GenerateCharsetDialog(QDialog):
         self._preset_card.setObjectName("resource_dialog_card")
         preset_layout = QVBoxLayout(self._preset_card)
         preset_layout.setContentsMargins(12, 10, 12, 10)
-        preset_layout.setSpacing(8)
+        preset_layout.setSpacing(6)
 
         preset_title = QLabel("Built-in Presets")
         preset_title.setObjectName("workspace_section_title")
@@ -800,7 +800,7 @@ class _GenerateCharsetDialog(QDialog):
         self._custom_card.setObjectName("resource_dialog_card")
         custom_layout = QVBoxLayout(self._custom_card)
         custom_layout.setContentsMargins(12, 10, 12, 10)
-        custom_layout.setSpacing(8)
+        custom_layout.setSpacing(6)
 
         custom_title = QLabel("Custom Characters")
         custom_title.setObjectName("workspace_section_title")
@@ -835,7 +835,7 @@ class _GenerateCharsetDialog(QDialog):
         self._output_card.setObjectName("resource_dialog_card")
         output_layout = QVBoxLayout(self._output_card)
         output_layout.setContentsMargins(12, 10, 12, 10)
-        output_layout.setSpacing(8)
+        output_layout.setSpacing(6)
 
         output_title = QLabel("Output")
         output_title.setObjectName("workspace_section_title")
@@ -848,7 +848,7 @@ class _GenerateCharsetDialog(QDialog):
 
         file_row = QHBoxLayout()
         file_row.setContentsMargins(0, 0, 0, 0)
-        file_row.setSpacing(8)
+        file_row.setSpacing(6)
         file_label = QLabel("Filename")
         file_label.setObjectName("resource_panel_field_label")
         _set_widget_metadata(

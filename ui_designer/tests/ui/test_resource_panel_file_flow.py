@@ -3196,6 +3196,11 @@ class TestResourcePanelFileFlow:
 
             root_layout = dialog.layout()
             header_layout = dialog._header_frame.layout()
+            metrics_layout = header_layout.itemAt(1).layout()
+            preset_layout = dialog._preset_card.layout()
+            custom_layout = dialog._custom_card.layout()
+            output_layout = dialog._output_card.layout()
+            file_row = output_layout.itemAt(1).layout()
             preset_margins = dialog._preset_card.layout().contentsMargins()
             custom_margins = dialog._custom_card.layout().contentsMargins()
             output_margins = dialog._output_card.layout().contentsMargins()
@@ -3205,6 +3210,11 @@ class TestResourcePanelFileFlow:
             assert root_layout.spacing() == 8
             assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
             assert header_layout.spacing() == 12
+            assert metrics_layout.spacing() == 6
+            assert preset_layout.spacing() == 6
+            assert custom_layout.spacing() == 6
+            assert output_layout.spacing() == 6
+            assert file_row.spacing() == 6
             assert (
                 preset_margins.left(),
                 preset_margins.top(),
