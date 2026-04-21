@@ -7473,6 +7473,114 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Delete"].statusTip() == refreshed_actions["Delete"].toolTip()
         _close_window(window)
 
+    def test_edit_actions_include_primary_display_scope_for_multi_display_projects(self, qapp, isolated_config, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MultiDisplayEditHintsDemo"
+        widget = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
+        project = _create_project_only_with_widgets(
+            project_dir,
+            "MultiDisplayEditHintsDemo",
+            sdk_root,
+            widgets=[widget],
+        )
+        project.displays = [
+            {"width": 320, "height": 240},
+            {"width": 128, "height": 64},
+        ]
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        edit_action = next(action for action in window.menuBar().actions() if action.text() == "Edit")
+        assert edit_action.toolTip() == (
+            "Undo changes and work with the current selection. "
+            "Page: main_page. Undo: unavailable. Redo: unavailable. Selection: none. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._undo_action.toolTip() == (
+            "Undo the last change on the current page (Ctrl+Z). "
+            "Unavailable: no earlier changes are available on this page. Display target: Display 0 (primary only)."
+        )
+        assert window._redo_action.toolTip() == (
+            "Redo the next change on the current page (Ctrl+Shift+Z). "
+            "Unavailable: no later changes are available on this page. Display target: Display 0 (primary only)."
+        )
+        assert window._copy_action.toolTip() == (
+            "Copy the current selection (Ctrl+C). Unavailable: select at least 1 widget. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._paste_action.toolTip() == (
+            "Paste clipboard widgets into the current page (Ctrl+V). Unavailable: copy or cut widgets first. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._select_all_action.toolTip() == (
+            "Select all visible widgets on the current page or all text in the focused editor (Ctrl+A). "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._cut_action.toolTip() == (
+            "Cut the current selection (Ctrl+X). Unavailable: select at least 1 widget. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._duplicate_action.toolTip() == (
+            "Duplicate the current selection (Ctrl+D). Unavailable: select at least 1 widget. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._delete_action.toolTip() == (
+            "Delete the current selection (Del). Unavailable: select at least 1 widget. "
+            "Display target: Display 0 (primary only)."
+        )
+
+        loaded_widget = window._current_page.root_widget.children[0]
+        window._set_selection([loaded_widget], primary=loaded_widget, sync_tree=True, sync_preview=True)
+        stack = window._undo_manager.get_stack(window._current_page.name)
+        stack.push("state 1", label="initial")
+        window._update_undo_actions()
+
+        assert edit_action.toolTip() == (
+            "Undo changes and work with the current selection. "
+            "Page: main_page. Undo: available. Redo: unavailable. Selection: title (label). "
+            "Display target: Display 0 (primary only)."
+        )
+        assert window._undo_action.toolTip() == (
+            "Undo the last change on the current page (Ctrl+Z). Display target: Display 0 (primary only)."
+        )
+        assert window._copy_action.toolTip() == (
+            "Copy the current selection (Ctrl+C). Display target: Display 0 (primary only)."
+        )
+        assert window._cut_action.toolTip() == (
+            "Cut the current selection (Ctrl+X). Display target: Display 0 (primary only)."
+        )
+        assert window._duplicate_action.toolTip() == (
+            "Duplicate the current selection (Ctrl+D). Display target: Display 0 (primary only)."
+        )
+        assert window._delete_action.toolTip() == (
+            "Delete the current selection (Del). Display target: Display 0 (primary only)."
+        )
+
+        window._copy_selection()
+        assert window._paste_action.toolTip() == (
+            "Paste clipboard widgets into the current page (Ctrl+V). Display target: Display 0 (primary only)."
+        )
+
+        for action in (
+            edit_action,
+            window._undo_action,
+            window._redo_action,
+            window._copy_action,
+            window._paste_action,
+            window._select_all_action,
+            window._cut_action,
+            window._duplicate_action,
+            window._delete_action,
+        ):
+            assert action.statusTip() == action.toolTip()
+        _close_window(window)
+
     def test_arrange_actions_expose_dynamic_status_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

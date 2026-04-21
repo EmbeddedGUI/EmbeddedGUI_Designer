@@ -1255,12 +1255,13 @@ class MainWindow(QMainWindow):
         selection_text = self._selection_accessibility_text()
         undo_state = "available" if getattr(getattr(self, "_undo_action", None), "isEnabled", lambda: False)() else "unavailable"
         redo_state = "available" if getattr(getattr(self, "_redo_action", None), "isEnabled", lambda: False)() else "unavailable"
+        hint = (
+            "Undo changes and work with the current selection. "
+            f"Page: {page_label}. Undo: {undo_state}. Redo: {redo_state}. {selection_text}"
+        )
         self._apply_action_hint(
             self._edit_menu.menuAction(),
-            (
-                "Undo changes and work with the current selection. "
-                f"Page: {page_label}. Undo: {undo_state}. Redo: {redo_state}. {selection_text}"
-            ),
+            self._with_display_target_hint(hint),
         )
 
     def _update_arrange_menu_metadata(self):
@@ -1859,28 +1860,28 @@ class MainWindow(QMainWindow):
                 self._undo_action.isEnabled(),
                 "open a page first" if self._current_page is None else "no earlier changes are available on this page",
             )
-            self._apply_action_hint(self._undo_action, undo_hint)
+            self._apply_action_hint(self._undo_action, self._with_display_target_hint(undo_hint))
         if hasattr(self, "_redo_action"):
             redo_hint = self._action_hint(
                 "Redo the next change on the current page (Ctrl+Shift+Z).",
                 self._redo_action.isEnabled(),
                 "open a page first" if self._current_page is None else "no later changes are available on this page",
             )
-            self._apply_action_hint(self._redo_action, redo_hint)
+            self._apply_action_hint(self._redo_action, self._with_display_target_hint(redo_hint))
         if hasattr(self, "_copy_action"):
             copy_hint = self._action_hint(
                 "Copy the current selection (Ctrl+C).",
                 self._copy_action.isEnabled(),
                 "select at least 1 widget",
             )
-            self._apply_action_hint(self._copy_action, copy_hint)
+            self._apply_action_hint(self._copy_action, self._with_display_target_hint(copy_hint))
         if hasattr(self, "_paste_action"):
             paste_hint = self._action_hint(
                 "Paste clipboard widgets into the current page (Ctrl+V).",
                 self._paste_action.isEnabled(),
                 self._paste_action_blocked_reason(),
             )
-            self._apply_action_hint(self._paste_action, paste_hint)
+            self._apply_action_hint(self._paste_action, self._with_display_target_hint(paste_hint))
         if hasattr(self, "_compile_action"):
             base_text = "Compile the current project and run the preview (F5)."
             compile_context = self._compile_action_context_summary()
@@ -2330,6 +2331,15 @@ class MainWindow(QMainWindow):
         if not display_target:
             return ""
         return f" {display_target}"
+
+    def _with_display_target_hint(self, text):
+        resolved_text = str(text or "").strip()
+        display_target = self._project_display_target_context_suffix()
+        if not resolved_text or not display_target:
+            return resolved_text
+        if resolved_text.endswith(display_target.strip()):
+            return resolved_text
+        return f"{resolved_text}{display_target}"
 
     def _update_workspace_context_label(self, *, page_count=0):
         if getattr(self, "project", None) is None:
@@ -7603,36 +7613,44 @@ class MainWindow(QMainWindow):
         )
         self._apply_action_hint(
             self._select_all_action,
-            self._action_hint(
-                "Select all visible widgets on the current page or all text in the focused editor (Ctrl+A).",
-                self._select_all_action.isEnabled(),
-                "focus a text field or open a page with selectable widgets"
-                if self._current_page is None
-                else "page has no selectable widgets",
+            self._with_display_target_hint(
+                self._action_hint(
+                    "Select all visible widgets on the current page or all text in the focused editor (Ctrl+A).",
+                    self._select_all_action.isEnabled(),
+                    "focus a text field or open a page with selectable widgets"
+                    if self._current_page is None
+                    else "page has no selectable widgets",
+                )
             ),
         )
         self._apply_action_hint(
             self._cut_action,
-            self._action_hint(
-                "Cut the current selection (Ctrl+X).",
-                self._cut_action.isEnabled(),
-                "select at least 1 widget" if not has_selection else "locked widgets cannot be cut",
+            self._with_display_target_hint(
+                self._action_hint(
+                    "Cut the current selection (Ctrl+X).",
+                    self._cut_action.isEnabled(),
+                    "select at least 1 widget" if not has_selection else "locked widgets cannot be cut",
+                )
             ),
         )
         self._apply_action_hint(
             self._duplicate_action,
-            self._action_hint(
-                "Duplicate the current selection (Ctrl+D).",
-                self._duplicate_action.isEnabled(),
-                "select at least 1 widget",
+            self._with_display_target_hint(
+                self._action_hint(
+                    "Duplicate the current selection (Ctrl+D).",
+                    self._duplicate_action.isEnabled(),
+                    "select at least 1 widget",
+                )
             ),
         )
         self._apply_action_hint(
             self._delete_action,
-            self._action_hint(
-                "Delete the current selection (Del).",
-                self._delete_action.isEnabled(),
-                "select at least 1 widget" if not has_selection else "locked widgets cannot be deleted",
+            self._with_display_target_hint(
+                self._action_hint(
+                    "Delete the current selection (Del).",
+                    self._delete_action.isEnabled(),
+                    "select at least 1 widget" if not has_selection else "locked widgets cannot be deleted",
+                )
             ),
         )
 
