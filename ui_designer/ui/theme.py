@@ -239,6 +239,7 @@ _TOKENS = {
         "danger": "#EF4444",
         "success": "#22C55E",
         "warning": "#EAB308",
+        "selection_text": "#BFDBFE",
         "syntax_meta": "#71717A",
         "syntax_comment": "#4ADE80",
         "syntax_tag": "#60A5FA",
@@ -307,6 +308,7 @@ _TOKENS = {
         "danger": "#D9534F",
         "success": "#2E8B57",
         "warning": "#A5691A",
+        "selection_text": "#1D4ED8",
         "syntax_meta": "#7B8696",
         "syntax_comment": "#2E8B57",
         "syntax_tag": "#287DDA",
@@ -1056,8 +1058,8 @@ QTableView::item:hover, QTableWidget::item:hover {{
 }}
 
 QListView::item:selected, QTreeView::item:selected, QListWidget::item:selected, QTreeWidget::item:selected {{
-    background-color: rgba(59, 130, 246, 0.25);
-    color: #BFDBFE;
+    background-color: {t['selection']};
+    color: {t['selection_text']};
 }}
 
 QTableView::item:selected, QTableWidget::item:selected {{
@@ -1068,7 +1070,7 @@ QTableView::item:selected, QTableWidget::item:selected {{
 QListView::item:selected:!active, QTreeView::item:selected:!active,
 QListWidget::item:selected:!active, QTreeWidget::item:selected:!active {{
     background-color: {t['selection_soft']};
-    color: #BFDBFE;
+    color: {t['selection_text']};
 }}
 
 QTableView::item:selected:!active, QTableWidget::item:selected:!active {{
@@ -1078,8 +1080,8 @@ QTableView::item:selected:!active, QTableWidget::item:selected:!active {{
 
 QListView::item:selected:hover, QTreeView::item:selected:hover,
 QListWidget::item:selected:hover, QTreeWidget::item:selected:hover {{
-    background-color: rgba(59, 130, 246, 0.25);
-    color: #BFDBFE;
+    background-color: {t['selection']};
+    color: {t['selection_text']};
 }}
 
 QTableView::item:selected:hover, QTableWidget::item:selected:hover {{

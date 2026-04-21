@@ -589,7 +589,7 @@ def load_lucide_icon(name: str, color=None, size: int = 16) -> QIcon:
     if color is None:
         from .theme import app_theme_tokens
 
-        color = app_theme_tokens().get("text_soft", "#71717A")
+        color = app_theme_tokens()["text_soft"]
     return _load_lucide_icon_cached(str(name), _normalize_icon_color(color), int(size))
 
 

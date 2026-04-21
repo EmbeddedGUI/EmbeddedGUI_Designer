@@ -1043,6 +1043,32 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         assert "padding: 0px;" in tree
 
 
+def test_item_selection_styles_use_theme_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        selected = css.split(
+            "QListView::item:selected, QTreeView::item:selected, QListWidget::item:selected, QTreeWidget::item:selected {",
+            1,
+        )[1].split("}", 1)[0]
+        inactive = css.split(
+            "QListView::item:selected:!active, QTreeView::item:selected:!active,\nQListWidget::item:selected:!active, QTreeWidget::item:selected:!active {",
+            1,
+        )[1].split("}", 1)[0]
+        hover = css.split(
+            "QListView::item:selected:hover, QTreeView::item:selected:hover,\nQListWidget::item:selected:hover, QTreeWidget::item:selected:hover {",
+            1,
+        )[1].split("}", 1)[0]
+
+        assert f"background-color: {t['selection']};" in selected
+        assert f"color: {t['selection_text']};" in selected
+        assert f"background-color: {t['selection_soft']};" in inactive
+        assert f"color: {t['selection_text']};" in inactive
+        assert f"background-color: {t['selection']};" in hover
+        assert f"color: {t['selection_text']};" in hover
+
+
 def test_diagnostics_panel_styles_use_engineering_surface_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)

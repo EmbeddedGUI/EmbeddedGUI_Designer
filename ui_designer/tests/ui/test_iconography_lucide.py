@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPixmap
 
 import ui_designer.ui.iconography as iconography
+import ui_designer.ui.theme as theme
 from ui_designer.ui.theme import apply_theme
 
 
@@ -46,6 +47,25 @@ def test_load_lucide_icon_missing_returns_fallback(qapp):
     module = _reload_iconography()
     icon = module.load_lucide_icon("definitely_not_a_real_lucide_name", color="#FFFFFF", size=16)
     assert isinstance(icon, QIcon)
+
+
+def test_load_lucide_icon_uses_theme_text_soft_by_default(qapp, monkeypatch):
+    module = _reload_iconography()
+    sentinel = _sentinel_icon(size=20)
+    captured = {}
+
+    monkeypatch.setattr(theme, "app_theme_tokens", lambda *args, **kwargs: {"text_soft": "#123456"})
+
+    def _capture(name, color, size):
+        captured["args"] = (name, color, size)
+        return sentinel
+
+    monkeypatch.setattr(module, "_load_lucide_icon_cached", _capture)
+
+    icon = module.load_lucide_icon("play", size=20)
+
+    assert icon is sentinel
+    assert captured["args"] == ("play", "#123456", 20)
 
 
 def test_make_icon_uses_lucide_by_default(qapp, monkeypatch):

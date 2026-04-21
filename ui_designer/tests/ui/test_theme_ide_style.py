@@ -43,6 +43,7 @@ def test_dark_selection_uses_rgba_blue500():
     t = theme_tokens("dark")
     assert t["selection"] == "rgba(59, 130, 246, 0.40)"
     assert t["selection_soft"] == "rgba(59, 130, 246, 0.15)"
+    assert t["selection_text"] == "#BFDBFE"
     assert t["accent_soft"] == "rgba(59, 130, 246, 0.15)"
 
 
@@ -77,6 +78,7 @@ def test_light_palette_unchanged():
     t = theme_tokens("light")
     assert t["bg"] == "#EEF2F6"
     assert t["accent"] == "#287DDA"
+    assert t["selection_text"] == "#1D4ED8"
     assert t["fs_body"] == 13
 
 
@@ -115,6 +117,6 @@ def test_dark_stylesheet_includes_ide_accent_features():
         or "border-top: 2px solid rgb(59, 130, 246)" in css
     )
     # 半透明蓝选中
-    assert "rgba(59, 130, 246, 0.25)" in css or "rgba(59, 130, 246, 0.40)" in css
+    assert "rgba(59, 130, 246, 0.15)" in css or "rgba(59, 130, 246, 0.40)" in css
     # 亮蓝文字（blue-200 #BFDBFE）
     assert "#BFDBFE" in css
