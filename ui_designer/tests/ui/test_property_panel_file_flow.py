@@ -169,14 +169,14 @@ class TestPropertyPanelFileFlow:
         assert metric_grid.verticalSpacing() == 2
         card_layout = metric_cards[0].layout()
         assert isinstance(card_layout, QHBoxLayout)
-        assert card_layout.spacing() == 4
+        assert card_layout.spacing() == 3
         assert card_layout.itemAt(0).widget().objectName() == "property_panel_metric_label"
         assert card_layout.itemAt(2).widget().objectName() == "property_panel_metric_value"
         margins = card_layout.contentsMargins()
-        assert margins.left() == 6
-        assert margins.top() == 3
-        assert margins.right() == 6
-        assert margins.bottom() == 3
+        assert margins.left() == 5
+        assert margins.top() == 2
+        assert margins.right() == 5
+        assert margins.bottom() == 2
         panel.deleteLater()
 
     def test_property_tree_uses_remaining_vertical_space(self, qapp):
@@ -417,6 +417,31 @@ class TestPropertyPanelFileFlow:
         assert group.isChecked() is True
         panel._on_property_tree_item_clicked(item, 0)
         assert group.isChecked() is False
+        panel.deleteLater()
+
+    def test_property_grid_sections_and_rows_use_compact_cell_gutters(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        layout_section = panel._property_sections["Layout"]
+        header_layout = layout_section["header_frame"].layout()
+        header_margins = header_layout.contentsMargins()
+        x_row = panel._property_grid_row_data(panel._editors["x"])
+        label_layout = x_row["label_frame"].layout()
+        label_margins = label_layout.contentsMargins()
+        editor_layout = x_row["editor_host"].layout()
+        editor_margins = editor_layout.contentsMargins()
+
+        assert layout_section["item"].sizeHint(0).height() == 24
+        assert header_layout.spacing() == 2
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (5, 1, 5, 1)
+        assert x_row["item"].sizeHint(0).height() == 24
+        assert (label_margins.left(), label_margins.top(), label_margins.right(), label_margins.bottom()) == (5, 0, 5, 0)
+        assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (3, 0, 3, 0)
         panel.deleteLater()
 
     def test_property_grid_focus_highlights_active_row(self, qapp):
