@@ -108,7 +108,7 @@ class EditorTabs(QWidget):
         self._header_frame.setObjectName("editor_tabs_header")
         self._header_frame.hide()
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(6, 6, 6, 6)
+        header_layout.setContentsMargins(4, 4, 4, 4)
         header_layout.setSpacing(2)
 
         self._eyebrow_label = QLabel("Editor")
@@ -140,7 +140,7 @@ class EditorTabs(QWidget):
             self._mode_toolbar = QFrame()
             self._mode_toolbar.setObjectName("editor_tabs_mode_strip")
             toolbar_layout = QHBoxLayout(self._mode_toolbar)
-            toolbar_layout.setContentsMargins(2, 2, 2, 2)
+            toolbar_layout.setContentsMargins(1, 1, 1, 1)
             toolbar_layout.setSpacing(2)
 
             self._btn_group = QButtonGroup(self)
@@ -161,7 +161,7 @@ class EditorTabs(QWidget):
         self._stack_shell = QFrame()
         self._stack_shell.setObjectName("editor_tabs_shell")
         stack_shell_layout = QVBoxLayout(self._stack_shell)
-        stack_shell_layout.setContentsMargins(2, 2, 2, 2)
+        stack_shell_layout.setContentsMargins(1, 1, 1, 1)
         stack_shell_layout.setSpacing(0)
 
         self._stack = QStackedWidget()

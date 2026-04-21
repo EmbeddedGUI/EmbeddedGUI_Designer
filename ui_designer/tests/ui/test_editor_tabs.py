@@ -42,7 +42,7 @@ class TestEditorTabsAccessibility:
             "Editor tabs header. Editor tabs: Design mode. XML source is empty. Mode switch visible."
         )
         assert tabs.layout().spacing() == 2
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
         assert header_layout.spacing() == 2
         assert tabs._eyebrow_label.accessibleName() == "Editor engineering workspace surface."
         assert tabs._eyebrow_label.isHidden() is True
@@ -79,9 +79,9 @@ class TestEditorTabsAccessibility:
         shell_margins = tabs._stack_shell.layout().contentsMargins()
 
         assert tabs.accessibleName() == "Editor tabs: Design mode. XML source is empty. Mode switch visible."
-        assert (toolbar_margins.left(), toolbar_margins.top(), toolbar_margins.right(), toolbar_margins.bottom()) == (2, 2, 2, 2)
+        assert (toolbar_margins.left(), toolbar_margins.top(), toolbar_margins.right(), toolbar_margins.bottom()) == (1, 1, 1, 1)
         assert toolbar_layout.spacing() == 2
-        assert (shell_margins.left(), shell_margins.top(), shell_margins.right(), shell_margins.bottom()) == (2, 2, 2, 2)
+        assert (shell_margins.left(), shell_margins.top(), shell_margins.right(), shell_margins.bottom()) == (1, 1, 1, 1)
         assert tabs._stack.accessibleName() == "Editor view stack: Design mode."
         assert tabs._design_container.accessibleName() == "Design editor surface: visible."
         assert tabs._design_container.toolTip() == "Design editor surface. Current state: visible."
