@@ -144,7 +144,7 @@ class NewProjectDialog(QDialog):
         workspace_card.setObjectName("new_project_form_card")
         workspace_layout = QVBoxLayout(workspace_card)
         workspace_layout.setContentsMargins(0, 0, 0, 0)
-        workspace_layout.setSpacing(8)
+        workspace_layout.setSpacing(6)
 
         workspace_title = QLabel("Workspace Binding")
         workspace_title.setObjectName("workspace_section_title")
@@ -205,7 +205,7 @@ class NewProjectDialog(QDialog):
         project_card.setObjectName("new_project_form_card")
         project_layout = QVBoxLayout(project_card)
         project_layout.setContentsMargins(0, 0, 0, 0)
-        project_layout.setSpacing(8)
+        project_layout.setSpacing(6)
 
         project_title = QLabel("Project Profile")
         project_title.setObjectName("workspace_section_title")

@@ -100,9 +100,9 @@ class TestAppSelectorDialog:
         assert content_layout.spacing() == 8
         assert left_column.spacing() == 8
         assert right_column.spacing() == 8
-        assert root_card_layout.spacing() == 8
-        assert options_layout.spacing() == 8
-        assert browser_layout.spacing() == 8
+        assert root_card_layout.spacing() == 6
+        assert options_layout.spacing() == 6
+        assert browser_layout.spacing() == 6
         assert selection_layout.spacing() == 6
         assert dialog._app_list.spacing() == 6
         assert dialog._eyebrow_label.isHidden()
@@ -627,9 +627,9 @@ class TestNewProjectDialog:
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
         assert content_layout.spacing() == 8
-        assert workspace_layout.spacing() == 8
+        assert workspace_layout.spacing() == 6
         assert right_column.spacing() == 8
-        assert project_layout.spacing() == 8
+        assert project_layout.spacing() == 6
         assert summary_layout.spacing() == 6
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()

@@ -243,7 +243,7 @@ class AppSelectorDialog(QDialog):
         root_card.setObjectName("app_selector_root_card")
         root_layout = QVBoxLayout(root_card)
         root_layout.setContentsMargins(0, 0, 0, 0)
-        root_layout.setSpacing(8)
+        root_layout.setSpacing(6)
 
         root_title = QLabel("SDK")
         root_title.setObjectName("workspace_section_title")
@@ -287,7 +287,7 @@ class AppSelectorDialog(QDialog):
         options_card.setObjectName("app_selector_options_card")
         options_layout = QVBoxLayout(options_card)
         options_layout.setContentsMargins(0, 0, 0, 0)
-        options_layout.setSpacing(8)
+        options_layout.setSpacing(6)
 
         options_title = QLabel("Filters")
         options_title.setObjectName("workspace_section_title")
@@ -324,7 +324,7 @@ class AppSelectorDialog(QDialog):
         browser_card.setObjectName("app_selector_browser_card")
         browser_layout = QVBoxLayout(browser_card)
         browser_layout.setContentsMargins(0, 0, 0, 0)
-        browser_layout.setSpacing(8)
+        browser_layout.setSpacing(6)
 
         browser_title = QLabel("Examples")
         browser_title.setObjectName("workspace_section_title")
