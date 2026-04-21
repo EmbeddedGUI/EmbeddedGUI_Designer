@@ -503,6 +503,19 @@ class _PreviewWidget(QWidget):
         self._font_file = None
         self._text_lines = []
 
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
+            self.update()
+
+    def _paint_palette(self):
+        tokens = app_theme_tokens()
+        return {
+            "image_meta": QColor(tokens["text"]),
+            "meta": QColor(tokens["text_muted"]),
+            "preview_text": QColor(tokens["text"]),
+        }
+
     def _ui_font_scale(self):
         app = QApplication.instance()
         return designer_font_scale(app, default_pt=_DEFAULT_RESOURCE_PREVIEW_FONT_PT)
@@ -603,6 +616,7 @@ class _PreviewWidget(QWidget):
         painter.end()
 
     def _paint_image(self, painter, w, h):
+        palette = self._paint_palette()
         pm = self._pixmap
         preview_w = max(w - 140, 60)
         preview_h = h - 8
@@ -612,7 +626,7 @@ class _PreviewWidget(QWidget):
         y = (h - scaled.height()) // 2
         painter.drawPixmap(x, y, scaled)
         text_x = x + scaled.width() + 8
-        painter.setPen(QColor(200, 200, 200))
+        painter.setPen(palette["image_meta"])
         painter.setFont(designer_ui_font(point_size=self._image_meta_font_point_size()))
         fm = painter.fontMetrics()
         ty = 8
@@ -621,7 +635,8 @@ class _PreviewWidget(QWidget):
             ty += fm.height() + 2
 
     def _paint_font(self, painter, w, h):
-        painter.setPen(QColor(180, 180, 180))
+        palette = self._paint_palette()
+        painter.setPen(palette["meta"])
         painter.setFont(designer_ui_font(point_size=self._meta_font_point_size()))
         fm = painter.fontMetrics()
         ty = 4
@@ -629,7 +644,7 @@ class _PreviewWidget(QWidget):
             painter.drawText(8, ty + fm.ascent(), line)
             ty += fm.height() + 1
         ty += 4
-        painter.setPen(QColor(220, 220, 220))
+        painter.setPen(palette["preview_text"])
         for sz in self._FONT_SIZES:
             if ty > h - 4:
                 break
@@ -640,7 +655,8 @@ class _PreviewWidget(QWidget):
             ty += fm2.height() + 2
 
     def _paint_text(self, painter, w, h):
-        painter.setPen(QColor(180, 180, 180))
+        palette = self._paint_palette()
+        painter.setPen(palette["meta"])
         painter.setFont(designer_ui_font(point_size=self._meta_font_point_size()))
         fm = painter.fontMetrics()
         ty = 4
@@ -649,7 +665,7 @@ class _PreviewWidget(QWidget):
             ty += fm.height() + 1
 
         preview_rect = QRect(8, ty + 6, max(w - 16, 0), max(h - ty - 12, 0))
-        painter.setPen(QColor(220, 220, 220))
+        painter.setPen(palette["preview_text"])
         painter.setFont(designer_monospace_font(point_size=self._text_preview_font_point_size()))
         painter.drawText(preview_rect, Qt.TextWordWrap | Qt.AlignTop | Qt.AlignLeft, "\n".join(self._text_lines))
 

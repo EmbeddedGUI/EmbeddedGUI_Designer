@@ -30,6 +30,55 @@ class TestResourcePanelFileFlow:
             preview.deleteLater()
             qapp.setProperty("designer_font_size_pt", 0)
 
+    def test_preview_widget_uses_active_theme_tokens(self, qapp):
+        from ui_designer.ui.resource_panel import _PreviewWidget
+        from ui_designer.ui.theme import app_theme_tokens
+
+        preview = _PreviewWidget()
+
+        try:
+            tokens = app_theme_tokens(qapp)
+            palette = preview._paint_palette()
+            assert palette["image_meta"].name().lower() == tokens["text"].lower()
+            assert palette["meta"].name().lower() == tokens["text_muted"].lower()
+            assert palette["preview_text"].name().lower() == tokens["text"].lower()
+        finally:
+            preview.deleteLater()
+
+    def test_preview_widget_reacts_to_theme_change(self, qapp, monkeypatch):
+        from ui_designer.ui.resource_panel import _PreviewWidget
+        from ui_designer.ui.theme import app_theme_tokens
+
+        preview = _PreviewWidget()
+        update_calls = 0
+        original_update = preview.update
+
+        def counted_update():
+            nonlocal update_calls
+            update_calls += 1
+            return original_update()
+
+        monkeypatch.setattr(preview, "update", counted_update)
+
+        try:
+            dark_palette = preview._paint_palette()
+
+            qapp.setProperty("designer_theme_mode", "light")
+            preview.changeEvent(QEvent(QEvent.StyleChange))
+
+            light_tokens = app_theme_tokens(qapp)
+            light_palette = preview._paint_palette()
+            assert update_calls == 1
+            assert light_palette["image_meta"].name().lower() == light_tokens["text"].lower()
+            assert light_palette["meta"].name().lower() == light_tokens["text_muted"].lower()
+            assert light_palette["meta"].name().lower() != dark_palette["meta"].name().lower()
+
+            preview.changeEvent(QEvent(QEvent.FontChange))
+            assert update_calls == 1
+        finally:
+            preview.deleteLater()
+            qapp.setProperty("designer_theme_mode", None)
+
     def test_resource_panel_shell_controls_use_compact_heights(self, qapp):
         from ui_designer.ui.resource_panel import ResourcePanel
 
