@@ -64,6 +64,35 @@ class TestDebugPanel:
         assert panel._output.accessibleName() == "Debug output log: 0 lines. Last message: No output yet."
         panel.deleteLater()
 
+    def test_message_formats_follow_active_theme_tokens(self, qapp):
+        from PyQt5.QtCore import QEvent
+
+        from ui_designer.ui.debug_panel import DebugPanel
+        from ui_designer.ui.theme import app_theme_tokens
+
+        panel = DebugPanel()
+
+        try:
+            dark_tokens = app_theme_tokens(qapp)
+            assert panel._error_format.foreground().color().name().lower() == dark_tokens["danger"].lower()
+            assert panel._success_format.foreground().color().name().lower() == dark_tokens["success"].lower()
+            assert panel._info_format.foreground().color().name().lower() == dark_tokens["text_muted"].lower()
+            assert panel._action_format.foreground().color().name().lower() == dark_tokens["accent"].lower()
+            assert panel._cmd_format.foreground().color().name().lower() == dark_tokens["warning"].lower()
+
+            qapp.setProperty("designer_theme_mode", "light")
+            panel.changeEvent(QEvent(QEvent.StyleChange))
+
+            light_tokens = app_theme_tokens(qapp)
+            assert panel._error_format.foreground().color().name().lower() == light_tokens["danger"].lower()
+            assert panel._success_format.foreground().color().name().lower() == light_tokens["success"].lower()
+            assert panel._info_format.foreground().color().name().lower() == light_tokens["text_muted"].lower()
+            assert panel._action_format.foreground().color().name().lower() == light_tokens["accent"].lower()
+            assert panel._cmd_format.foreground().color().name().lower() == light_tokens["warning"].lower()
+        finally:
+            panel.deleteLater()
+            qapp.setProperty("designer_theme_mode", None)
+
     def test_append_and_clear_refresh_debug_output_summary(self, qapp):
         from ui_designer.ui.debug_panel import DebugPanel
 

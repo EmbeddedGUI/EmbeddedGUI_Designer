@@ -164,12 +164,6 @@ class WidgetTreePanel(QWidget):
     feedback_message = pyqtSignal(str)  # emits user-facing status messages
     browse_widgets_requested = pyqtSignal(object)  # preferred parent widget or None
 
-    _DRAG_TARGET_LABEL_STYLES = {
-        "default": "color: #666666;",
-        "valid": "color: #0b5cab; font-weight: 600;",
-        "invalid": "color: #a1260d; font-weight: 600;",
-    }
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self._config = get_config()
@@ -196,6 +190,7 @@ class WidgetTreePanel(QWidget):
         if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
             self._apply_tree_base_font()
             self.refresh_tree_typography()
+            self._refresh_drag_target_theme()
         elif event.type() == QEvent.FontChange:
             self.refresh_tree_typography()
 
@@ -2216,7 +2211,7 @@ class WidgetTreePanel(QWidget):
         if drag_text and drag_text != default_drag_text:
             summary = f"{base_text} {drag_text}"
             tone = self._drag_target_tone if hasattr(self, "_drag_target_tone") else "default"
-            self.structure_hint_label.setStyleSheet(self._DRAG_TARGET_LABEL_STYLES.get(tone, self._DRAG_TARGET_LABEL_STYLES["default"]))
+            self.structure_hint_label.setStyleSheet(self._drag_target_label_style(tone))
         else:
             summary = base_text
             self.structure_hint_label.setStyleSheet("")
@@ -2381,10 +2376,38 @@ class WidgetTreePanel(QWidget):
     def _default_drag_target_text(self):
         return "Drop target: drag over the tree to preview where the selection will land."
 
+    def _drag_target_label_styles(self):
+        tokens = app_theme_tokens()
+        return {
+            "default": f"color: {tokens['text_muted']};",
+            "valid": f"color: {tokens['accent']}; font-weight: 600;",
+            "invalid": f"color: {tokens['danger']}; font-weight: 600;",
+        }
+
+    def _drag_target_label_style(self, tone="default"):
+        styles = self._drag_target_label_styles()
+        return styles.get(tone, styles["default"])
+
+    def _drag_target_highlight_brush(self):
+        accent = QColor(app_theme_tokens()["accent"])
+        accent.setAlphaF(0.18)
+        return QBrush(accent)
+
+    def _refresh_drag_target_theme(self):
+        if hasattr(self, "drag_target_label"):
+            tone = self._drag_target_tone if hasattr(self, "_drag_target_tone") else "default"
+            self.drag_target_label.setStyleSheet(self._drag_target_label_style(tone))
+        if getattr(self, "_drag_target_item", None) is not None:
+            brush = self._drag_target_highlight_brush()
+            for column in range(self.tree.columnCount()):
+                self._drag_target_item.setBackground(column, brush)
+        if hasattr(self, "structure_hint_label"):
+            self._apply_structure_status_summary()
+
     def _set_drag_target_label(self, text, tone="default"):
         self._drag_target_tone = tone
         self.drag_target_label.setText(text)
-        self.drag_target_label.setStyleSheet(self._DRAG_TARGET_LABEL_STYLES.get(tone, self._DRAG_TARGET_LABEL_STYLES["default"]))
+        self.drag_target_label.setStyleSheet(self._drag_target_label_style(tone))
         if hasattr(self, "_drag_hint_frame"):
             default_text = self._default_drag_target_text()
             self._drag_hint_frame.setVisible(bool(text.strip()) and text.strip() != default_text)
@@ -3061,7 +3084,7 @@ class WidgetTreePanel(QWidget):
                 self._drag_target_item.setBackground(column, QBrush())
         self._drag_target_item = item
         if self._drag_target_item is not None:
-            brush = QBrush(QColor("#d8ecff"))
+            brush = self._drag_target_highlight_brush()
             for column in range(self.tree.columnCount()):
                 self._drag_target_item.setBackground(column, brush)
 

@@ -12,10 +12,10 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QLabel,
 )
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import QEvent, Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QTextCharFormat, QColor
 
-from .theme import designer_font_size_pt, designer_monospace_font, theme_tokens
+from .theme import app_theme_tokens, designer_font_size_pt, designer_monospace_font, theme_tokens
 
 
 _TOKENS = theme_tokens("dark")
@@ -57,6 +57,11 @@ class DebugPanel(QWidget):
         self._rebuild_button_accessible_name = ""
         self._init_ui()
         self._update_accessibility_summary("No output yet.")
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
+            self._refresh_message_formats()
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
@@ -136,19 +141,19 @@ class DebugPanel(QWidget):
 
         # Formats for different message types
         self._error_format = QTextCharFormat()
-        self._error_format.setForeground(QColor("#ff6b6b"))
-
         self._success_format = QTextCharFormat()
-        self._success_format.setForeground(QColor("#69db7c"))
-
         self._info_format = QTextCharFormat()
-        self._info_format.setForeground(QColor("#a0a0a0"))
-
         self._action_format = QTextCharFormat()
-        self._action_format.setForeground(QColor("#74c0fc"))
-
         self._cmd_format = QTextCharFormat()
-        self._cmd_format.setForeground(QColor("#ffd43b"))
+        self._refresh_message_formats()
+
+    def _refresh_message_formats(self):
+        tokens = app_theme_tokens(QApplication.instance())
+        self._error_format.setForeground(QColor(tokens["danger"]))
+        self._success_format.setForeground(QColor(tokens["success"]))
+        self._info_format.setForeground(QColor(tokens["text_muted"]))
+        self._action_format.setForeground(QColor(tokens["accent"]))
+        self._cmd_format.setForeground(QColor(tokens["warning"]))
 
     def _current_last_message(self):
         lines = self._output.toPlainText().splitlines()

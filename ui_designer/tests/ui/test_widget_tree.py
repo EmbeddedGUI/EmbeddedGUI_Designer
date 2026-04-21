@@ -11,7 +11,7 @@ from ui_designer.utils.scaffold import add_widget_children as _add_widget_childr
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QEvent, Qt
-    from PyQt5.QtGui import QFont, QKeyEvent
+    from PyQt5.QtGui import QColor, QFont, QKeyEvent
     from PyQt5.QtWidgets import QApplication, QAbstractItemView, QToolButton
 
 _skip_no_qt = skip_if_no_qt
@@ -1456,6 +1456,7 @@ class TestWidgetTreePanel:
 
     def test_structure_buttons_reflect_selection_state(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.theme import app_theme_tokens
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
         first = WidgetModel("label", name="first")
@@ -1477,7 +1478,8 @@ class TestWidgetTreePanel:
         assert panel.top_btn.isEnabled() is False
         assert panel.bottom_btn.isEnabled() is False
         assert panel.structure_hint_label.text() == "Structure: select widgets to group, move, or reorder."
-        assert "#666666" in panel.drag_target_label.styleSheet()
+        tokens = app_theme_tokens(qapp)
+        assert tokens["text_muted"].lower() in panel.drag_target_label.styleSheet().lower()
 
         panel.set_selected_widgets([first, second], primary=first)
 
@@ -1691,6 +1693,7 @@ class TestWidgetTreePanel:
 
     def test_tree_drag_hover_updates_drop_target_preview(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.theme import app_theme_tokens
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
         source = WidgetModel("label", name="source")
@@ -1708,7 +1711,8 @@ class TestWidgetTreePanel:
 
         assert panel.drag_target_label.text() == "Drop target: move into target."
         assert panel._drag_target_item is target_item
-        assert "#0b5cab" in panel.drag_target_label.styleSheet()
+        tokens = app_theme_tokens(qapp)
+        assert tokens["accent"].lower() in panel.drag_target_label.styleSheet().lower()
 
         panel._on_tree_drag_hover(sibling_item, QAbstractItemView.AboveItem)
 
@@ -1719,11 +1723,12 @@ class TestWidgetTreePanel:
 
         assert panel.drag_target_label.text() == "Drop target: drag over the tree to preview where the selection will land."
         assert panel._drag_target_item is None
-        assert "#666666" in panel.drag_target_label.styleSheet()
+        assert tokens["text_muted"].lower() in panel.drag_target_label.styleSheet().lower()
         panel.deleteLater()
 
     def test_tree_drag_hover_reports_invalid_target_preview(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.theme import app_theme_tokens
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
         first = WidgetModel("label", name="first")
@@ -1740,11 +1745,13 @@ class TestWidgetTreePanel:
             "Drop target unavailable: Cannot move selection in tree: widgets are already in that position."
         )
         assert panel._drag_target_item is None
-        assert "#a1260d" in panel.drag_target_label.styleSheet()
+        tokens = app_theme_tokens(qapp)
+        assert tokens["danger"].lower() in panel.drag_target_label.styleSheet().lower()
         panel.deleteLater()
 
     def test_tree_drag_preview_clears_on_selection_change_and_rebuild(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.theme import app_theme_tokens
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
         first = WidgetModel("label", name="first")
@@ -1763,7 +1770,8 @@ class TestWidgetTreePanel:
         panel.set_selected_widgets([third], primary=third)
         assert panel._drag_target_item is None
         assert panel.drag_target_label.text() == "Drop target: drag over the tree to preview where the selection will land."
-        assert "#666666" in panel.drag_target_label.styleSheet()
+        tokens = app_theme_tokens(qapp)
+        assert tokens["text_muted"].lower() in panel.drag_target_label.styleSheet().lower()
 
         panel._on_tree_drag_hover(second_item, QAbstractItemView.OnItem)
         assert panel._drag_target_item is second_item
@@ -1771,8 +1779,44 @@ class TestWidgetTreePanel:
         panel.rebuild_tree()
         assert panel._drag_target_item is None
         assert panel.drag_target_label.text() == "Drop target: drag over the tree to preview where the selection will land."
-        assert "#666666" in panel.drag_target_label.styleSheet()
+        assert tokens["text_muted"].lower() in panel.drag_target_label.styleSheet().lower()
         panel.deleteLater()
+
+    def test_tree_drag_preview_theme_refresh_updates_style_tokens(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.theme import app_theme_tokens
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        source = WidgetModel("label", name="source")
+        target = WidgetModel("group", name="target")
+        project, root = _build_project_with_widgets(widgets=[source, target])
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([source], primary=source)
+        target_item = panel._item_map[id(target)]
+
+        try:
+            panel._on_tree_drag_hover(target_item, QAbstractItemView.OnItem)
+            dark_tokens = app_theme_tokens(qapp)
+            assert dark_tokens["accent"].lower() in panel.drag_target_label.styleSheet().lower()
+
+            qapp.setProperty("designer_theme_mode", "light")
+            panel.changeEvent(QEvent(QEvent.StyleChange))
+
+            light_tokens = app_theme_tokens(qapp)
+            assert light_tokens["accent"].lower() in panel.drag_target_label.styleSheet().lower()
+            highlight = panel._drag_target_item.background(0).color()
+            accent = QColor(light_tokens["accent"])
+            assert (highlight.red(), highlight.green(), highlight.blue()) == (
+                accent.red(),
+                accent.green(),
+                accent.blue(),
+            )
+            assert highlight.alpha() > 0
+        finally:
+            panel.deleteLater()
+            qapp.setProperty("designer_theme_mode", None)
 
     def test_tree_drag_hover_expands_valid_collapsed_container(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
