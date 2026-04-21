@@ -1676,13 +1676,14 @@ class MainWindow(QMainWindow):
 
     def _page_tab_context_action_hint(self, action_key, page_name):
         state_summary = self._page_tab_state_summary(page_name)
+        display_target = self._project_display_target_context_suffix()
         if action_key == "close_tab":
-            return f"Close page tab. {state_summary}"
+            return f"Close page tab. {state_summary}{display_target}"
         if action_key == "close_others":
-            return f"Close all other open page tabs and keep {page_name}. {state_summary}"
+            return f"Close all other open page tabs and keep {page_name}. {state_summary}{display_target}"
         if action_key == "close_all":
-            return f"Close all open page tabs from {page_name}. {state_summary}"
-        return state_summary
+            return f"Close all open page tabs from {page_name}. {state_summary}{display_target}"
+        return f"{state_summary}{display_target}"
 
     def _paste_action_blocked_reason(self):
         if self._current_page is None:
@@ -6567,6 +6568,7 @@ class MainWindow(QMainWindow):
     def _build_preview_context_menu(self, widget=None):
         menu = QMenu(self)
         menu.setToolTipsVisible(True)
+        display_target = self._project_display_target_context_suffix()
         menu.addAction(self._select_all_action)
         if widget is not None and hasattr(self, "widget_tree") and self.widget_tree is not None:
             self.widget_tree._populate_select_menu(menu.addMenu("Select"), widget)
@@ -6617,6 +6619,8 @@ class MainWindow(QMainWindow):
         arrange_hint = "Arrange selected widgets by alignment, order, lock, and visibility."
         if not arrange_enabled:
             arrange_hint = "Arrange unavailable: select at least 1 widget."
+        if display_target:
+            arrange_hint = f"{arrange_hint}{display_target}"
         arrange_menu.menuAction().setToolTip(arrange_hint)
         arrange_menu.menuAction().setStatusTip(arrange_hint)
 
@@ -6656,6 +6660,10 @@ class MainWindow(QMainWindow):
             structure_hint = self._structure_action_state().blocked_reason
             if structure_hint:
                 structure_hint = f"Structure unavailable: {structure_hint}"
+            else:
+                structure_hint = "Structure unavailable: select at least 1 widget."
+        if display_target:
+            structure_hint = f"{structure_hint}{display_target}"
         structure_menu.menuAction().setToolTip(structure_hint)
         structure_menu.menuAction().setStatusTip(structure_hint)
         return menu

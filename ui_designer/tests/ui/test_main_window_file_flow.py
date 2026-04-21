@@ -11693,6 +11693,64 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_context_menus_include_primary_display_scope_for_multi_display_projects(self, qapp, isolated_config, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MultiDisplayContextMenusDemo"
+        widget = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
+        project = _create_project_only_with_widgets(
+            project_dir,
+            "MultiDisplayContextMenusDemo",
+            sdk_root,
+            widgets=[widget],
+        )
+        project.displays = [
+            {"width": 320, "height": 240},
+            {"width": 128, "height": 64},
+        ]
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        menu, actions = window._build_page_tab_context_menu(0)
+        assert actions["close_tab"].toolTip() == (
+            "Close page tab. Page: main_page. Current page. Startup page. No unsaved changes. "
+            "Display target: Display 0 (primary only)."
+        )
+        assert actions["close_others"].toolTip() == (
+            "Close all other open page tabs and keep main_page. "
+            "Page: main_page. Current page. Startup page. No unsaved changes. "
+            "Display target: Display 0 (primary only). Unavailable: only 1 page tab is open."
+        )
+        assert actions["close_all"].toolTip() == (
+            "Close all open page tabs from main_page. Page: main_page. Current page. Startup page. No unsaved changes. "
+            "Display target: Display 0 (primary only)."
+        )
+        for action in actions.values():
+            assert action.statusTip() == action.toolTip()
+        menu.deleteLater()
+
+        window._selection_state.set_widgets([], primary=None)
+        window._selected_widget = None
+        window._update_edit_actions()
+        menu = window._build_preview_context_menu(None)
+        actions = {action.text(): action for action in menu.actions() if action.text()}
+        assert actions["Arrange"].toolTip() == (
+            "Arrange unavailable: select at least 1 widget. Display target: Display 0 (primary only)."
+        )
+        assert actions["Arrange"].statusTip() == actions["Arrange"].toolTip()
+        assert actions["Structure"].toolTip() == (
+            "Structure unavailable: select at least 1 widget. Display target: Display 0 (primary only)."
+        )
+        assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
+        menu.deleteLater()
+
+        _close_window(window)
+
     def test_copy_and_paste_selection_creates_unique_widget_names(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -15967,6 +16025,8 @@ class TestMainWindowCanvasActions:
         assert actions["Arrange"].toolTip() == "Arrange unavailable: select at least 1 widget."
         assert actions["Arrange"].statusTip() == actions["Arrange"].toolTip()
         assert actions["Structure"].isEnabled() is False
+        assert actions["Structure"].toolTip() == "Structure unavailable: select at least 1 widget."
+        assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
 
         assert arrange_actions["Align Left"].isEnabled() is False
         assert arrange_actions["Distribute Horizontally"].isEnabled() is False
