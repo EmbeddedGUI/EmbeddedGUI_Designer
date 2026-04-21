@@ -763,7 +763,7 @@ class _GenerateCharsetDialog(QDialog):
         self._preset_card = QFrame()
         self._preset_card.setObjectName("resource_dialog_card")
         preset_layout = QVBoxLayout(self._preset_card)
-        preset_layout.setContentsMargins(16, 14, 16, 14)
+        preset_layout.setContentsMargins(12, 10, 12, 10)
         preset_layout.setSpacing(8)
 
         preset_title = QLabel("Built-in Presets")
@@ -791,7 +791,7 @@ class _GenerateCharsetDialog(QDialog):
         self._custom_card = QFrame()
         self._custom_card.setObjectName("resource_dialog_card")
         custom_layout = QVBoxLayout(self._custom_card)
-        custom_layout.setContentsMargins(16, 14, 16, 14)
+        custom_layout.setContentsMargins(12, 10, 12, 10)
         custom_layout.setSpacing(8)
 
         custom_title = QLabel("Custom Characters")
@@ -826,7 +826,7 @@ class _GenerateCharsetDialog(QDialog):
         self._output_card = QFrame()
         self._output_card.setObjectName("resource_dialog_card")
         output_layout = QVBoxLayout(self._output_card)
-        output_layout.setContentsMargins(16, 14, 16, 14)
+        output_layout.setContentsMargins(12, 10, 12, 10)
         output_layout.setSpacing(8)
 
         output_title = QLabel("Output")

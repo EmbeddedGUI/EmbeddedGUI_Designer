@@ -3190,6 +3190,9 @@ class TestResourcePanelFileFlow:
 
             header_layout = dialog._header_frame.layout()
             header_margins = header_layout.contentsMargins()
+            preset_margins = dialog._preset_card.layout().contentsMargins()
+            custom_margins = dialog._custom_card.layout().contentsMargins()
+            output_margins = dialog._output_card.layout().contentsMargins()
 
             assert dialog.accessibleName().startswith("Generate Charset: 1 preset selected.")
             assert (
@@ -3199,6 +3202,24 @@ class TestResourcePanelFileFlow:
                 header_margins.bottom(),
             ) == (12, 10, 12, 10)
             assert header_layout.spacing() == 12
+            assert (
+                preset_margins.left(),
+                preset_margins.top(),
+                preset_margins.right(),
+                preset_margins.bottom(),
+            ) == (12, 10, 12, 10)
+            assert (
+                custom_margins.left(),
+                custom_margins.top(),
+                custom_margins.right(),
+                custom_margins.bottom(),
+            ) == (12, 10, 12, 10)
+            assert (
+                output_margins.left(),
+                output_margins.top(),
+                output_margins.right(),
+                output_margins.bottom(),
+            ) == (12, 10, 12, 10)
             assert dialog._header_frame.accessibleName() == (
                 "Font charset dialog header: 1 preset selected. 96 chars. File: charset_ascii_printable_custom.txt."
             )
