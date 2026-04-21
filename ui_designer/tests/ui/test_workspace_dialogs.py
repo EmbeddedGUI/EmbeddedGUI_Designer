@@ -73,11 +73,20 @@ class TestAppSelectorDialog:
         isolated_config.sdk_root = ""
         isolated_config.sdk_root = ""
         dialog = AppSelectorDialog(sdk_root="")
+        header_layout = dialog._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
 
         assert dialog._header_frame.accessibleName() == (
             "Example header. Open Example dialog: SDK root none. Search none. "
             "Unmanaged SDK examples off. Examples list: 1 entry. Selection: none."
         )
+        assert (
+            header_margins.left(),
+            header_margins.top(),
+            header_margins.right(),
+            header_margins.bottom(),
+        ) == (12, 10, 12, 10)
+        assert header_layout.spacing() == 12
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()
         assert dialog._metrics_frame.isHidden()
@@ -581,12 +590,21 @@ class TestNewProjectDialog:
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr("ui_designer.ui.new_project_dialog.default_sdk_install_dir", lambda: "")
             dialog = NewProjectDialog(sdk_root="", default_parent_dir=str(tmp_path))
+        header_layout = dialog._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
 
         normalized_parent = os.path.normpath(os.path.abspath(tmp_path))
         assert dialog._header_frame.accessibleName() == (
             f"New project header. New Project dialog: SDK root none. Parent directory {normalized_parent}. "
             "App name none. Size 240 by 320."
         )
+        assert (
+            header_margins.left(),
+            header_margins.top(),
+            header_margins.right(),
+            header_margins.bottom(),
+        ) == (12, 10, 12, 10)
+        assert header_layout.spacing() == 12
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "New project scaffold workspace."

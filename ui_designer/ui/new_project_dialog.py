@@ -85,8 +85,8 @@ class NewProjectDialog(QDialog):
         self._header_frame = QFrame()
         self._header_frame.setObjectName("new_project_header")
         header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(16, 14, 16, 14)
-        header_layout.setSpacing(16)
+        header_layout.setContentsMargins(12, 10, 12, 10)
+        header_layout.setSpacing(12)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
