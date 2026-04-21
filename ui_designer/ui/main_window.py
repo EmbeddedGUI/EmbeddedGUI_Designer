@@ -210,8 +210,9 @@ WORKSPACE_TOP_VISIBLE_HEIGHT = 860
 WORKSPACE_BOTTOM_VISIBLE_HEIGHT = 200
 WORKSPACE_TOP_HIDDEN_HEIGHT = 1000
 WORKSPACE_BOTTOM_HIDDEN_HEIGHT = 0
-WORKSPACE_CONTROL_HEIGHT = 22
-WORKSPACE_TOOLBAR_HEIGHT = 24
+WORKSPACE_CONTROL_HEIGHT = 20
+WORKSPACE_TOOLBAR_HEIGHT = 22
+WORKSPACE_COMMAND_BUTTON_WIDTH = 48
 PAGE_TAB_BAR_HEIGHT = 36
 PAGE_TAB_BAR_MAX_WIDTH = 188
 
@@ -501,7 +502,7 @@ class MainWindow(QMainWindow):
         self._toolbar_command_row.setObjectName("workspace_command_body")
         self._toolbar_command_row_layout = QHBoxLayout(self._toolbar_command_row)
         self._toolbar_command_row_layout.setContentsMargins(0, 0, 0, 0)
-        self._toolbar_command_row_layout.setSpacing(2)
+        self._toolbar_command_row_layout.setSpacing(1)
         self._toolbar_host_layout.addWidget(self._toolbar_command_row)
         editor_layout.addWidget(self._toolbar_host)
 
@@ -4189,7 +4190,7 @@ class MainWindow(QMainWindow):
 
         self._insert_widget_button = QPushButton("Add")
         self._insert_widget_button.setObjectName("workspace_insert_button")
-        self._insert_widget_button.setFixedSize(52, WORKSPACE_CONTROL_HEIGHT)
+        self._insert_widget_button.setFixedSize(WORKSPACE_COMMAND_BUTTON_WIDTH, WORKSPACE_CONTROL_HEIGHT)
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)
         self._update_insert_widget_button_metadata()
@@ -4239,7 +4240,7 @@ class MainWindow(QMainWindow):
             button = QPushButton(label)
             button.setObjectName("workspace_mode_button")
             button.setCheckable(True)
-            button.setFixedSize(52, WORKSPACE_CONTROL_HEIGHT)
+            button.setFixedSize(WORKSPACE_COMMAND_BUTTON_WIDTH, WORKSPACE_CONTROL_HEIGHT)
             button.clicked.connect(lambda checked=False, m=mode: self.editor_tabs.set_mode(m))
             self._mode_buttons[mode] = button
             mode_layout.addWidget(button)

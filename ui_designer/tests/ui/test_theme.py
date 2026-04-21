@@ -570,7 +570,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "margin: 1px 1px;" in toolbar_separator
         assert "background-color: transparent;" in toolbar_button
         assert "border-radius: 0px;" in toolbar_button
-        assert "padding: 0px 4px;" in toolbar_button
+        assert "padding: 0px 3px;" in toolbar_button
         assert "min-height: 20px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
         assert f"background-color: {t['shell_bg']};" in toolbar_button_disabled
@@ -581,9 +581,9 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "margin-right: 2px;" in host_separator
         assert "background-color: transparent;" in insert_button
         assert "border-radius: 0px;" in insert_button
-        assert "padding: 0px 8px;" in insert_button
-        assert "min-width: 52px;" in insert_button
-        assert "max-width: 52px;" in insert_button
+        assert "padding: 0px 6px;" in insert_button
+        assert "min-width: 48px;" in insert_button
+        assert "max-width: 48px;" in insert_button
         assert "min-height: 20px;" in insert_button
         assert "max-height: 20px;" in insert_button
         assert f"background-color: {t['surface_hover']};" in insert_button_hover
@@ -618,8 +618,9 @@ def test_workspace_chrome_corner_radii_stay_flat():
         thumb_label = css.split("QLabel#page_navigator_thumb_label {", 1)[1].split("}", 1)[0]
 
         assert "border-radius: 0px;" in mode_button
-        assert "min-width: 52px;" in mode_button
-        assert "max-width: 52px;" in mode_button
+        assert "padding: 0px 6px;" in mode_button
+        assert "min-width: 48px;" in mode_button
+        assert "max-width: 48px;" in mode_button
         assert "min-height: 20px;" in mode_button
         assert "max-height: 20px;" in mode_button
         assert "border-radius: 0px;" in bottom_toggle_button

@@ -11435,7 +11435,7 @@ class TestMainWindowFileFlow:
         assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (6, 6, 6, 6)
         assert editor_layout.spacing() == 2
         assert (toolbar_host_margins.left(), toolbar_host_margins.top(), toolbar_host_margins.right(), toolbar_host_margins.bottom()) == (1, 1, 1, 1)
-        assert window._toolbar_command_row_layout.spacing() == 2
+        assert window._toolbar_command_row_layout.spacing() == 1
         assert window.project_dock.minimumWidth() == 256
         assert window._left_panel_stack.minimumWidth() == 256
         assert window._left_shell.minimumWidth() == 256
@@ -13958,8 +13958,8 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
         assert window._insert_widget_button.objectName() == "workspace_insert_button"
         assert window._insert_widget_button.text() == "Add"
-        assert window._insert_widget_button.width() == 52
-        assert window._insert_widget_button.height() == 22
+        assert window._insert_widget_button.width() == 48
+        assert window._insert_widget_button.height() == 20
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
         assert all(window._left_panel_stack.tabIcon(i).isNull() for i in range(window._left_panel_stack.count()))
@@ -14227,12 +14227,12 @@ class TestMainWindowFileFlow:
         assert window._toolbar.toolTip() == window._toolbar.accessibleName()
         assert window._toolbar_host.accessibleName() == "Workspace command bar with insert, save, build, mode, context, and runtime indicators."
         assert window._toolbar_host.statusTip() == window._toolbar_host.toolTip()
-        assert window._toolbar_command_row_layout.spacing() == 2
+        assert window._toolbar_command_row_layout.spacing() == 1
         assert mode_host.layout().spacing() == 1
-        assert window._toolbar.height() == 24
-        assert window._toolbar.widgetForAction(window._save_action).height() == 22
-        assert window._mode_buttons["design"].width() == 52
-        assert window._mode_buttons["design"].height() == 22
+        assert window._toolbar.height() == 22
+        assert window._toolbar.widgetForAction(window._save_action).height() == 20
+        assert window._mode_buttons["design"].width() == 48
+        assert window._mode_buttons["design"].height() == 20
         assert separator.minimumHeight() == 20
         assert separator.maximumHeight() == 20
         assert window._workspace_context_label.text() == "No project open"
@@ -14457,8 +14457,8 @@ class TestMainWindowFileFlow:
         window = MainWindow("")
 
         assert window._mode_buttons[MODE_DESIGN].toolTip() == "Currently showing Design mode."
-        assert window._mode_buttons[MODE_DESIGN].width() == 52
-        assert window._mode_buttons[MODE_DESIGN].height() == 22
+        assert window._mode_buttons[MODE_DESIGN].width() == 48
+        assert window._mode_buttons[MODE_DESIGN].height() == 20
         assert window._mode_buttons[MODE_DESIGN].accessibleName() == "Editor mode button: Design. Current mode."
         assert window._mode_buttons[MODE_CODE].toolTip() == "Switch the workspace editor to Code mode."
         assert window._mode_buttons[MODE_CODE].statusTip() == window._mode_buttons[MODE_CODE].toolTip()
@@ -14635,7 +14635,7 @@ class TestMainWindowFileFlow:
         assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "widgets")) == "Add"
         assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "assets")) == "Assets"
         assert window._workspace_nav_frame.height() >= 24
-        assert window._bottom_toggle_button.height() == 22
+        assert window._bottom_toggle_button.height() == 20
         assert window.project_dock.minimumWidth() == 256
         assert window._left_panel_stack.minimumWidth() == 256
         assert window._left_shell.minimumWidth() == 256

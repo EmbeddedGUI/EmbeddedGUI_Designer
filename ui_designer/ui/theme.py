@@ -1730,7 +1730,7 @@ QToolBar#main_toolbar QToolButton {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px 4px;
+    padding: 0px 3px;
     min-height: 20px;
     max-height: 20px;
     font-size: {t['fs_body_sm']}px;
@@ -1763,9 +1763,9 @@ QPushButton#workspace_mode_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px {t['space_sm']}px;
-    min-width: 52px;
-    max-width: 52px;
+    padding: 0px 6px;
+    min-width: 48px;
+    max-width: 48px;
     min-height: 20px;
     max-height: 20px;
 }}
@@ -1813,9 +1813,9 @@ QPushButton#workspace_insert_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px {t['space_sm']}px;
-    min-width: 52px;
-    max-width: 52px;
+    padding: 0px 6px;
+    min-width: 48px;
+    max-width: 48px;
     min-height: 20px;
     max-height: 20px;
 }}
