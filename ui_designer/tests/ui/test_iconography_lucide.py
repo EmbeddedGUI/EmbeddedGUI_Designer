@@ -114,6 +114,26 @@ def test_legacy_icon_mode_falls_back(qapp, monkeypatch):
     assert not icon.isNull()
 
 
+def test_legacy_icon_mode_renders_all_canonical_semantic_icons(qapp, monkeypatch):
+    module = _reload_iconography()
+    monkeypatch.setenv("EMBEDDEDGUI_LEGACY_ICONS", "1")
+
+    for key in module.semantic_icon_keys():
+        icon = module.make_icon(key)
+        assert isinstance(icon, QIcon), key
+        assert not icon.isNull(), key
+
+
+def test_legacy_icon_mode_renders_all_widget_icons(qapp, monkeypatch):
+    module = _reload_iconography()
+    monkeypatch.setenv("EMBEDDEDGUI_LEGACY_ICONS", "1")
+
+    for widget_key in sorted(module._WIDGET_ICON_KEYS):
+        icon = module.icon_for_widget(widget_key)
+        assert isinstance(icon, QIcon), widget_key
+        assert not icon.isNull(), widget_key
+
+
 def test_theme_switch_clears_lucide_cache(qapp):
     module = _reload_iconography()
     original_stylesheet = qapp.styleSheet()
