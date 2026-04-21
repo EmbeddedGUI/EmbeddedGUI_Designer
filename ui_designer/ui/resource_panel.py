@@ -75,6 +75,9 @@ EGUI_RESOURCE_MIME = "application/x-egui-resource"
 _VALID_FILENAME_RE = re.compile(r'^[A-Za-z0-9_\-]+\.[A-Za-z0-9]+$')
 _DEFAULT_RESOURCE_PREVIEW_FONT_PT = 9
 _RESOURCE_PANEL_CONTROL_HEIGHT = 22
+_RESOURCE_DIALOG_SHELL_MARGINS = (12, 12, 12, 12)
+_RESOURCE_DIALOG_SHELL_SPACING = 8
+_RESOURCE_DIALOG_CONTENT_SPACING = 8
 
 
 # -- Helpers ------------------------------------------------------------
@@ -97,6 +100,12 @@ def _set_compact_control_height(widget, *, height=_RESOURCE_PANEL_CONTROL_HEIGHT
     if widget is not None:
         widget.setFixedHeight(height)
     return widget
+
+
+def _apply_resource_dialog_shell_layout(layout):
+    left, top, right, bottom = _RESOURCE_DIALOG_SHELL_MARGINS
+    layout.setContentsMargins(left, top, right, bottom)
+    layout.setSpacing(_RESOURCE_DIALOG_SHELL_SPACING)
 
 
 def _validate_english_filename(name):
@@ -696,8 +705,7 @@ class _GenerateCharsetDialog(QDialog):
         self.resize(860, 680)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(12)
+        _apply_resource_dialog_shell_layout(layout)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("resource_dialog_header")
@@ -1174,8 +1182,7 @@ class _MissingResourceReplaceDialog(QDialog):
         self.resize(820, 560)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(12)
+        _apply_resource_dialog_shell_layout(layout)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("resource_dialog_header")
@@ -1237,7 +1244,7 @@ class _MissingResourceReplaceDialog(QDialog):
         content_card.setObjectName("resource_dialog_card")
         content_layout = QVBoxLayout(content_card)
         content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(10)
+        content_layout.setSpacing(_RESOURCE_DIALOG_CONTENT_SPACING)
 
         self._caption = CaptionLabel(
             "Choose replacement files for missing resources. "
@@ -1428,8 +1435,7 @@ class _ReferenceImpactDialog(QDialog):
         self.resize(860, 560)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(12)
+        _apply_resource_dialog_shell_layout(layout)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("resource_dialog_header")
@@ -1491,7 +1497,7 @@ class _ReferenceImpactDialog(QDialog):
         content_card.setObjectName("resource_dialog_card")
         content_layout = QVBoxLayout(content_card)
         content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(10)
+        content_layout.setSpacing(_RESOURCE_DIALOG_CONTENT_SPACING)
 
         self._summary_label = QLabel(summary)
         self._summary_label.setObjectName("resource_dialog_summary")
@@ -1632,8 +1638,7 @@ class _BatchReplaceImpactDialog(QDialog):
         self.resize(980, 720)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(12)
+        _apply_resource_dialog_shell_layout(layout)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("resource_dialog_header")
@@ -1695,7 +1700,7 @@ class _BatchReplaceImpactDialog(QDialog):
         summary_card.setObjectName("resource_dialog_card")
         summary_layout = QVBoxLayout(summary_card)
         summary_layout.setContentsMargins(0, 0, 0, 0)
-        summary_layout.setSpacing(10)
+        summary_layout.setSpacing(_RESOURCE_DIALOG_CONTENT_SPACING)
 
         self._summary_label = QLabel("")
         self._summary_label.setObjectName("resource_dialog_summary")
@@ -1720,7 +1725,7 @@ class _BatchReplaceImpactDialog(QDialog):
         impact_card.setObjectName("resource_dialog_card")
         impact_layout = QVBoxLayout(impact_card)
         impact_layout.setContentsMargins(0, 0, 0, 0)
-        impact_layout.setSpacing(10)
+        impact_layout.setSpacing(_RESOURCE_DIALOG_CONTENT_SPACING)
 
         self._group_caption = QLabel("Impacts")
         self._group_caption.setObjectName("workspace_section_title")
@@ -1746,7 +1751,7 @@ class _BatchReplaceImpactDialog(QDialog):
         usage_card.setObjectName("resource_dialog_card")
         usage_layout = QVBoxLayout(usage_card)
         usage_layout.setContentsMargins(0, 0, 0, 0)
-        usage_layout.setSpacing(10)
+        usage_layout.setSpacing(_RESOURCE_DIALOG_CONTENT_SPACING)
 
         self._usage_caption = QLabel("Usages")
         self._usage_caption.setObjectName("workspace_section_title")
@@ -2049,8 +2054,7 @@ class _CleanupUnusedDialog(QDialog):
         self.resize(720, 480)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(12)
+        _apply_resource_dialog_shell_layout(layout)
 
         self._title_label = QLabel(title or "Clean Unused")
         self._title_label.setObjectName("resource_dialog_title")

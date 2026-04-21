@@ -14,6 +14,11 @@ if HAS_PYQT5:
 _skip_no_qt = skip_if_no_qt
 
 
+def _layout_margins_tuple(layout):
+    margins = layout.contentsMargins()
+    return (margins.left(), margins.top(), margins.right(), margins.bottom())
+
+
 @_skip_no_qt
 class TestResourcePanelFileFlow:
     def test_preview_widget_font_sizes_follow_designer_font_preference(self, qapp):
@@ -2231,8 +2236,9 @@ class TestResourcePanelFileFlow:
             ["missing.png", "icon.png"],
             [source_a, source_b],
         )
+        root_layout = dialog.layout()
         header_layout = dialog._header_frame.layout()
-        header_margins = header_layout.contentsMargins()
+        content_layout = dialog._table.parentWidget().layout()
 
         first_combo = dialog._combos[0][1]
         second_combo = dialog._combos[1][1]
@@ -2240,13 +2246,11 @@ class TestResourcePanelFileFlow:
         assert "2 missing resources." in dialog.accessibleName()
         assert "2 candidate files available." in dialog.accessibleName()
         assert "1 replacement selected." in dialog.accessibleName()
-        assert (
-            header_margins.left(),
-            header_margins.top(),
-            header_margins.right(),
-            header_margins.bottom(),
-        ) == (12, 10, 12, 10)
+        assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
+        assert root_layout.spacing() == 8
+        assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
+        assert content_layout.spacing() == 8
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Replace missing resources: 2 missing resources. "
             "2 candidate files available. 1 replacement selected."
@@ -2385,17 +2389,16 @@ class TestResourcePanelFileFlow:
             usages,
             "Delete",
         )
+        root_layout = dialog.layout()
         header_layout = dialog._header_frame.layout()
-        header_margins = header_layout.contentsMargins()
+        content_layout = dialog._table.parentWidget().layout()
 
         assert dialog.accessibleName() == "Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
-        assert (
-            header_margins.left(),
-            header_margins.top(),
-            header_margins.right(),
-            header_margins.bottom(),
-        ) == (12, 10, 12, 10)
+        assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
+        assert root_layout.spacing() == 8
+        assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
+        assert content_layout.spacing() == 8
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
         )
@@ -2480,18 +2483,21 @@ class TestResourcePanelFileFlow:
             "Replace",
             current_page_name="detail_page",
         )
+        root_layout = dialog.layout()
         header_layout = dialog._header_frame.layout()
-        header_margins = header_layout.contentsMargins()
+        summary_layout = dialog._summary_label.parentWidget().layout()
+        impact_layout = dialog._impact_table.parentWidget().layout()
+        usage_layout = dialog._usage_table.parentWidget().layout()
 
         assert "2 visible rename impacts." in dialog.accessibleName()
         assert "Current rename: missing_a.png -> renamed_a.png." in dialog.accessibleName()
-        assert (
-            header_margins.left(),
-            header_margins.top(),
-            header_margins.right(),
-            header_margins.bottom(),
-        ) == (12, 10, 12, 10)
+        assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
+        assert root_layout.spacing() == 8
+        assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
+        assert summary_layout.spacing() == 8
+        assert impact_layout.spacing() == 8
+        assert usage_layout.spacing() == 8
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Replace Missing Resources: 2 visible rename impacts. 2 visible usages shown. "
             "Current page only: off. Current rename: missing_a.png -> renamed_a.png. "
@@ -3188,19 +3194,16 @@ class TestResourcePanelFileFlow:
             dialog._preset_checks["ascii_printable"].setChecked(True)
             dialog._custom_input.setPlainText("中")
 
+            root_layout = dialog.layout()
             header_layout = dialog._header_frame.layout()
-            header_margins = header_layout.contentsMargins()
             preset_margins = dialog._preset_card.layout().contentsMargins()
             custom_margins = dialog._custom_card.layout().contentsMargins()
             output_margins = dialog._output_card.layout().contentsMargins()
 
             assert dialog.accessibleName().startswith("Generate Charset: 1 preset selected.")
-            assert (
-                header_margins.left(),
-                header_margins.top(),
-                header_margins.right(),
-                header_margins.bottom(),
-            ) == (12, 10, 12, 10)
+            assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
+            assert root_layout.spacing() == 8
+            assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
             assert header_layout.spacing() == 12
             assert (
                 preset_margins.left(),
@@ -3241,6 +3244,24 @@ class TestResourcePanelFileFlow:
             assert dialog._save_assign_button.accessibleName() == "Save charset resource and bind current widget"
             assert dialog._cancel_button.accessibleName() == "Cancel charset generation"
             assert dialog._custom_input.placeholderText() == "e.g. A&#x2103;&#x00B0;&#x4F60;&#x597D;"
+        finally:
+            dialog.deleteLater()
+
+    def test_cleanup_unused_dialog_uses_compact_shell_spacing(self, qapp):
+        from ui_designer.ui.resource_panel import _CleanupUnusedDialog
+
+        dialog = _CleanupUnusedDialog(
+            None,
+            "Clean Unused Images",
+            "Images",
+            ["hero.png", "icon.png"],
+            search_text="hero",
+            status_label="Unused",
+        )
+        try:
+            layout = dialog.layout()
+            assert _layout_margins_tuple(layout) == (12, 12, 12, 12)
+            assert layout.spacing() == 8
         finally:
             dialog.deleteLater()
 
