@@ -47,7 +47,8 @@ class TestAnimationsPanel:
         assert panel.accessibleName() == "Animations: 1 animation on label title"
         assert panel.toolTip() == panel.accessibleName()
         assert panel.layout().spacing() == 2
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 4, 6, 4)
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 3, 4, 3)
+        assert header_layout.spacing() == 2
         assert title_row.spacing() == 2
         assert panel._actions_strip.layout().spacing() == 2
         assert panel._header_eyebrow.accessibleName() == "Motion timeline workspace surface."
