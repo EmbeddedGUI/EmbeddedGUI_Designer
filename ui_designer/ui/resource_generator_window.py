@@ -2923,7 +2923,7 @@ class ResourceGeneratorWindow(QDialog):
     def _build_section_panel(self):
         container = QGroupBox("Sections")
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setContentsMargins(6, 6, 6, 6)
         self._section_list = QListWidget()
         self._section_list.setSelectionMode(QAbstractItemView.SingleSelection)
         self._section_list.currentRowChanged.connect(self._on_section_changed)
@@ -2937,7 +2937,7 @@ class ResourceGeneratorWindow(QDialog):
     def _build_entry_panel(self):
         container = QGroupBox("Entries")
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(6)
 
         header_layout = QHBoxLayout()
@@ -2967,7 +2967,7 @@ class ResourceGeneratorWindow(QDialog):
     def _build_editor_panel(self):
         container = QGroupBox("Entry Editor")
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(6)
 
         self._entry_summary = QPlainTextEdit()
@@ -2978,7 +2978,7 @@ class ResourceGeneratorWindow(QDialog):
         self._form_host = QWidget()
         self._form_layout = QFormLayout(self._form_host)
         self._form_layout.setContentsMargins(0, 0, 0, 0)
-        self._form_layout.setSpacing(8)
+        self._form_layout.setSpacing(6)
         layout.addWidget(self._form_host, 1)
         return container
 
