@@ -1,6 +1,6 @@
 # IDE 风格视觉改版设计（EmbeddedGUI Designer）
 
-- **状态**: Draft
+- **状态**: Implemented
 - **日期**: 2026-04-21
 - **所有者**: UI/UX
 - **相关**: `ref/UI Editor Design/`（Figma 源码）、[ui_designer/ui/theme.py](../../../ui_designer/ui/theme.py)、[ui_designer/ui/typography.py](../../../ui_designer/ui/typography.py)、[ui_designer/ui/iconography.py](../../../ui_designer/ui/iconography.py)
