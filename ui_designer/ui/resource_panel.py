@@ -1711,7 +1711,7 @@ class _BatchReplaceImpactDialog(QDialog):
         if self._current_page_name:
             filter_row = QHBoxLayout()
             filter_row.setContentsMargins(0, 0, 0, 0)
-            filter_row.setSpacing(8)
+            filter_row.setSpacing(6)
             self._current_page_only = QCheckBox("This Page")
             self._current_page_only.toggled.connect(self._refresh_impact_view)
             filter_row.addWidget(self._current_page_only)

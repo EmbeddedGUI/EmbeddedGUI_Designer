@@ -2488,6 +2488,7 @@ class TestResourcePanelFileFlow:
         summary_layout = dialog._summary_label.parentWidget().layout()
         impact_layout = dialog._impact_table.parentWidget().layout()
         usage_layout = dialog._usage_table.parentWidget().layout()
+        filter_layout = summary_layout.itemAt(1).layout()
 
         assert "2 visible rename impacts." in dialog.accessibleName()
         assert "Current rename: missing_a.png -> renamed_a.png." in dialog.accessibleName()
@@ -2496,6 +2497,7 @@ class TestResourcePanelFileFlow:
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
         assert summary_layout.spacing() == 8
+        assert filter_layout.spacing() == 6
         assert impact_layout.spacing() == 8
         assert usage_layout.spacing() == 8
         assert dialog._header_frame.accessibleName() == (
