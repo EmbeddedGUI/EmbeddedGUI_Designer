@@ -247,6 +247,7 @@ _TOKENS = {
         "syntax_value": "#FDBA74",
         "syntax_bracket": "#A1A1AA",
         "selection": "rgba(59, 130, 246, 0.40)",
+        "selection_hover": "rgba(59, 130, 246, 0.10)",
         "selection_soft": "rgba(59, 130, 246, 0.15)",
         "r_sm": 4,
         "r_md": 4,
@@ -316,6 +317,7 @@ _TOKENS = {
         "syntax_value": "#C2410C",
         "syntax_bracket": "#55606F",
         "selection": "#D8E7F9",
+        "selection_hover": "rgba(59, 130, 246, 0.10)",
         "selection_soft": "#EDF4FD",
         "r_sm": 4,
         "r_md": 6,
@@ -1050,7 +1052,7 @@ QListView::item, QTreeView::item, QTableView::item, QListWidget::item, QTreeWidg
 }}
 
 QListView::item:hover, QTreeView::item:hover, QListWidget::item:hover, QTreeWidget::item:hover {{
-    background-color: rgba(59, 130, 246, 0.10);
+    background-color: {t['selection_hover']};
 }}
 
 QTableView::item:hover, QTableWidget::item:hover {{

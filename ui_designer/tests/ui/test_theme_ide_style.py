@@ -42,6 +42,7 @@ def test_dark_palette_uses_zinc_and_blue500():
 def test_dark_selection_uses_rgba_blue500():
     t = theme_tokens("dark")
     assert t["selection"] == "rgba(59, 130, 246, 0.40)"
+    assert t["selection_hover"] == "rgba(59, 130, 246, 0.10)"
     assert t["selection_soft"] == "rgba(59, 130, 246, 0.15)"
     assert t["selection_text"] == "#BFDBFE"
     assert t["accent_soft"] == "rgba(59, 130, 246, 0.15)"
