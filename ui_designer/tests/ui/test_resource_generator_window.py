@@ -320,6 +320,38 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_mode_attention_highlights_svg_rasterization_without_dim(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "icon.svg").write_text(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"></svg>\n',
+            encoding="utf-8",
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {
+                "img": [{"file": "icon.svg", "name": "icon", "format": "rgb565", "alpha": "4"}],
+                "font": [],
+                "mp4": [],
+            },
+            dirty=False,
+        )
+
+        assert window._simple_asset_table.item(0, 0).text() == "! Images"
+        assert window._simple_attention_count.text() == "Needs Attention: 1"
+        assert window._simple_asset_table.item(0, 0).toolTip() == (
+            "SVG rasterization is missing a dim value.\n"
+            "Fix: Set Dim in Professional Mode so the SVG can be rasterized."
+        )
+        assert "Attention: SVG rasterization is missing a dim value." in window._simple_asset_meta.toPlainText()
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_attention_search_matches_issue_and_fix_text(self, qapp, tmp_path):
         from ui_designer.model.resource_generation_session import GenerationPaths
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
@@ -628,6 +660,35 @@ class TestResourceGeneratorWindow:
         window._simple_asset_table.selectRow(2)
         qapp.processEvents()
         assert window._simple_asset_primary_action_button.text() == "Detect Video Info"
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_mode_disables_raster_image_tools_for_svg_assets(self, qapp, tmp_path):
+        from ui_designer.model.resource_generation_session import GenerationPaths
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "icon.svg").write_text(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"></svg>\n',
+            encoding="utf-8",
+        )
+
+        window = ResourceGeneratorWindow("")
+        window._apply_paths_and_data(
+            GenerationPaths(source_dir=str(source_dir)),
+            {"img": [{"file": "icon.svg", "name": "icon", "format": "svg"}], "font": [], "mp4": []},
+            dirty=False,
+        )
+
+        window._simple_asset_table.selectRow(0)
+        qapp.processEvents()
+
+        assert window._duplicate_simple_asset_button.isEnabled() is True
+        assert window._resize_image_button.isEnabled() is False
+        assert window._rotate_image_button.isEnabled() is False
+        assert window._resize_image_button.toolTip() == "Raster image tools are unavailable for SVG source assets."
+        assert "Mode: Raw SVG" in window._simple_asset_meta.toPlainText()
         _close_window(window)
 
     @_skip_no_qt
@@ -1562,6 +1623,31 @@ class TestResourceGeneratorWindow:
         assert window._simple_asset_table.rowCount() == 2
         assert window.has_unsaved_changes() is True
         assert window._status_label.text() == "Imported 2 assets, added 2, updated Source Dir."
+        _close_window(window)
+
+    @_skip_no_qt
+    def test_import_assets_from_files_defaults_svg_entries_to_raw_svg_mode(self, qapp, monkeypatch, tmp_path):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        import_dir = tmp_path / "imports"
+        import_dir.mkdir(parents=True)
+        (import_dir / "logo.svg").write_text(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"></svg>\n',
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window = ResourceGeneratorWindow("")
+        window._import_assets_from_files([str(import_dir / "logo.svg")])
+
+        entry = window._session.section_entries("img")[0]
+        assert entry["file"] == "logo.svg"
+        assert entry["format"] == "svg"
+        assert "alpha" not in entry
+        assert "dim" not in entry
+        assert window._simple_asset_table.rowCount() == 1
+        assert window._simple_asset_table.item(0, 3).text() == "raw svg"
+        assert window._status_label.text() == "Imported 1 assets, added 1, updated Source Dir."
         _close_window(window)
 
     @_skip_no_qt

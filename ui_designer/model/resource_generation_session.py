@@ -30,12 +30,14 @@ from ..utils.resource_config_overlay import (
 
 KNOWN_RESOURCE_SECTIONS = ("img", "font", "mp4")
 
-_IMG_FORMAT_CHOICES = ("rgb565", "rgb32", "gray8", "alpha", "all")
+_IMG_FORMAT_CHOICES = ("rgb565", "rgb32", "gray8", "alpha", "svg", "all")
 _IMG_ALPHA_CHOICES = ("0", "1", "2", "4", "8", "all")
 _IMG_EXTERNAL_CHOICES = ("0", "1", "all")
 _IMG_COMPRESS_CHOICES = ("none", "qoi", "rle")
 _IMG_SWAP_CHOICES = ("0", "1")
 _FONT_BITS_CHOICES = ("1", "2", "4", "8", "all")
+_FONT_COMPRESS_CHOICES = ("none", "rle4", "rle4_xor")
+_MP4_FORMAT_CHOICES = ("rgb565", "rgb32", "gray8", "alpha", "all")
 _MP4_COMPRESS_CHOICES = ("none", "qoi", "rle")
 
 
@@ -63,7 +65,7 @@ RESOURCE_SECTION_SPECS: dict[str, ResourceSectionSpec] = {
         name="img",
         label="Images",
         fields=(
-            ResourceFieldSpec("file", "File", required=True, file_filter="Image files (*.png *.bmp *.jpg *.jpeg *.gif *.webp);;All files (*)"),
+            ResourceFieldSpec("file", "File", required=True, file_filter="Image files (*.png *.bmp *.jpg *.jpeg *.gif *.webp *.svg);;All files (*)"),
             ResourceFieldSpec("name", "Name"),
             ResourceFieldSpec("format", "Format", editor="combo", choices=_IMG_FORMAT_CHOICES),
             ResourceFieldSpec("alpha", "Alpha", editor="combo", choices=_IMG_ALPHA_CHOICES),
@@ -83,6 +85,7 @@ RESOURCE_SECTION_SPECS: dict[str, ResourceSectionSpec] = {
             ResourceFieldSpec("name", "Name"),
             ResourceFieldSpec("pixelsize", "Pixel Size", placeholder="4-48 or all"),
             ResourceFieldSpec("fontbitsize", "Bit Size", editor="combo", choices=_FONT_BITS_CHOICES),
+            ResourceFieldSpec("compress", "Compress", editor="combo", choices=_FONT_COMPRESS_CHOICES),
             ResourceFieldSpec("external", "External", editor="combo", choices=_IMG_EXTERNAL_CHOICES),
             ResourceFieldSpec("text", "Text", required=True, file_filter="Text files (*.txt);;All files (*)"),
             ResourceFieldSpec("weight", "Weight", placeholder="e.g. 500"),
@@ -97,7 +100,7 @@ RESOURCE_SECTION_SPECS: dict[str, ResourceSectionSpec] = {
             ResourceFieldSpec("fps", "FPS", placeholder="e.g. 10"),
             ResourceFieldSpec("width", "Width", placeholder="e.g. 240"),
             ResourceFieldSpec("height", "Height", placeholder="e.g. 240"),
-            ResourceFieldSpec("format", "Format", editor="combo", choices=_IMG_FORMAT_CHOICES),
+            ResourceFieldSpec("format", "Format", editor="combo", choices=_MP4_FORMAT_CHOICES),
             ResourceFieldSpec("alpha", "Alpha", editor="combo", choices=_IMG_ALPHA_CHOICES),
             ResourceFieldSpec("external", "External", editor="combo", choices=_IMG_EXTERNAL_CHOICES),
             ResourceFieldSpec("compress", "Compress", editor="combo", choices=_MP4_COMPRESS_CHOICES),
@@ -230,6 +233,7 @@ def default_entry_for_section(section: str) -> dict:
             "file": "",
             "pixelsize": "16",
             "fontbitsize": "4",
+            "compress": "none",
             "external": "0",
             "text": "",
         }
@@ -708,6 +712,7 @@ def _validate_entry(section: str, index: int, entry, *, source_dir: str, build_i
         _validate_choice(entry, "compress", _IMG_COMPRESS_CHOICES, add_issue)
         _validate_dim(entry, "dim", add_issue)
         _validate_float_like(entry, "rot", add_issue)
+        _validate_svg_image_entry(entry, add_issue)
         if for_generation:
             _validate_relative_source_file(entry, "file", source_dir, add_issue)
 
@@ -716,6 +721,8 @@ def _validate_entry(section: str, index: int, entry, *, source_dir: str, build_i
         _require_non_empty(entry, "text", add_issue)
         _validate_numeric_or_all(entry, "pixelsize", add_issue)
         _validate_choice(entry, "fontbitsize", _FONT_BITS_CHOICES, add_issue)
+        _validate_choice(entry, "compress", _FONT_COMPRESS_CHOICES, add_issue)
+        _validate_font_compress_usage(entry, add_issue)
         _validate_choice(entry, "external", _IMG_EXTERNAL_CHOICES, add_issue)
         _validate_int_like(entry, "weight", add_issue)
         if for_generation:
@@ -727,7 +734,7 @@ def _validate_entry(section: str, index: int, entry, *, source_dir: str, build_i
         _validate_int_like(entry, "fps", add_issue)
         _validate_int_like(entry, "width", add_issue)
         _validate_int_like(entry, "height", add_issue)
-        _validate_choice(entry, "format", _IMG_FORMAT_CHOICES, add_issue)
+        _validate_choice(entry, "format", _MP4_FORMAT_CHOICES, add_issue)
         _validate_choice(entry, "alpha", _IMG_ALPHA_CHOICES, add_issue)
         _validate_choice(entry, "external", _IMG_EXTERNAL_CHOICES, add_issue)
         _validate_choice(entry, "compress", _MP4_COMPRESS_CHOICES, add_issue)
@@ -809,6 +816,43 @@ def _validate_dim(entry: dict, field_name: str, add_issue):
         except Exception:
             add_issue("invalid_dim", f"Field '{field_name}' must contain integers.", field=field_name)
             return
+
+
+def _validate_svg_image_entry(entry: dict, add_issue):
+    raw_file = str(entry.get("file", "") or "").strip().lower()
+    if not raw_file:
+        return
+
+    is_svg_source = raw_file.endswith(".svg")
+    format_name = str(entry.get("format", "") or "").strip().lower()
+    compress = str(entry.get("compress", "") or "").strip().lower()
+
+    if format_name == "svg" and not is_svg_source:
+        add_issue("svg_file_required", "Field 'format' can be 'svg' only when the source file ends with '.svg'.", field="format")
+        return
+
+    if is_svg_source and format_name != "svg":
+        dim_value = str(entry.get("dim", "") or "").strip()
+        if not dim_value:
+            add_issue("svg_dim_required", "SVG image sources need a 'dim' value unless Format is set to 'svg'.", field="dim")
+
+    if format_name == "svg" and compress and compress != "none":
+        add_issue("svg_compress_ignored", "Raw SVG resources ignore the image compress setting.", field="compress", severity="warning")
+
+
+def _validate_font_compress_usage(entry: dict, add_issue):
+    compress = str(entry.get("compress", "") or "").strip().lower()
+    if not compress or compress == "none":
+        return
+
+    fontbitsize = str(entry.get("fontbitsize", "") or "").strip().lower()
+    if fontbitsize not in {"4", "all"}:
+        add_issue(
+            "font_compress_ignored",
+            "Font compression is effective only for 4-bit glyph bitmaps; use Bit Size '4' or 'all'.",
+            field="compress",
+            severity="warning",
+        )
 
 
 def _validate_relative_source_file(entry: dict, field_name: str, source_dir: str, add_issue):

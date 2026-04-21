@@ -47,6 +47,10 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+try:
+    from PyQt5.QtSvg import QSvgRenderer
+except Exception:
+    QSvgRenderer = None
 
 from ..model.resource_generation_session import (
     GenerationPaths,
@@ -74,7 +78,7 @@ from .resource_panel import (
 from .theme import app_theme_tokens, sync_window_chrome_theme
 
 
-_IMAGE_FILE_EXTENSIONS = {".png", ".bmp", ".jpg", ".jpeg", ".gif", ".webp"}
+_IMAGE_FILE_EXTENSIONS = {".png", ".bmp", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
 _FONT_FILE_EXTENSIONS = {".ttf", ".otf"}
 _VIDEO_FILE_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv"}
 _TEXT_FILE_EXTENSIONS = {".txt"}
@@ -2478,6 +2482,12 @@ class ResourceGeneratorWindow(QDialog):
         elif not os.path.exists(resolved_path):
             messages.append("Asset file is missing.")
 
+        if section == "img":
+            if self._image_entry_uses_raw_svg(entry) and not self._image_entry_uses_svg_source(entry):
+                messages.append("Raw SVG format requires an .svg source file.")
+            elif self._image_entry_requires_raster_svg_dim(entry):
+                messages.append("SVG rasterization is missing a dim value.")
+
         if section == "font":
             text_items = self._font_text_items_from_value(entry.get("text", ""))
             if not text_items:
@@ -2525,6 +2535,12 @@ class ResourceGeneratorWindow(QDialog):
                 suggestions.append("Use Open Asset Folder to restore the missing file, or remove the asset from the config.")
             else:
                 suggestions.append("Restore the missing file or remove the asset from the config.")
+
+        if section == "img":
+            if self._image_entry_uses_raw_svg(entry) and not self._image_entry_uses_svg_source(entry):
+                suggestions.append("Use an .svg source file or switch Format back to a raster mode.")
+            elif self._image_entry_requires_raster_svg_dim(entry):
+                suggestions.append("Set Dim in Professional Mode so the SVG can be rasterized.")
 
         if section == "font":
             text_value = str(entry.get("text", "") or "").strip()
@@ -2587,6 +2603,10 @@ class ResourceGeneratorWindow(QDialog):
             return "Suggested Fix: Open Asset Folder", self._open_selected_asset_folder
         if not normalized_file or not resolved_path or not file_exists:
             return "Suggested Fix: Open Professional Mode", self._open_current_simple_selection_in_professional_mode
+
+        if section == "img":
+            if (self._image_entry_uses_raw_svg(entry) and not self._image_entry_uses_svg_source(entry)) or self._image_entry_requires_raster_svg_dim(entry):
+                return "Suggested Fix: Open Professional Mode", self._open_current_simple_selection_in_professional_mode
 
         if section == "font":
             text_value = str(entry.get("text", "") or "").strip()
@@ -3157,9 +3177,46 @@ class ResourceGeneratorWindow(QDialog):
         lines = [
             f"Section: {RESOURCE_SECTION_SPECS[self._active_section].label}",
             f"Entry: {self._active_entry_index + 1}",
-            "",
-            json.dumps(entry, indent=4, ensure_ascii=False),
         ]
+        if self._active_section == "img":
+            format_name = str(entry.get("format", "") or "").strip() or "rgb565"
+            compress = str(entry.get("compress", "") or "").strip() or "none"
+            if self._image_entry_uses_raw_svg(entry):
+                lines.append("Mode: Raw SVG resource")
+            elif self._image_entry_uses_svg_source(entry):
+                dim_value = str(entry.get("dim", "") or "").strip()
+                lines.append("Mode: SVG source rasterized during generation")
+                lines.append(f"Raster Size: {dim_value or '(missing dim)'}")
+            else:
+                alpha = str(entry.get("alpha", "") or "").strip() or "0"
+                lines.append(f"Pixel Format: {format_name} (alpha {alpha})")
+            lines.append(f"Codec: {compress}")
+        elif self._active_section == "font":
+            lines.append(f"Pixel Size: {str(entry.get('pixelsize', '') or '').strip() or '16'}")
+            lines.append(f"Bit Size: {str(entry.get('fontbitsize', '') or '').strip() or '4'}")
+            lines.append(f"Codec: {str(entry.get('compress', '') or '').strip() or 'none'}")
+        elif self._active_section == "mp4":
+            lines.append(
+                "Frames: "
+                + " ".join(
+                    part
+                    for part in (
+                        f"{entry.get('fps', '')}fps" if str(entry.get("fps", "") or "").strip() else "",
+                        f"{entry.get('width', '')}x{entry.get('height', '')}"
+                        if str(entry.get("width", "") or "").strip() or str(entry.get("height", "") or "").strip()
+                        else "",
+                    )
+                    if part
+                ).strip()
+            )
+            lines.append(f"Frame Format: {str(entry.get('format', '') or '').strip() or 'rgb565'}")
+            lines.append(f"Codec: {str(entry.get('compress', '') or '').strip() or 'none'}")
+        lines.extend(
+            [
+                "",
+                json.dumps(entry, indent=4, ensure_ascii=False),
+            ]
+        )
         file_name = str(entry.get("file", "") or "").strip()
         if file_name:
             resolved_path = self._resolve_entry_path(self._active_section, "file", file_name)
@@ -3801,12 +3858,15 @@ class ResourceGeneratorWindow(QDialog):
             parts = []
             pixel_size = str(entry.get("pixelsize", "") or "").strip()
             font_bit_size = str(entry.get("fontbitsize", "") or "").strip()
+            compress = str(entry.get("compress", "") or "").strip()
             weight = str(entry.get("weight", "") or "").strip()
             text_items = self._font_text_items_from_value(entry.get("text", ""))
             if pixel_size:
                 parts.append(f"{pixel_size}px")
             if font_bit_size:
                 parts.append(f"{font_bit_size}-bit")
+            if compress and compress != "none":
+                parts.append(compress)
             if weight:
                 parts.append(f"w{weight}")
             if len(text_items) == 1:
@@ -3822,12 +3882,15 @@ class ResourceGeneratorWindow(QDialog):
             height = str(entry.get("height", "") or "").strip()
             format_name = str(entry.get("format", "") or "").strip()
             alpha = str(entry.get("alpha", "") or "").strip()
+            compress = str(entry.get("compress", "") or "").strip()
             if fps:
                 parts.append(f"{fps}fps")
             if width or height:
                 parts.append(f"{width or '?'}x{height or '?'}")
             if format_name:
                 parts.append(format_name)
+            if compress and compress != "none":
+                parts.append(compress)
             if alpha:
                 parts.append(f"a{alpha}")
             return " | ".join(parts)
@@ -3838,17 +3901,41 @@ class ResourceGeneratorWindow(QDialog):
             alpha = str(entry.get("alpha", "") or "").strip()
             dim = str(entry.get("dim", "") or "").strip()
             compress = str(entry.get("compress", "") or "").strip()
-            if format_name:
+            if self._image_entry_uses_raw_svg(entry):
+                parts.append("raw svg")
+            elif self._image_entry_uses_svg_source(entry):
+                parts.append(f"svg->{format_name or 'rgb565'}")
+            elif format_name:
                 parts.append(format_name)
-            if alpha:
+            if alpha and not self._image_entry_uses_raw_svg(entry):
                 parts.append(f"a{alpha}")
             if dim:
                 parts.append(dim)
+            elif self._image_entry_requires_raster_svg_dim(entry):
+                parts.append("dim?")
             if compress and compress != "none":
                 parts.append(compress)
             return " | ".join(parts)
 
         return ""
+
+    def _image_entry_source_extension(self, entry: dict | None) -> str:
+        file_name = str((entry or {}).get("file", "") or "").strip().lower()
+        return os.path.splitext(file_name)[1]
+
+    def _image_entry_uses_svg_source(self, entry: dict | None) -> bool:
+        return self._image_entry_source_extension(entry) == ".svg"
+
+    def _image_entry_uses_raw_svg(self, entry: dict | None) -> bool:
+        return str((entry or {}).get("format", "") or "").strip().lower() == "svg"
+
+    def _image_entry_requires_raster_svg_dim(self, entry: dict | None) -> bool:
+        if not self._image_entry_uses_svg_source(entry) or self._image_entry_uses_raw_svg(entry):
+            return False
+        return not str((entry or {}).get("dim", "") or "").strip()
+
+    def _image_entry_supports_raster_quick_tools(self, entry: dict | None) -> bool:
+        return not self._image_entry_uses_svg_source(entry)
 
     def _on_mode_changed(self, _index: int):
         self._set_ui_mode(self._mode_combo.currentData() or "simple")
@@ -3942,11 +4029,16 @@ class ResourceGeneratorWindow(QDialog):
         )
         font_buttons = (self._open_font_text_button,)
         video_buttons = (self._detect_video_info_button,)
+        image_quick_tools_enabled = bool(has_selection and section == "img" and self._image_entry_supports_raster_quick_tools(entry))
 
         for button in any_selection_buttons:
             button.setEnabled(has_selection)
         for button in image_buttons:
-            button.setEnabled(has_selection and section == "img")
+            button.setEnabled(image_quick_tools_enabled)
+            if has_selection and section == "img" and not image_quick_tools_enabled:
+                button.setToolTip("Raster image tools are unavailable for SVG source assets.")
+            elif button.toolTip() == "Raster image tools are unavailable for SVG source assets.":
+                button.setToolTip("")
         for button in font_buttons:
             button.setEnabled(has_selection and section == "font")
         for button in video_buttons:
@@ -4207,6 +4299,7 @@ class ResourceGeneratorWindow(QDialog):
             meta_lines.append(f"Text: {str(entry.get('text', '') or '(none)')}")
             meta_lines.append(f"Pixel Size: {self._font_preview_pixel_size(entry)}")
             meta_lines.append(f"Bit Size: {self._font_preview_bit_size(entry)}")
+            meta_lines.append(f"Codec: {str(entry.get('compress', '') or 'none')}")
             if self._font_preview_weight(entry) is not None:
                 meta_lines.append(f"Weight: {self._font_preview_weight(entry)}")
         if section == "mp4":
@@ -4223,16 +4316,32 @@ class ResourceGeneratorWindow(QDialog):
                     if part
                 ).strip()
             )
+            meta_lines.append(f"Frame Format: {str(entry.get('format', '') or 'rgb565')}")
+            meta_lines.append(f"Frame Codec: {str(entry.get('compress', '') or 'none')}")
 
         preview_pixmap = None
         preview_text = ""
         if section == "img" and exists:
-            pixmap = QPixmap(resolved_path)
+            format_name = str(entry.get("format", "") or "").strip() or "rgb565"
+            compress = str(entry.get("compress", "") or "").strip() or "none"
+            if self._image_entry_uses_raw_svg(entry):
+                meta_lines.append("Mode: Raw SVG")
+            elif self._image_entry_uses_svg_source(entry):
+                dim_value = str(entry.get("dim", "") or "").strip()
+                meta_lines.append("Mode: SVG rasterized during generation")
+                meta_lines.append(f"Raster Size: {dim_value or '(missing dim)'}")
+            else:
+                meta_lines.append(f"Pixel Format: {format_name}")
+            meta_lines.append(f"Image Codec: {compress}")
+            pixmap = self._build_image_preview_pixmap(resolved_path, entry=entry)
             if not pixmap.isNull():
                 preview_pixmap = pixmap
                 meta_lines.append(f"Image Size: {pixmap.width()} x {pixmap.height()}")
             else:
-                preview_text = "Image file exists but Qt could not decode it."
+                if self._image_entry_uses_svg_source(entry):
+                    preview_text = "SVG file exists but Designer could not render a preview."
+                else:
+                    preview_text = "Image file exists but Qt could not decode it."
         elif section == "font" and exists:
             sample_text, preview_source = self._font_preview_sample(entry)
             meta_lines.append(f"Preview Text: {sample_text}")
@@ -4314,6 +4423,14 @@ class ResourceGeneratorWindow(QDialog):
         if image is None:
             return None
         return _pil_image_to_qpixmap(image)
+
+    def _build_image_preview_pixmap(self, image_path: str, *, entry: dict | None = None) -> QPixmap:
+        pixmap = QPixmap(image_path)
+        if not pixmap.isNull():
+            return pixmap
+        if not self._image_entry_uses_svg_source(entry):
+            return QPixmap()
+        return _render_svg_preview_pixmap(image_path, dim_hint=str((entry or {}).get("dim", "") or ""))
 
     def _open_selected_asset_in_external_editor(self):
         section, index, entry = self._selected_simple_asset_context()
@@ -6847,7 +6964,15 @@ class ResourceGeneratorWindow(QDialog):
             entry = default_entry_for_section(section)
             entry["file"] = relative_file
             entry["name"] = os.path.splitext(os.path.basename(relative_file))[0]
-            if section == "font":
+            if section == "img" and relative_file.lower().endswith(".svg"):
+                entry["format"] = "svg"
+                entry["compress"] = "none"
+                entry.pop("alpha", None)
+                entry.pop("dim", None)
+                entry.pop("rot", None)
+                entry.pop("swap", None)
+                entry.pop("bg", None)
+            elif section == "font":
                 text_key = (
                     os.path.dirname(relative_file).replace("\\", "/"),
                     os.path.splitext(os.path.basename(relative_file))[0].lower(),
@@ -7701,6 +7826,40 @@ def _parse_video_fps(value) -> int:
     if fps <= 0:
         return 0
     return max(int(round(fps)), 1)
+
+
+def _render_svg_preview_pixmap(svg_path: str, *, dim_hint: str = "") -> QPixmap:
+    if QSvgRenderer is None:
+        return QPixmap()
+    renderer = QSvgRenderer(svg_path)
+    if not renderer.isValid():
+        return QPixmap()
+
+    width = 0
+    height = 0
+    if dim_hint:
+        try:
+            raw_width, raw_height = [part.strip() for part in str(dim_hint).split(",", 1)]
+            width = int(raw_width)
+            height = int(raw_height)
+        except Exception:
+            width = 0
+            height = 0
+    if width <= 0 or height <= 0:
+        default_size = renderer.defaultSize()
+        width = default_size.width() if default_size.width() > 0 else 256
+        height = default_size.height() if default_size.height() > 0 else 256
+
+    width = max(16, min(int(width), 1024))
+    height = max(16, min(int(height), 1024))
+    image = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
+    image.fill(0)
+    painter = QPainter(image)
+    try:
+        renderer.render(painter)
+    finally:
+        painter.end()
+    return QPixmap.fromImage(image)
 
 
 def _section_for_asset_extension(extension: str) -> str:

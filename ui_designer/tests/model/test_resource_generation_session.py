@@ -7,7 +7,9 @@ import pytest
 
 from ui_designer.model.resource_generation_session import (
     GenerationPaths,
+    RESOURCE_SECTION_SPECS,
     ResourceGenerationSession,
+    default_entry_for_section,
     infer_generation_paths,
 )
 from ui_designer.tests.sdk_builders import build_test_sdk_root
@@ -30,6 +32,17 @@ def test_infer_generation_paths_prefers_standard_resource_layout(tmp_path):
     assert paths.source_dir == str(config_path.parent.resolve())
     assert paths.workspace_dir == str(config_path.parent.parent.resolve())
     assert paths.bin_output_dir == str(config_path.parent.parent.resolve())
+
+
+def test_resource_specs_expose_svg_and_font_compress_defaults():
+    image_file_field = next(field for field in RESOURCE_SECTION_SPECS["img"].fields if field.name == "file")
+    image_format_field = next(field for field in RESOURCE_SECTION_SPECS["img"].fields if field.name == "format")
+    font_compress_field = next(field for field in RESOURCE_SECTION_SPECS["font"].fields if field.name == "compress")
+
+    assert "*.svg" in image_file_field.file_filter
+    assert "svg" in image_format_field.choices
+    assert font_compress_field.choices == ("none", "rle4", "rle4_xor")
+    assert default_entry_for_section("font")["compress"] == "none"
 
 
 def test_session_merged_config_uses_adjacent_designer_overlay(tmp_path):
@@ -227,6 +240,121 @@ def test_validation_issues_reject_designer_managed_entry_paths(tmp_path):
     )
     assert any(
         issue.code == "designer_managed_path" and issue.section == "font" and issue.field == "text"
+        for issue in issues
+    )
+
+
+def test_validation_issues_accept_raw_svg_and_font_compress(tmp_path):
+    sdk_root = _build_sdk_with_generator(tmp_path / "sdk")
+    source_dir = tmp_path / "resource" / "src"
+    workspace_dir = tmp_path / "workspace"
+    bin_output_dir = tmp_path / "bin"
+    source_dir.mkdir(parents=True)
+    workspace_dir.mkdir()
+    bin_output_dir.mkdir()
+    (source_dir / "icon.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"></svg>\n', encoding="utf-8")
+    (source_dir / "display.ttf").write_bytes(b"font")
+    (source_dir / "display.txt").write_text("ABCD\n", encoding="utf-8")
+
+    session = ResourceGenerationSession(str(sdk_root))
+    session.reset(
+        GenerationPaths(
+            config_path=str(source_dir / "app_resource_config.json"),
+            source_dir=str(source_dir),
+            workspace_dir=str(workspace_dir),
+            bin_output_dir=str(bin_output_dir),
+        ),
+        {
+            "img": [{"file": "icon.svg", "name": "icon", "format": "svg", "external": "0"}],
+            "font": [
+                {
+                    "file": "display.ttf",
+                    "name": "display",
+                    "pixelsize": "16",
+                    "fontbitsize": "4",
+                    "compress": "rle4",
+                    "external": "0",
+                    "text": "display.txt",
+                }
+            ],
+            "mp4": [],
+        },
+    )
+
+    issues = session.validation_issues(for_generation=True)
+
+    assert [issue for issue in issues if issue.severity == "error"] == []
+
+
+def test_validation_issues_require_dim_for_rasterized_svg(tmp_path):
+    sdk_root = _build_sdk_with_generator(tmp_path / "sdk")
+    source_dir = tmp_path / "resource" / "src"
+    workspace_dir = tmp_path / "workspace"
+    bin_output_dir = tmp_path / "bin"
+    source_dir.mkdir(parents=True)
+    workspace_dir.mkdir()
+    bin_output_dir.mkdir()
+    (source_dir / "icon.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"></svg>\n', encoding="utf-8")
+
+    session = ResourceGenerationSession(str(sdk_root))
+    session.reset(
+        GenerationPaths(
+            config_path=str(source_dir / "app_resource_config.json"),
+            source_dir=str(source_dir),
+            workspace_dir=str(workspace_dir),
+            bin_output_dir=str(bin_output_dir),
+        ),
+        {
+            "img": [{"file": "icon.svg", "name": "icon", "format": "rgb565", "alpha": "4", "external": "0"}],
+            "font": [],
+            "mp4": [],
+        },
+    )
+
+    issues = session.validation_issues(for_generation=True)
+
+    assert any(issue.code == "svg_dim_required" and issue.section == "img" and issue.field == "dim" for issue in issues)
+
+
+def test_validation_issues_warn_when_font_compress_cannot_apply(tmp_path):
+    sdk_root = _build_sdk_with_generator(tmp_path / "sdk")
+    source_dir = tmp_path / "resource" / "src"
+    workspace_dir = tmp_path / "workspace"
+    bin_output_dir = tmp_path / "bin"
+    source_dir.mkdir(parents=True)
+    workspace_dir.mkdir()
+    bin_output_dir.mkdir()
+    (source_dir / "display.ttf").write_bytes(b"font")
+    (source_dir / "display.txt").write_text("ABCD\n", encoding="utf-8")
+
+    session = ResourceGenerationSession(str(sdk_root))
+    session.reset(
+        GenerationPaths(
+            config_path=str(source_dir / "app_resource_config.json"),
+            source_dir=str(source_dir),
+            workspace_dir=str(workspace_dir),
+            bin_output_dir=str(bin_output_dir),
+        ),
+        {
+            "img": [],
+            "font": [
+                {
+                    "file": "display.ttf",
+                    "pixelsize": "16",
+                    "fontbitsize": "8",
+                    "compress": "rle4",
+                    "external": "0",
+                    "text": "display.txt",
+                }
+            ],
+            "mp4": [],
+        },
+    )
+
+    issues = session.validation_issues(for_generation=True)
+
+    assert any(
+        issue.code == "font_compress_ignored" and issue.section == "font" and issue.severity == "warning"
         for issue in issues
     )
 
