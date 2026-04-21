@@ -24,8 +24,8 @@ from ..model.page_timers import (
 )
 
 
-_PAGE_TIMERS_CONTROL_HEIGHT = 22
-_PAGE_TIMERS_TABLE_ROW_HEIGHT = 26
+_PAGE_TIMERS_CONTROL_HEIGHT = 20
+_PAGE_TIMERS_TABLE_ROW_HEIGHT = 24
 _PAGE_TIMERS_TABLE_HEADER_HEIGHT = 20
 
 
@@ -79,7 +79,7 @@ class PageTimersPanel(QWidget):
         self._header_frame.setObjectName("page_timers_header")
         self._header_frame.setProperty("panelTone", "timers")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(2, 2, 2, 2)
+        header_layout.setContentsMargins(1, 1, 1, 1)
         header_layout.setSpacing(2)
 
         self._eyebrow_label = QLabel("Timers")

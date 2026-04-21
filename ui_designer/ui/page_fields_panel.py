@@ -19,8 +19,8 @@ from PyQt5.QtWidgets import (
 from ..model.page_fields import COMMON_PAGE_FIELD_TYPES, normalize_page_fields, suggest_page_field_name, validate_page_fields
 
 
-_PAGE_FIELDS_CONTROL_HEIGHT = 22
-_PAGE_FIELDS_TABLE_ROW_HEIGHT = 26
+_PAGE_FIELDS_CONTROL_HEIGHT = 20
+_PAGE_FIELDS_TABLE_ROW_HEIGHT = 24
 _PAGE_FIELDS_TABLE_HEADER_HEIGHT = 20
 
 
@@ -74,7 +74,7 @@ class PageFieldsPanel(QWidget):
         self._header_frame.setObjectName("page_fields_header")
         self._header_frame.setProperty("panelTone", "fields")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(2, 2, 2, 2)
+        header_layout.setContentsMargins(1, 1, 1, 1)
         header_layout.setSpacing(2)
 
         self._eyebrow_label = QLabel("Fields")
