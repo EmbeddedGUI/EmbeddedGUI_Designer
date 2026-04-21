@@ -315,6 +315,12 @@ class ProjectExplorerDock(QDockWidget):
             )
         return items, 0, summary
 
+    def _primary_display_scope_note(self):
+        displays = self._project_displays()
+        if len(displays) <= 1:
+            return ""
+        return " Editing/preview: primary display only."
+
     def _update_accessibility_summary(self):
         page_count = len(getattr(self._project, "pages", []) or [])
         page_label = f"{page_count} page" if page_count == 1 else f"{page_count} pages"
@@ -326,7 +332,8 @@ class ProjectExplorerDock(QDockWidget):
         dirty_label = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
         mode = str(self._mode_combo.currentText() or "easy_page").strip() or "easy_page"
         display_count_text, primary_text, display_detail = self._display_settings_summary()
-        summary = f"Project Explorer: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}."
+        display_scope_note = self._primary_display_scope_note()
+        summary = f"Project Explorer: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.{display_scope_note}"
         settings_summary = (
             f"Project settings: {page_label}. Current mode: {mode}. "
             f"Displays: {display_count_text}. Primary canvas: {primary_text}. {display_detail}"
@@ -363,12 +370,12 @@ class ProjectExplorerDock(QDockWidget):
         _set_widget_metadata(
             self._pages_label,
             tooltip=summary,
-            accessible_name=f"Pages: {page_label}. Current page: {current_page}. Startup page: {startup_page}.",
+            accessible_name=f"Pages: {page_label}. Current page: {current_page}. Startup page: {startup_page}.{display_scope_note}",
         )
         _set_widget_metadata(
             self._page_tree,
             tooltip=summary,
-            accessible_name=f"Project pages: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
+            accessible_name=f"Project pages: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.{display_scope_note}",
         )
         _set_widget_metadata(
             self._mode_combo,
@@ -425,10 +432,13 @@ class ProjectExplorerDock(QDockWidget):
             tooltip=add_page_hint,
             accessible_name=f"New page action: {mode} mode. {add_page_hint}",
         )
+        status_summary = f"Project explorer status: mode {mode}. Current page: {current_page}"
+        if display_scope_note:
+            status_summary = f"{status_summary}.{display_scope_note}"
         _set_widget_metadata(
             self._status_label,
-            tooltip=f"Project explorer status: mode {mode}. Current page: {current_page}.",
-            accessible_name=f"Project explorer status: mode {mode}. Current page: {current_page}",
+            tooltip=status_summary,
+            accessible_name=status_summary,
         )
 
     def _apply_page_item_metadata(self, item, page_name):

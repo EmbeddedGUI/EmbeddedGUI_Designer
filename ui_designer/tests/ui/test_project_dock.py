@@ -254,6 +254,24 @@ class TestProjectExplorerDock:
             "Display target selector: Display 0: 320 x 240 (Primary). "
             "Editing and preview are fixed to the primary display."
         )
+        assert dock.accessibleName() == (
+            "Project Explorer: 2 pages. Current page: none. Startup page: main_page. No dirty pages. "
+            "Editing/preview: primary display only."
+        )
+        assert dock._header_frame.accessibleName() == (
+            "Project explorer header. Project Explorer: 2 pages. Current page: none. Startup page: main_page. No dirty pages. "
+            "Editing/preview: primary display only."
+        )
+        assert dock._pages_label.accessibleName() == (
+            "Pages: 2 pages. Current page: none. Startup page: main_page. Editing/preview: primary display only."
+        )
+        assert dock._page_tree.accessibleName() == (
+            "Project pages: 2 pages. Current page: none. Startup page: main_page. No dirty pages. "
+            "Editing/preview: primary display only."
+        )
+        assert dock._status_label.accessibleName() == (
+            "Project explorer status: mode easy_page. Current page: none. Editing/preview: primary display only."
+        )
         assert dock._settings_group.toolTip() == (
             "Project settings: 2 pages. Current mode: easy_page. Displays: 2 displays. "
             "Primary canvas: 320 x 240. Secondary displays: 1: 128 x 64. Editing/preview: primary display only."
