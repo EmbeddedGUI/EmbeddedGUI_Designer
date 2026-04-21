@@ -168,23 +168,19 @@ class TestWidgetModelXmlRoundTrip:
         assert restored.properties["image_format"] == "rgb32"
         assert restored.properties["image_alpha"] == "8"
 
-    def test_from_xml_ignores_legacy_image_expr_attribute(self, tmp_path):
-        (tmp_path / "star.png").write_bytes(b"PNG")
-
+    def test_from_xml_ignores_legacy_image_expr_attribute(self):
         elem = WidgetModel("image", name="img", x=0, y=0, width=64, height=64).to_xml_element()
         elem.set("image", "&egui_res_image_star_rgb565_4")
 
-        restored = WidgetModel.from_xml_element(elem, src_dir=str(tmp_path))
+        restored = WidgetModel.from_xml_element(elem)
 
         assert restored.properties.get("image_file", "") == ""
 
-    def test_from_xml_ignores_legacy_font_expr_attribute(self, tmp_path):
-        (tmp_path / "myfont.ttf").write_bytes(b"FONT")
-
+    def test_from_xml_ignores_legacy_font_expr_attribute(self):
         elem = WidgetModel("label", name="title", x=0, y=0, width=80, height=24).to_xml_element()
         elem.set("font", "&egui_res_font_myfont_24_8")
 
-        restored = WidgetModel.from_xml_element(elem, src_dir=str(tmp_path))
+        restored = WidgetModel.from_xml_element(elem)
 
         assert restored.properties.get("font_file", "") == ""
         assert restored.properties.get("font_builtin", "EGUI_CONFIG_FONT_DEFAULT") == "EGUI_CONFIG_FONT_DEFAULT"

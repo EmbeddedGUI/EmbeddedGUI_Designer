@@ -642,6 +642,7 @@ class TestGenerateUicode:
         assert "PAGE_MAIN_PAGE = 0" in output
         assert "PAGE_SETTINGS = 1" in output
         assert "PAGE_COUNT = 2" in output
+        assert "uicode_create_ui" not in output
 
     def test_uicode_source_easy_page(self):
         page = _make_page("main_page")
@@ -650,6 +651,7 @@ class TestGenerateUicode:
         assert "union page_array" in output
         assert "switch (page_index)" in output
         assert "egui_main_page_init" in output
+        assert "uicode_create_ui" not in output
 
     def test_uicode_source_activity(self):
         page = _make_page("main_page")
@@ -658,6 +660,7 @@ class TestGenerateUicode:
         assert "main_page_activity" in output
         assert "egui_activity_t base" in output
         assert "main_page_activity_on_create" in output
+        assert "uicode_create_ui" not in output
 
     def test_uicode_startup_page_index(self):
         p1 = _make_page("page_a")

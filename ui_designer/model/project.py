@@ -45,7 +45,6 @@ from ..utils.scaffold import (
     project_designer_dir,
     project_designer_resource_dir,
     project_config_resource_dir,
-    preferred_resource_source_dir,
     project_file_path,
     project_generated_font_dir,
     project_generated_img_dir,
@@ -224,10 +223,7 @@ class Project:
 
     @property
     def root_widgets(self):
-        """Compatibility shim: return root widgets of the startup page.
-
-        Used by layout_engine.compute_layout() and widget_tree/preview.
-        """
+        """Return the startup page root widget as a single-item list."""
         page = self.get_startup_page()
         if page and page.root_widget:
             return [page.root_widget]
@@ -521,9 +517,6 @@ class Project:
         # Load i18n string resources from the canonical resource directory only.
         proj.string_catalog = StringResourceCatalog.scan_and_load(eguiproject_res_dir)
 
-        # Determine the authoritative source dir for page loading.
-        effective_src_dir = preferred_resource_source_dir(eguiproject_res_dir) or None
-
         # Load pages
         pages_elem = root.find("Pages")
         if pages_elem is not None:
@@ -533,7 +526,7 @@ class Project:
                 if not file_path:
                     continue
                 try:
-                    page = Page.load(config_dir, file_path, src_dir=effective_src_dir)
+                    page = Page.load(config_dir, file_path)
                     proj.pages.append(page)
                 except Exception as e:
                     print(f"Warning: Failed to load page {file_path}: {e}")

@@ -730,13 +730,11 @@ class WidgetModel:
         return elem
 
     @classmethod
-    def from_xml_element(cls, elem, src_dir=None):
+    def from_xml_element(cls, elem):
         """Deserialize widget from XML element.
 
         Args:
             elem: XML element to parse.
-            src_dir: Reserved compatibility argument accepted from older
-                callers. Current project XML only uses structured properties.
         """
         widget_type = TAG_TO_TYPE.get(elem.tag, None)
         if widget_type is None:
@@ -784,7 +782,7 @@ class WidgetModel:
             elif child_elem.tag == "Animation":
                 w.animations.append(AnimationModel.from_xml_element(child_elem))
             else:
-                child = cls.from_xml_element(child_elem, src_dir=src_dir)
+                child = cls.from_xml_element(child_elem)
                 w.add_child(child)
         return w
 

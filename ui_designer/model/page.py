@@ -98,22 +98,20 @@ class Page:
         return _indent_xml(root_elem)
 
     @classmethod
-    def from_xml_string(cls, xml_string, file_path="", src_dir=None):
+    def from_xml_string(cls, xml_string, file_path=""):
         """Parse page from XML string.
 
         Args:
             xml_string: XML content to parse.
             file_path: Relative file path for this page.
-            src_dir: Reserved compatibility argument accepted from older
-                callers.
 
         Returns Page on success, raises ValueError on parse error.
         """
         root_elem = ET.fromstring(xml_string)
-        return cls._from_element(root_elem, file_path, src_dir=src_dir)
+        return cls._from_element(root_elem, file_path)
 
     @classmethod
-    def _from_element(cls, root_elem, file_path, src_dir=None):
+    def _from_element(cls, root_elem, file_path):
         page = cls(file_path=file_path)
 
         # Read mockup image attributes
@@ -147,7 +145,7 @@ class Page:
             else:
                 # First non-UserFields child is the root widget
                 if page.root_widget is None:
-                    page.root_widget = WidgetModel.from_xml_element(child, src_dir=src_dir)
+                    page.root_widget = WidgetModel.from_xml_element(child)
 
         return page
 
@@ -163,19 +161,17 @@ class Page:
         self._dirty = False
 
     @classmethod
-    def load(cls, base_dir, file_path, src_dir=None):
+    def load(cls, base_dir, file_path):
         """Load page from XML file.
 
         Args:
             base_dir: Base directory for the project.
             file_path: Relative path to the page XML file.
-            src_dir: Reserved compatibility argument accepted from older
-                callers.
         """
         full_path = os.path.join(base_dir, file_path)
         with open(full_path, "r", encoding="utf-8") as f:
             xml_string = f.read()
-        return cls.from_xml_string(xml_string, file_path, src_dir=src_dir)
+        return cls.from_xml_string(xml_string, file_path)
 
     @classmethod
     def create_default(cls, page_name, screen_width=240, screen_height=320):

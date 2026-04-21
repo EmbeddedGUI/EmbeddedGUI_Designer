@@ -7887,9 +7887,7 @@ class MainWindow(QMainWindow):
         """Restore page state from an XML snapshot without recording a new undo entry."""
         self._undoing = True
         try:
-            images_dir = self._get_eguiproject_images_dir()
-            src_dir = images_dir if images_dir else None
-            new_page = Page.from_xml_string(xml, self._current_page.file_path, src_dir=src_dir)
+            new_page = Page.from_xml_string(xml, self._current_page.file_path)
             self._apply_page_state(self._current_page, new_page)
             # Refresh UI
             self._page_shim = _PageProjectShim(self._current_page)
@@ -7972,9 +7970,7 @@ class MainWindow(QMainWindow):
         if not self._current_page:
             return
         try:
-            images_dir = self._get_eguiproject_images_dir()
-            src_dir = images_dir if images_dir else None
-            new_page = Page.from_xml_string(xml_text, self._current_page.file_path, src_dir=src_dir)
+            new_page = Page.from_xml_string(xml_text, self._current_page.file_path)
             self._apply_page_state(self._current_page, new_page)
 
             if not self._undoing:

@@ -1399,7 +1399,6 @@ def generate_uicode_header(project):
     lines.append("int uicode_start_next_page(void);")
     lines.append("int uicode_start_prev_page(void);")
     lines.append("void uicode_disp0_init(egui_core_t *core);")
-    lines.append("void uicode_create_ui(void);")
     lines.append("")
     lines.append("/* Ends C function definitions when using C++ */")
     lines.append("#ifdef __cplusplus")
@@ -1413,7 +1412,7 @@ def generate_uicode_header(project):
 
 
 def generate_uicode_disp0_header(project):
-    """Generate a compatibility header for the new SDK display entrypoint."""
+    """Generate the display-0 SDK entrypoint header."""
     _ = project
     lines = []
     lines.append("#ifndef _UICODE_DISP0_H_")
@@ -1450,7 +1449,6 @@ def _gen_uicode_easy_page(project):
     # Toast
     lines.append("static egui_toast_std_t toast;")
     lines.append("static egui_page_base_t *current_page = NULL;")
-    lines.append("static egui_core_t *s_uicode_core = NULL;")
     lines.append("")
 
     # Page union
@@ -1564,7 +1562,6 @@ def _gen_uicode_easy_page(project):
     lines.append("        return;")
     lines.append("    }")
     lines.append("")
-    lines.append("    s_uicode_core = core;")
     if has_i18n:
         lines.append("    // Initialize i18n string tables")
         lines.append("    egui_strings_init();")
@@ -1583,16 +1580,6 @@ def _gen_uicode_easy_page(project):
     lines.append("void uicode_disp0_init(egui_core_t *core)")
     lines.append("{")
     lines.append("    uicode_init_ui(core);")
-    lines.append("}")
-    lines.append("")
-
-    # uicode_create_ui
-    lines.append("void uicode_create_ui(void)")
-    lines.append("{")
-    lines.append("    if (s_uicode_core != NULL)")
-    lines.append("    {")
-    lines.append("        uicode_init_ui(s_uicode_core);")
-    lines.append("    }")
     lines.append("}")
     lines.append("")
 
@@ -1839,7 +1826,7 @@ def _gen_uicode_activity(project):
     lines.append("}")
     lines.append("")
 
-    # uicode_init_ui / create_ui
+    # uicode_init_ui
     lines.append("static void uicode_init_ui(egui_core_t *core)")
     lines.append("{")
     lines.append("    if (core == NULL)")
@@ -1862,14 +1849,6 @@ def _gen_uicode_activity(project):
     lines.append("void uicode_disp0_init(egui_core_t *core)")
     lines.append("{")
     lines.append("    uicode_init_ui(core);")
-    lines.append("}")
-    lines.append("")
-    lines.append("void uicode_create_ui(void)")
-    lines.append("{")
-    lines.append("    if (s_uicode_core != NULL)")
-    lines.append("    {")
-    lines.append("        uicode_init_ui(s_uicode_core);")
-    lines.append("    }")
     lines.append("}")
     lines.append("")
 
@@ -2159,5 +2138,4 @@ def generate_uicode(project):
         "\n"
         "static void uicode_init_ui(egui_core_t *core) { EGUI_UNUSED(core); }\n"
         "void uicode_disp0_init(egui_core_t *core) { uicode_init_ui(core); }\n"
-        "void uicode_create_ui(void) {}\n"
     )
