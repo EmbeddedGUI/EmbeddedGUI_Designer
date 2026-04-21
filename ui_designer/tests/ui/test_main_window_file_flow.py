@@ -11448,8 +11448,8 @@ class TestMainWindowFileFlow:
         assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "assets")) == "Assets"
         assert window._center_shell.layout().spacing() == 2
         assert window._page_inspector_body.layout().spacing() == 2
-        assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (1, 1, 1, 1)
-        assert bottom_header_layout.spacing() == 2
+        assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (0, 0, 0, 0)
+        assert bottom_header_layout.spacing() == 1
         assert window._bottom_shell.layout().spacing() == 2
         assert window._workspace_nav_frame.accessibleName() == "Workspace panel tabs. Current panel: Project."
         assert window._left_panel_stack.accessibleName() == (

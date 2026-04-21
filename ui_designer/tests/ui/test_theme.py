@@ -140,8 +140,9 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         compact_panel_title = css.split("QWidget#project_workspace_panel QLabel#workspace_section_title,", 1)[1].split("}", 1)[0]
         assert "background-color: transparent;" in left_tabs_pane
         assert "border: none;" in left_tabs_pane
-        assert "padding: 2px 6px;" in left_tabs_tab
+        assert "padding: 1px 5px;" in left_tabs_tab
         assert f"font-size: {t['fs_body_sm']}px;" in compact_panel_title
+        assert "QFrame#workspace_bottom_header QLabel#workspace_section_title" in css
         indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
         metrics = css.split("#preview_metrics_strip {", 1)[1].split("}", 1)[0]
         assert str(t["space_xs"]) in indicator
@@ -624,6 +625,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "min-height: 20px;" in mode_button
         assert "max-height: 20px;" in mode_button
         assert "border-radius: 0px;" in bottom_toggle_button
+        assert "padding: 0px 6px;" in bottom_toggle_button
         assert "min-width: 48px;" in bottom_toggle_button
         assert "min-height: 20px;" in bottom_toggle_button
         assert "max-height: 20px;" in bottom_toggle_button
@@ -633,7 +635,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in left_tabs_tab
         assert "margin-right: 0px;" in left_tabs_tab
         assert "min-height: 24px;" in left_tabs_tab
-        assert "padding: 2px 6px;" in left_tabs_tab
+        assert "padding: 1px 5px;" in left_tabs_tab
         assert "border-radius: 0px;" in status_chip
         assert "background-color: transparent;" in empty_state
         assert "border-top: none;" in empty_state
@@ -677,7 +679,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in bottom_tabs_tab
         assert "margin-right: 0px;" in bottom_tabs_tab
         assert "min-height: 24px;" in bottom_tabs_tab
-        assert "padding: 2px 6px;" in bottom_tabs_tab
+        assert "padding: 1px 5px;" in bottom_tabs_tab
         assert "background-color: transparent;" in thumb_surface
         assert "border: none;" in thumb_surface
         assert "border-radius: 0px;" in thumb_surface

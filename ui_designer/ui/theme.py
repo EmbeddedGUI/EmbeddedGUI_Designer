@@ -1786,7 +1786,7 @@ QPushButton#workspace_bottom_toggle_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px {t['space_sm']}px;
+    padding: 0px 6px;
     min-width: 48px;
     min-height: 20px;
     max-height: 20px;
@@ -1907,7 +1907,7 @@ QTabWidget#workspace_left_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
     min-height: 24px;
-    padding: 2px 6px;
+    padding: 1px 5px;
 }}
 
 QTabWidget#workspace_inspector_tabs::pane {{
@@ -1937,7 +1937,7 @@ QTabWidget#workspace_bottom_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
     min-height: 24px;
-    padding: 2px 6px;
+    padding: 1px 5px;
 }}
 
 #workspace_status_chip {{
@@ -2120,7 +2120,8 @@ QWidget#project_workspace_panel QLabel#workspace_section_title,
 QWidget#widget_tree_dock QLabel#workspace_section_title,
 QWidget#animations_dock QLabel#workspace_section_title,
 QWidget#page_fields_dock QLabel#workspace_section_title,
-QWidget#page_timers_dock QLabel#workspace_section_title {{
+QWidget#page_timers_dock QLabel#workspace_section_title,
+QFrame#workspace_bottom_header QLabel#workspace_section_title {{
     font-size: {t['fs_body_sm']}px;
 }}
 
