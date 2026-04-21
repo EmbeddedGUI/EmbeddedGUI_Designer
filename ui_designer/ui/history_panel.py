@@ -30,8 +30,8 @@ class HistoryPanel(QWidget):
         self._header_frame.setObjectName("history_panel_header")
         self._header_frame.setProperty("panelTone", "history")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(6, _SPACE_XS, 6, _SPACE_XS)
-        header_layout.setSpacing(_SPACE_XS)
+        header_layout.setContentsMargins(4, 3, 4, 3)
+        header_layout.setSpacing(2)
 
         self._header_eyebrow = QLabel("Undo Timeline")
         self._header_eyebrow.setObjectName("history_panel_eyebrow")
