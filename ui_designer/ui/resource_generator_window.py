@@ -2049,7 +2049,7 @@ class ResourceGeneratorWindow(QDialog):
 
         assets_group = QGroupBox("Assets")
         assets_layout = QVBoxLayout(assets_group)
-        assets_layout.setContentsMargins(10, 10, 10, 10)
+        assets_layout.setContentsMargins(8, 8, 8, 8)
         assets_layout.setSpacing(8)
 
         asset_toolbar = QHBoxLayout()
@@ -2274,7 +2274,7 @@ class ResourceGeneratorWindow(QDialog):
     def _build_simple_action_group(self, title: str, buttons, *, columns: int) -> QGroupBox:
         group = QGroupBox(title)
         layout = QGridLayout(group)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(8, 8, 8, 8)
         layout.setHorizontalSpacing(8)
         layout.setVerticalSpacing(8)
         for index, button in enumerate(buttons):
@@ -4208,7 +4208,7 @@ class ResourceGeneratorWindow(QDialog):
         card = QGroupBox(payload["title"])
         card.setObjectName("quick_preview_card")
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
 
         preview_label = QLabel("")

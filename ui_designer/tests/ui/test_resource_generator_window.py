@@ -137,12 +137,20 @@ class TestResourceGeneratorWindow:
 
         window = ResourceGeneratorWindow("")
         try:
+            assets_group = next(group for group in window._simple_page.findChildren(QGroupBox) if group.title() == "Assets")
+            action_group = next(group for group in window._simple_page.findChildren(QGroupBox) if group.title() == "Import & Setup")
+
             assert _layout_margins_tuple(window.layout()) == (12, 12, 12, 12)
             assert window.layout().spacing() == 8
             assert window._simple_page.layout().spacing() == 8
             assert window._professional_page.layout().spacing() == 8
             assert _layout_margins_tuple(window._simple_asset_empty_state.layout()) == (20, 16, 20, 16)
             assert window._simple_asset_empty_state.layout().spacing() == 8
+            assert _layout_margins_tuple(assets_group.layout()) == (8, 8, 8, 8)
+            assert assets_group.layout().spacing() == 8
+            assert _layout_margins_tuple(action_group.layout()) == (8, 8, 8, 8)
+            assert action_group.layout().horizontalSpacing() == 8
+            assert action_group.layout().verticalSpacing() == 8
         finally:
             _close_window(window)
 
@@ -1251,6 +1259,8 @@ class TestResourceGeneratorWindow:
         assert dialog._summary_label.text() == "Previewing 3 assets from quick mode."
         cards = dialog.findChildren(QGroupBox, "quick_preview_card")
         assert {card.title() for card in cards} == {"Images: hero", "Fonts: display", "MP4: intro"}
+        assert all(_layout_margins_tuple(card.layout()) == (8, 8, 8, 8) for card in cards)
+        assert all(card.layout().spacing() == 8 for card in cards)
         meta_labels = dialog.findChildren(QLabel, "quick_preview_meta")
         assert any("Image Size: 12 x 8" in label.text() for label in meta_labels)
         assert any("Preview Source: fonts/display.txt" in label.text() for label in meta_labels)
