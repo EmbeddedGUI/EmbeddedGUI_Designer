@@ -70,7 +70,7 @@ class TestWidgetBrowserPanel:
         card_margins = card_layout.contentsMargins()
 
         assert panel.layout().spacing() == 2
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (2, 2, 2, 2)
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (1, 1, 1, 1)
         assert header_layout.spacing() == 2
         assert title_row.spacing() == 2
         assert metrics_layout.spacing() == 2
@@ -79,7 +79,7 @@ class TestWidgetBrowserPanel:
         assert panel._search.placeholderText() == "Search"
         assert panel._category_combo.minimumWidth() == 144
         assert panel._insert_target.wordWrap() is False
-        assert (card_margins.left(), card_margins.top(), card_margins.right(), card_margins.bottom()) == (2, 2, 2, 2)
+        assert (card_margins.left(), card_margins.top(), card_margins.right(), card_margins.bottom()) == (1, 1, 1, 1)
         assert card_layout.spacing() == 2
         panel.deleteLater()
 

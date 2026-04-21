@@ -94,7 +94,7 @@ class WidgetBrowserCard(QFrame):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setContentsMargins(1, 1, 1, 1)
         layout.setSpacing(2)
 
         text_layout = QVBoxLayout()
@@ -263,7 +263,7 @@ class WidgetBrowserPanel(QWidget):
         self._header_frame.setObjectName("widget_browser_header")
         self._header_frame.setProperty("panelTone", "components")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(2, 2, 2, 2)
+        header_layout.setContentsMargins(1, 1, 1, 1)
         header_layout.setSpacing(2)
 
         self._header_eyebrow = QLabel("Components")
