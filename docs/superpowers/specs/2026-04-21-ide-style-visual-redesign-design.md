@@ -73,9 +73,11 @@
 | `success` | `#46C98B` | `#22C55E` | `green-500` |
 | `warning` | `#FFB84D` | `#EAB308` | `yellow-500` |
 | `selection` | `#2B5F98` | `rgba(59,130,246,0.40)` | **S1 方案**，半透明蓝 |
+| `selection_hover` | - | `rgba(59,130,246,0.10)` | tree/list hover wash |
 | `selection_soft` | `#1B2E46` | `rgba(59,130,246,0.15)` | hover/弱选中 |
+| `selection_text` | - | `#BFDBFE` | tree/list 选中文字（blue-200） |
 
-> ⚠️ RGBA 值在 QSS 里写成 `rgba(59, 130, 246, 0.40)`；在需要 hex 的 API 里保留 fallback 常量 `#1E3A5F` / `#1E2A45`。
+> ⚠️ RGBA 值在 QSS 里写成 `rgba(59, 130, 246, 0.40)` / `rgba(59, 130, 246, 0.10)`；tree/list 相关 QSS 统一从 `selection` / `selection_hover` / `selection_soft` / `selection_text` 取值，不再直接写字面量。
 
 ### 3.2 字号 token（全部 px）
 
@@ -148,8 +150,11 @@
 2. **Tree/List 选中行 = 半透明蓝 + 亮蓝文字**
    ```qss
    QTreeView::item:selected, QListView::item:selected {
-       background: rgba(59, 130, 246, 0.25);
-       color: #BFDBFE;  /* blue-200 */
+       background: {selection};
+       color: {selection_text};
+   }
+   QTreeView::item:hover, QListView::item:hover {
+       background: {selection_hover};
    }
    ```
 3. **hover 态克制**：只加 1 档灰，不改文字色

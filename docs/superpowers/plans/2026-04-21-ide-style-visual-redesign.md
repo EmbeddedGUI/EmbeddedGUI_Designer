@@ -35,7 +35,7 @@
 **Files:**
 - Create: `ui_designer/tests/ui/test_theme_ide_style.py`
 
-- [ ] **Step 1: 新建失败测试**
+- [x] **Step 1: 新建失败测试**
 
 ```python
 """IDE-style redesign token assertions (dark only).
@@ -119,7 +119,7 @@ def test_light_palette_unchanged():
     assert t["fs_body"] == 13
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme_ide_style.py -v
@@ -127,7 +127,7 @@ python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme_i
 
 Expected: 4 个新 dark 测试 FAIL（因为旧值还没改），1 个 light 测试 PASS。
 
-- [ ] **Step 3: Commit 测试骨架**
+- [x] **Step 3: Commit 测试骨架**
 
 ```
 git add ui_designer/tests/ui/test_theme_ide_style.py
@@ -141,7 +141,7 @@ git commit -m "test(theme): add IDE-style redesign dark-mode token assertions (R
 **Files:**
 - Modify: `ui_designer/ui/theme.py` — `_TOKENS["dark"]` 整个 dict（行号以实际文件为准，约 L248–L299）
 
-- [ ] **Step 1: 替换 dark token 字典**
+- [x] **Step 1: 替换 dark token 字典**
 
 定位 `_TOKENS = { "dark": { ... }, "light": { ... } }`，把 `dark` 分支完整替换为：
 
@@ -210,7 +210,7 @@ git commit -m "test(theme): add IDE-style redesign dark-mode token assertions (R
     },
 ```
 
-- [ ] **Step 2: 跑 1.1 的测试，验证 RED → GREEN**
+- [x] **Step 2: 跑 1.1 的测试，验证 RED → GREEN**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme_ide_style.py -v
@@ -218,7 +218,7 @@ python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme_i
 
 Expected: 全部 PASS。
 
-- [ ] **Step 3: 跑整个 theme 测试套件，检查回归**
+- [x] **Step 3: 跑整个 theme 测试套件，检查回归**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme.py -v
@@ -231,7 +231,7 @@ Expected: 可能出现少量失败（老测试可能断言了旧颜色值，如 
 
 **⚠️ 不得删除老测试以让它通过，必须更新断言到与新 spec 一致的期望值。** 任何语义变化（例如 token 用途变了）才可以重写。
 
-- [ ] **Step 4: Commit token 替换**
+- [x] **Step 4: Commit token 替换**
 
 ```
 git add ui_designer/ui/theme.py ui_designer/tests/ui/test_theme.py
@@ -245,7 +245,7 @@ git commit -m "feat(theme): align dark-mode tokens with IDE-style zinc + blue-50
 **Files:**
 - Modify: `ui_designer/ui/theme.py` — `_FLUENT_*_QSS` 系列常量（行号以实际文件为准，约 L75–L200）
 
-- [ ] **Step 1: 写失败断言**
+- [x] **Step 1: 写失败断言**
 
 在 `ui_designer/tests/ui/test_theme_ide_style.py` 追加：
 
@@ -279,7 +279,7 @@ def test_property_panel_qss_templates_use_4px_radius():
         assert "border-radius: 0px" not in qss
 ```
 
-- [ ] **Step 2: 跑测试确认 RED**
+- [x] **Step 2: 跑测试确认 RED**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme_ide_style.py::test_fluent_qss_templates_use_4px_radius_and_12px_font ui_designer/tests/ui/test_theme_ide_style.py::test_property_panel_qss_templates_use_4px_radius -v
@@ -287,7 +287,7 @@ python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme_i
 
 Expected: FAIL。
 
-- [ ] **Step 3: 改 `_FLUENT_*_QSS` 常量**
+- [x] **Step 3: 改 `_FLUENT_*_QSS` 常量**
 
 在 `theme.py` 的全部 8 个 QSS 模板（4 个全局 + 4 个 property-panel）里，用文本替换：
 
@@ -296,13 +296,13 @@ Expected: FAIL。
 
 其余字段（`min-height`, `padding`, `min-width`）保持现状。
 
-- [ ] **Step 4: 跑测试 → GREEN**
+- [x] **Step 4: 跑测试 → GREEN**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme_ide_style.py -v
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add ui_designer/ui/theme.py ui_designer/tests/ui/test_theme_ide_style.py
@@ -316,7 +316,7 @@ git commit -m "feat(theme): round buttons/inputs to 4px and tighten font to 12px
 **Files:**
 - Modify: `ui_designer/ui/theme.py` — `_build_stylesheet()` 函数体内追加 QSS
 
-- [ ] **Step 1: 写失败断言**
+- [x] **Step 1: 写失败断言**
 
 在 `ui_designer/tests/ui/test_theme_ide_style.py` 追加：
 
@@ -332,7 +332,7 @@ def test_dark_stylesheet_includes_ide_accent_features():
     assert "#BFDBFE" in css
 ```
 
-- [ ] **Step 2: 跑测试确认 RED**
+- [x] **Step 2: 跑测试确认 RED**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme_ide_style.py::test_dark_stylesheet_includes_ide_accent_features -v
@@ -340,7 +340,7 @@ python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme_i
 
 Expected: FAIL。
 
-- [ ] **Step 3: 读 `_build_stylesheet()` 找到 QTabBar 相关 QSS 的输出位置**
+- [x] **Step 3: 读 `_build_stylesheet()` 找到 QTabBar 相关 QSS 的输出位置**
 
 ```
 python - <<'PY'
@@ -354,7 +354,7 @@ PY
 
 记录现有 QTabBar/QTreeView 规则所在行数，准备在其附近插入新规则。
 
-- [ ] **Step 4: 追加新规则**
+- [x] **Step 4: 追加新规则**
 
 在 `_build_stylesheet()` 返回字符串的末尾（或现有 QTabBar 规则之后）追加：
 
@@ -403,19 +403,19 @@ QPushButton:hover, QToolButton:hover {{
 
 **实现提示**：`_build_stylesheet` 目前返回单个 f-string，需要把这段 `css_ide_accents` 通过字符串拼接加到末尾。`t` 是 `theme_tokens(mode, ...)` 的返回值（已在函数顶部计算）。
 
-- [ ] **Step 5: 跑测试 → GREEN**
+- [x] **Step 5: 跑测试 → GREEN**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme_ide_style.py -v
 ```
 
-- [ ] **Step 6: 跑全量 theme 测试，修任何回归**
+- [x] **Step 6: 跑全量 theme 测试，修任何回归**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_theme.py -v
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```
 git add ui_designer/ui/theme.py ui_designer/tests/ui/test_theme_ide_style.py
@@ -429,7 +429,7 @@ git commit -m "feat(theme): add IDE-style tab activation bar, translucent select
 **Files:**
 - Scan: `ui_designer/ui/**/*.py`
 
-- [ ] **Step 1: 列出硬编码 hex 颜色**
+- [x] **Step 1: 列出硬编码 hex 颜色**
 
 ```
 python - <<'PY'
@@ -446,20 +446,20 @@ PY
 
 Expected: 输出一份候选列表。
 
-- [ ] **Step 2: 逐个替换为 token 读取**
+- [x] **Step 2: 逐个替换为 token 读取**
 
 对每个命中：
 - 确认该色在 `_TOKENS["dark"]` 中的角色（查对照表）
 - 改为 `theme_tokens(mode)["<key>"]` 或 `app_theme_tokens(app)["<key>"]`
 - 若在 QSS f-string 内，用 `f"color: {tokens['text']}"` 风格
 
-- [ ] **Step 3: 跑 pytest 套件**
+- [x] **Step 3: 跑 pytest 套件**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests -v --tb=short
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```
 git add -u ui_designer/ui
@@ -472,7 +472,7 @@ git commit -m "refactor(ui): replace hard-coded legacy hex colors with theme tok
 
 **Files:** 无代码改动，仅人工验证。
 
-- [ ] **Step 1: 启动 Designer 做短启动检查（非阻塞）**
+- [x] **Step 1: 启动 Designer 做短启动检查（非阻塞）**
 
 ```
 python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
@@ -481,6 +481,8 @@ python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
 Expected: 程序能启动并在 ~5 秒内进入主窗口；无 Python 异常。
 
 - [ ] **Step 2: 截图对比**
+
+补充：已完成 welcome screen 的短启动窗口截图和主窗口纯黑底/紧凑按钮样式核对；加载项目后的 tab 激活态、tree 选中态和完整侧栏层级截图仍待补全。
 
 启动 `python ui_designer/main.py --sdk-root sdk/EmbeddedGUI`（后台模式），截图：
 - 主窗口（对比 `ref/UI Editor Design/src/imports/ScreenShot_2026-04-19_141404_066.png`）
@@ -507,7 +509,7 @@ Expected: 程序能启动并在 ~5 秒内进入主窗口；无 Python 异常。
 - Create: `ui_designer/assets/icons/lucide/*.svg`（资源文件）
 - Create: `ui_designer/assets/icons/lucide/MAPPING.md` — 本地文档记录「项目 key → lucide name」
 
-- [ ] **Step 1: 归纳所需 icon key 清单**
+- [x] **Step 1: 归纳所需 icon key 清单**
 
 ```
 python - <<'PY'
@@ -520,7 +522,7 @@ PY
 
 对照 Spec 第 6 节补齐 toolbar/nav/state 语义键（约 40 项）与 widget 键（70+ 项）。
 
-- [ ] **Step 2: 拉取 lucide SVG**
+- [x] **Step 2: 拉取 lucide SVG**
 
 方式 A（零依赖）：从 https://lucide.dev/icons/ 单独下载所需 SVG，放入 `ui_designer/assets/icons/lucide/`。
 
@@ -528,7 +530,7 @@ PY
 
 确保 SVG viewBox 为 `0 0 24 24`、`stroke="currentColor"`、`stroke-width="2"`、`fill="none"` 的 lucide 标准格式。
 
-- [ ] **Step 3: 写映射表 MAPPING.md**
+- [x] **Step 3: 写映射表 MAPPING.md**
 
 ```markdown
 # Lucide Icon Mapping
@@ -554,7 +556,7 @@ PY
 
 （完整表格由执行时按 widget 清单填充；最终应覆盖所有 `_ICON_DEFINITIONS` + `_WIDGET_ICON_KEYS` 值）
 
-- [ ] **Step 4: Commit 资源**
+- [x] **Step 4: Commit 资源**
 
 ```
 git add ui_designer/assets/icons/lucide
@@ -569,7 +571,7 @@ git commit -m "assets(icons): add lucide SVG icon set for IDE-style redesign"
 - Create: `ui_designer/tests/ui/test_iconography_lucide.py`
 - Modify: `ui_designer/ui/iconography.py`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```python
 """Lucide icon loader tests."""
@@ -605,7 +607,7 @@ def test_load_lucide_icon_missing_returns_fallback(qapp):
 
 （`qapp` fixture 可能已存在于 conftest，否则用 `pytest-qt` 提供。）
 
-- [ ] **Step 2: 跑测试确认 RED**
+- [x] **Step 2: 跑测试确认 RED**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_iconography_lucide.py -v
@@ -613,7 +615,7 @@ python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_iconogr
 
 Expected: FAIL（`load_lucide_icon` 不存在）。
 
-- [ ] **Step 3: 实现 `load_lucide_icon`**
+- [x] **Step 3: 实现 `load_lucide_icon`**
 
 在 `iconography.py` 顶部追加：
 
@@ -656,13 +658,13 @@ def load_lucide_icon(name: str, color: str = None, size: int = 16) -> QIcon:
     return _load_lucide_icon_cached(str(name), str(color), int(size))
 ```
 
-- [ ] **Step 4: 跑测试 → GREEN**
+- [x] **Step 4: 跑测试 → GREEN**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_iconography_lucide.py -v
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add ui_designer/ui/iconography.py ui_designer/tests/ui/test_iconography_lucide.py
@@ -676,7 +678,7 @@ git commit -m "feat(icons): add load_lucide_icon SVG loader with recoloring and 
 **Files:**
 - Modify: `ui_designer/ui/iconography.py`
 
-- [ ] **Step 1: 加 LEGACY 开关**
+- [x] **Step 1: 加 LEGACY 开关**
 
 ```python
 import os
@@ -684,7 +686,7 @@ import os
 _LEGACY_ICON_MODE = os.environ.get("EMBEDDEDGUI_LEGACY_ICONS", "0") == "1"
 ```
 
-- [ ] **Step 2: 在现有图标解析入口（例如 `icon_for_widget(key)` / `icon_for_semantic(key)` — 以实际函数名为准）新增 lucide 分支**
+- [x] **Step 2: 在现有图标解析入口（例如 `icon_for_widget(key)` / `icon_for_semantic(key)` — 以实际函数名为准）新增 lucide 分支**
 
 伪代码：
 
@@ -722,7 +724,7 @@ _LUCIDE_KEY_MAP = {
 }
 ```
 
-- [ ] **Step 3: 写集成测试**
+- [x] **Step 3: 写集成测试**
 
 `ui_designer/tests/ui/test_iconography_lucide.py` 追加：
 
@@ -742,14 +744,14 @@ def test_legacy_icon_mode_falls_back(qapp, monkeypatch):
     assert not icon.isNull()  # legacy path still works
 ```
 
-- [ ] **Step 4: 跑测试 + GUI 冒烟**
+- [x] **Step 4: 跑测试 + GUI 冒烟**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_iconography_lucide.py -v
 python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add ui_designer/ui/iconography.py ui_designer/tests/ui/test_iconography_lucide.py
@@ -763,7 +765,7 @@ git commit -m "feat(icons): route widget/semantic icons through lucide loader wi
 **Files:**
 - Modify: `ui_designer/ui/iconography.py` 或 `ui_designer/ui/theme.py`
 
-- [ ] **Step 1: 在 `apply_theme()` 末尾清空 lucide LRU 缓存**
+- [x] **Step 1: 在 `apply_theme()` 末尾清空 lucide LRU 缓存**
 
 在 `theme.py` 的 `apply_theme(app, mode, density)` 末尾添加：
 
@@ -775,7 +777,7 @@ except ImportError:
     pass
 ```
 
-- [ ] **Step 2: 写断言**
+- [x] **Step 2: 写断言**
 
 ```python
 def test_theme_switch_clears_lucide_cache(qapp):
@@ -787,13 +789,13 @@ def test_theme_switch_clears_lucide_cache(qapp):
     assert _load_lucide_icon_cached.cache_info().currsize == 0
 ```
 
-- [ ] **Step 3: 跑测试**
+- [x] **Step 3: 跑测试**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_iconography_lucide.py -v
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```
 git add -u
@@ -805,6 +807,8 @@ git commit -m "fix(icons): invalidate lucide cache on theme change for proper re
 ### Task 2.5: 最终肉眼验收
 
 - [ ] **Step 1: 启动并对比**
+
+补充：已完成 modern/legacy 两条路径的 Qt 级别短启动可见性检查；工具条和项目加载态的图标肉眼对比仍待补充截图。
 
 ```
 python ui_designer/main.py --sdk-root sdk/EmbeddedGUI
@@ -826,7 +830,7 @@ python ui_designer/main.py --sdk-root sdk/EmbeddedGUI
 
 确认能回退到老图标，证明回滚路径可用。
 
-- [ ] **Step 3: 跑全量 pytest**
+- [x] **Step 3: 跑全量 pytest**
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests -v --tb=short
@@ -834,7 +838,7 @@ python -m pytest -c ui_designer/pyproject.toml ui_designer/tests -v --tb=short
 
 Expected: 全绿。
 
-- [ ] **Step 4: 更新 Spec 状态为 Done**
+- [x] **Step 4: 更新 Spec 状态为 Done**
 
 在 spec 文件顶部改 `Status: Draft` → `Status: Implemented`。
 
