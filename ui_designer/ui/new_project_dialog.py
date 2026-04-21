@@ -79,8 +79,8 @@ class NewProjectDialog(QDialog):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(10)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("new_project_header")
@@ -138,7 +138,7 @@ class NewProjectDialog(QDialog):
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(10)
+        content_layout.setSpacing(8)
 
         workspace_card = QFrame()
         workspace_card.setObjectName("new_project_form_card")
@@ -199,7 +199,7 @@ class NewProjectDialog(QDialog):
 
         right_column = QVBoxLayout()
         right_column.setContentsMargins(0, 0, 0, 0)
-        right_column.setSpacing(10)
+        right_column.setSpacing(8)
 
         project_card = QFrame()
         project_card.setObjectName("new_project_form_card")

@@ -39,6 +39,11 @@ def _find_label_by_text(root, text):
     raise AssertionError(f"Label not found: {text}")
 
 
+def _layout_margins_tuple(layout):
+    margins = layout.contentsMargins()
+    return (margins.left(), margins.top(), margins.right(), margins.bottom())
+
+
 @_skip_no_qt
 class TestAppSelectorDialog:
     @pytest.mark.skip(reason="flaky Windows tempdir cleanup in this environment")
@@ -88,17 +93,13 @@ class TestAppSelectorDialog:
             "Example header. Open Example dialog: SDK root none. Search none. "
             "Unmanaged SDK examples off. Examples list: 1 entry. Selection: none."
         )
-        assert root_layout.spacing() == 10
-        assert (
-            header_margins.left(),
-            header_margins.top(),
-            header_margins.right(),
-            header_margins.bottom(),
-        ) == (12, 10, 12, 10)
+        assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
+        assert root_layout.spacing() == 8
+        assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
-        assert content_layout.spacing() == 10
-        assert left_column.spacing() == 10
-        assert right_column.spacing() == 10
+        assert content_layout.spacing() == 8
+        assert left_column.spacing() == 8
+        assert right_column.spacing() == 8
         assert root_card_layout.spacing() == 8
         assert options_layout.spacing() == 8
         assert browser_layout.spacing() == 8
@@ -621,17 +622,13 @@ class TestNewProjectDialog:
             f"New project header. New Project dialog: SDK root none. Parent directory {normalized_parent}. "
             "App name none. Size 240 by 320."
         )
-        assert root_layout.spacing() == 10
-        assert (
-            header_margins.left(),
-            header_margins.top(),
-            header_margins.right(),
-            header_margins.bottom(),
-        ) == (12, 10, 12, 10)
+        assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
+        assert root_layout.spacing() == 8
+        assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
-        assert content_layout.spacing() == 10
+        assert content_layout.spacing() == 8
         assert workspace_layout.spacing() == 8
-        assert right_column.spacing() == 10
+        assert right_column.spacing() == 8
         assert project_layout.spacing() == 8
         assert summary_layout.spacing() == 6
         assert dialog._eyebrow_label.isHidden()

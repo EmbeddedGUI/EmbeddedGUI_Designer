@@ -174,8 +174,8 @@ class AppSelectorDialog(QDialog):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(10)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("app_selector_header")
@@ -233,11 +233,11 @@ class AppSelectorDialog(QDialog):
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(10)
+        content_layout.setSpacing(8)
 
         left_column = QVBoxLayout()
         left_column.setContentsMargins(0, 0, 0, 0)
-        left_column.setSpacing(10)
+        left_column.setSpacing(8)
 
         root_card = QFrame()
         root_card.setObjectName("app_selector_root_card")
@@ -318,7 +318,7 @@ class AppSelectorDialog(QDialog):
 
         right_column = QVBoxLayout()
         right_column.setContentsMargins(0, 0, 0, 0)
-        right_column.setSpacing(10)
+        right_column.setSpacing(8)
 
         browser_card = QFrame()
         browser_card.setObjectName("app_selector_browser_card")
