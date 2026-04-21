@@ -45,6 +45,11 @@ class _FakeUrlDropEvent:
         self.ignored = True
 
 
+def _layout_margins_tuple(layout):
+    margins = layout.contentsMargins()
+    return (margins.left(), margins.top(), margins.right(), margins.bottom())
+
+
 @pytest.mark.usefixtures("isolated_config")
 class TestResourceGeneratorWindow:
     @_skip_no_qt
@@ -2575,6 +2580,94 @@ class TestResourceGeneratorWindow:
         assert dialog._count_label.text() == "Linked text files: 1"
         assert dialog._remove_missing_button.isEnabled() is False
         dialog.close()
+
+    @_skip_no_qt
+    @pytest.mark.parametrize(
+        ("dialog_name", "kwargs"),
+        [
+            ("_QuickImageResizeDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageRotateDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageFlipDialog", {"output_filename": "hero.png"}),
+            ("_QuickImageCropDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageBorderDialog", {"output_filename": "hero.png"}),
+            ("_QuickImageBackgroundDialog", {"output_filename": "hero.png"}),
+            ("_QuickImageRoundCornersDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageOpacityDialog", {"output_filename": "hero.png"}),
+            ("_QuickThumbnailBatchDialog", {"width": 320, "height": 240, "output_folder": "thumbnails", "suffix": "_thumb"}),
+            ("_QuickImageNormalizeDialog", {"output_folder": "normalized", "suffix": "_normalized"}),
+            ("_QuickImageCompressDialog", {"output_folder": "compressed", "suffix": "_compressed", "colors": 64}),
+            ("_QuickFontPrerenderDialog", {"output_folder": "font_previews", "suffix": "_preview", "sample_text": ""}),
+            ("_QuickImagePlaceholderDialog", {"width": 320, "height": 240, "output_folder": "placeholders"}),
+        ],
+    )
+    def test_quick_resource_dialogs_use_compact_shell_and_form_spacing(self, qapp, dialog_name, kwargs):
+        from PyQt5.QtWidgets import QFormLayout
+
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+
+        dialog_cls = getattr(resource_generator_window_module, dialog_name)
+        dialog = dialog_cls(parent=None, **kwargs)
+        try:
+            layout = dialog.layout()
+            assert _layout_margins_tuple(layout) == (12, 12, 12, 12)
+            assert layout.spacing() == 8
+
+            form = next(
+                (
+                    child_layout
+                    for index in range(layout.count())
+                    if (child_layout := layout.itemAt(index).layout()) is not None and isinstance(child_layout, QFormLayout)
+                ),
+                None,
+            )
+            assert form is not None
+            assert form.spacing() == 6
+        finally:
+            dialog.close()
+
+    @_skip_no_qt
+    def test_font_text_dialogs_use_compact_shell_spacing(self, qapp, tmp_path):
+        from ui_designer.ui.resource_generator_window import _FontTextEditorDialog, _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+        (source_dir / "ui_text.txt").write_text("HELLO", encoding="utf-8")
+
+        editor_dialog = _FontTextEditorDialog(
+            filename="charset/ui_text.txt",
+            initial_text="HELLO",
+            is_new_file=False,
+            parent=None,
+        )
+        links_dialog = _FontTextLinksDialog(
+            initial_items=["ui_text.txt"],
+            source_dir=str(source_dir),
+            parent=None,
+        )
+        try:
+            editor_layout = editor_dialog.layout()
+            assert _layout_margins_tuple(editor_layout) == (12, 12, 12, 12)
+            assert editor_layout.spacing() == 8
+
+            links_layout = links_dialog.layout()
+            assert _layout_margins_tuple(links_layout) == (12, 12, 12, 12)
+            assert links_layout.spacing() == 8
+
+            content_row = next(
+                (
+                    child_layout
+                    for index in range(links_layout.count())
+                    if (child_layout := links_layout.itemAt(index).layout()) is not None
+                    and child_layout.count() > 0
+                    and child_layout.itemAt(0).widget() is links_dialog._list_widget
+                ),
+                None,
+            )
+            assert content_row is not None
+            assert content_row.spacing() == 8
+        finally:
+            editor_dialog.close()
+            links_dialog.close()
 
     @_skip_no_qt
     def test_font_text_links_dialog_updates_preview_for_selected_item(self, qapp, tmp_path):

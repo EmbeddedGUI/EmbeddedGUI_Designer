@@ -95,6 +95,9 @@ _DEFAULT_SIMPLE_PREVIEW_SPLITTER_SIZES = [460, 460]
 _DEFAULT_SIMPLE_ASSET_COLUMN_WIDTHS = [88, 220, 360, 280]
 _FONT_TEXT_PREVIEW_CHAR_LIMIT = 4096
 _FONT_TEXT_COMBINED_PREVIEW_CHAR_LIMIT = 8192
+_COMPACT_DIALOG_MARGINS = (12, 12, 12, 12)
+_COMPACT_DIALOG_SPACING = 8
+_COMPACT_DIALOG_FORM_SPACING = 6
 
 
 def _best_contrast_color(background: QColor, *candidates) -> QColor:
@@ -248,6 +251,18 @@ def _pil_image_to_qpixmap(image) -> QPixmap:
     return QPixmap.fromImage(qimage.copy())
 
 
+def _apply_compact_dialog_layout(layout) -> None:
+    left, top, right, bottom = _COMPACT_DIALOG_MARGINS
+    layout.setContentsMargins(left, top, right, bottom)
+    layout.setSpacing(_COMPACT_DIALOG_SPACING)
+
+
+def _create_compact_dialog_form() -> QFormLayout:
+    form = QFormLayout()
+    form.setSpacing(_COMPACT_DIALOG_FORM_SPACING)
+    return form
+
+
 class _QuickImageResizeDialog(QDialog):
     def __init__(self, *, width: int, height: int, output_filename: str, parent=None):
         super().__init__(parent)
@@ -257,14 +272,12 @@ class _QuickImageResizeDialog(QDialog):
         self._syncing_size = False
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel(f"Current size: {width} x {height}")
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._width_spin = QSpinBox()
         self._width_spin.setRange(1, 8192)
@@ -328,14 +341,12 @@ class _QuickImageRotateDialog(QDialog):
         self.setMinimumWidth(360)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         self._summary = QLabel("")
         layout.addWidget(self._summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._rotation_combo = QComboBox()
         self._rotation_combo.addItem("90 Right", 90)
@@ -375,15 +386,13 @@ class _QuickImageFlipDialog(QDialog):
         self.setMinimumWidth(360)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel("Choose how to mirror the current image.")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._mode_combo = QComboBox()
         self._mode_combo.addItem("Horizontal", "horizontal")
@@ -413,14 +422,12 @@ class _QuickImageCropDialog(QDialog):
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel(f"Current size: {width} x {height}")
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._x_spin = QSpinBox()
         self._x_spin.setRange(0, max(int(width) - 1, 0))
@@ -474,15 +481,13 @@ class _QuickImageBorderDialog(QDialog):
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel("Extend the image with a simple solid-color border.")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._border_spin = QSpinBox()
         self._border_spin.setRange(1, 512)
@@ -519,15 +524,13 @@ class _QuickImageBackgroundDialog(QDialog):
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel("Fill transparent areas with a solid background color while keeping the image size unchanged.")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._color_edit = QLineEdit("#FFFFFF")
         self._color_edit.setPlaceholderText("#RRGGBB or #RRGGBBAA")
@@ -556,15 +559,13 @@ class _QuickImageRoundCornersDialog(QDialog):
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel(f"Make the outer corners transparent while keeping the image size unchanged ({width} x {height}).")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         max_radius = max(1, int(math.ceil(min(max(int(width or 1), 1), max(int(height or 1), 1)) / 2.0)))
         self._radius_spin = QSpinBox()
@@ -595,15 +596,13 @@ class _QuickImageOpacityDialog(QDialog):
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel("Scale the image alpha to quickly make faded or disabled-looking variants.")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._opacity_spin = QSpinBox()
         self._opacity_spin.setRange(1, 100)
@@ -634,15 +633,13 @@ class _QuickThumbnailBatchDialog(QDialog):
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel("Create resized thumbnail images for every image asset in quick mode.")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._width_spin = QSpinBox()
         self._width_spin.setRange(1, 4096)
@@ -687,15 +684,13 @@ class _QuickImageNormalizeDialog(QDialog):
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel("Create normalized PNG copies for every image asset in quick mode.")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._folder_edit = QLineEdit(str(output_folder or "").strip())
         form.addRow("Output Folder", self._folder_edit)
@@ -724,15 +719,13 @@ class _QuickImageCompressDialog(QDialog):
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel("Create compressed PNG copies for every image asset in quick mode.")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._folder_edit = QLineEdit(str(output_folder or "").strip())
         form.addRow("Output Folder", self._folder_edit)
@@ -769,15 +762,13 @@ class _QuickFontPrerenderDialog(QDialog):
         self.setMinimumWidth(420)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel("Render each font asset into a PNG preview card so quick mode users can compare fonts visually.")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._folder_edit = QLineEdit(str(output_folder or "").strip())
         form.addRow("Output Folder", self._folder_edit)
@@ -813,15 +804,13 @@ class _QuickImagePlaceholderDialog(QDialog):
         self.setMinimumWidth(400)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel("Create simple PNG placeholders for image entries whose files are currently missing.")
         summary.setWordWrap(True)
         layout.addWidget(summary)
 
-        form = QFormLayout()
-        form.setSpacing(8)
+        form = _create_compact_dialog_form()
 
         self._width_spin = QSpinBox()
         self._width_spin.setRange(16, 4096)
@@ -898,8 +887,7 @@ class _FontTextEditorDialog(QDialog):
         self.setMinimumSize(560, 420)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel(
             "Edit the UTF-8 text content used to generate glyphs for this font."
@@ -943,8 +931,7 @@ class _FontTextLinksDialog(QDialog):
         self._source_dir = str(source_dir or "").strip()
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        _apply_compact_dialog_layout(layout)
 
         summary = QLabel("Manage linked UTF-8 text files. Drag to reorder them. Duplicates are removed when you save.")
         summary.setWordWrap(True)
@@ -960,7 +947,7 @@ class _FontTextLinksDialog(QDialog):
 
         content_row = QHBoxLayout()
         content_row.setContentsMargins(0, 0, 0, 0)
-        content_row.setSpacing(10)
+        content_row.setSpacing(_COMPACT_DIALOG_SPACING)
         layout.addLayout(content_row, 1)
 
         self._list_widget = QListWidget()
