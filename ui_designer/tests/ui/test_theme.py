@@ -132,7 +132,9 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert t["success"] in css.split('QLabel[hintTone="success"]', 1)[1].split("}", 1)[0]
         assert t["shell_bg"] in css.split("QMainWindow, QDialog", 1)[1].split("}", 1)[0]
         assert "QTabBar::tab:selected" in css
-        assert t["panel_raised"] in css.split("QTabBar::tab:selected", 1)[1].split("}", 1)[0]
+        selected_tab = css.split("QTabBar::tab:selected", 1)[1].split("}", 1)[0]
+        assert f"background-color: {t['panel']};" in selected_tab
+        assert f"border-top: 2px solid {t['accent']};" in selected_tab
         left_tabs_pane = css.split("QTabWidget#workspace_left_tabs::pane {", 1)[1].split("}", 1)[0]
         left_tabs_tab = css.split("QTabWidget#workspace_left_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
         compact_panel_title = css.split("QWidget#project_workspace_panel QLabel#workspace_section_title,", 1)[1].split("}", 1)[0]
@@ -1206,14 +1208,14 @@ def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
         for expected_kind, widget in widgets:
             assert widget.property("_designer_fluent_engineering_style") == expected_kind
 
-        assert "border-radius: 0px;" in widgets[0][1].styleSheet()
-        assert "border-radius: 0px;" in widgets[1][1].styleSheet()
+        assert "border-radius: 4px;" in widgets[0][1].styleSheet()
+        assert "border-radius: 4px;" in widgets[1][1].styleSheet()
         assert "#lineEditButton" in widgets[1][1].styleSheet()
-        assert "border-radius: 0px;" in widgets[1][1].styleSheet()
-        assert "border-radius: 0px;" in widgets[2][1].styleSheet()
+        assert "border-radius: 4px;" in widgets[1][1].styleSheet()
+        assert "border-radius: 4px;" in widgets[2][1].styleSheet()
         assert "SpinButton" in widgets[3][1].styleSheet()
-        assert "border-radius: 0px;" in widgets[3][1].styleSheet()
-        assert "border-radius: 0px;" in widgets[3][1].styleSheet()
+        assert "border-radius: 4px;" in widgets[3][1].styleSheet()
+        assert "border-radius: 4px;" in widgets[3][1].styleSheet()
     finally:
         for _, widget in widgets:
             widget.close()
@@ -1262,8 +1264,8 @@ def test_apply_theme_patches_new_fluent_widgets_after_theme_install():
 
         assert button.property("_designer_fluent_engineering_style") == "button"
         assert search.property("_designer_fluent_engineering_style") == "line_edit"
-        assert "border-radius: 0px;" in button.styleSheet()
-        assert "border-radius: 0px;" in search.styleSheet()
+        assert "border-radius: 4px;" in button.styleSheet()
+        assert "border-radius: 4px;" in search.styleSheet()
     finally:
         button.close()
         button.deleteLater()
@@ -1303,16 +1305,16 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
         assert browse_button.property("_designer_fluent_engineering_style") == "property_panel_button"
 
         assert "#lineEditButton" in search.styleSheet()
-        assert "border-radius: 0px;" in search.styleSheet()
+        assert "border-radius: 4px;" in search.styleSheet()
         assert "min-height: 24px;" in search.styleSheet()
         assert "padding: 0px 6px;" in search.styleSheet()
         assert "min-width: 18px;" in search.styleSheet()
-        assert "border-radius: 0px;" in name_edit.styleSheet()
+        assert "border-radius: 4px;" in name_edit.styleSheet()
         assert "min-height: 24px;" in name_edit.styleSheet()
-        assert "border-radius: 0px;" in alpha_combo.styleSheet()
+        assert "border-radius: 4px;" in alpha_combo.styleSheet()
         assert "min-height: 24px;" in alpha_combo.styleSheet()
         assert x_spin.minimumHeight() >= 24
-        assert "border-radius: 0px;" in browse_button.styleSheet()
+        assert "border-radius: 4px;" in browse_button.styleSheet()
         assert "min-height: 22px;" in browse_button.styleSheet()
         assert "padding: 1px 6px;" in browse_button.styleSheet()
     finally:

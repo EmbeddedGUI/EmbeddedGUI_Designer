@@ -80,8 +80,8 @@ TransparentPushButton,
 TransparentToolButton,
 TransparentToggleButton,
 TransparentToggleToolButton {{
-    border-radius: 0px;
-    font-size: 13px;
+    border-radius: 4px;
+    font-size: 12px;
 }}
 """
 
@@ -100,7 +100,7 @@ TransparentPushButton,
 TransparentToolButton,
 TransparentToggleButton,
 TransparentToggleToolButton {
-    border-radius: 0px;
+    border-radius: 4px;
     min-height: 22px;
     padding: 1px 6px;
 }
@@ -111,13 +111,13 @@ LineEdit,
 TextEdit,
 PlainTextEdit,
 TextBrowser {{
-    border-radius: 0px;
+    border-radius: 4px;
     padding: 0px 8px;
-    font-size: 13px;
+    font-size: 12px;
 }}
 
 #lineEditButton {{
-    border-radius: 0px;
+    border-radius: 4px;
 }}
 """
 
@@ -126,13 +126,13 @@ LineEdit,
 TextEdit,
 PlainTextEdit,
 TextBrowser {
-    border-radius: 0px;
+    border-radius: 4px;
     min-height: 24px;
     padding: 0px 6px;
 }
 
 #lineEditButton {
-    border-radius: 0px;
+    border-radius: 4px;
     min-width: 18px;
 }
 """
@@ -140,17 +140,17 @@ TextBrowser {
 _FLUENT_COMBO_BOX_RADIUS_QSS = f"""
 ComboBox,
 ModelComboBox {{
-    border-radius: 0px;
+    border-radius: 4px;
     min-height: 24px;
     padding: 0px 8px;
-    font-size: 13px;
+    font-size: 12px;
 }}
 """
 
 _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = """
 ComboBox,
 ModelComboBox {
-    border-radius: 0px;
+    border-radius: 4px;
     min-height: 24px;
     padding: 0px 6px;
 }
@@ -167,14 +167,14 @@ CompactDoubleSpinBox,
 CompactDateEdit,
 CompactDateTimeEdit,
 CompactTimeEdit {{
-    border-radius: 0px;
+    border-radius: 4px;
     min-height: 24px;
     padding: 0px 8px;
-    font-size: 13px;
+    font-size: 12px;
 }}
 
 SpinButton {{
-    border-radius: 0px;
+    border-radius: 4px;
 }}
 """
 
@@ -189,13 +189,13 @@ CompactDoubleSpinBox,
 CompactDateEdit,
 CompactDateTimeEdit,
 CompactTimeEdit {
-    border-radius: 0px;
+    border-radius: 4px;
     min-height: 24px;
     padding: 0px 6px;
 }
 
 SpinButton {
-    border-radius: 0px;
+    border-radius: 4px;
     min-width: 18px;
 }
 """
@@ -939,7 +939,7 @@ QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox, QSpinBox, QDoubleSpinBox
     background-color: {t['panel_raised']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: 0px;
+    border-radius: {t['r_sm']}px;
     padding: {t['pad_input_v']}px {t['pad_input_h']}px;
     selection-background-color: {t['selection']};
     font-size: {t['fs_body']}px;
@@ -958,7 +958,7 @@ QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBo
 }}
 
 QSpinBox[propertyPanelSpin="true"], QDoubleSpinBox[propertyPanelSpin="true"] {{
-    border-radius: 0px;
+    border-radius: {t['r_sm']}px;
     min-height: 24px;
     padding: 0px 52px 0px 6px;
 }}
@@ -1001,7 +1001,7 @@ QPushButton, QToolButton {{
     background-color: {t['panel_raised']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: 0px;
+    border-radius: {t['r_sm']}px;
     padding: {t['pad_btn_v']}px {t['pad_btn_h']}px;
     font-size: {t['fs_body']}px;
     font-weight: {t['fw_medium']};
@@ -1035,23 +1035,42 @@ QListView::item, QTreeView::item, QTableView::item, QListWidget::item, QTreeWidg
     min-height: 24px;
 }}
 
-QListView::item:hover, QTreeView::item:hover, QTableView::item:hover, QListWidget::item:hover, QTreeWidget::item:hover {{
+QListView::item:hover, QTreeView::item:hover, QListWidget::item:hover, QTreeWidget::item:hover {{
+    background-color: rgba(59, 130, 246, 0.10);
+}}
+
+QTableView::item:hover, QTableWidget::item:hover {{
     background-color: {t['surface_hover']};
 }}
 
-QListView::item:selected, QTreeView::item:selected, QTableView::item:selected, QListWidget::item:selected, QTreeWidget::item:selected {{
+QListView::item:selected, QTreeView::item:selected, QListWidget::item:selected, QTreeWidget::item:selected {{
+    background-color: rgba(59, 130, 246, 0.25);
+    color: #BFDBFE;
+}}
+
+QTableView::item:selected, QTableWidget::item:selected {{
     background-color: {t['selection']};
     color: {t['text']};
 }}
 
-QListView::item:selected:!active, QTreeView::item:selected:!active, QTableView::item:selected:!active,
-QListWidget::item:selected:!active, QTreeWidget::item:selected:!active, QTableWidget::item:selected:!active {{
+QListView::item:selected:!active, QTreeView::item:selected:!active,
+QListWidget::item:selected:!active, QTreeWidget::item:selected:!active {{
+    background-color: {t['selection_soft']};
+    color: #BFDBFE;
+}}
+
+QTableView::item:selected:!active, QTableWidget::item:selected:!active {{
     background-color: {t['selection_soft']};
     color: {t['text']};
 }}
 
-QListView::item:selected:hover, QTreeView::item:selected:hover, QTableView::item:selected:hover,
-QListWidget::item:selected:hover, QTreeWidget::item:selected:hover, QTableWidget::item:selected:hover {{
+QListView::item:selected:hover, QTreeView::item:selected:hover,
+QListWidget::item:selected:hover, QTreeWidget::item:selected:hover {{
+    background-color: rgba(59, 130, 246, 0.25);
+    color: #BFDBFE;
+}}
+
+QTableView::item:selected:hover, QTableWidget::item:selected:hover {{
     background-color: {t['selection']};
 }}
 
@@ -1072,24 +1091,27 @@ QTabWidget::pane {{
 }}
 
 QTabBar::tab {{
-    background-color: transparent;
-    color: {t['text_muted']};
-    padding: 2px {t['space_sm']}px;
+    background-color: {t['sidebar_bg']};
+    color: {t['text_soft']};
+    padding: {t['space_xxs']}px {t['space_md']}px;
     margin-right: {t['space_xs']}px;
     min-height: {t['h_tab_min']}px;
     border: 1px solid transparent;
+    border-top: 2px solid transparent;
     border-radius: 0px;
 }}
 
 QTabBar::tab:selected {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     color: {t['text']};
     border: 1px solid {t['border']};
+    border-top: 2px solid {t['accent']};
     border-bottom-color: {t['border']};
 }}
 
 QTabBar::tab:hover:!selected {{
     background-color: {t['surface_hover']};
+    color: {t['text_muted']};
 }}
 
 QMenuBar {{
