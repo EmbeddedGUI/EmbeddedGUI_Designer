@@ -49,6 +49,25 @@ def test_load_lucide_icon_missing_returns_fallback(qapp):
     assert isinstance(icon, QIcon)
 
 
+def test_lucide_mapping_covers_widget_semantic_keys():
+    module = _reload_iconography()
+    missing = sorted(set(module._WIDGET_ICON_KEYS.values()) - set(module._LUCIDE_KEY_MAP))
+    assert missing == []
+
+
+def test_lucide_mapping_covers_canonical_semantics_and_assets():
+    module = _reload_iconography()
+    missing_semantics = sorted(set(module._ICON_DEFINITIONS) - set(module._LUCIDE_KEY_MAP))
+    missing_assets = sorted(
+        name
+        for name in set(module._LUCIDE_KEY_MAP.values())
+        if not (module._LUCIDE_DIR / f"{name}.svg").is_file()
+    )
+
+    assert missing_semantics == []
+    assert missing_assets == []
+
+
 def test_load_lucide_icon_uses_theme_text_soft_by_default(qapp, monkeypatch):
     module = _reload_iconography()
     sentinel = _sentinel_icon(size=20)
