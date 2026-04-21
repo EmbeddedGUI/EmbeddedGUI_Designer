@@ -77,7 +77,20 @@ def test_legacy_icon_mode_falls_back(qapp, monkeypatch):
 
 def test_theme_switch_clears_lucide_cache(qapp):
     module = _reload_iconography()
-    module.load_lucide_icon("play", color="#D4D4D8", size=16)
-    assert module._load_lucide_icon_cached.cache_info().currsize >= 1
-    apply_theme(qapp, mode="dark")
-    assert module._load_lucide_icon_cached.cache_info().currsize == 0
+    original_stylesheet = qapp.styleSheet()
+    original_mode = qapp.property("designer_theme_mode")
+    original_density = qapp.property("designer_ui_density")
+    original_font_size = qapp.property("designer_font_size_pt")
+    original_fluent_mode = qapp.property("_designer_fluent_theme_mode")
+
+    try:
+        module.load_lucide_icon("play", color="#D4D4D8", size=16)
+        assert module._load_lucide_icon_cached.cache_info().currsize >= 1
+        apply_theme(qapp, mode="dark")
+        assert module._load_lucide_icon_cached.cache_info().currsize == 0
+    finally:
+        qapp.setStyleSheet(original_stylesheet)
+        qapp.setProperty("designer_theme_mode", original_mode)
+        qapp.setProperty("designer_ui_density", original_density)
+        qapp.setProperty("designer_font_size_pt", original_font_size)
+        qapp.setProperty("_designer_fluent_theme_mode", original_fluent_mode)

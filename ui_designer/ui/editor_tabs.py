@@ -1,6 +1,6 @@
 """Editor tabs panel for Design / Split / Code workflows."""
 
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import QEvent, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QApplication,
@@ -69,6 +69,11 @@ class XmlEditor(QPlainTextEdit):
         font = designer_monospace_font(point_size=int(point_size))
         self.setFont(font)
         self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * 4)
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
+            self._highlighter.refresh_formats()
 
 
 class EditorTabs(QWidget):
@@ -177,7 +182,6 @@ class EditorTabs(QWidget):
         self._stack.addWidget(self._design_container)
 
         self._code_editor = XmlEditor()
-        self._code_editor.textChanged.connect(self._on_code_text_changed)
         self._stack.addWidget(self._code_editor)
 
         self._split_container = QWidget()
@@ -187,7 +191,6 @@ class EditorTabs(QWidget):
         self._split = QSplitter(Qt.Horizontal)
         self._split.setObjectName("editor_tabs_splitter")
         self._split_editor = XmlEditor()
-        self._split_editor.textChanged.connect(self._on_code_text_changed)
         self._split_preview_container = QWidget()
         self._split_preview_container.setObjectName("editor_tabs_preview_surface")
         self._split.addWidget(self._split_editor)
@@ -206,6 +209,8 @@ class EditorTabs(QWidget):
         split_layout.addWidget(self._split)
         self._stack.addWidget(self._split_container)
 
+        self._code_editor.textChanged.connect(self._on_code_text_changed)
+        self._split_editor.textChanged.connect(self._on_code_text_changed)
         self._update_accessibility_metadata()
 
     def _mode_label(self, mode=None):

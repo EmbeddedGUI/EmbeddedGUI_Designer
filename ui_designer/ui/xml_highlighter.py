@@ -1,7 +1,24 @@
 """XML syntax highlighter for the Code view editor."""
 
-from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QFont
+from __future__ import annotations
+
 from PyQt5.QtCore import QRegularExpression
+from PyQt5.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
+
+from .theme import app_theme_tokens
+
+
+def xml_syntax_palette(app=None):
+    """Return the active XML syntax palette derived from theme tokens."""
+    tokens = app_theme_tokens(app)
+    return {
+        "meta": tokens["syntax_meta"],
+        "comment": tokens["syntax_comment"],
+        "tag": tokens["syntax_tag"],
+        "attr": tokens["syntax_attr"],
+        "value": tokens["syntax_value"],
+        "bracket": tokens["syntax_bracket"],
+    }
 
 
 class XmlSyntaxHighlighter(QSyntaxHighlighter):
@@ -9,40 +26,61 @@ class XmlSyntaxHighlighter(QSyntaxHighlighter):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._palette = {}
+        self._formats = {}
         self._rules = []
+        self.refresh_formats()
 
-        # XML declaration / processing instruction  <?xml ... ?>
-        fmt_pi = QTextCharFormat()
-        fmt_pi.setForeground(QColor("#808080"))
-        self._rules.append((QRegularExpression(r"<\?.*?\?>"), fmt_pi))
+    def current_palette(self):
+        """Return the active color palette used by the highlighter."""
+        return dict(self._palette)
 
-        # Comments  <!-- ... -->
+    def format_for_role(self, role):
+        """Return the configured text format for a syntax role."""
+        return QTextCharFormat(self._formats[str(role)])
+
+    def refresh_formats(self):
+        """Rebuild formats from the active theme and rehighlight the document."""
+        self._palette = xml_syntax_palette()
+
+        fmt_meta = QTextCharFormat()
+        fmt_meta.setForeground(QColor(self._palette["meta"]))
+
         fmt_comment = QTextCharFormat()
-        fmt_comment.setForeground(QColor("#6A9955"))
+        fmt_comment.setForeground(QColor(self._palette["comment"]))
         fmt_comment.setFontItalic(True)
-        self._rules.append((QRegularExpression(r"<!--.*?-->"), fmt_comment))
 
-        # Tag names  <TagName  or </TagName>
         fmt_tag = QTextCharFormat()
-        fmt_tag.setForeground(QColor("#569CD6"))
+        fmt_tag.setForeground(QColor(self._palette["tag"]))
         fmt_tag.setFontWeight(QFont.Bold)
-        self._rules.append((QRegularExpression(r"</?[\w:-]+"), fmt_tag))
 
-        # Attribute names  name=
         fmt_attr = QTextCharFormat()
-        fmt_attr.setForeground(QColor("#9CDCFE"))
-        self._rules.append((QRegularExpression(r'\b[\w:-]+(?=\s*=)'), fmt_attr))
+        fmt_attr.setForeground(QColor(self._palette["attr"]))
 
-        # Attribute values  "value"
         fmt_value = QTextCharFormat()
-        fmt_value.setForeground(QColor("#CE9178"))
-        self._rules.append((QRegularExpression(r'"[^"]*"'), fmt_value))
-        self._rules.append((QRegularExpression(r"'[^']*'"), fmt_value))
+        fmt_value.setForeground(QColor(self._palette["value"]))
 
-        # Angle brackets and closing slash
         fmt_bracket = QTextCharFormat()
-        fmt_bracket.setForeground(QColor("#808080"))
-        self._rules.append((QRegularExpression(r"[<>/?]"), fmt_bracket))
+        fmt_bracket.setForeground(QColor(self._palette["bracket"]))
+
+        self._formats = {
+            "meta": fmt_meta,
+            "comment": fmt_comment,
+            "tag": fmt_tag,
+            "attr": fmt_attr,
+            "value": fmt_value,
+            "bracket": fmt_bracket,
+        }
+        self._rules = [
+            (QRegularExpression(r"<\?.*?\?>"), fmt_meta),
+            (QRegularExpression(r"<!--.*?-->"), fmt_comment),
+            (QRegularExpression(r"</?[\w:-]+"), fmt_tag),
+            (QRegularExpression(r'\b[\w:-]+(?=\s*=)'), fmt_attr),
+            (QRegularExpression(r'"[^"]*"'), fmt_value),
+            (QRegularExpression(r"'[^']*'"), fmt_value),
+            (QRegularExpression(r"[<>/?]"), fmt_bracket),
+        ]
+        self.rehighlight()
 
     def highlightBlock(self, text):
         for pattern, fmt in self._rules:

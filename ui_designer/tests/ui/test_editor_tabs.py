@@ -183,3 +183,57 @@ class TestEditorTabsAccessibility:
         tabs.set_xml_text("<page />")
         assert accessible_calls == 2
         tabs.deleteLater()
+
+    def test_xml_editor_refreshes_syntax_highlighter_on_theme_change(self, qapp):
+        from PyQt5.QtCore import QEvent
+
+        from ui_designer.ui.editor_tabs import XmlEditor
+        from ui_designer.ui.theme import app_theme_tokens
+
+        qapp.setProperty("designer_theme_mode", "dark")
+        editor = XmlEditor()
+
+        try:
+            dark_tokens = app_theme_tokens(qapp)
+            assert editor._highlighter.current_palette()["tag"] == dark_tokens["syntax_tag"]
+
+            qapp.setProperty("designer_theme_mode", "light")
+            editor.changeEvent(QEvent(QEvent.StyleChange))
+
+            light_tokens = app_theme_tokens(qapp)
+            assert editor._highlighter.current_palette()["tag"] == light_tokens["syntax_tag"]
+            assert editor._highlighter.current_palette()["comment"] == light_tokens["syntax_comment"]
+
+            qapp.setProperty("designer_theme_mode", "dark")
+            editor.changeEvent(QEvent(QEvent.PaletteChange))
+
+            dark_tokens = app_theme_tokens(qapp)
+            assert editor._highlighter.current_palette()["tag"] == dark_tokens["syntax_tag"]
+        finally:
+            editor.deleteLater()
+            qapp.setProperty("designer_theme_mode", None)
+
+    def test_editor_tabs_can_initialize_when_theme_is_preapplied(self, qapp):
+        from ui_designer.ui.editor_tabs import EditorTabs
+        from ui_designer.ui.theme import apply_theme
+
+        original_stylesheet = qapp.styleSheet()
+        original_mode = qapp.property("designer_theme_mode")
+        original_density = qapp.property("designer_ui_density")
+        original_font_size = qapp.property("designer_font_size_pt")
+        original_fluent_mode = qapp.property("_designer_fluent_theme_mode")
+
+        apply_theme(qapp, mode="dark")
+        tabs = EditorTabs(QWidget(), show_mode_switch=False)
+
+        try:
+            assert tabs.code_editor is not None
+            assert tabs.split_editor is not None
+            assert tabs.accessibleName() == "Editor tabs: Design mode. XML source is empty. Mode switch hidden."
+        finally:
+            tabs.deleteLater()
+            qapp.setStyleSheet(original_stylesheet)
+            qapp.setProperty("designer_theme_mode", original_mode)
+            qapp.setProperty("designer_ui_density", original_density)
+            qapp.setProperty("designer_font_size_pt", original_font_size)
+            qapp.setProperty("_designer_fluent_theme_mode", original_fluent_mode)
