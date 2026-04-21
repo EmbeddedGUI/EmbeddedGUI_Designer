@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import (
     QComboBox, QCheckBox, QToolButton, QLineEdit, QPlainTextEdit, QPushButton,
 )
 from PyQt5.QtCore import (
-    Qt, QSize, pyqtSignal, QMimeData, QUrl, QTimer, QRect,
+    QEvent, Qt, QSize, pyqtSignal, QMimeData, QUrl, QTimer, QRect,
 )
 from PyQt5.QtGui import (
     QPixmap, QIcon, QPixmapCache, QFontDatabase, QFont,
@@ -60,7 +60,7 @@ from ..services.font_charset_presets import (
 )
 from ..utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME, is_designer_resource_path
 from ..utils.scaffold import preferred_resource_source_dir, resource_images_dir
-from .theme import designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size
+from .theme import app_theme_tokens, designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size
 
 
 # -- Constants ----------------------------------------------------------
@@ -2130,6 +2130,12 @@ class ResourcePanel(QWidget):
         self.setAcceptDrops(True)
         self._init_ui()
 
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
+            for resource_type in ("image", "font", "text"):
+                self._refresh_resource_list(resource_type, selection_fallback="keep")
+
     # -- UI construction --
 
     def _init_ui(self):
@@ -2899,7 +2905,7 @@ class ResourcePanel(QWidget):
                 tooltip += f"\nFamily: {family}"
         if not os.path.isfile(full_path):
             tooltip += "\n\u26a0 File not found!"
-            item.setForeground(QColor(255, 100, 100))
+            item.setForeground(QColor(app_theme_tokens()["danger"]))
         _set_item_metadata(item, tooltip)
         return item
 

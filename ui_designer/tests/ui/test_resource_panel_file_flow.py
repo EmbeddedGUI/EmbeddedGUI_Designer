@@ -8,7 +8,7 @@ from ui_designer.tests.namespace_fixtures import build_overwrite_diff
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
 if HAS_PYQT5:
-    from PyQt5.QtCore import QTimer, Qt
+    from PyQt5.QtCore import QEvent, QTimer, Qt
     from PyQt5.QtWidgets import QApplication, QComboBox, QFrame, QLabel, QLineEdit, QMessageBox, QPushButton
 
 _skip_no_qt = skip_if_no_qt
@@ -135,6 +135,37 @@ class TestResourcePanelFileFlow:
         assert panel._selection_metric_value._resource_panel_metric_card.isHidden() is True
         assert len(header.findChildren(QFrame, "resource_panel_metric_card")) == 3
         panel.deleteLater()
+
+    def test_missing_resource_items_follow_theme_danger_token(self, qapp, tmp_path):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+        from ui_designer.ui.theme import app_theme_tokens
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+
+        catalog = ResourceCatalog()
+        catalog.add_image("missing.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+
+        try:
+            item = panel._image_list.item(0)
+            assert item.foreground().color().name().lower() == app_theme_tokens(qapp)["danger"].lower()
+            assert "File not found!" in item.toolTip()
+
+            qapp.setProperty("designer_theme_mode", "light")
+            panel.changeEvent(QEvent(QEvent.StyleChange))
+
+            item = panel._image_list.item(0)
+            assert item.foreground().color().name().lower() == app_theme_tokens(qapp)["danger"].lower()
+            assert "File not found!" in item.toolTip()
+        finally:
+            panel.deleteLater()
+            qapp.setProperty("designer_theme_mode", None)
 
     def test_more_button_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.resource_panel import ResourcePanel
