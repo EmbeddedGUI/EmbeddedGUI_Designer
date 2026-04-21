@@ -154,9 +154,10 @@ class TestResourceGeneratorWindow:
             assert window._simple_asset_empty_state.layout().spacing() == 8
             assert _layout_margins_tuple(assets_group.layout()) == (8, 8, 8, 8)
             assert assets_group.layout().spacing() == 8
-            assert _layout_margins_tuple(action_group.layout()) == (8, 8, 8, 8)
-            assert action_group.layout().horizontalSpacing() == 8
-            assert action_group.layout().verticalSpacing() == 8
+            assert _layout_margins_tuple(action_group.layout()) == (6, 6, 6, 6)
+            assert action_group.layout().horizontalSpacing() == 6
+            assert action_group.layout().verticalSpacing() == 6
+            assert window._simple_action_tabs.widget(0).layout().spacing() == 6
             assert _layout_margins_tuple(asset_preview_group.layout()) == (6, 6, 6, 6)
             assert asset_preview_group.layout().spacing() == 6
             assert preview_header.spacing() == 6

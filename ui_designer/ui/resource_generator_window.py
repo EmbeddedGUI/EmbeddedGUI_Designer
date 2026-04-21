@@ -2275,9 +2275,9 @@ class ResourceGeneratorWindow(QDialog):
     def _build_simple_action_group(self, title: str, buttons, *, columns: int) -> QGroupBox:
         group = QGroupBox(title)
         layout = QGridLayout(group)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setHorizontalSpacing(8)
-        layout.setVerticalSpacing(8)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setHorizontalSpacing(6)
+        layout.setVerticalSpacing(6)
         for index, button in enumerate(buttons):
             button.setMinimumHeight(30)
             layout.addWidget(button, index // columns, index % columns)
@@ -2289,7 +2289,7 @@ class ResourceGeneratorWindow(QDialog):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(6)
 
         summary = QLabel(description)
         summary.setWordWrap(True)
