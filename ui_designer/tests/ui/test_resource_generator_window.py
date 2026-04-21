@@ -132,6 +132,21 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_resource_generator_uses_compact_workspace_shell_spacing(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        try:
+            assert _layout_margins_tuple(window.layout()) == (12, 12, 12, 12)
+            assert window.layout().spacing() == 8
+            assert window._simple_page.layout().spacing() == 8
+            assert window._professional_page.layout().spacing() == 8
+            assert _layout_margins_tuple(window._simple_asset_empty_state.layout()) == (24, 20, 24, 20)
+            assert window._simple_asset_empty_state.layout().spacing() == 8
+        finally:
+            _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_asset_table_allows_interactive_column_resize(self, qapp):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
 
@@ -1329,6 +1344,23 @@ class TestResourceGeneratorWindow:
         assert exported.height() > 300
         assert window._status_label.text() == f"Exported preview board to '{normalize_path(str(output_path))}'."
         _close_window(window)
+
+    @_skip_no_qt
+    def test_quick_preview_board_dialog_uses_compact_spacing(self, qapp):
+        from PyQt5.QtWidgets import QLabel
+
+        from ui_designer.ui.resource_generator_window import _QuickPreviewBoardDialog
+
+        cards = [QLabel(f"Asset {index}") for index in range(4)]
+        dialog = _QuickPreviewBoardDialog(cards, total_assets=len(cards), parent=None)
+        try:
+            layout = dialog.layout()
+            assert _layout_margins_tuple(layout) == (12, 12, 12, 12)
+            assert layout.spacing() == 8
+            assert dialog._cards_layout.horizontalSpacing() == 8
+            assert dialog._cards_layout.verticalSpacing() == 8
+        finally:
+            dialog.close()
 
     @_skip_no_qt
     def test_invalid_raw_json_blocks_tab_switch(self, qapp, monkeypatch):

@@ -851,7 +851,7 @@ class _QuickPreviewBoardDialog(QDialog):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
 
         self._summary_label = QLabel(f"Previewing {total_assets} assets from quick mode.")
         self._summary_label.setWordWrap(True)
@@ -864,8 +864,8 @@ class _QuickPreviewBoardDialog(QDialog):
         container = QWidget()
         self._cards_layout = QGridLayout(container)
         self._cards_layout.setContentsMargins(0, 0, 0, 0)
-        self._cards_layout.setHorizontalSpacing(10)
-        self._cards_layout.setVerticalSpacing(10)
+        self._cards_layout.setHorizontalSpacing(8)
+        self._cards_layout.setVerticalSpacing(8)
 
         columns = 3
         for index, card in enumerate(cards):
@@ -1728,7 +1728,7 @@ class ResourceGeneratorWindow(QDialog):
         self.setWindowTitle("Resource Generator")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
 
         layout.addLayout(self._build_toolbar())
         layout.addWidget(self._build_path_group())
@@ -1791,7 +1791,7 @@ class ResourceGeneratorWindow(QDialog):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
 
         intro_group = QGroupBox("Quick Mode")
         intro_layout = QVBoxLayout(intro_group)
@@ -2376,7 +2376,7 @@ class ResourceGeneratorWindow(QDialog):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(24, 20, 24, 20)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
         layout.addStretch(1)
 
         self._simple_asset_empty_title = QLabel("No assets imported yet.")
@@ -2853,7 +2853,7 @@ class ResourceGeneratorWindow(QDialog):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
         layout.addWidget(self._build_center_splitter(), 1)
         layout.addWidget(self._build_bottom_tabs(), 1)
         return page
