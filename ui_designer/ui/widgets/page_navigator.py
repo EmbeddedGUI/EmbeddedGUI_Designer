@@ -62,11 +62,11 @@ class PageThumbnail(QWidget):
         self.setProperty("dirty", False)
         self.setProperty("startup", False)
         self.setCursor(Qt.PointingHandCursor)
-        self.setMinimumHeight(THUMB_HEIGHT + 8)
+        self.setMinimumHeight(THUMB_HEIGHT + 6)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setContentsMargins(1, 1, 1, 1)
         layout.setSpacing(2)
 
         self._preview_frame = QFrame()
@@ -308,7 +308,7 @@ class PageNavigator(QWidget):
         self._header_frame = QFrame()
         self._header_frame.setObjectName("page_navigator_header")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(6, 6, 6, 6)
+        header_layout.setContentsMargins(4, 4, 4, 4)
         header_layout.setSpacing(2)
 
         self._eyebrow_label = QLabel("Page Flow")

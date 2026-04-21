@@ -15,10 +15,10 @@ class TestPageNavigator:
         thumb = PageThumbnail("main_page")
         margins = thumb.layout().contentsMargins()
 
-        assert thumb.minimumHeight() == THUMB_HEIGHT + 8
+        assert thumb.minimumHeight() == THUMB_HEIGHT + 6
         assert thumb._thumb_label.width() == THUMB_WIDTH
         assert thumb._thumb_label.height() == THUMB_HEIGHT
-        assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (2, 2, 2, 2)
+        assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (1, 1, 1, 1)
         assert thumb.layout().spacing() == 2
         assert thumb.toolTip() == "Open page: main_page. Available. No unsaved changes."
         assert thumb.statusTip() == thumb.toolTip()
@@ -66,7 +66,7 @@ class TestPageNavigator:
         title_row = header_layout.itemAt(1).layout()
 
         assert root_layout.spacing() == 2
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
         assert title_row.spacing() == 2
         assert navigator._layout.spacing() == 2
         assert navigator.accessibleName() == "Page navigator: 0 pages. Current page: none. Startup page: none. No dirty pages."
@@ -109,7 +109,7 @@ class TestPageNavigator:
         header_margins = header_layout.contentsMargins()
         title_row = header_layout.itemAt(1).layout()
 
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
         assert title_row.spacing() == 2
         assert navigator._header_frame.accessibleName() == (
             "Page navigator header. Page navigator: 0 pages. Current page: none. Startup page: none. No dirty pages."
