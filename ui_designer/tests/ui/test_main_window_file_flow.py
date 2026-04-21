@@ -11432,7 +11432,7 @@ class TestMainWindowFileFlow:
         left_shell_layout = window._left_shell.layout()
         bottom_header_layout = window._bottom_header.layout()
         bottom_header_margins = bottom_header_layout.contentsMargins()
-        assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (6, 6, 6, 6)
+        assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (4, 4, 4, 4)
         assert editor_layout.spacing() == 2
         assert (toolbar_host_margins.left(), toolbar_host_margins.top(), toolbar_host_margins.right(), toolbar_host_margins.bottom()) == (1, 1, 1, 1)
         assert window._toolbar_command_row_layout.spacing() == 1
