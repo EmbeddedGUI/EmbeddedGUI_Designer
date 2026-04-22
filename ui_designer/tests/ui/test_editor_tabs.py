@@ -42,7 +42,7 @@ class TestEditorTabsAccessibility:
             "Editor tabs header. Editor tabs: Design mode. XML source is empty. Mode switch visible."
         )
         assert tabs.layout().spacing() == 2
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (2, 2, 2, 2)
         assert header_layout.spacing() == 2
         assert tabs._eyebrow_label.accessibleName() == "Editor engineering workspace surface."
         assert tabs._eyebrow_label.isHidden() is True

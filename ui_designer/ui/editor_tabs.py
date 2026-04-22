@@ -108,7 +108,7 @@ class EditorTabs(QWidget):
         self._header_frame.setObjectName("editor_tabs_header")
         self._header_frame.hide()
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(4, 4, 4, 4)
+        header_layout.setContentsMargins(2, 2, 2, 2)
         header_layout.setSpacing(2)
 
         self._eyebrow_label = QLabel("Editor")
