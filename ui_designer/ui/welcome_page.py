@@ -156,7 +156,7 @@ class WelcomePage(QWidget):
         self._hero.setObjectName("welcome_hero")
         hero_layout = QHBoxLayout(self._hero)
         hero_layout.setContentsMargins(12, 10, 12, 10)
-        hero_layout.setSpacing(12)
+        hero_layout.setSpacing(10)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
