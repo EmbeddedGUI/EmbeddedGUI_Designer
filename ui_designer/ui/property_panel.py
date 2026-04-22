@@ -242,7 +242,7 @@ class _PropertyGridSectionHandle:
 
 
 class _PropertyGridFormAdapter:
-    _VERTICAL_SPACING = 4
+    _VERTICAL_SPACING = 2
     _HORIZONTAL_SPACING = 0
 
     def __init__(self, panel, section_handle):
@@ -309,7 +309,7 @@ def _inspector_form():
     """Consistent label/field rhythm for inspector property forms (readable balanced density)."""
     form = QFormLayout()
     form.setContentsMargins(0, 0, 0, 0)
-    form.setSpacing(4)
+    form.setSpacing(2)
     form.setHorizontalSpacing(0)
     form.setRowWrapPolicy(QFormLayout.WrapAllRows)
     form.setLabelAlignment(Qt.AlignLeft | Qt.AlignBottom)

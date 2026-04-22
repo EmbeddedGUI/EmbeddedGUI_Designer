@@ -309,7 +309,7 @@ class TestPropertyPanelFileFlow:
             assert body.objectName() == "inspector_group_body"
             assert group.content_indent() > 0
             assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (0, 0, 0, 0)
-            assert form.verticalSpacing() == 4
+            assert form.verticalSpacing() == 2
             assert form.horizontalSpacing() == 0
 
         panel.deleteLater()
@@ -1250,7 +1250,7 @@ class TestPropertyPanelFileFlow:
             assert body.objectName() == "inspector_group_body"
             assert group.content_indent() > 0
             assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (0, 0, 0, 0)
-            assert form.verticalSpacing() == 4
+            assert form.verticalSpacing() == 2
             assert form.horizontalSpacing() == 0
 
         panel.deleteLater()
