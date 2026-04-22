@@ -1310,7 +1310,7 @@ class PropertyPanel(QWidget):
             card.setProperty("metricTone", tone)
         layout = QHBoxLayout(card)
         layout.setContentsMargins(5, 2, 5, 2)
-        layout.setSpacing(3)
+        layout.setSpacing(2)
 
         caption = QLabel(label)
         caption.setObjectName("property_panel_metric_label")

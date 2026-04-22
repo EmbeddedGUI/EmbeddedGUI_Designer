@@ -169,7 +169,7 @@ class TestPropertyPanelFileFlow:
         assert metric_grid.verticalSpacing() == 2
         card_layout = metric_cards[0].layout()
         assert isinstance(card_layout, QHBoxLayout)
-        assert card_layout.spacing() == 3
+        assert card_layout.spacing() == 2
         assert card_layout.itemAt(0).widget().objectName() == "property_panel_metric_label"
         assert card_layout.itemAt(2).widget().objectName() == "property_panel_metric_value"
         margins = card_layout.contentsMargins()
