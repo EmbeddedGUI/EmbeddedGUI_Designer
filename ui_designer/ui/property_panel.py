@@ -1843,7 +1843,7 @@ class PropertyPanel(QWidget):
         frame.setObjectName("workspace_hint_strip")
         frame.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(3, 3, 3, 3)
+        layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(1)
         frame.setLayout(layout)
 

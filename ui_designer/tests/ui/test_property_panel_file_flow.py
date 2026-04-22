@@ -1207,8 +1207,8 @@ class TestPropertyPanelFileFlow:
         assert summary_layout.spacing() == 2
         assert chips_row.spacing() == 2
         assert panel._context_frame.isHidden() is True
-        assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (3, 3)
-        assert (hint_layout.contentsMargins().right(), hint_layout.contentsMargins().bottom()) == (3, 3)
+        assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (2, 2)
+        assert (hint_layout.contentsMargins().right(), hint_layout.contentsMargins().bottom()) == (2, 2)
         assert hint_layout.spacing() == 1
         assert summary_header.accessibleName() == "Property batch header: 2 widgets selected. Primary: second. 2 types."
         assert eyebrow.accessibleName() == "Batch property inspection surface."
