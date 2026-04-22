@@ -851,7 +851,7 @@ class _QuickPreviewBoardDialog(QDialog):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
+        layout.setSpacing(6)
 
         self._summary_label = QLabel(f"Previewing {total_assets} assets from quick mode.")
         self._summary_label.setWordWrap(True)
@@ -864,8 +864,8 @@ class _QuickPreviewBoardDialog(QDialog):
         container = QWidget()
         self._cards_layout = QGridLayout(container)
         self._cards_layout.setContentsMargins(0, 0, 0, 0)
-        self._cards_layout.setHorizontalSpacing(8)
-        self._cards_layout.setVerticalSpacing(8)
+        self._cards_layout.setHorizontalSpacing(6)
+        self._cards_layout.setVerticalSpacing(6)
 
         columns = 3
         for index, card in enumerate(cards):

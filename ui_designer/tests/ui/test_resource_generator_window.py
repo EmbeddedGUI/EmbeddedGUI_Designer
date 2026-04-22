@@ -1386,9 +1386,9 @@ class TestResourceGeneratorWindow:
         try:
             layout = dialog.layout()
             assert _layout_margins_tuple(layout) == (12, 12, 12, 12)
-            assert layout.spacing() == 8
-            assert dialog._cards_layout.horizontalSpacing() == 8
-            assert dialog._cards_layout.verticalSpacing() == 8
+            assert layout.spacing() == 6
+            assert dialog._cards_layout.horizontalSpacing() == 6
+            assert dialog._cards_layout.verticalSpacing() == 6
         finally:
             dialog.close()
 
