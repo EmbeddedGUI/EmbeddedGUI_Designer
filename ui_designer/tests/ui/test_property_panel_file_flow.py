@@ -274,7 +274,7 @@ class TestPropertyPanelFileFlow:
 
         assert header.objectName() == "workspace_panel_header"
         assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (2, 2, 2, 2)
-        assert header_layout.spacing() == 3
+        assert header_layout.spacing() == 2
         assert chips_row.spacing() == 2
         assert panel._context_frame.isHidden() is True
         assert header.accessibleName() == f"Property header: title. {subtitle.text()}."

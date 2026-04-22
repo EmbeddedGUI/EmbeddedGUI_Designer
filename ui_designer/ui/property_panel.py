@@ -1625,7 +1625,7 @@ class PropertyPanel(QWidget):
         header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
         layout.setContentsMargins(2, 2, 2, 2)
-        layout.setSpacing(3)
+        layout.setSpacing(2)
         header.setLayout(layout)
 
         eyebrow = QLabel("Widget Profile")
