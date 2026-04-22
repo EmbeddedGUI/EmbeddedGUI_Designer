@@ -1292,7 +1292,7 @@ class TestResourceGeneratorWindow:
         cards = dialog.findChildren(QGroupBox, "quick_preview_card")
         assert {card.title() for card in cards} == {"Images: hero", "Fonts: display", "MP4: intro"}
         assert all(_layout_margins_tuple(card.layout()) == (6, 6, 6, 6) for card in cards)
-        assert all(card.layout().spacing() == 6 for card in cards)
+        assert all(card.layout().spacing() == 4 for card in cards)
         meta_labels = dialog.findChildren(QLabel, "quick_preview_meta")
         assert any("Image Size: 12 x 8" in label.text() for label in meta_labels)
         assert any("Preview Source: fonts/display.txt" in label.text() for label in meta_labels)

@@ -4210,7 +4210,7 @@ class ResourceGeneratorWindow(QDialog):
         card.setObjectName("quick_preview_card")
         layout = QVBoxLayout(card)
         layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
 
         preview_label = QLabel("")
         preview_label.setAlignment(Qt.AlignCenter)
