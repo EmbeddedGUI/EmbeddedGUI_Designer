@@ -1906,7 +1906,7 @@ class ResourceGeneratorWindow(QDialog):
 
         counts_row = QHBoxLayout()
         counts_row.setContentsMargins(0, 0, 0, 0)
-        counts_row.setSpacing(16)
+        counts_row.setSpacing(10)
         self._simple_image_count = _ClickableLabel("Images: 0")
         self._simple_image_count.setToolTip("Show only image assets.")
         self._simple_image_count.clicked.connect(lambda: self._set_simple_asset_filter("img"))
