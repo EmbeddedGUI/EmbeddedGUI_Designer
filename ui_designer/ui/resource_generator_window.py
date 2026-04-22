@@ -2276,8 +2276,8 @@ class ResourceGeneratorWindow(QDialog):
         group = QGroupBox(title)
         layout = QGridLayout(group)
         layout.setContentsMargins(6, 6, 6, 6)
-        layout.setHorizontalSpacing(6)
-        layout.setVerticalSpacing(6)
+        layout.setHorizontalSpacing(4)
+        layout.setVerticalSpacing(4)
         for index, button in enumerate(buttons):
             button.setMinimumHeight(30)
             layout.addWidget(button, index // columns, index % columns)
