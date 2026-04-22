@@ -460,7 +460,7 @@ class WelcomePage(QWidget):
             empty = QWidget()
             empty.setObjectName("welcome_recent_empty")
             el = QVBoxLayout(empty)
-            el.setContentsMargins(0, 2, 0, 0)
+            el.setContentsMargins(0, 0, 0, 0)
             el.setSpacing(4)
             no_recent = QLabel("No recent projects")
             no_recent.setObjectName("workspace_section_title")
