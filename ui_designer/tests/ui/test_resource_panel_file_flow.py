@@ -2249,7 +2249,7 @@ class TestResourcePanelFileFlow:
         assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
         assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
-        assert header_layout.spacing() == 12
+        assert header_layout.spacing() == 10
         assert content_layout.spacing() == 6
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Replace missing resources: 2 missing resources. "
@@ -2397,7 +2397,7 @@ class TestResourcePanelFileFlow:
         assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
         assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
-        assert header_layout.spacing() == 12
+        assert header_layout.spacing() == 10
         assert content_layout.spacing() == 6
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
@@ -2495,7 +2495,7 @@ class TestResourcePanelFileFlow:
         assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
         assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
-        assert header_layout.spacing() == 12
+        assert header_layout.spacing() == 10
         assert summary_layout.spacing() == 6
         assert filter_layout.spacing() == 6
         assert impact_layout.spacing() == 6
@@ -3211,7 +3211,7 @@ class TestResourcePanelFileFlow:
             assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
             assert root_layout.spacing() == 6
             assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
-            assert header_layout.spacing() == 12
+            assert header_layout.spacing() == 10
             assert metrics_layout.spacing() == 6
             assert preset_layout.spacing() == 6
             assert custom_layout.spacing() == 6
