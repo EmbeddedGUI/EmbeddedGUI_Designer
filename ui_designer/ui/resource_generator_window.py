@@ -2862,8 +2862,8 @@ class ResourceGeneratorWindow(QDialog):
     def _build_path_group(self):
         group = QGroupBox("Paths")
         grid = QGridLayout(group)
-        grid.setHorizontalSpacing(6)
-        grid.setVerticalSpacing(6)
+        grid.setHorizontalSpacing(4)
+        grid.setVerticalSpacing(4)
 
         self._config_path_edit = self._add_path_row(
             grid,
