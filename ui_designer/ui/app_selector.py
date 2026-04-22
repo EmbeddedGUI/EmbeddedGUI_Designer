@@ -101,7 +101,7 @@ class AppEntryRowWidget(QWidget):
 
         text_layout = QVBoxLayout()
         text_layout.setContentsMargins(0, 0, 0, 0)
-        text_layout.setSpacing(4)
+        text_layout.setSpacing(2)
 
         self._title_label = QLabel(title)
         self._title_label.setObjectName("app_selector_item_title")

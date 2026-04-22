@@ -57,6 +57,7 @@ class TestAppSelectorDialog:
         )
         try:
             assert widget.layout().spacing() == 6
+            assert widget.layout().itemAt(0).layout().spacing() == 2
             assert widget.layout().contentsMargins().left() == 0
             assert widget.layout().contentsMargins().top() == 0
             assert widget.layout().contentsMargins().right() == 0
