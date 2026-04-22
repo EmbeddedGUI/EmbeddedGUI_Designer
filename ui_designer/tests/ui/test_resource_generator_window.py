@@ -2695,7 +2695,7 @@ class TestResourceGeneratorWindow:
                 None,
             )
             assert form is not None
-            assert form.spacing() == 6
+            assert form.spacing() == 4
         finally:
             dialog.close()
 
