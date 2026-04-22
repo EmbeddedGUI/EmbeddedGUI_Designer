@@ -161,7 +161,7 @@ class TestResourceGeneratorWindow:
             assert _layout_margins_tuple(quick_mode_group.layout()) == (12, 12, 12, 12)
             assert quick_mode_group.layout().spacing() == 6
             assert _layout_margins_tuple(window._simple_asset_empty_state.layout()) == (20, 16, 20, 16)
-            assert window._simple_asset_empty_state.layout().spacing() == 8
+            assert window._simple_asset_empty_state.layout().spacing() == 6
             assert empty_state_buttons.spacing() == 6
             assert _layout_margins_tuple(assets_group.layout()) == (6, 6, 6, 6)
             assert assets_group.layout().spacing() == 6
