@@ -166,7 +166,7 @@ class TestResourceGeneratorWindow:
             assert window._simple_asset_empty_state.layout().spacing() == 4
             assert empty_state_buttons.spacing() == 4
             assert _layout_margins_tuple(assets_group.layout()) == (6, 6, 6, 6)
-            assert assets_group.layout().spacing() == 6
+            assert assets_group.layout().spacing() == 4
             assert asset_toolbar.spacing() == 4
             assert _layout_margins_tuple(action_group.layout()) == (6, 6, 6, 6)
             assert action_group.layout().horizontalSpacing() == 6

@@ -2050,7 +2050,7 @@ class ResourceGeneratorWindow(QDialog):
         assets_group = QGroupBox("Assets")
         assets_layout = QVBoxLayout(assets_group)
         assets_layout.setContentsMargins(6, 6, 6, 6)
-        assets_layout.setSpacing(6)
+        assets_layout.setSpacing(4)
 
         asset_toolbar = QHBoxLayout()
         asset_toolbar.setContentsMargins(0, 0, 0, 0)
