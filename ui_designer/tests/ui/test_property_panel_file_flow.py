@@ -214,7 +214,7 @@ class TestPropertyPanelFileFlow:
         assert panel._context_frame.isHidden() is True
         assert (root_layout.contentsMargins().left(), root_layout.contentsMargins().top()) == (2, 2)
         assert (root_layout.contentsMargins().right(), root_layout.contentsMargins().bottom()) == (2, 2)
-        assert root_layout.spacing() == 3
+        assert root_layout.spacing() == 2
         assert (context_layout.contentsMargins().left(), context_layout.contentsMargins().top()) == (0, 0)
         assert (context_layout.contentsMargins().right(), context_layout.contentsMargins().bottom()) == (0, 0)
         assert context_layout.spacing() == 1

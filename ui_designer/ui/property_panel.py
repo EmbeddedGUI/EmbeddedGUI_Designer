@@ -680,7 +680,7 @@ class PropertyPanel(QWidget):
         self.setObjectName("property_panel_root")
         outer = QVBoxLayout(self)
         outer.setContentsMargins(2, 2, 2, 2)
-        outer.setSpacing(3)
+        outer.setSpacing(2)
 
         self._context_frame = QWidget()
         self._context_frame.setObjectName("property_panel_context")
