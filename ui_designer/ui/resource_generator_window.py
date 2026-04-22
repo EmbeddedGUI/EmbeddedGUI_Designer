@@ -2397,7 +2397,7 @@ class ResourceGeneratorWindow(QDialog):
 
         buttons_row = QHBoxLayout()
         buttons_row.setContentsMargins(0, 0, 0, 0)
-        buttons_row.setSpacing(6)
+        buttons_row.setSpacing(4)
         buttons_row.addStretch(1)
 
         self._simple_asset_empty_import_button = QPushButton("Import Files...")
