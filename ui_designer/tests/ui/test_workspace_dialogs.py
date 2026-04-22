@@ -1041,6 +1041,8 @@ class TestWelcomePage:
         assert page._overview_recent_value.accessibleName() == "Welcome metric: Recent Work. No recent projects."
         assert page._overview_recent_value._welcome_metric_label.accessibleName() == "Recent Work metric label."
         assert page._overview_recent_value._welcome_metric_card.accessibleName() == "Recent Work metric: No recent projects."
+        assert _layout_margins_tuple(page._overview_sdk_value._welcome_metric_card.layout()) == (12, 10, 12, 10)
+        assert page._overview_sdk_value._welcome_metric_card.layout().spacing() == 4
         assert len(page.findChildren(QFrame, "welcome_metric_card")) == 3
         assert page._new_project_btn.toolTip() == "Create a new EmbeddedGUI Designer project."
         assert page._new_project_btn.accessibleName() == (

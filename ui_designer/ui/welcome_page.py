@@ -344,7 +344,7 @@ class WelcomePage(QWidget):
         card = QFrame()
         card.setObjectName("welcome_metric_card")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setContentsMargins(12, 10, 12, 10)
         card_layout.setSpacing(4)
 
         label = QLabel(label_text)
