@@ -851,7 +851,7 @@ class _QuickPreviewBoardDialog(QDialog):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
 
         self._summary_label = QLabel(f"Previewing {total_assets} assets from quick mode.")
         self._summary_label.setWordWrap(True)
