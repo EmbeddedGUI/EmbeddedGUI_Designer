@@ -2939,7 +2939,7 @@ class ResourceGeneratorWindow(QDialog):
         container = QGroupBox("Entries")
         layout = QVBoxLayout(container)
         layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
 
         header_layout = QHBoxLayout()
         self._add_entry_button = QPushButton("Add")
