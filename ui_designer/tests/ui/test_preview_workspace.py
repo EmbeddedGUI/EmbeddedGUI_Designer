@@ -89,10 +89,10 @@ class TestPreviewPanelFallback:
 
         assert panel._zoom_label.text() == "100% (8px)"
         assert panel._main_layout.spacing() == 2
-        assert header_margins.left() == 4
-        assert header_margins.top() == 4
-        assert header_margins.right() == 4
-        assert header_margins.bottom() == 4
+        assert header_margins.left() == 2
+        assert header_margins.top() == 2
+        assert header_margins.right() == 2
+        assert header_margins.bottom() == 2
         assert header_layout.spacing() == 2
         assert panel.accessibleName() == (
             "Preview panel: Preview - waiting for exe.... Mode: Horizontal split. "
