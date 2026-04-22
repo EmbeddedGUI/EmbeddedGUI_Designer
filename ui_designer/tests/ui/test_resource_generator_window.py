@@ -182,7 +182,7 @@ class TestResourceGeneratorWindow:
             assert entries_group.layout().spacing() == 4
             assert _layout_margins_tuple(editor_group.layout()) == (6, 6, 6, 6)
             assert editor_group.layout().spacing() == 4
-            assert window._form_layout.spacing() == 6
+            assert window._form_layout.spacing() == 4
         finally:
             _close_window(window)
 

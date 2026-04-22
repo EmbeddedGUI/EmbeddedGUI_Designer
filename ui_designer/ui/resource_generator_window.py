@@ -2979,7 +2979,7 @@ class ResourceGeneratorWindow(QDialog):
         self._form_host = QWidget()
         self._form_layout = QFormLayout(self._form_host)
         self._form_layout.setContentsMargins(0, 0, 0, 0)
-        self._form_layout.setSpacing(6)
+        self._form_layout.setSpacing(4)
         layout.addWidget(self._form_host, 1)
         return container
 
