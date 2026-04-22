@@ -100,7 +100,7 @@ class DiagnosticsPanel(QWidget):
         self._header_frame.setObjectName("diagnostics_header")
         self._header_frame.setProperty("panelTone", "diagnostics")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(4, 3, 4, 3)
+        header_layout.setContentsMargins(2, 2, 2, 2)
         header_layout.setSpacing(2)
 
         self._header_eyebrow = QLabel("Diagnostics")

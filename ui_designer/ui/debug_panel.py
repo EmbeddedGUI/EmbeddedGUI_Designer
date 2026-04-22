@@ -72,7 +72,7 @@ class DebugPanel(QWidget):
         self._header_frame.setObjectName("debug_panel_header")
         self._header_frame.setProperty("panelTone", "runtime")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(4, 3, 4, 3)
+        header_layout.setContentsMargins(2, 2, 2, 2)
         header_layout.setSpacing(2)
 
         self._header_eyebrow = QLabel("Runtime")
