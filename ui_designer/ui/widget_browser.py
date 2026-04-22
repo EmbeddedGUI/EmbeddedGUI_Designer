@@ -641,7 +641,7 @@ class WidgetBrowserPanel(QWidget):
             empty = QFrame()
             empty.setObjectName("widget_browser_empty_state")
             empty_layout = QVBoxLayout(empty)
-            empty_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
+            empty_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
             empty_layout.setSpacing(2)
 
             summary = QLabel(f"No matching widgets. {self._empty_state_hint_text()}")

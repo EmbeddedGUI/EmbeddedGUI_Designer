@@ -502,7 +502,7 @@ class TestWidgetBrowserPanel:
         )
         buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
 
-        assert (empty_margins.left(), empty_margins.top(), empty_margins.right(), empty_margins.bottom()) == (12, 12, 12, 12)
+        assert (empty_margins.left(), empty_margins.top(), empty_margins.right(), empty_margins.bottom()) == (8, 8, 8, 8)
         assert empty_layout.spacing() == 2
         assert hint.text() == "No matching widgets. Clear search to show matching widgets."
         assert sorted(buttons) == ["Clear Search"]
