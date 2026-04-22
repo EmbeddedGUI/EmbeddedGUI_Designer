@@ -146,12 +146,14 @@ class TestResourceGeneratorWindow:
             sections_group = next(group for group in window._professional_page.findChildren(QGroupBox) if group.title() == "Sections")
             entries_group = next(group for group in window._professional_page.findChildren(QGroupBox) if group.title() == "Entries")
             editor_group = next(group for group in window._professional_page.findChildren(QGroupBox) if group.title() == "Entry Editor")
+            toolbar_layout = window.layout().itemAt(0).layout()
             empty_state_buttons = window._simple_asset_empty_state.layout().itemAt(3).layout()
             asset_toolbar = assets_group.layout().itemAt(0).layout()
             preview_header = asset_preview_group.layout().itemAt(0).layout()
 
             assert _layout_margins_tuple(window.layout()) == (12, 12, 12, 12)
             assert window.layout().spacing() == 8
+            assert toolbar_layout.spacing() == 6
             assert window._simple_page.layout().spacing() == 6
             assert window._professional_page.layout().spacing() == 6
             assert path_group.layout().horizontalSpacing() == 6

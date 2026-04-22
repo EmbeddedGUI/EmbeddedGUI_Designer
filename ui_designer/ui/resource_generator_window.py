@@ -1740,7 +1740,7 @@ class ResourceGeneratorWindow(QDialog):
     def _build_toolbar(self):
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(6)
 
         self._new_button = QPushButton("New")
         self._new_button.setShortcut(QKeySequence("Ctrl+N"))
