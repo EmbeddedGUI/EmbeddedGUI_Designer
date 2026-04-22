@@ -981,7 +981,7 @@ class _FontTextLinksDialog(QDialog):
 
         actions_col = QVBoxLayout()
         actions_col.setContentsMargins(0, 0, 0, 0)
-        actions_col.setSpacing(6)
+        actions_col.setSpacing(4)
         content_row.addLayout(actions_col)
 
         self._new_file_button = QPushButton("New File...")
