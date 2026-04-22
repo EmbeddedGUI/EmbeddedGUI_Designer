@@ -1370,7 +1370,7 @@ class PropertyPanel(QWidget):
         frame = QWidget()
         frame.setObjectName("property_panel_empty_state")
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(4, 6, 4, 6)
+        layout.setContentsMargins(2, 4, 2, 4)
         layout.setSpacing(2)
         eyebrow = QLabel("Inspector")
         eyebrow.setObjectName("property_panel_eyebrow")
