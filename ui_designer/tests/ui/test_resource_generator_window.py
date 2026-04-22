@@ -144,6 +144,7 @@ class TestResourceGeneratorWindow:
             sections_group = next(group for group in window._professional_page.findChildren(QGroupBox) if group.title() == "Sections")
             entries_group = next(group for group in window._professional_page.findChildren(QGroupBox) if group.title() == "Entries")
             editor_group = next(group for group in window._professional_page.findChildren(QGroupBox) if group.title() == "Entry Editor")
+            empty_state_buttons = window._simple_asset_empty_state.layout().itemAt(3).layout()
             asset_toolbar = assets_group.layout().itemAt(0).layout()
             preview_header = asset_preview_group.layout().itemAt(0).layout()
 
@@ -153,6 +154,7 @@ class TestResourceGeneratorWindow:
             assert window._professional_page.layout().spacing() == 8
             assert _layout_margins_tuple(window._simple_asset_empty_state.layout()) == (20, 16, 20, 16)
             assert window._simple_asset_empty_state.layout().spacing() == 8
+            assert empty_state_buttons.spacing() == 6
             assert _layout_margins_tuple(assets_group.layout()) == (6, 6, 6, 6)
             assert assets_group.layout().spacing() == 6
             assert asset_toolbar.spacing() == 6
