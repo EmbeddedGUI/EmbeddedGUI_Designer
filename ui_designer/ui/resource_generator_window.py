@@ -3185,7 +3185,7 @@ class ResourceGeneratorWindow(QDialog):
         wrapper = QWidget()
         layout = QHBoxLayout(wrapper)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
         edit = QLineEdit(str(value if value is not None else ""))
         if field_spec.placeholder:
             edit.setPlaceholderText(field_spec.placeholder)

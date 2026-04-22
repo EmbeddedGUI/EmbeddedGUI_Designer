@@ -5237,6 +5237,7 @@ class TestResourceGeneratorWindow:
 
         edit = window._active_field_widgets["text"]
         assert isinstance(edit, QLineEdit)
+        assert edit.parentWidget().layout().spacing() == 4
         edit.setText(" charset/basic.txt ;\r\n charset/extra.txt ")
 
         window._commit_font_text_field("text", edit)
