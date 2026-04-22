@@ -84,7 +84,7 @@ def build_typography_preview_widget(parent: QWidget | None = None) -> QWidget:
     root = QWidget(parent)
     layout = QVBoxLayout(root)
     layout.setContentsMargins(12, 12, 12, 12)
-    layout.setSpacing(8)
+    layout.setSpacing(6)
     intro = QLabel("Typography roles — use apply_typography_role() or stylesheet tokens.")
     intro.setWordWrap(True)
     apply_typography_role(intro, "meta")

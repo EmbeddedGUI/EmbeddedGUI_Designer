@@ -3,7 +3,7 @@ from PyQt5.QtCore import QEvent
 from PyQt5.QtWidgets import QApplication, QDialog, QSpinBox
 
 from ui_designer.ui.iconography import semantic_icon_keys
-from ui_designer.ui.typography import apply_typography_role
+from ui_designer.ui.typography import apply_typography_role, build_typography_preview_widget
 from ui_designer.ui.theme import (
     _build_stylesheet,
     _ensure_fluent_engineering_style_manager,
@@ -358,6 +358,22 @@ def test_apply_typography_role_uses_active_density_and_font_preference():
         app.setProperty("designer_theme_mode", None)
         app.setProperty("designer_ui_density", None)
         app.setProperty("designer_font_size_pt", 0)
+
+
+def test_typography_preview_widget_uses_compact_root_spacing(qapp):
+    del qapp
+    preview = build_typography_preview_widget()
+    try:
+        layout = preview.layout()
+        assert (
+            layout.contentsMargins().left(),
+            layout.contentsMargins().top(),
+            layout.contentsMargins().right(),
+            layout.contentsMargins().bottom(),
+        ) == (12, 12, 12, 12)
+        assert layout.spacing() == 6
+    finally:
+        preview.deleteLater()
 
 
 def test_qt_font_weight_maps_css_scale_to_qfont_weights():
