@@ -220,7 +220,7 @@ class TestPropertyPanelFileFlow:
         assert context_layout.spacing() == 1
         assert (content_layout.contentsMargins().left(), content_layout.contentsMargins().top()) == (1, 2)
         assert (content_layout.contentsMargins().right(), content_layout.contentsMargins().bottom()) == (1, 2)
-        assert content_layout.spacing() == 3
+        assert content_layout.spacing() == 2
         assert (empty_layout.contentsMargins().left(), empty_layout.contentsMargins().top()) == (4, 6)
         assert (empty_layout.contentsMargins().right(), empty_layout.contentsMargins().bottom()) == (4, 6)
         assert empty_layout.spacing() == 2

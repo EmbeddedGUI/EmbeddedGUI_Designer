@@ -734,7 +734,7 @@ class PropertyPanel(QWidget):
         self._container = QWidget()
         self._layout = QVBoxLayout(self._container)
         self._layout.setContentsMargins(1, 2, 1, 2)
-        self._layout.setSpacing(3)
+        self._layout.setSpacing(2)
         scroll.setWidget(self._container)
 
         self._property_tree = QTreeWidget(self._container)
