@@ -715,7 +715,7 @@ class _GenerateCharsetDialog(QDialog):
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(4)
+        hero_copy.setSpacing(2)
 
         self._eyebrow_label = QLabel("Font Charset Tool")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
@@ -1192,7 +1192,7 @@ class _MissingResourceReplaceDialog(QDialog):
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(4)
+        hero_copy.setSpacing(2)
 
         self._eyebrow_label = QLabel("Resource Recovery")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
@@ -1445,7 +1445,7 @@ class _ReferenceImpactDialog(QDialog):
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(4)
+        hero_copy.setSpacing(2)
 
         self._eyebrow_label = QLabel("Impact Review")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
@@ -1648,7 +1648,7 @@ class _BatchReplaceImpactDialog(QDialog):
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(4)
+        hero_copy.setSpacing(2)
 
         self._eyebrow_label = QLabel("Batch Rename Impact")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")

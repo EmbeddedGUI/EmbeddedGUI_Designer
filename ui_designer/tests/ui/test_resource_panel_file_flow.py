@@ -2238,6 +2238,7 @@ class TestResourcePanelFileFlow:
         )
         root_layout = dialog.layout()
         header_layout = dialog._header_frame.layout()
+        hero_copy = header_layout.itemAt(0).layout()
         content_layout = dialog._table.parentWidget().layout()
 
         first_combo = dialog._combos[0][1]
@@ -2250,6 +2251,7 @@ class TestResourcePanelFileFlow:
         assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 10
+        assert hero_copy.spacing() == 2
         assert content_layout.spacing() == 6
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Replace missing resources: 2 missing resources. "
@@ -2391,6 +2393,7 @@ class TestResourcePanelFileFlow:
         )
         root_layout = dialog.layout()
         header_layout = dialog._header_frame.layout()
+        hero_copy = header_layout.itemAt(0).layout()
         content_layout = dialog._table.parentWidget().layout()
 
         assert dialog.accessibleName() == "Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
@@ -2398,6 +2401,7 @@ class TestResourcePanelFileFlow:
         assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 10
+        assert hero_copy.spacing() == 2
         assert content_layout.spacing() == 6
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
@@ -2485,6 +2489,7 @@ class TestResourcePanelFileFlow:
         )
         root_layout = dialog.layout()
         header_layout = dialog._header_frame.layout()
+        hero_copy = header_layout.itemAt(0).layout()
         summary_layout = dialog._summary_label.parentWidget().layout()
         impact_layout = dialog._impact_table.parentWidget().layout()
         usage_layout = dialog._usage_table.parentWidget().layout()
@@ -2496,6 +2501,7 @@ class TestResourcePanelFileFlow:
         assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 10
+        assert hero_copy.spacing() == 2
         assert summary_layout.spacing() == 6
         assert filter_layout.spacing() == 6
         assert impact_layout.spacing() == 6
@@ -3198,6 +3204,7 @@ class TestResourcePanelFileFlow:
 
             root_layout = dialog.layout()
             header_layout = dialog._header_frame.layout()
+            hero_copy = header_layout.itemAt(0).layout()
             metrics_layout = header_layout.itemAt(1).layout()
             preset_layout = dialog._preset_card.layout()
             custom_layout = dialog._custom_card.layout()
@@ -3212,6 +3219,7 @@ class TestResourcePanelFileFlow:
             assert root_layout.spacing() == 6
             assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
             assert header_layout.spacing() == 10
+            assert hero_copy.spacing() == 2
             assert metrics_layout.spacing() == 6
             assert preset_layout.spacing() == 6
             assert custom_layout.spacing() == 6

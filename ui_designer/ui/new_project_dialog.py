@@ -90,7 +90,7 @@ class NewProjectDialog(QDialog):
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(4)
+        hero_copy.setSpacing(2)
 
         self._eyebrow_label = QLabel("Project Scaffold")
         self._eyebrow_label.setObjectName("new_project_eyebrow")

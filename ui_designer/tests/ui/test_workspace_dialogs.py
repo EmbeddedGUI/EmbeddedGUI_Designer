@@ -99,6 +99,7 @@ class TestAppSelectorDialog:
         header_layout = dialog._header_frame.layout()
         header_margins = header_layout.contentsMargins()
         root_layout = dialog.layout()
+        hero_copy = header_layout.itemAt(0).layout()
         content_layout = root_layout.itemAt(1).layout()
         left_column = content_layout.itemAt(0).layout()
         right_column = content_layout.itemAt(1).layout()
@@ -115,6 +116,7 @@ class TestAppSelectorDialog:
         assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 10
+        assert hero_copy.spacing() == 2
         assert content_layout.spacing() == 6
         assert left_column.spacing() == 6
         assert right_column.spacing() == 6
@@ -630,6 +632,7 @@ class TestNewProjectDialog:
         header_layout = dialog._header_frame.layout()
         header_margins = header_layout.contentsMargins()
         root_layout = dialog.layout()
+        hero_copy = header_layout.itemAt(0).layout()
         content_layout = root_layout.itemAt(1).layout()
         workspace_layout = content_layout.itemAt(0).widget().layout()
         right_column = content_layout.itemAt(1).layout()
@@ -645,6 +648,7 @@ class TestNewProjectDialog:
         assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 10
+        assert hero_copy.spacing() == 2
         assert content_layout.spacing() == 6
         assert workspace_layout.spacing() == 6
         assert right_column.spacing() == 6
@@ -1000,6 +1004,7 @@ class TestWelcomePage:
         center_widget = shell_layout.itemAt(0).widget()
         center_layout = center_widget.layout()
         hero_layout = page._hero.layout()
+        hero_copy = hero_layout.itemAt(0).layout()
         content_layout = center_layout.itemAt(1).layout()
         left_col = content_layout.itemAt(0).widget().layout()
         right_col = content_layout.itemAt(1).widget().layout()
@@ -1015,6 +1020,7 @@ class TestWelcomePage:
         assert right_col.spacing() == 6
         assert (hero_layout.contentsMargins().left(), hero_layout.contentsMargins().top(), hero_layout.contentsMargins().right(), hero_layout.contentsMargins().bottom()) == (12, 10, 12, 10)
         assert hero_layout.spacing() == 10
+        assert hero_copy.spacing() == 2
         assert page._hero.accessibleName() == (
             f"Welcome hero. Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. No recent projects."
         )
