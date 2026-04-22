@@ -626,9 +626,9 @@ class TestNewProjectDialog:
         assert root_layout.spacing() == 8
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
-        assert content_layout.spacing() == 8
+        assert content_layout.spacing() == 6
         assert workspace_layout.spacing() == 6
-        assert right_column.spacing() == 8
+        assert right_column.spacing() == 6
         assert project_layout.spacing() == 6
         assert summary_layout.spacing() == 6
         assert dialog._eyebrow_label.isHidden()

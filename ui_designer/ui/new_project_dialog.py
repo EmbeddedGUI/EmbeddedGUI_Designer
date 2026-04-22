@@ -138,7 +138,7 @@ class NewProjectDialog(QDialog):
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(8)
+        content_layout.setSpacing(6)
 
         workspace_card = QFrame()
         workspace_card.setObjectName("new_project_form_card")
@@ -199,7 +199,7 @@ class NewProjectDialog(QDialog):
 
         right_column = QVBoxLayout()
         right_column.setContentsMargins(0, 0, 0, 0)
-        right_column.setSpacing(8)
+        right_column.setSpacing(6)
 
         project_card = QFrame()
         project_card.setObjectName("new_project_form_card")
