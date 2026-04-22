@@ -641,7 +641,7 @@ class TestNewProjectDialog:
             "App name none. Size 240 by 320."
         )
         assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
-        assert root_layout.spacing() == 8
+        assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
         assert content_layout.spacing() == 6
