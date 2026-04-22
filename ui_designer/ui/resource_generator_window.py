@@ -1791,7 +1791,7 @@ class ResourceGeneratorWindow(QDialog):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
 
         intro_group = QGroupBox("Quick Mode")
         intro_layout = QVBoxLayout(intro_group)
