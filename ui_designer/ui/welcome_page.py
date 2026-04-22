@@ -294,7 +294,7 @@ class WelcomePage(QWidget):
         right_col.addWidget(self._recent_hint_label)
 
         self._recent_list = QVBoxLayout()
-        self._recent_list.setSpacing(4)
+        self._recent_list.setSpacing(2)
         right_col.addLayout(self._recent_list)
         right_col.addStretch()
         content_layout.addWidget(right_card, 4)
@@ -460,7 +460,7 @@ class WelcomePage(QWidget):
             empty = QWidget()
             empty.setObjectName("welcome_recent_empty")
             el = QVBoxLayout(empty)
-            el.setContentsMargins(0, 4, 0, 0)
+            el.setContentsMargins(0, 2, 0, 0)
             el.setSpacing(6)
             no_recent = QLabel("No recent projects")
             no_recent.setObjectName("workspace_section_title")

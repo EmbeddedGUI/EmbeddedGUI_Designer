@@ -1197,7 +1197,7 @@ class TestWelcomePage:
         assert widget.minimumHeight() == 84
         assert (recent_margins.left(), recent_margins.top(), recent_margins.right(), recent_margins.bottom()) == (0, 0, 0, 0)
         assert widget.layout().spacing() == 6
-        assert page._recent_list.spacing() == 4
+        assert page._recent_list.spacing() == 2
         assert widget.accessibleName() == (
             f"Recent project: DemoApp. Project ready. SDK ready. Path: {project_path}."
         )
@@ -1225,6 +1225,8 @@ class TestWelcomePage:
         widget = page._recent_list.itemAt(0).widget()
         assert widget is not None
         assert "No recent projects" in (widget.accessibleName() or "")
+        assert _layout_margins_tuple(widget.layout()) == (0, 2, 0, 0)
+        assert widget.layout().spacing() == 6
         assert any("No recent projects" in (lb.text() or "") for lb in widget.findChildren(QLabel))
         assert not _find_label_by_text(widget, "Open a .egui file or create a project - it will appear here.").isHidden()
         assert "No recent projects." in page.accessibleName()
