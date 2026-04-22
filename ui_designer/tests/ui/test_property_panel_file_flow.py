@@ -1204,7 +1204,7 @@ class TestPropertyPanelFileFlow:
         hint_layout = hint_strip.layout()
 
         assert (summary_margins.left(), summary_margins.top(), summary_margins.right(), summary_margins.bottom()) == (2, 2, 2, 2)
-        assert summary_layout.spacing() == 3
+        assert summary_layout.spacing() == 2
         assert chips_row.spacing() == 2
         assert panel._context_frame.isHidden() is True
         assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (3, 3)
