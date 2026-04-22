@@ -175,7 +175,7 @@ class AppSelectorDialog(QDialog):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
+        layout.setSpacing(6)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("app_selector_header")
