@@ -2377,7 +2377,7 @@ class ResourceGeneratorWindow(QDialog):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(10, 8, 10, 8)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
         layout.addStretch(1)
 
         self._simple_asset_empty_title = QLabel("No assets imported yet.")
