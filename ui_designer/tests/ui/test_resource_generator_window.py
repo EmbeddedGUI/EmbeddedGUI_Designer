@@ -2682,7 +2682,7 @@ class TestResourceGeneratorWindow:
         try:
             layout = dialog.layout()
             assert _layout_margins_tuple(layout) == (12, 12, 12, 12)
-            assert layout.spacing() == 8
+            assert layout.spacing() == 6
 
             form = next(
                 (
@@ -2719,11 +2719,11 @@ class TestResourceGeneratorWindow:
         try:
             editor_layout = editor_dialog.layout()
             assert _layout_margins_tuple(editor_layout) == (12, 12, 12, 12)
-            assert editor_layout.spacing() == 8
+            assert editor_layout.spacing() == 6
 
             links_layout = links_dialog.layout()
             assert _layout_margins_tuple(links_layout) == (12, 12, 12, 12)
-            assert links_layout.spacing() == 8
+            assert links_layout.spacing() == 6
 
             content_row = next(
                 (
@@ -2736,7 +2736,7 @@ class TestResourceGeneratorWindow:
                 None,
             )
             assert content_row is not None
-            assert content_row.spacing() == 8
+            assert content_row.spacing() == 6
             assert content_row.itemAt(1).layout().spacing() == 6
         finally:
             editor_dialog.close()
