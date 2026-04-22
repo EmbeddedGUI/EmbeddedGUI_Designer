@@ -2969,7 +2969,7 @@ class ResourceGeneratorWindow(QDialog):
         container = QGroupBox("Entry Editor")
         layout = QVBoxLayout(container)
         layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
 
         self._entry_summary = QPlainTextEdit()
         self._entry_summary.setReadOnly(True)
