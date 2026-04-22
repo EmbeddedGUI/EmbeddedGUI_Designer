@@ -461,7 +461,7 @@ class WelcomePage(QWidget):
             empty.setObjectName("welcome_recent_empty")
             el = QVBoxLayout(empty)
             el.setContentsMargins(0, 2, 0, 0)
-            el.setSpacing(6)
+            el.setSpacing(4)
             no_recent = QLabel("No recent projects")
             no_recent.setObjectName("workspace_section_title")
             sub = QLabel("Open a .egui file or create a project - it will appear here.")
