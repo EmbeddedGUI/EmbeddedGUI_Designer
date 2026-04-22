@@ -156,7 +156,7 @@ class TestResourceGeneratorWindow:
             assert window.layout().spacing() == 6
             assert toolbar_layout.spacing() == 6
             assert window._simple_page.layout().spacing() == 6
-            assert window._professional_page.layout().spacing() == 6
+            assert window._professional_page.layout().spacing() == 4
             assert path_group.layout().horizontalSpacing() == 4
             assert path_group.layout().verticalSpacing() == 4
             assert _layout_margins_tuple(quick_mode_group.layout()) == (12, 12, 12, 12)

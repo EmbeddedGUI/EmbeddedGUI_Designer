@@ -2854,7 +2854,7 @@ class ResourceGeneratorWindow(QDialog):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
         layout.addWidget(self._build_center_splitter(), 1)
         layout.addWidget(self._build_bottom_tabs(), 1)
         return page
