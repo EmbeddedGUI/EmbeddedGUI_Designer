@@ -2740,6 +2740,8 @@ class TestResourceGeneratorWindow:
             assert content_row is not None
             assert content_row.spacing() == 6
             assert content_row.itemAt(1).layout().spacing() == 4
+            assert links_dialog._preview_splitter.widget(0).layout().spacing() == 4
+            assert links_dialog._preview_splitter.widget(1).layout().spacing() == 4
         finally:
             editor_dialog.close()
             links_dialog.close()

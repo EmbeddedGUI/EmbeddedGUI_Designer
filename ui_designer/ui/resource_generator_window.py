@@ -1049,7 +1049,7 @@ class _FontTextLinksDialog(QDialog):
         selected_preview_shell = QWidget()
         selected_preview_layout = QVBoxLayout(selected_preview_shell)
         selected_preview_layout.setContentsMargins(0, 0, 0, 0)
-        selected_preview_layout.setSpacing(6)
+        selected_preview_layout.setSpacing(4)
 
         self._preview_info_label = QLabel("")
         self._preview_info_label.setWordWrap(True)
@@ -1065,7 +1065,7 @@ class _FontTextLinksDialog(QDialog):
         combined_preview_shell = QWidget()
         combined_preview_layout = QVBoxLayout(combined_preview_shell)
         combined_preview_layout.setContentsMargins(0, 0, 0, 0)
-        combined_preview_layout.setSpacing(6)
+        combined_preview_layout.setSpacing(4)
 
         self._combined_preview_info_label = QLabel("")
         self._combined_preview_info_label.setWordWrap(True)
