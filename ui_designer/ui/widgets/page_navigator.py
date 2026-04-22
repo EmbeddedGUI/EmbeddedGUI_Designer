@@ -308,7 +308,7 @@ class PageNavigator(QWidget):
         self._header_frame = QFrame()
         self._header_frame.setObjectName("page_navigator_header")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(4, 4, 4, 4)
+        header_layout.setContentsMargins(2, 2, 2, 2)
         header_layout.setSpacing(2)
 
         self._eyebrow_label = QLabel("Page Flow")
