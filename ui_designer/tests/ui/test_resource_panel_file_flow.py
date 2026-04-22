@@ -2247,10 +2247,10 @@ class TestResourcePanelFileFlow:
         assert "2 candidate files available." in dialog.accessibleName()
         assert "1 replacement selected." in dialog.accessibleName()
         assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
-        assert root_layout.spacing() == 8
+        assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
-        assert content_layout.spacing() == 8
+        assert content_layout.spacing() == 6
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Replace missing resources: 2 missing resources. "
             "2 candidate files available. 1 replacement selected."
@@ -2395,10 +2395,10 @@ class TestResourcePanelFileFlow:
 
         assert dialog.accessibleName() == "Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
         assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
-        assert root_layout.spacing() == 8
+        assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
-        assert content_layout.spacing() == 8
+        assert content_layout.spacing() == 6
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
         )
@@ -2493,13 +2493,13 @@ class TestResourcePanelFileFlow:
         assert "2 visible rename impacts." in dialog.accessibleName()
         assert "Current rename: missing_a.png -> renamed_a.png." in dialog.accessibleName()
         assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
-        assert root_layout.spacing() == 8
+        assert root_layout.spacing() == 6
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 12
-        assert summary_layout.spacing() == 8
+        assert summary_layout.spacing() == 6
         assert filter_layout.spacing() == 6
-        assert impact_layout.spacing() == 8
-        assert usage_layout.spacing() == 8
+        assert impact_layout.spacing() == 6
+        assert usage_layout.spacing() == 6
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Replace Missing Resources: 2 visible rename impacts. 2 visible usages shown. "
             "Current page only: off. Current rename: missing_a.png -> renamed_a.png. "
@@ -3209,7 +3209,7 @@ class TestResourcePanelFileFlow:
 
             assert dialog.accessibleName().startswith("Generate Charset: 1 preset selected.")
             assert _layout_margins_tuple(root_layout) == (12, 12, 12, 12)
-            assert root_layout.spacing() == 8
+            assert root_layout.spacing() == 6
             assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
             assert header_layout.spacing() == 12
             assert metrics_layout.spacing() == 6
@@ -3273,7 +3273,7 @@ class TestResourcePanelFileFlow:
         try:
             layout = dialog.layout()
             assert _layout_margins_tuple(layout) == (12, 12, 12, 12)
-            assert layout.spacing() == 8
+            assert layout.spacing() == 6
         finally:
             dialog.deleteLater()
 
