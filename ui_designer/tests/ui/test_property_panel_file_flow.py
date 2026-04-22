@@ -212,8 +212,8 @@ class TestPropertyPanelFileFlow:
         assert panel.accessibleName() == "Property panel: no widget selected. Search: none."
         assert panel.toolTip() == panel.accessibleName()
         assert panel._context_frame.isHidden() is True
-        assert (root_layout.contentsMargins().left(), root_layout.contentsMargins().top()) == (4, 4)
-        assert (root_layout.contentsMargins().right(), root_layout.contentsMargins().bottom()) == (4, 4)
+        assert (root_layout.contentsMargins().left(), root_layout.contentsMargins().top()) == (2, 2)
+        assert (root_layout.contentsMargins().right(), root_layout.contentsMargins().bottom()) == (2, 2)
         assert root_layout.spacing() == 3
         assert (context_layout.contentsMargins().left(), context_layout.contentsMargins().top()) == (0, 0)
         assert (context_layout.contentsMargins().right(), context_layout.contentsMargins().bottom()) == (0, 0)
