@@ -233,11 +233,11 @@ class AppSelectorDialog(QDialog):
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(8)
+        content_layout.setSpacing(6)
 
         left_column = QVBoxLayout()
         left_column.setContentsMargins(0, 0, 0, 0)
-        left_column.setSpacing(8)
+        left_column.setSpacing(6)
 
         root_card = QFrame()
         root_card.setObjectName("app_selector_root_card")
@@ -318,7 +318,7 @@ class AppSelectorDialog(QDialog):
 
         right_column = QVBoxLayout()
         right_column.setContentsMargins(0, 0, 0, 0)
-        right_column.setSpacing(8)
+        right_column.setSpacing(6)
 
         browser_card = QFrame()
         browser_card.setObjectName("app_selector_browser_card")
