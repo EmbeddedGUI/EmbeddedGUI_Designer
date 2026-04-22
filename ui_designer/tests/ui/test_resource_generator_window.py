@@ -153,7 +153,7 @@ class TestResourceGeneratorWindow:
             preview_header = asset_preview_group.layout().itemAt(0).layout()
 
             assert _layout_margins_tuple(window.layout()) == (12, 12, 12, 12)
-            assert window.layout().spacing() == 6
+            assert window.layout().spacing() == 4
             assert toolbar_layout.spacing() == 4
             assert window._simple_page.layout().spacing() == 4
             assert window._professional_page.layout().spacing() == 4

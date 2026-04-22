@@ -1728,7 +1728,7 @@ class ResourceGeneratorWindow(QDialog):
         self.setWindowTitle("Resource Generator")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
 
         layout.addLayout(self._build_toolbar())
         layout.addWidget(self._build_path_group())
