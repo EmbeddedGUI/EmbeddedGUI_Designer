@@ -2049,12 +2049,12 @@ class ResourceGeneratorWindow(QDialog):
 
         assets_group = QGroupBox("Assets")
         assets_layout = QVBoxLayout(assets_group)
-        assets_layout.setContentsMargins(8, 8, 8, 8)
-        assets_layout.setSpacing(8)
+        assets_layout.setContentsMargins(6, 6, 6, 6)
+        assets_layout.setSpacing(6)
 
         asset_toolbar = QHBoxLayout()
         asset_toolbar.setContentsMargins(0, 0, 0, 0)
-        asset_toolbar.setSpacing(8)
+        asset_toolbar.setSpacing(6)
         asset_toolbar.addWidget(QLabel("Show"))
         self._simple_asset_type_filter = QComboBox()
         self._simple_asset_type_filter.addItem("All Assets", "all")
