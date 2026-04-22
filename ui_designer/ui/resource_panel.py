@@ -2168,7 +2168,7 @@ class ResourcePanel(QWidget):
         self._panel_header = QFrame(self)
         self._panel_header.setObjectName("resource_panel_header")
         header_layout = QHBoxLayout(self._panel_header)
-        header_layout.setContentsMargins(4, 4, 4, 4)
+        header_layout.setContentsMargins(2, 2, 2, 2)
         header_layout.setSpacing(2)
 
         hero_copy = QVBoxLayout()

@@ -143,7 +143,7 @@ class TestResourcePanelFileFlow:
             "Catalog: 3 assets. Missing: 2 missing files. Selection: Images: none."
         )
         assert panel.layout().spacing() == 2
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (2, 2, 2, 2)
         assert header.layout().spacing() == 2
         assert top_card.layout().spacing() == 2
         assert panel._tabs.widget(0).layout().spacing() == 2
