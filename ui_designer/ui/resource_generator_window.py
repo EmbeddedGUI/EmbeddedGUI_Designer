@@ -947,7 +947,7 @@ class _FontTextLinksDialog(QDialog):
 
         content_row = QHBoxLayout()
         content_row.setContentsMargins(0, 0, 0, 0)
-        content_row.setSpacing(_COMPACT_DIALOG_SPACING)
+        content_row.setSpacing(4)
         layout.addLayout(content_row, 1)
 
         self._list_widget = QListWidget()
