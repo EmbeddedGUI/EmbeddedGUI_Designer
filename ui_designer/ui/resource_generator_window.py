@@ -864,8 +864,8 @@ class _QuickPreviewBoardDialog(QDialog):
         container = QWidget()
         self._cards_layout = QGridLayout(container)
         self._cards_layout.setContentsMargins(0, 0, 0, 0)
-        self._cards_layout.setHorizontalSpacing(6)
-        self._cards_layout.setVerticalSpacing(6)
+        self._cards_layout.setHorizontalSpacing(4)
+        self._cards_layout.setVerticalSpacing(4)
 
         columns = 3
         for index, card in enumerate(cards):
