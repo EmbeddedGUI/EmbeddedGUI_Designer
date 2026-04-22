@@ -327,7 +327,7 @@ class NewProjectDialog(QDialog):
         card.setObjectName("new_project_metric_card")
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(0, 0, 0, 0)
-        card_layout.setSpacing(4)
+        card_layout.setSpacing(2)
 
         label = QLabel(label_text)
         label.setObjectName("new_project_metric_label")

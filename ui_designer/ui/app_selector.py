@@ -406,7 +406,7 @@ class AppSelectorDialog(QDialog):
         card.setObjectName("app_selector_metric_card")
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(0, 0, 0, 0)
-        card_layout.setSpacing(4)
+        card_layout.setSpacing(2)
 
         label = QLabel(label_text)
         label.setObjectName("app_selector_metric_label")
