@@ -142,9 +142,9 @@ class TestResourcePanelFileFlow:
             "Resource panel: Workspace configured. Active tab: Images. "
             "Catalog: 3 assets. Missing: 2 missing files. Selection: Images: none."
         )
-        assert panel.layout().spacing() == 4
+        assert panel.layout().spacing() == 2
         assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
-        assert header.layout().spacing() == 4
+        assert header.layout().spacing() == 2
         assert top_card.layout().spacing() == 2
         assert panel._tabs.widget(0).layout().spacing() == 2
         assert panel._tabs.widget(1).layout().spacing() == 2
@@ -182,6 +182,7 @@ class TestResourcePanelFileFlow:
         assert panel._catalog_metric_value.toolTip() == "Catalog: 3 assets."
         assert panel._catalog_metric_value._resource_panel_metric_label.accessibleName() == "Catalog metric label."
         assert panel._catalog_metric_value._resource_panel_metric_card.accessibleName() == "Catalog metric: 3 assets."
+        assert panel._catalog_metric_value._resource_panel_metric_card.layout().spacing() == 2
         assert panel._catalog_metric_value._resource_panel_metric_card.isHidden() is True
         assert panel._missing_metric_value.accessibleName() == "Resource panel metric: Missing. 2 missing files."
         assert panel._missing_metric_value._resource_panel_metric_card.isHidden() is True
@@ -2252,6 +2253,7 @@ class TestResourcePanelFileFlow:
         assert _layout_margins_tuple(header_layout) == (12, 10, 12, 10)
         assert header_layout.spacing() == 10
         assert hero_copy.spacing() == 2
+        assert dialog._missing_metric_value._resource_dialog_metric_card.layout().spacing() == 2
         assert content_layout.spacing() == 6
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Replace missing resources: 2 missing resources. "

@@ -187,7 +187,7 @@ def _create_dialog_metric_card(layout, label_text):
     card.setObjectName("resource_dialog_metric_card")
     card_layout = QVBoxLayout(card)
     card_layout.setContentsMargins(0, 0, 0, 0)
-    card_layout.setSpacing(4)
+    card_layout.setSpacing(2)
 
     label = QLabel(label_text)
     label.setObjectName("resource_dialog_metric_label")
@@ -2163,13 +2163,13 @@ class ResourcePanel(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        layout.setSpacing(2)
 
         self._panel_header = QFrame(self)
         self._panel_header.setObjectName("resource_panel_header")
         header_layout = QHBoxLayout(self._panel_header)
         header_layout.setContentsMargins(4, 4, 4, 4)
-        header_layout.setSpacing(4)
+        header_layout.setSpacing(2)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
