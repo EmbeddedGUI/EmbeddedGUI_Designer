@@ -137,6 +137,7 @@ class TestResourceGeneratorWindow:
 
         window = ResourceGeneratorWindow("")
         try:
+            path_group = next(group for group in window.findChildren(QGroupBox) if group.title() == "Paths")
             assets_group = next(group for group in window._simple_page.findChildren(QGroupBox) if group.title() == "Assets")
             action_group = next(group for group in window._simple_page.findChildren(QGroupBox) if group.title() == "Import & Setup")
             asset_preview_group = next(group for group in window._simple_page.findChildren(QGroupBox) if group.title() == "Asset Preview")
@@ -152,6 +153,8 @@ class TestResourceGeneratorWindow:
             assert window.layout().spacing() == 8
             assert window._simple_page.layout().spacing() == 8
             assert window._professional_page.layout().spacing() == 8
+            assert path_group.layout().horizontalSpacing() == 6
+            assert path_group.layout().verticalSpacing() == 6
             assert _layout_margins_tuple(window._simple_asset_empty_state.layout()) == (20, 16, 20, 16)
             assert window._simple_asset_empty_state.layout().spacing() == 8
             assert empty_state_buttons.spacing() == 6
