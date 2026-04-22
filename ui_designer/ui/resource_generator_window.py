@@ -1796,7 +1796,7 @@ class ResourceGeneratorWindow(QDialog):
         intro_group = QGroupBox("Quick Mode")
         intro_layout = QVBoxLayout(intro_group)
         intro_layout.setContentsMargins(12, 12, 12, 12)
-        intro_layout.setSpacing(6)
+        intro_layout.setSpacing(4)
 
         intro = QLabel(
             "Use quick helpers to scan an asset folder, edit font text files, and build resources without editing every field manually."
