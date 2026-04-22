@@ -466,7 +466,7 @@ class MainWindow(QMainWindow):
         self._editor_container = editor_container
         editor_container.setObjectName("workspace_shell")
         editor_layout = QVBoxLayout(editor_container)
-        editor_layout.setContentsMargins(4, 4, 4, 4)
+        editor_layout.setContentsMargins(2, 2, 2, 2)
         editor_layout.setSpacing(2)
 
         self._toolbar_host = QFrame()
