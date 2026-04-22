@@ -273,7 +273,7 @@ class TestPropertyPanelFileFlow:
         chips_row = header_layout.itemAt(4).layout()
 
         assert header.objectName() == "workspace_panel_header"
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (2, 2, 2, 2)
         assert header_layout.spacing() == 3
         assert chips_row.spacing() == 2
         assert panel._context_frame.isHidden() is True

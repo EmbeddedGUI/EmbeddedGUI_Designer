@@ -1624,7 +1624,7 @@ class PropertyPanel(QWidget):
         header.setObjectName("workspace_panel_header")
         header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(3)
         header.setLayout(layout)
 
