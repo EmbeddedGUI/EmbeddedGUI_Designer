@@ -2105,7 +2105,7 @@ class ResourceGeneratorWindow(QDialog):
 
         preview_header = QHBoxLayout()
         preview_header.setContentsMargins(0, 0, 0, 0)
-        preview_header.setSpacing(6)
+        preview_header.setSpacing(4)
         self._simple_asset_preview_title = QLabel("No asset selected.")
         preview_header.addWidget(self._simple_asset_preview_title, 1)
 
