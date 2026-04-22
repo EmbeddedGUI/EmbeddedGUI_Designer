@@ -142,7 +142,7 @@ class WelcomePage(QWidget):
         shell.setObjectName("welcome_shell")
         shell_layout = QVBoxLayout(shell)
         shell_layout.setContentsMargins(12, 12, 12, 12)
-        shell_layout.setSpacing(8)
+        shell_layout.setSpacing(6)
 
         center_widget = QWidget()
         center_widget.setAttribute(Qt.WA_StyledBackground, True)

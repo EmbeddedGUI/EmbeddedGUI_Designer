@@ -1006,7 +1006,7 @@ class TestWelcomePage:
             f"Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. No recent projects."
         )
         assert (shell_layout.contentsMargins().left(), shell_layout.contentsMargins().top(), shell_layout.contentsMargins().right(), shell_layout.contentsMargins().bottom()) == (12, 12, 12, 12)
-        assert shell_layout.spacing() == 8
+        assert shell_layout.spacing() == 6
         assert center_layout.spacing() == 6
         assert content_layout.spacing() == 6
         assert left_col.spacing() == 6
