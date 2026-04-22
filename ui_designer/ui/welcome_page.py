@@ -150,7 +150,7 @@ class WelcomePage(QWidget):
         center_widget.setMaximumWidth(1180)
         center_layout = QVBoxLayout(center_widget)
         center_layout.setContentsMargins(0, 0, 0, 0)
-        center_layout.setSpacing(8)
+        center_layout.setSpacing(6)
 
         self._hero = QFrame()
         self._hero.setObjectName("welcome_hero")
@@ -211,7 +211,7 @@ class WelcomePage(QWidget):
         center_layout.addWidget(self._hero)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(8)
+        content_layout.setSpacing(6)
 
         left_card = QFrame()
         left_card.setObjectName("welcome_action_panel")

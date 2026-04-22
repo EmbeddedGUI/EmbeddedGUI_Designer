@@ -989,8 +989,8 @@ class TestWelcomePage:
         )
         assert (shell_layout.contentsMargins().left(), shell_layout.contentsMargins().top(), shell_layout.contentsMargins().right(), shell_layout.contentsMargins().bottom()) == (12, 12, 12, 12)
         assert shell_layout.spacing() == 8
-        assert center_layout.spacing() == 8
-        assert content_layout.spacing() == 8
+        assert center_layout.spacing() == 6
+        assert content_layout.spacing() == 6
         assert left_col.spacing() == 6
         assert right_col.spacing() == 6
         assert (hero_layout.contentsMargins().left(), hero_layout.contentsMargins().top(), hero_layout.contentsMargins().right(), hero_layout.contentsMargins().bottom()) == (12, 10, 12, 10)
