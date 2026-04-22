@@ -2135,7 +2135,7 @@ class ResourceGeneratorWindow(QDialog):
         preview_group = QGroupBox("Merged Preview")
         preview_layout = QVBoxLayout(preview_group)
         preview_layout.setContentsMargins(6, 6, 6, 6)
-        preview_layout.setSpacing(6)
+        preview_layout.setSpacing(4)
         self._simple_preview = QPlainTextEdit()
         self._simple_preview.setReadOnly(True)
         preview_layout.addWidget(self._simple_preview)
