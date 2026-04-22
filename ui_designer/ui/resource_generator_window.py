@@ -2101,7 +2101,7 @@ class ResourceGeneratorWindow(QDialog):
         asset_preview_group = QGroupBox("Asset Preview")
         asset_preview_layout = QVBoxLayout(asset_preview_group)
         asset_preview_layout.setContentsMargins(6, 6, 6, 6)
-        asset_preview_layout.setSpacing(6)
+        asset_preview_layout.setSpacing(4)
 
         preview_header = QHBoxLayout()
         preview_header.setContentsMargins(0, 0, 0, 0)

@@ -173,7 +173,7 @@ class TestResourceGeneratorWindow:
             assert action_group.layout().verticalSpacing() == 6
             assert window._simple_action_tabs.widget(0).layout().spacing() == 6
             assert _layout_margins_tuple(asset_preview_group.layout()) == (6, 6, 6, 6)
-            assert asset_preview_group.layout().spacing() == 6
+            assert asset_preview_group.layout().spacing() == 4
             assert preview_header.spacing() == 4
             assert _layout_margins_tuple(merged_preview_group.layout()) == (6, 6, 6, 6)
             assert merged_preview_group.layout().spacing() == 4
