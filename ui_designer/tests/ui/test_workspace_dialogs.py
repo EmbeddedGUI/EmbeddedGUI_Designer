@@ -46,6 +46,24 @@ def _layout_margins_tuple(layout):
 
 @_skip_no_qt
 class TestAppSelectorDialog:
+    def test_app_entry_row_widget_uses_compact_internal_spacing(self, qapp):
+        from ui_designer.ui.app_selector import AppEntryRowWidget
+
+        widget = AppEntryRowWidget(
+            title="HelloModern",
+            path_text="D:/sdk/example/HelloModern",
+            kind_text="Designer Project",
+            parent=None,
+        )
+        try:
+            assert widget.layout().spacing() == 6
+            assert widget.layout().contentsMargins().left() == 0
+            assert widget.layout().contentsMargins().top() == 0
+            assert widget.layout().contentsMargins().right() == 0
+            assert widget.layout().contentsMargins().bottom() == 0
+        finally:
+            widget.deleteLater()
+
     @pytest.mark.skip(reason="flaky Windows tempdir cleanup in this environment")
     def test_refresh_app_list_does_not_leave_stale_row_widgets_attached(self, qapp, isolated_config, tmp_path):
         from ui_designer.ui.app_selector import AppEntryRowWidget, AppSelectorDialog
