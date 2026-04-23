@@ -23,14 +23,16 @@ def _layout_margins_tuple(layout):
 class TestResourcePanelFileFlow:
     def test_preview_widget_font_sizes_follow_designer_font_preference(self, qapp):
         from ui_designer.ui.resource_panel import _PreviewWidget
+        from ui_designer.ui.theme import app_theme_tokens
 
         qapp.setProperty("designer_font_size_pt", 12)
         preview = _PreviewWidget()
 
         try:
-            assert preview._image_meta_font_point_size() == 12
-            assert preview._meta_font_point_size() == 11
-            assert preview._text_preview_font_point_size() == 12
+            tokens = app_theme_tokens(qapp)
+            assert preview._image_meta_font_pixel_size() == int(tokens["fs_body"])
+            assert preview._meta_font_pixel_size() == int(tokens["fs_body_sm"])
+            assert preview._text_preview_font_pixel_size() == int(tokens["fs_body"])
         finally:
             preview.deleteLater()
             qapp.setProperty("designer_font_size_pt", 0)

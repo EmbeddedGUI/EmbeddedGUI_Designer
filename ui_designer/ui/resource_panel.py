@@ -60,7 +60,7 @@ from ..services.font_charset_presets import (
 )
 from ..utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME, is_designer_resource_path
 from ..utils.scaffold import preferred_resource_source_dir, resource_images_dir
-from .theme import app_theme_tokens, designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size
+from .theme import app_theme_tokens, designer_monospace_font, designer_ui_font
 
 
 # -- Constants ----------------------------------------------------------
@@ -73,7 +73,6 @@ EGUI_RESOURCE_MIME = "application/x-egui-resource"
 
 # Regex for validating English-only filenames
 _VALID_FILENAME_RE = re.compile(r'^[A-Za-z0-9_\-]+\.[A-Za-z0-9]+$')
-_DEFAULT_RESOURCE_PREVIEW_FONT_PT = 9
 _RESOURCE_PANEL_CONTROL_HEIGHT = 22
 _RESOURCE_DIALOG_SHELL_MARGINS = (12, 12, 12, 12)
 _RESOURCE_DIALOG_SHELL_SPACING = 6
@@ -525,22 +524,21 @@ class _PreviewWidget(QWidget):
             "preview_text": QColor(tokens["text"]),
         }
 
-    def _ui_font_scale(self):
-        app = QApplication.instance()
-        return designer_font_scale(app, default_pt=_DEFAULT_RESOURCE_PREVIEW_FONT_PT)
+    def _token_font_pixel_size(self, token_key, fallback):
+        tokens = app_theme_tokens(QApplication.instance())
+        try:
+            return max(int(tokens.get(token_key, fallback)), 1)
+        except (TypeError, ValueError):
+            return max(int(fallback), 1)
 
-    def _scaled_ui_font_point_size(self, base_point_size, minimum=1):
-        app = QApplication.instance()
-        return scaled_point_size(base_point_size, app=app, minimum=minimum, default_pt=_DEFAULT_RESOURCE_PREVIEW_FONT_PT)
+    def _image_meta_font_pixel_size(self):
+        return self._token_font_pixel_size("fs_body", 12)
 
-    def _image_meta_font_point_size(self):
-        return self._scaled_ui_font_point_size(9, minimum=8)
+    def _meta_font_pixel_size(self):
+        return self._token_font_pixel_size("fs_body_sm", 11)
 
-    def _meta_font_point_size(self):
-        return self._scaled_ui_font_point_size(8, minimum=7)
-
-    def _text_preview_font_point_size(self):
-        return self._scaled_ui_font_point_size(9, minimum=8)
+    def _text_preview_font_pixel_size(self):
+        return self._token_font_pixel_size("fs_body", 12)
 
     def show_image(self, path):
         self._mode = "image"
@@ -636,7 +634,7 @@ class _PreviewWidget(QWidget):
         painter.drawPixmap(x, y, scaled)
         text_x = x + scaled.width() + 8
         painter.setPen(palette["image_meta"])
-        painter.setFont(designer_ui_font(point_size=self._image_meta_font_point_size()))
+        painter.setFont(designer_ui_font(pixel_size=self._image_meta_font_pixel_size()))
         fm = painter.fontMetrics()
         ty = 8
         for line in self._meta_lines:
@@ -646,7 +644,7 @@ class _PreviewWidget(QWidget):
     def _paint_font(self, painter, w, h):
         palette = self._paint_palette()
         painter.setPen(palette["meta"])
-        painter.setFont(designer_ui_font(point_size=self._meta_font_point_size()))
+        painter.setFont(designer_ui_font(pixel_size=self._meta_font_pixel_size()))
         fm = painter.fontMetrics()
         ty = 4
         for line in self._meta_lines:
@@ -666,7 +664,7 @@ class _PreviewWidget(QWidget):
     def _paint_text(self, painter, w, h):
         palette = self._paint_palette()
         painter.setPen(palette["meta"])
-        painter.setFont(designer_ui_font(point_size=self._meta_font_point_size()))
+        painter.setFont(designer_ui_font(pixel_size=self._meta_font_pixel_size()))
         fm = painter.fontMetrics()
         ty = 4
         for line in self._meta_lines:
@@ -675,7 +673,7 @@ class _PreviewWidget(QWidget):
 
         preview_rect = QRect(8, ty + 6, max(w - 16, 0), max(h - ty - 12, 0))
         painter.setPen(palette["preview_text"])
-        painter.setFont(designer_monospace_font(point_size=self._text_preview_font_point_size()))
+        painter.setFont(designer_monospace_font(pixel_size=self._text_preview_font_pixel_size()))
         painter.drawText(preview_rect, Qt.TextWordWrap | Qt.AlignTop | Qt.AlignLeft, "\n".join(self._text_lines))
 
 
