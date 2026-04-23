@@ -1380,8 +1380,8 @@ QFrame#property_grid_section_fill[sectionHovered="true"] {{
 
 #property_grid_section_text {{
     color: {t['text']};
-    font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_medium']};
+    font-size: {t['fs_h2']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #property_grid_section_text[sectionExpanded="true"] {{

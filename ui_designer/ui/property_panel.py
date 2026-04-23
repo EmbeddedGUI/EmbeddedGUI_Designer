@@ -42,6 +42,7 @@ from ..utils.scaffold import (
 from .widgets.collapsible_group import CollapsibleGroupBox
 from .widgets.color_picker import EguiColorPicker
 from .widgets.font_selector import EguiFontSelector
+from .theme import app_theme_tokens, designer_ui_font
 
 # UI group display names
 _UI_GROUP_LABELS = {
@@ -96,6 +97,15 @@ _CORNER_RADIUS_ROW_LABELS = {
     "radius_right_top": "TR:",
     "radius_right_bottom": "BR:",
 }
+
+
+def _property_section_header_font():
+    tokens = app_theme_tokens()
+    try:
+        pixel_size = max(int(tokens.get("fs_h2", 12)), 1)
+    except (TypeError, ValueError):
+        pixel_size = 12
+    return designer_ui_font(pixel_size=pixel_size, weight=QFont.DemiBold)
 
 # UIX-005: default expanded groups <=2 — keep first-edit path focused.
 _DEFAULT_EXPANDED_INSPECTOR_TITLES = frozenset({"Basic", "Layout"})
@@ -902,8 +912,7 @@ class PropertyPanel(QWidget):
         item.setFirstColumnSpanned(True)
         item.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
         item.setFlags(Qt.ItemIsEnabled)
-        section_font = QFont(self._property_tree.font())
-        section_font.setWeight(QFont.DemiBold)
+        section_font = _property_section_header_font()
         item.setFont(0, section_font)
         item.setForeground(0, QBrush(QColor(self.palette().color(self.foregroundRole()))))
         section_brush = QBrush(self.palette().alternateBase())
@@ -930,6 +939,7 @@ class PropertyPanel(QWidget):
         title_label.setObjectName("property_grid_section_text")
         title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         title_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        title_label.setFont(section_font)
         header_layout.addWidget(title_label, 1)
         self._property_tree.setItemWidget(item, 0, header_frame)
 

@@ -14,6 +14,7 @@ from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
 if HAS_PYQT5:
     from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QFont
     from PyQt5.QtWidgets import QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel, QWidget, QToolButton
 
 _skip_no_qt = skip_if_no_qt
@@ -442,6 +443,28 @@ class TestPropertyPanelFileFlow:
         assert x_row["item"].sizeHint(0).height() == 24
         assert (label_margins.left(), label_margins.top(), label_margins.right(), label_margins.bottom()) == (5, 0, 5, 0)
         assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (3, 0, 3, 0)
+        panel.deleteLater()
+
+    def test_property_grid_section_titles_use_dense_ui_section_typography(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+        from ui_designer.ui.theme import app_theme_tokens, designer_ui_font
+
+        widget = WidgetModel("label", name="title")
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        tokens = app_theme_tokens()
+        expected_px = int(tokens["fs_h2"])
+        expected_family = designer_ui_font().family()
+        text_section = panel._property_sections["Text"]
+        title_label = text_section["title_label"]
+
+        assert title_label.font().pixelSize() == expected_px
+        assert title_label.font().family() == expected_family
+        assert title_label.font().weight() == QFont.DemiBold
+        assert text_section["item"].font(0).pixelSize() == expected_px
+        assert text_section["item"].font(0).family() == expected_family
         panel.deleteLater()
 
     def test_property_grid_focus_highlights_active_row(self, qapp):

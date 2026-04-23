@@ -262,7 +262,7 @@ def test_compact_typography_scale_stays_consistent():
         assert f"font-weight: {t['fw_regular']};" in welcome_subtitle
 
 
-def test_secondary_typography_uses_lighter_weights_for_dense_views():
+def test_secondary_typography_uses_expected_weights_for_dense_views():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)
         css = _build_stylesheet(mode)
@@ -279,7 +279,7 @@ def test_secondary_typography_uses_lighter_weights_for_dense_views():
         welcome_metric_value = css.split("#welcome_metric_value {", 1)[1].split("}", 1)[0]
         welcome_recent_name = css.split("#welcome_recent_name {", 1)[1].split("}", 1)[0]
 
-        assert f"font-weight: {t['fw_medium']};" in property_grid_section
+        assert f"font-weight: {t['fw_semibold']};" in property_grid_section
         assert f"font-weight: {t['fw_regular']};" in resource_metric_label
         assert f"font-weight: {t['fw_medium']};" in resource_metric_value
         assert f"font-weight: {t['fw_medium']};" in resource_table_header
@@ -773,6 +773,8 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['panel_raised']};" in property_grid_section_fill_expanded
         assert f"background-color: {t['surface_hover']};" in property_grid_section_hover
         assert f"color: {t['text']};" in property_grid_section_text
+        assert f"font-size: {t['fs_h2']}px;" in property_grid_section_text
+        assert f"font-weight: {t['fw_semibold']};" in property_grid_section_text
         assert f"color: {t['accent_hover']};" in property_grid_section_text_expanded
         assert "background-color: transparent;" in property_grid_section_indicator_button
         assert "border: none;" in property_grid_section_indicator_button
