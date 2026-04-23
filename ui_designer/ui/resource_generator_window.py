@@ -7646,9 +7646,10 @@ def _build_quick_placeholder_pixmap(label: str, *, width: int, height: int) -> Q
         painter.setPen(QPen(border, 2))
         painter.drawRect(1, 1, safe_width - 2, safe_height - 2)
 
-        font = QFont()
-        font.setBold(True)
-        font.setPointSize(max(10, min(safe_width // 11, safe_height // 5)))
+        font = designer_ui_font(
+            pixel_size=max(10, min(safe_width // 11, safe_height // 5)),
+            weight=QFont.Bold,
+        )
         painter.setFont(font)
         painter.setPen(text_color)
         painter.drawText(

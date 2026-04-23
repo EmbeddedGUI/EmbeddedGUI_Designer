@@ -1358,6 +1358,41 @@ class TestResourceGeneratorWindow:
             qapp.setProperty("designer_theme_mode", None)
 
     @_skip_no_qt
+    def test_quick_placeholder_pixmap_uses_pixel_sized_designer_ui_font(self, qapp, monkeypatch):
+        from PyQt5.QtGui import QFont
+
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+
+        captured = {}
+        original_designer_ui_font = resource_generator_window_module.designer_ui_font
+
+        def _capture_font(*, point_size=None, pixel_size=None, weight=None, app=None):
+            captured["point_size"] = point_size
+            captured["pixel_size"] = pixel_size
+            captured["weight"] = weight
+            return original_designer_ui_font(
+                point_size=point_size,
+                pixel_size=pixel_size,
+                weight=weight,
+                app=app,
+            )
+
+        monkeypatch.setattr(resource_generator_window_module, "designer_ui_font", _capture_font)
+
+        pixmap = resource_generator_window_module._build_quick_placeholder_pixmap(
+            "Hero Banner",
+            width=220,
+            height=120,
+        )
+
+        assert pixmap.isNull() is False
+        assert pixmap.width() == 220
+        assert pixmap.height() == 120
+        assert captured["point_size"] is None
+        assert captured["pixel_size"] == 20
+        assert captured["weight"] == QFont.Bold
+
+    @_skip_no_qt
     def test_export_quick_preview_board_image_writes_png(self, qapp, monkeypatch, tmp_path):
         from PyQt5.QtGui import QImage, QPixmap
 
