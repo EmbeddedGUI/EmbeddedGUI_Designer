@@ -129,12 +129,13 @@ def _quick_preview_board_palette():
 
 
 def _quick_preview_board_font_sizes() -> dict[str, int]:
+    tokens = app_theme_tokens()
     return {
-        "title": 18,
-        "subtitle": 10,
-        "card_title": 11,
-        "preview": 10,
-        "meta": 10,
+        "title": int(tokens.get("fs_display", 18)),
+        "subtitle": int(tokens.get("fs_caption", 10)),
+        "card_title": int(tokens.get("fs_body_sm", 11)),
+        "preview": int(tokens.get("fs_caption", 10)),
+        "meta": int(tokens.get("fs_caption", 10)),
     }
 
 
@@ -1941,7 +1942,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_action_tabs.setStyleSheet("QTabBar::tab { min-height: 18px; padding: 1px 8px; }")
         tab_bar = self._simple_action_tabs.tabBar()
         tab_font = QFont(tab_bar.font())
-        tab_font.setPixelSize(10)
+        tab_font.setPixelSize(int(app_theme_tokens().get("fs_caption", 10)))
         tab_bar.setFont(tab_font)
         tab_bar.setExpanding(False)
         tab_bar.setUsesScrollButtons(False)
@@ -2344,7 +2345,7 @@ class ResourceGeneratorWindow(QDialog):
         if getattr(self, "_simple_asset_table", None) is None:
             return
         simple_header = self._simple_asset_table.horizontalHeader()
-        header_font = designer_ui_font(pixel_size=10)
+        header_font = designer_ui_font(pixel_size=int(app_theme_tokens().get("fs_caption", 10)))
         header_font.setWeight(simple_header.font().weight())
         header_font.setItalic(simple_header.font().italic())
         simple_header.setFont(header_font)
