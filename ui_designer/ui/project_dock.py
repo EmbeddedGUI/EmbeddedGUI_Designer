@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import QEvent, pyqtSignal, Qt
 
-from .theme import app_theme_tokens
+from .theme import app_theme_tokens, designer_ui_font
 
 # Page names that collide with egui internal module names.
 # A page named "test" generates egui_test_init() which conflicts with
@@ -477,9 +477,7 @@ class ProjectExplorerDock(QDockWidget):
             px = max(int(tokens.get(key, fallback)), 1)
         except (TypeError, ValueError):
             px = fallback
-        font = self._page_tree.font()
-        font.setPixelSize(px)
-        font.setBold(False)
+        font = designer_ui_font(pixel_size=px)
         self._page_tree.setFont(font)
 
     def _page_context_action_hint(self, action_key, page_name=""):

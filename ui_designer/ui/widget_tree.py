@@ -32,7 +32,7 @@ from ..model.structure_ops import (
 from ..model.widget_model import WidgetModel
 from ..model.widget_registry import WidgetRegistry
 from .iconography import make_icon, widget_icon_key
-from .theme import app_theme_tokens
+from .theme import app_theme_tokens, designer_ui_font
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -3269,9 +3269,7 @@ class WidgetTreePanel(QWidget):
             px = max(int(tokens.get("fs_body_sm", 12)), 1)
         except (TypeError, ValueError):
             px = 12
-        font = self.tree.font()
-        font.setPixelSize(px)
-        font.setBold(False)
+        font = designer_ui_font(pixel_size=px)
         self.tree.setFont(font)
 
     def refresh_tree_typography(self):

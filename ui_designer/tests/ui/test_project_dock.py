@@ -14,7 +14,7 @@ _skip_no_qt = skip_if_no_qt
 class TestProjectExplorerDock:
     def test_compact_mode_uses_dense_page_tree_font(self, qapp):
         from ui_designer.ui.project_dock import ProjectExplorerDock
-        from ui_designer.ui.theme import app_theme_tokens
+        from ui_designer.ui.theme import app_theme_tokens, designer_ui_font
 
         dock = ProjectExplorerDock()
         dock.set_compact_mode(True)
@@ -22,10 +22,12 @@ class TestProjectExplorerDock:
 
         tokens = app_theme_tokens()
         expected_px = int(tokens["fs_body_sm"])
+        expected_family = designer_ui_font().family()
         first = dock._page_tree.topLevelItem(0)
         second = dock._page_tree.topLevelItem(1)
 
         assert dock._page_tree.font().pixelSize() == expected_px
+        assert dock._page_tree.font().family() == expected_family
         assert first.font(0).pixelSize() == expected_px
         assert second.font(0).pixelSize() == expected_px
         dock.deleteLater()

@@ -53,7 +53,7 @@ def _select_menu_labels(menu):
 class TestWidgetTreePanel:
     def test_structure_tree_uses_dense_item_font_by_default(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.theme import app_theme_tokens
+        from ui_designer.ui.theme import app_theme_tokens, designer_ui_font
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
         leaf = WidgetModel("label", name="field_label")
@@ -64,9 +64,11 @@ class TestWidgetTreePanel:
 
         tokens = app_theme_tokens()
         expected_px = int(tokens["fs_body_sm"])
+        expected_family = designer_ui_font().family()
         leaf_item = panel._item_map[id(leaf)]
 
         assert panel.tree.font().pixelSize() == expected_px
+        assert panel.tree.font().family() == expected_family
         assert leaf_item.font(0).pixelSize() == expected_px
         panel.deleteLater()
 
