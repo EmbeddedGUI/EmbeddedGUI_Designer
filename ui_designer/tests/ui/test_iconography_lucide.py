@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import importlib
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import QRectF, Qt
+from PyQt5.QtGui import QFont, QIcon, QPainter, QPixmap
 
 import ui_designer.ui.iconography as iconography
 import ui_designer.ui.theme as theme
@@ -153,3 +153,34 @@ def test_theme_switch_clears_lucide_cache(qapp):
         qapp.setProperty("designer_ui_density", original_density)
         qapp.setProperty("designer_font_size_pt", original_font_size)
         qapp.setProperty("_designer_fluent_theme_mode", original_fluent_mode)
+
+
+def test_unknown_painted_icon_uses_pixel_sized_placeholder_font(qapp, monkeypatch):
+    module = _reload_iconography()
+    original_designer_ui_font = theme.designer_ui_font
+    captured = {}
+
+    def _capture_font(*, point_size=None, pixel_size=None, weight=None, app=None):
+        captured["point_size"] = point_size
+        captured["pixel_size"] = pixel_size
+        captured["weight"] = weight
+        return original_designer_ui_font(
+            point_size=point_size,
+            pixel_size=pixel_size,
+            weight=weight,
+            app=app,
+        )
+
+    monkeypatch.setattr(theme, "designer_ui_font", _capture_font)
+
+    pixmap = QPixmap(24, 24)
+    pixmap.fill(Qt.transparent)
+    painter = QPainter(pixmap)
+    try:
+        module._paint_icon(painter, "definitely_unknown_preview_key", QRectF(0, 0, 24, 24), module._palette_for_mode("dark"))
+    finally:
+        painter.end()
+
+    assert captured["point_size"] is None
+    assert captured["pixel_size"] == 10
+    assert captured["weight"] == QFont.DemiBold

@@ -989,5 +989,5 @@ def _paint_icon(painter: QPainter, icon_key: str, rect: QRectF, palette: dict) -
     else:
         painter.drawRoundedRect(rect.adjusted(3, 3, -3, -3), 5, 5)
         from .theme import designer_ui_font
-        painter.setFont(designer_ui_font(point_size=max(int(rect.height() * 0.44), 8), weight=QFont.DemiBold))
+        painter.setFont(designer_ui_font(pixel_size=max(int(rect.height() * 0.44), 8), weight=QFont.DemiBold))
         painter.drawText(rect, Qt.AlignCenter, "W")
