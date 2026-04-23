@@ -359,13 +359,17 @@ class TestMainWindowBuildAvailability:
 class TestWidgetOverlaySelection:
     def test_overlay_auxiliary_font_sizes_follow_designer_font_preference(self, qapp):
         from ui_designer.ui.preview_panel import WidgetOverlay
+        from ui_designer.ui.theme import app_theme_tokens
 
         qapp.setProperty("designer_font_size_pt", 12)
         overlay = WidgetOverlay()
 
         try:
-            assert overlay._widget_label_font_point_size() == 9
-            assert overlay._coord_tooltip_font_point_size() == 9
+            expected_pixel_size = int(app_theme_tokens(qapp)["fs_micro"])
+            assert overlay._widget_label_font_pixel_size() == expected_pixel_size
+            assert overlay._coord_tooltip_font_pixel_size() == expected_pixel_size
+            assert overlay._widget_label_font().pixelSize() == expected_pixel_size
+            assert overlay._coord_tooltip_font().pixelSize() == expected_pixel_size
             assert overlay.focusPolicy() == Qt.StrongFocus
         finally:
             _dispose_widget(overlay)

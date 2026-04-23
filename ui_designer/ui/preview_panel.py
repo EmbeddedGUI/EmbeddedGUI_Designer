@@ -13,7 +13,7 @@ from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF,
 from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage, QRegion
 
 
-from .theme import app_theme_tokens, designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size, theme_tokens
+from .theme import app_theme_tokens, designer_monospace_font, designer_ui_font, theme_tokens
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_registry import WidgetRegistry
 from ..engine.python_renderer import render_page
@@ -80,7 +80,6 @@ _DEFAULT_UI_TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
-_DEFAULT_PREVIEW_FONT_PT = 9
 
 
 def _theme_color(color_value, alpha=None):
@@ -152,9 +151,9 @@ class WidgetOverlay(QWidget):
         self._passive_bounds_cache_key = None
         self._passive_bounds_cache_rect = QRect()
         self._label_font_cache = None
-        self._label_font_cache_pt = None
+        self._label_font_cache_px = None
         self._coord_font_cache = None
-        self._coord_font_cache_pt = None
+        self._coord_font_cache_px = None
         self._widget_label_text_by_id = {}
         self._visible_widget_order_by_id = {}
 
@@ -241,19 +240,18 @@ class WidgetOverlay(QWidget):
             "tooltip_text": _theme_color(tokens["text"]),
         }
 
-    def _ui_font_scale(self):
-        app = QApplication.instance()
-        return designer_font_scale(app, default_pt=_DEFAULT_PREVIEW_FONT_PT)
+    def _token_font_pixel_size(self, token_key, fallback):
+        tokens = app_theme_tokens(QApplication.instance())
+        try:
+            return max(int(tokens.get(token_key, fallback)), 1)
+        except (TypeError, ValueError):
+            return max(int(fallback), 1)
 
-    def _scaled_font_point_size(self, base_point_size, minimum=1):
-        app = QApplication.instance()
-        return scaled_point_size(base_point_size, app=app, minimum=minimum, default_pt=_DEFAULT_PREVIEW_FONT_PT)
+    def _widget_label_font_pixel_size(self):
+        return self._token_font_pixel_size("fs_micro", 10)
 
-    def _widget_label_font_point_size(self):
-        return self._scaled_font_point_size(7, minimum=6)
-
-    def _coord_tooltip_font_point_size(self):
-        return self._scaled_font_point_size(7, minimum=6)
+    def _coord_tooltip_font_pixel_size(self):
+        return self._token_font_pixel_size("fs_micro", 10)
 
     def _is_lightweight_interaction_active(self):
         return self._dragging or self._resizing or self._rubber_band
@@ -373,17 +371,17 @@ class WidgetOverlay(QWidget):
         return True
 
     def _widget_label_font(self):
-        point_size = self._widget_label_font_point_size()
-        if self._label_font_cache is None or self._label_font_cache_pt != point_size:
-            self._label_font_cache = designer_ui_font(point_size=point_size)
-            self._label_font_cache_pt = point_size
+        pixel_size = self._widget_label_font_pixel_size()
+        if self._label_font_cache is None or self._label_font_cache_px != pixel_size:
+            self._label_font_cache = designer_ui_font(pixel_size=pixel_size)
+            self._label_font_cache_px = pixel_size
         return self._label_font_cache
 
     def _coord_tooltip_font(self):
-        point_size = self._coord_tooltip_font_point_size()
-        if self._coord_font_cache is None or self._coord_font_cache_pt != point_size:
-            self._coord_font_cache = designer_monospace_font(point_size=point_size)
-            self._coord_font_cache_pt = point_size
+        pixel_size = self._coord_tooltip_font_pixel_size()
+        if self._coord_font_cache is None or self._coord_font_cache_px != pixel_size:
+            self._coord_font_cache = designer_monospace_font(pixel_size=pixel_size)
+            self._coord_font_cache_px = pixel_size
         return self._coord_font_cache
 
     def _widget_label_text(self, widget):
@@ -606,7 +604,7 @@ class WidgetOverlay(QWidget):
             bool(self._bg_image is not None and self._bg_image_visible),
             round(float(self._bg_image_opacity), 3),
             bg_cache_key,
-            self._widget_label_font_point_size(),
+            self._widget_label_font_pixel_size(),
         )
 
     def _widget_bounds_style(self, widget, z, *, passive_only=False, palette=None):
