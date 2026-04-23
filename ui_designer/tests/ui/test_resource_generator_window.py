@@ -1351,6 +1351,21 @@ class TestResourceGeneratorWindow:
         assert meta_font.pixelSize() == 10
 
     @_skip_no_qt
+    def test_resource_generator_headings_use_designer_ui_font_family(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+        from ui_designer.ui.theme import designer_ui_font
+
+        window = ResourceGeneratorWindow("")
+
+        try:
+            expected_family = designer_ui_font().family()
+            assert window._simple_action_tabs.tabBar().font().family() == expected_family
+            assert window._simple_asset_empty_title.font().family() == expected_family
+            assert window._simple_asset_table.horizontalHeader().font().family() == expected_family
+        finally:
+            _close_window(window)
+
+    @_skip_no_qt
     def test_quick_placeholder_palette_chooses_theme_aware_contrast_text(self, qapp):
         from PyQt5.QtGui import QColor
 

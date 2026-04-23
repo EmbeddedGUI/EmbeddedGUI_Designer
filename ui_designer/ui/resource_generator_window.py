@@ -147,6 +147,15 @@ def _quick_preview_board_font(role: str, *, bold: bool = False) -> QFont:
     )
 
 
+def _resource_generator_ui_font(token_key: str, fallback: int, *, weight=None) -> QFont:
+    tokens = app_theme_tokens()
+    try:
+        pixel_size = max(int(tokens.get(token_key, fallback)), 1)
+    except (TypeError, ValueError):
+        pixel_size = max(int(fallback), 1)
+    return designer_ui_font(pixel_size=pixel_size, weight=weight)
+
+
 def _clear_qt_pixmap_cache():
     try:
         QPixmapCache.clear()
@@ -1949,8 +1958,8 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_action_tabs.setDocumentMode(True)
         self._simple_action_tabs.setStyleSheet("QTabBar::tab { min-height: 18px; padding: 1px 8px; }")
         tab_bar = self._simple_action_tabs.tabBar()
-        tab_font = QFont(tab_bar.font())
-        tab_font.setPixelSize(int(app_theme_tokens().get("fs_caption", 10)))
+        tab_font = _resource_generator_ui_font("fs_caption", 10, weight=tab_bar.font().weight())
+        tab_font.setItalic(tab_bar.font().italic())
         tab_bar.setFont(tab_font)
         tab_bar.setExpanding(False)
         tab_bar.setUsesScrollButtons(False)
@@ -2400,9 +2409,7 @@ class ResourceGeneratorWindow(QDialog):
         layout.addStretch(1)
 
         self._simple_asset_empty_title = QLabel("No assets imported yet.")
-        empty_title_font = QFont(self._simple_asset_empty_title.font())
-        empty_title_font.setPixelSize(int(app_theme_tokens().get("fs_h1", 13)))
-        empty_title_font.setBold(True)
+        empty_title_font = _resource_generator_ui_font("fs_h1", 13, weight=QFont.Bold)
         self._simple_asset_empty_title.setFont(empty_title_font)
         self._simple_asset_empty_title.setAlignment(Qt.AlignCenter)
         layout.addWidget(self._simple_asset_empty_title)
