@@ -128,7 +128,7 @@ class TestResourceGeneratorWindow:
         assert window._simple_actions_scroll.widget() is window._simple_action_tabs
         assert tab_bar.minimumHeight() == 24
         assert tab_bar.maximumHeight() == 24
-        assert tab_bar.font().pointSize() == 9
+        assert tab_bar.font().pointSize() == 10
         _close_window(window)
 
     @_skip_no_qt
@@ -1316,6 +1316,17 @@ class TestResourceGeneratorWindow:
         assert palette["preview_border"].name().lower() == tokens["border_strong"].lower()
         assert palette["preview_fill"].name().lower() == tokens["panel_alt"].lower()
         assert palette["meta_text"].name().lower() == tokens["text_soft"].lower()
+
+    def test_quick_preview_board_typography_uses_compact_scale(self):
+        from ui_designer.ui.resource_generator_window import _quick_preview_board_font_sizes
+
+        assert _quick_preview_board_font_sizes() == {
+            "title": 18,
+            "subtitle": 10,
+            "card_title": 11,
+            "preview": 10,
+            "meta": 10,
+        }
 
     @_skip_no_qt
     def test_quick_placeholder_palette_chooses_theme_aware_contrast_text(self, qapp):

@@ -128,6 +128,16 @@ def _quick_preview_board_palette():
     }
 
 
+def _quick_preview_board_font_sizes() -> dict[str, int]:
+    return {
+        "title": 18,
+        "subtitle": 10,
+        "card_title": 11,
+        "preview": 10,
+        "meta": 10,
+    }
+
+
 def _clear_qt_pixmap_cache():
     try:
         QPixmapCache.clear()
@@ -1931,7 +1941,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_action_tabs.setStyleSheet("QTabBar::tab { min-height: 18px; padding: 1px 8px; }")
         tab_bar = self._simple_action_tabs.tabBar()
         tab_font = QFont(tab_bar.font())
-        tab_font.setPointSize(9)
+        tab_font.setPointSize(10)
         tab_bar.setFont(tab_font)
         tab_bar.setExpanding(False)
         tab_bar.setUsesScrollButtons(False)
@@ -4168,16 +4178,17 @@ class ResourceGeneratorWindow(QDialog):
         try:
             painter.setRenderHint(QPainter.Antialiasing, True)
             painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+            font_sizes = _quick_preview_board_font_sizes()
 
             title_font = QFont()
-            title_font.setPointSize(18)
+            title_font.setPointSize(font_sizes["title"])
             title_font.setBold(True)
             painter.setFont(title_font)
             painter.setPen(palette["title_text"])
             painter.drawText(page_margin, page_margin + 28, "Quick Preview Board")
 
             subtitle_font = QFont()
-            subtitle_font.setPointSize(10)
+            subtitle_font.setPointSize(font_sizes["subtitle"])
             painter.setFont(subtitle_font)
             painter.setPen(palette["subtitle_text"])
             painter.drawText(
@@ -4245,7 +4256,7 @@ class ResourceGeneratorWindow(QDialog):
             painter.drawRoundedRect(x, y, width, height, 12, 12)
 
             title_font = QFont()
-            title_font.setPointSize(11)
+            title_font.setPointSize(_quick_preview_board_font_sizes()["card_title"])
             title_font.setBold(True)
             painter.setFont(title_font)
             painter.setPen(palette["card_title"])
@@ -4268,7 +4279,7 @@ class ResourceGeneratorWindow(QDialog):
             else:
                 painter.setPen(palette["preview_text"])
                 preview_font = QFont()
-                preview_font.setPointSize(9)
+                preview_font.setPointSize(_quick_preview_board_font_sizes()["preview"])
                 painter.setFont(preview_font)
                 painter.drawText(
                     preview_rect[0] + 10,
@@ -4280,7 +4291,7 @@ class ResourceGeneratorWindow(QDialog):
                 )
 
             meta_font = QFont()
-            meta_font.setPointSize(8)
+            meta_font.setPointSize(_quick_preview_board_font_sizes()["meta"])
             painter.setFont(meta_font)
             painter.setPen(palette["meta_text"])
             meta_top = preview_rect[1] + preview_rect[3] + 10
