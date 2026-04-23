@@ -128,7 +128,7 @@ class TestResourceGeneratorWindow:
         assert window._simple_actions_scroll.widget() is window._simple_action_tabs
         assert tab_bar.minimumHeight() == 24
         assert tab_bar.maximumHeight() == 24
-        assert tab_bar.font().pointSize() == 10
+        assert tab_bar.font().pixelSize() == 10
         _close_window(window)
 
     @_skip_no_qt
@@ -198,7 +198,7 @@ class TestResourceGeneratorWindow:
         assert header.sectionResizeMode(2) == QHeaderView.Interactive
         assert header.sectionResizeMode(3) == QHeaderView.Interactive
         assert header.height() >= 24
-        assert header.font().pointSize() == 10
+        assert header.font().pixelSize() == 10
         assert window._simple_asset_table.verticalHeader().defaultSectionSize() >= window.fontMetrics().height() + 12
         _close_window(window)
 
@@ -229,6 +229,8 @@ class TestResourceGeneratorWindow:
 
         assert window._simple_asset_content_stack.currentWidget() is window._simple_asset_empty_state
         assert window._simple_asset_empty_title.text() == "No assets imported yet."
+        assert window._simple_asset_empty_title.font().pixelSize() == 13
+        assert window._simple_asset_empty_title.font().bold() is True
         assert window._simple_asset_empty_import_button.isHidden() is False
         assert window._simple_asset_empty_scan_button.isHidden() is False
         assert window._simple_asset_empty_clear_button.isHidden() is True

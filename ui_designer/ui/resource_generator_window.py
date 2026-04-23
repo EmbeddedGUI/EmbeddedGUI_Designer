@@ -1941,7 +1941,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_action_tabs.setStyleSheet("QTabBar::tab { min-height: 18px; padding: 1px 8px; }")
         tab_bar = self._simple_action_tabs.tabBar()
         tab_font = QFont(tab_bar.font())
-        tab_font.setPointSize(10)
+        tab_font.setPixelSize(10)
         tab_bar.setFont(tab_font)
         tab_bar.setExpanding(False)
         tab_bar.setUsesScrollButtons(False)
@@ -2344,7 +2344,7 @@ class ResourceGeneratorWindow(QDialog):
         if getattr(self, "_simple_asset_table", None) is None:
             return
         simple_header = self._simple_asset_table.horizontalHeader()
-        header_font = designer_ui_font(point_size=10)
+        header_font = designer_ui_font(pixel_size=10)
         header_font.setWeight(simple_header.font().weight())
         header_font.setItalic(simple_header.font().italic())
         simple_header.setFont(header_font)
@@ -2392,7 +2392,7 @@ class ResourceGeneratorWindow(QDialog):
 
         self._simple_asset_empty_title = QLabel("No assets imported yet.")
         empty_title_font = QFont(self._simple_asset_empty_title.font())
-        empty_title_font.setPointSize(max(empty_title_font.pointSize(), 12))
+        empty_title_font.setPixelSize(int(app_theme_tokens().get("fs_h1", 13)))
         empty_title_font.setBold(True)
         self._simple_asset_empty_title.setFont(empty_title_font)
         self._simple_asset_empty_title.setAlignment(Qt.AlignCenter)
@@ -4181,14 +4181,14 @@ class ResourceGeneratorWindow(QDialog):
             font_sizes = _quick_preview_board_font_sizes()
 
             title_font = QFont()
-            title_font.setPointSize(font_sizes["title"])
+            title_font.setPixelSize(font_sizes["title"])
             title_font.setBold(True)
             painter.setFont(title_font)
             painter.setPen(palette["title_text"])
             painter.drawText(page_margin, page_margin + 28, "Quick Preview Board")
 
             subtitle_font = QFont()
-            subtitle_font.setPointSize(font_sizes["subtitle"])
+            subtitle_font.setPixelSize(font_sizes["subtitle"])
             painter.setFont(subtitle_font)
             painter.setPen(palette["subtitle_text"])
             painter.drawText(
@@ -4256,7 +4256,7 @@ class ResourceGeneratorWindow(QDialog):
             painter.drawRoundedRect(x, y, width, height, 12, 12)
 
             title_font = QFont()
-            title_font.setPointSize(_quick_preview_board_font_sizes()["card_title"])
+            title_font.setPixelSize(_quick_preview_board_font_sizes()["card_title"])
             title_font.setBold(True)
             painter.setFont(title_font)
             painter.setPen(palette["card_title"])
@@ -4279,7 +4279,7 @@ class ResourceGeneratorWindow(QDialog):
             else:
                 painter.setPen(palette["preview_text"])
                 preview_font = QFont()
-                preview_font.setPointSize(_quick_preview_board_font_sizes()["preview"])
+                preview_font.setPixelSize(_quick_preview_board_font_sizes()["preview"])
                 painter.setFont(preview_font)
                 painter.drawText(
                     preview_rect[0] + 10,
@@ -4291,7 +4291,7 @@ class ResourceGeneratorWindow(QDialog):
                 )
 
             meta_font = QFont()
-            meta_font.setPointSize(_quick_preview_board_font_sizes()["meta"])
+            meta_font.setPixelSize(_quick_preview_board_font_sizes()["meta"])
             painter.setFont(meta_font)
             painter.setPen(palette["meta_text"])
             meta_top = preview_rect[1] + preview_rect[3] + 10
