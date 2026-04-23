@@ -1331,6 +1331,26 @@ class TestResourceGeneratorWindow:
         }
 
     @_skip_no_qt
+    def test_quick_preview_board_fonts_use_designer_ui_pixels(self, qapp):
+        from PyQt5.QtGui import QFont
+
+        from ui_designer.ui.resource_generator_window import _quick_preview_board_font
+
+        title_font = _quick_preview_board_font("title", bold=True)
+        subtitle_font = _quick_preview_board_font("subtitle")
+        card_title_font = _quick_preview_board_font("card_title", bold=True)
+        preview_font = _quick_preview_board_font("preview")
+        meta_font = _quick_preview_board_font("meta")
+
+        assert title_font.pixelSize() == 18
+        assert title_font.weight() == QFont.Bold
+        assert subtitle_font.pixelSize() == 10
+        assert card_title_font.pixelSize() == 11
+        assert card_title_font.weight() == QFont.Bold
+        assert preview_font.pixelSize() == 10
+        assert meta_font.pixelSize() == 10
+
+    @_skip_no_qt
     def test_quick_placeholder_palette_chooses_theme_aware_contrast_text(self, qapp):
         from PyQt5.QtGui import QColor
 
