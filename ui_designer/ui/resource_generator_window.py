@@ -1681,6 +1681,7 @@ class ResourceGeneratorWindow(QDialog):
             self._apply_resource_table_palettes()
             if getattr(self, "_simple_asset_table", None) is not None:
                 self._apply_simple_asset_table_header_style()
+                self._apply_simple_count_label_typography()
                 self._refresh_simple_page()
 
     def dragEnterEvent(self, event):
@@ -1952,6 +1953,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_attention_count.clicked.connect(lambda: self._set_simple_asset_filter("attention"))
         counts_row.addWidget(self._simple_attention_count)
         counts_row.addStretch(1)
+        self._apply_simple_count_label_typography()
         intro_layout.addLayout(counts_row)
 
         self._simple_action_tabs = QTabWidget()
@@ -2368,6 +2370,18 @@ class ResourceGeneratorWindow(QDialog):
         simple_header.setFont(header_font)
         simple_header.setMinimumHeight(max(24, simple_header.fontMetrics().height() + 10))
 
+    def _apply_simple_count_label_typography(self):
+        for label in (
+            getattr(self, "_simple_image_count", None),
+            getattr(self, "_simple_font_count", None),
+            getattr(self, "_simple_mp4_count", None),
+        ):
+            if not isinstance(label, QLabel):
+                continue
+            font = _resource_generator_ui_font("fs_body_sm", 11, weight=label.font().weight())
+            font.setItalic(label.font().italic())
+            label.setFont(font)
+
     def _apply_resource_table_palette(self, table: QTableWidget | None, *, use_alt_background: bool):
         if table is None:
             return
@@ -2755,8 +2769,12 @@ class ResourceGeneratorWindow(QDialog):
             else "No assets currently need attention."
         )
         self._simple_attention_count.setToolTip(tooltip)
-        font = QFont(self._simple_attention_count.font())
-        font.setBold(count > 0)
+        font = _resource_generator_ui_font(
+            "fs_body_sm",
+            11,
+            weight=QFont.Bold if count > 0 else None,
+        )
+        font.setItalic(self._simple_attention_count.font().italic())
         self._simple_attention_count.setFont(font)
         if count > 0:
             tokens = app_theme_tokens()

@@ -132,6 +132,40 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_mode_filter_counts_use_dense_ui_typography(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+        from ui_designer.ui.theme import app_theme_tokens, designer_ui_font
+
+        window = ResourceGeneratorWindow("")
+
+        try:
+            tokens = app_theme_tokens()
+            expected_px = int(tokens["fs_body_sm"])
+            expected_family = designer_ui_font().family()
+
+            for label in (
+                window._simple_image_count,
+                window._simple_font_count,
+                window._simple_mp4_count,
+                window._simple_attention_count,
+            ):
+                assert label.font().pixelSize() == expected_px
+                assert label.font().family() == expected_family
+                assert label.font().bold() is False
+
+            window._update_simple_attention_count(2)
+            assert window._simple_attention_count.font().pixelSize() == expected_px
+            assert window._simple_attention_count.font().family() == expected_family
+            assert window._simple_attention_count.font().bold() is True
+
+            window._update_simple_attention_count(0)
+            assert window._simple_attention_count.font().pixelSize() == expected_px
+            assert window._simple_attention_count.font().family() == expected_family
+            assert window._simple_attention_count.font().bold() is False
+        finally:
+            _close_window(window)
+
+    @_skip_no_qt
     def test_resource_generator_uses_compact_workspace_shell_spacing(self, qapp):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
 
