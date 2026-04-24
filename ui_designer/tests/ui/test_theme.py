@@ -984,6 +984,7 @@ def test_welcome_page_styles_use_engineering_surface_tokens():
         assert "padding: 0px;" in recent_status
         assert f"border: 1px dashed {t['border']};" in empty
         assert "border-radius: 0px;" in empty
+        assert f"padding: {t['space_lg'] + t['space_3xs']}px;" in empty
 
 
 def test_project_dock_styles_use_engineering_surface_tokens():

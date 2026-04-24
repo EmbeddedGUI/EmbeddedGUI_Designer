@@ -3349,7 +3349,7 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
     background-color: transparent;
     border: 1px dashed {t['border']};
     border-radius: 0px;
-    padding: 18px;
+    padding: {t['space_lg'] + t['space_3xs']}px;
 }}
 
 #widget_browser_results,
