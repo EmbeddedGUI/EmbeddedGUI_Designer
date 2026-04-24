@@ -2113,7 +2113,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 #workspace_section_title {{
     color: {t['text']};
     font-size: {t['fs_body']}px;
-    font-weight: {t['fw_medium']};
+    font-weight: {t['fw_semibold']};
 }}
 
 QWidget#project_workspace_panel QLabel#workspace_section_title,

@@ -15,8 +15,8 @@ _TYPO_ROLES = {
     # Keep hierarchy compact and IDE-like: fewer strong levels, more readable defaults.
     "display": ("fs_display", "fw_semibold"),
     "heading": ("fs_h1", "fw_semibold"),
-    "section": ("fs_h2", "fw_medium"),
-    "panel_title": ("fs_panel_title", "fw_medium"),
+    "section": ("fs_h2", "fw_semibold"),
+    "panel_title": ("fs_panel_title", "fw_semibold"),
     "body": ("fs_body", "fw_regular"),
     "meta": ("fs_body_sm", "fw_regular"),
     "caption": ("fs_caption", "fw_regular"),

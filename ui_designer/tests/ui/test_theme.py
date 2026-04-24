@@ -133,6 +133,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert t["shell_bg"] in css.split("QMainWindow, QDialog", 1)[1].split("}", 1)[0]
         assert "QTabBar::tab:selected" in css
         selected_tab = css.split("QTabBar::tab:selected", 1)[1].split("}", 1)[0]
+        workspace_section_title = css.split("#workspace_section_title {", 1)[1].split("}", 1)[0]
         assert f"background-color: {t['panel']};" in selected_tab
         assert f"border-top: 2px solid {t['accent']};" in selected_tab
         left_tabs_pane = css.split("QTabWidget#workspace_left_tabs::pane {", 1)[1].split("}", 1)[0]
@@ -141,6 +142,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert "background-color: transparent;" in left_tabs_pane
         assert "border: none;" in left_tabs_pane
         assert "padding: 1px 5px;" in left_tabs_tab
+        assert f"font-weight: {t['fw_semibold']};" in workspace_section_title
         assert f"font-size: {t['fs_panel_title']}px;" in compact_panel_title
         assert "QFrame#workspace_bottom_header QLabel#workspace_section_title" in css
         indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
@@ -358,6 +360,27 @@ def test_apply_typography_role_uses_active_density_and_font_preference():
         app.setProperty("designer_theme_mode", None)
         app.setProperty("designer_ui_density", None)
         app.setProperty("designer_font_size_pt", 0)
+
+
+def test_apply_typography_role_uses_semibold_for_section_hierarchy():
+    from PyQt5.QtWidgets import QLabel
+
+    app = _app()
+    app.setProperty("designer_theme_mode", "dark")
+    title = QLabel("Section")
+    try:
+        expected = theme_tokens("dark")
+
+        assert apply_typography_role(title, "section") is True
+        assert title.font().pixelSize() == int(expected["fs_h2"])
+        assert title.font().weight() == int(qt_font_weight(expected["fw_semibold"]))
+
+        assert apply_typography_role(title, "panel_title") is True
+        assert title.font().pixelSize() == int(expected["fs_panel_title"])
+        assert title.font().weight() == int(qt_font_weight(expected["fw_semibold"]))
+    finally:
+        title.deleteLater()
+        app.setProperty("designer_theme_mode", None)
 
 
 def test_typography_preview_widget_uses_compact_root_spacing(qapp):
