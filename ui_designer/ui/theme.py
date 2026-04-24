@@ -1651,7 +1651,7 @@ QFrame#inspector_group_body {{
     background-color: transparent;
     border: none;
     color: {t['text_soft']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
     font-weight: {t['fw_medium']};
     padding: 0px;
 }}

@@ -1033,7 +1033,7 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         assert "background-color: transparent;" in target
         assert "border: none;" in target
         assert f"color: {t['text_soft']};" in target
-        assert f"font-size: {t['fs_body_sm']}px;" in target
+        assert f"font-size: {t['fs_caption']}px;" in target
         assert "background-color: transparent;" in metrics
         assert "border: none;" in metrics
         assert "border-radius: 0px;" in metrics
