@@ -2541,7 +2541,7 @@ QListWidget#diagnostics_list {{
 
 #debug_panel_header_meta {{
     color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
 }}
 
 #debug_panel_controls_strip {{
