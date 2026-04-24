@@ -3436,7 +3436,7 @@ QSplitter#preview_splitter::handle {{
 
 #preview_status_value {{
     color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
 }}
 
 QPushButton#preview_status_button {{

@@ -568,6 +568,7 @@ def test_preview_panel_styles_use_engineering_surface_tokens():
         content = css.split("#preview_content {", 1)[1].split("}", 1)[0]
         overlay = css.split('QWidget#preview_overlay_surface[solidBackground="true"] {', 1)[1].split("}", 1)[0]
         status_shell = css.split("#preview_status_shell {", 1)[1].split("}", 1)[0]
+        status_value = css.split("#preview_status_value {", 1)[1].split("}", 1)[0]
         status_button = css.split("QPushButton#preview_status_button {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -581,6 +582,8 @@ def test_preview_panel_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in content
         assert f"background-color: {t['panel_raised']};" in status_shell
         assert "border-radius: 0px;" in status_shell
+        assert f"color: {t['text_muted']};" in status_value
+        assert f"font-size: {t['fs_caption']}px;" in status_value
         assert f"background-color: {t['panel_alt']};" in status_button
         assert "border-radius: 0px;" in status_button
 
