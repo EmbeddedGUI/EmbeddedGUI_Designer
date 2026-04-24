@@ -633,10 +633,10 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_md']}px;" in context
         assert "spacing: 1px;" in toolbar
         assert "width: 1px;" in toolbar_separator
-        assert "margin: 1px 1px;" in toolbar_separator
+        assert f"margin: {t['space_toolbar_separator']}px {t['space_toolbar_separator']}px;" in toolbar_separator
         assert "background-color: transparent;" in toolbar_button
         assert "border-radius: 0px;" in toolbar_button
-        assert "padding: 0px 3px;" in toolbar_button
+        assert f"padding: 0px {t['pad_toolbar_h']}px;" in toolbar_button
         assert "min-height: 20px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
         assert f"background-color: {t['shell_bg']};" in toolbar_button_disabled

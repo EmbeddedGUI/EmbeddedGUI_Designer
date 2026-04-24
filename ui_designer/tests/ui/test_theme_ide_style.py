@@ -69,6 +69,8 @@ def test_dark_spacing_and_radii_tightened():
     assert t["pad_input_h"] == 6
     assert t["pad_tab_compact_v"] == 1
     assert t["pad_tab_compact_h"] == 5
+    assert t["pad_toolbar_h"] == 3
+    assert t["space_toolbar_separator"] == 1
     assert t["r_sm"] == 4
     assert t["r_md"] == 4
     assert t["r_lg"] == 4

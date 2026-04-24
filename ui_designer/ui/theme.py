@@ -272,6 +272,8 @@ _TOKENS = {
         "pad_input_h": 6,
         "pad_tab_compact_v": 1,
         "pad_tab_compact_h": 5,
+        "pad_toolbar_h": 3,
+        "space_toolbar_separator": 1,
         "h_tab_min": 24,
         "fs_display": 18,
         "fs_h1": 13,
@@ -345,6 +347,8 @@ _TOKENS = {
         "pad_input_h": 10,
         "pad_tab_compact_v": 1,
         "pad_tab_compact_h": 5,
+        "pad_toolbar_h": 3,
+        "space_toolbar_separator": 1,
         "h_tab_min": 24,
         "fs_display": 20,
         "fs_h1": 14,
@@ -657,7 +661,15 @@ def _density_adjusted_tokens(tokens: dict, density="standard"):
             out[key] = int(out.get(key, 0)) + text_delta
         except Exception:
             pass
-    for key in ("pad_btn_v", "pad_btn_h", "pad_input_v", "pad_input_h", "pad_tab_compact_v", "pad_tab_compact_h"):
+    for key in (
+        "pad_btn_v",
+        "pad_btn_h",
+        "pad_input_v",
+        "pad_input_h",
+        "pad_tab_compact_v",
+        "pad_tab_compact_h",
+        "pad_toolbar_h",
+    ):
         try:
             out[key] = int(out.get(key, 0)) + control_delta
         except Exception:
@@ -687,7 +699,15 @@ def _font_adjusted_tokens(tokens: dict, font_size_pt=0):
         except Exception:
             pass
 
-    for key in ("pad_btn_v", "pad_btn_h", "pad_input_v", "pad_input_h", "pad_tab_compact_v", "pad_tab_compact_h"):
+    for key in (
+        "pad_btn_v",
+        "pad_btn_h",
+        "pad_input_v",
+        "pad_input_h",
+        "pad_tab_compact_v",
+        "pad_tab_compact_h",
+        "pad_toolbar_h",
+    ):
         try:
             out[key] = max(1, int(round(float(out.get(key, 0)) * scale)))
         except Exception:
@@ -1764,7 +1784,7 @@ QToolBar#main_toolbar {{
 QToolBar#main_toolbar::separator {{
     background-color: {t['border']};
     width: 1px;
-    margin: 1px 1px;
+    margin: {t['space_toolbar_separator']}px {t['space_toolbar_separator']}px;
 }}
 
 QToolBar#main_toolbar QToolButton {{
@@ -1772,7 +1792,7 @@ QToolBar#main_toolbar QToolButton {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px 3px;
+    padding: 0px {t['pad_toolbar_h']}px;
     min-height: 20px;
     max-height: 20px;
     font-size: {t['fs_body_sm']}px;
