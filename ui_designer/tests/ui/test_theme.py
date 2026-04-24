@@ -276,6 +276,7 @@ def test_secondary_typography_uses_expected_weights_for_dense_views():
         resource_metric_value = css.split("#resource_panel_metric_value {", 1)[1].split("}", 1)[0]
         resource_table_header = css.split("QTableWidget#resource_panel_table QHeaderView::section {", 1)[1].split("}", 1)[0]
         app_selector_label = css.split("#app_selector_metric_label,", 1)[1].split("}", 1)[0]
+        app_selector_selection_value = css.split("#app_selector_selection_value {", 1)[1].split("}", 1)[0]
         app_selector_item_title = css.split("#app_selector_item_title {", 1)[1].split("}", 1)[0]
         app_selector_item_kind = css.split("#app_selector_item_kind {", 1)[1].split("}", 1)[0]
         welcome_eyebrow = css.split("#welcome_eyebrow {", 1)[1].split("}", 1)[0]
@@ -289,6 +290,8 @@ def test_secondary_typography_uses_expected_weights_for_dense_views():
         assert f"font-weight: {t['fw_medium']};" in resource_metric_value
         assert f"font-weight: {t['fw_medium']};" in resource_table_header
         assert f"font-weight: {t['fw_regular']};" in app_selector_label
+        assert f"font-size: {t['fs_caption']}px;" in app_selector_selection_value
+        assert f"font-weight: {t['fw_medium']};" in app_selector_selection_value
         assert f"font-weight: {t['fw_medium']};" in app_selector_item_title
         assert f"font-weight: {t['fw_medium']};" in app_selector_item_kind
         assert f"font-weight: {t['fw_medium']};" in welcome_eyebrow

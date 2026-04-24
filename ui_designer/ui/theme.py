@@ -2973,7 +2973,7 @@ QLabel#page_navigator_thumb_label[selected="true"] {{
 #app_selector_status_value,
 #app_selector_selection_value {{
     color: {t['text']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
     font-weight: {t['fw_medium']};
 }}
 
