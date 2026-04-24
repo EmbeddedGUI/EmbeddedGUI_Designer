@@ -1709,7 +1709,7 @@ QPushButton#project_workspace_view_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: 0px 4px;
+    padding: 0px {t['space_xs']}px;
     text-align: center;
     min-height: 20px;
     max-height: 20px;
