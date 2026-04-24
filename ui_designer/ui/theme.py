@@ -65,6 +65,7 @@ _PROPERTY_PANEL_SPIN_BUTTON_QSS = (
     "border-radius: 0px;"
 )
 _ENGINEERING_FS_BODY_SENTINEL = "__FS_BODY__"
+_ENGINEERING_RADIUS_SM_SENTINEL = "__R_SM__"
 
 _FLUENT_BUTTON_RADIUS_QSS = f"""
 PushButton,
@@ -81,7 +82,7 @@ TransparentPushButton,
 TransparentToolButton,
 TransparentToggleButton,
 TransparentToggleToolButton {{
-    border-radius: 4px;
+    border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
     font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
 """
@@ -101,7 +102,7 @@ TransparentPushButton,
 TransparentToolButton,
 TransparentToggleButton,
 TransparentToggleToolButton {
-    border-radius: 4px;
+    border-radius: __R_SM__px;
     min-height: 22px;
     padding: 1px 6px;
 }
@@ -112,13 +113,13 @@ LineEdit,
 TextEdit,
 PlainTextEdit,
 TextBrowser {{
-    border-radius: 4px;
+    border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
     padding: 0px 8px;
     font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
 
 #lineEditButton {{
-    border-radius: 4px;
+    border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
 }}
 """
 
@@ -127,13 +128,13 @@ LineEdit,
 TextEdit,
 PlainTextEdit,
 TextBrowser {
-    border-radius: 4px;
+    border-radius: __R_SM__px;
     min-height: 24px;
     padding: 0px 6px;
 }
 
 #lineEditButton {
-    border-radius: 4px;
+    border-radius: __R_SM__px;
     min-width: 18px;
 }
 """
@@ -141,7 +142,7 @@ TextBrowser {
 _FLUENT_COMBO_BOX_RADIUS_QSS = f"""
 ComboBox,
 ModelComboBox {{
-    border-radius: 4px;
+    border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
     min-height: 24px;
     padding: 0px 8px;
     font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
@@ -151,7 +152,7 @@ ModelComboBox {{
 _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = """
 ComboBox,
 ModelComboBox {
-    border-radius: 4px;
+    border-radius: __R_SM__px;
     min-height: 24px;
     padding: 0px 6px;
 }
@@ -168,14 +169,14 @@ CompactDoubleSpinBox,
 CompactDateEdit,
 CompactDateTimeEdit,
 CompactTimeEdit {{
-    border-radius: 4px;
+    border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
     min-height: 24px;
     padding: 0px 8px;
     font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
 
 SpinButton {{
-    border-radius: 4px;
+    border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
 }}
 """
 
@@ -190,13 +191,13 @@ CompactDoubleSpinBox,
 CompactDateEdit,
 CompactDateTimeEdit,
 CompactTimeEdit {
-    border-radius: 4px;
+    border-radius: __R_SM__px;
     min-height: 24px;
     padding: 0px 6px;
 }
 
 SpinButton {
-    border-radius: 4px;
+    border-radius: __R_SM__px;
     min-width: 18px;
 }
 """
@@ -374,10 +375,22 @@ def _resolve_engineering_fs_body_qss(template: str) -> str:
     return str(template).replace(_ENGINEERING_FS_BODY_SENTINEL, str(int(_TOKENS["dark"]["fs_body"])))
 
 
+def _resolve_engineering_radius_sm_qss(template: str) -> str:
+    return str(template).replace(_ENGINEERING_RADIUS_SM_SENTINEL, str(int(_TOKENS["dark"]["r_sm"])))
+
+
 _FLUENT_BUTTON_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_BUTTON_RADIUS_QSS)
 _FLUENT_LINE_EDIT_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_LINE_EDIT_RADIUS_QSS)
 _FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_COMBO_BOX_RADIUS_QSS)
 _FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
+_FLUENT_BUTTON_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_BUTTON_RADIUS_QSS)
+_FLUENT_PROPERTY_PANEL_BUTTON_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_BUTTON_QSS)
+_FLUENT_LINE_EDIT_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_LINE_EDIT_RADIUS_QSS)
+_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS)
+_FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_COMBO_BOX_RADIUS_QSS)
+_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS)
+_FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
+_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS)
 
 _WINDOWS_FONTDIR_CANDIDATES = (
     os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts"),

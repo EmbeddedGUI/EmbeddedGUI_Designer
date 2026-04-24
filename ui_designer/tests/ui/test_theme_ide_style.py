@@ -85,6 +85,7 @@ def test_light_palette_unchanged():
 
 def test_fluent_qss_templates_use_4px_radius_and_12px_font():
     """Buttons/inputs/combos must have 4px radius and 12px font (IDE density)."""
+    expected_radius_px = theme_tokens("dark")["r_sm"]
     expected_font_px = theme_tokens("dark")["fs_body"]
     fragments = [
         _theme_mod._FLUENT_BUTTON_RADIUS_QSS,
@@ -93,12 +94,13 @@ def test_fluent_qss_templates_use_4px_radius_and_12px_font():
         _theme_mod._FLUENT_SPIN_BOX_RADIUS_QSS,
     ]
     for qss in fragments:
-        assert "border-radius: 4px" in qss, f"missing 4px radius: {qss[:80]}"
+        assert f"border-radius: {expected_radius_px}px" in qss, f"missing token radius: {qss[:80]}"
         assert f"font-size: {expected_font_px}px" in qss, f"missing token body font: {qss[:80]}"
         assert "border-radius: 0px" not in qss
 
 
 def test_property_panel_qss_templates_use_4px_radius():
+    expected_radius_px = theme_tokens("dark")["r_sm"]
     fragments = [
         _theme_mod._FLUENT_PROPERTY_PANEL_BUTTON_QSS,
         _theme_mod._FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS,
@@ -106,7 +108,7 @@ def test_property_panel_qss_templates_use_4px_radius():
         _theme_mod._FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS,
     ]
     for qss in fragments:
-        assert "border-radius: 4px" in qss
+        assert f"border-radius: {expected_radius_px}px" in qss
         assert "border-radius: 0px" not in qss
 
 
