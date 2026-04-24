@@ -894,6 +894,7 @@ def test_resource_panel_styles_use_engineering_surface_tokens():
         metric_card = css.split("#resource_panel_metric_card {", 1)[1].split("}", 1)[0]
         summary = css.split("#resource_panel_status,\n#resource_panel_summary {", 1)[1].split("}", 1)[0]
         list_surface = css.split("QListWidget#resource_panel_list,", 1)[1].split("}", 1)[0]
+        table_header = css.split("QTableWidget#resource_panel_table QHeaderView::section {", 1)[1].split("}", 1)[0]
         preview = css.split("#resource_panel_preview {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -906,6 +907,7 @@ def test_resource_panel_styles_use_engineering_surface_tokens():
         assert f"color: {t['text_muted']};" in summary
         assert f"font-size: {t['fs_caption']}px;" in summary
         assert f"background-color: {t['panel_alt']};" in list_surface
+        assert f"padding: {t['space_sm']}px;" in table_header
         assert f"background-color: {t['panel_alt']};" in preview
         assert "border-radius: 0px;" in preview
         assert "border-radius: 0px;" in list_surface
