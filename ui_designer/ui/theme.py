@@ -2168,7 +2168,7 @@ QFrame#workspace_bottom_header QLabel#workspace_section_title {{
 
 #workspace_empty_state {{
     color: {t['text_soft']};
-    padding: 20px;
+    padding: {t['space_xl']}px;
 }}
 
 #project_workspace_summary {{

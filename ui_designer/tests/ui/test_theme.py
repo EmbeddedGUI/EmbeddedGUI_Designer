@@ -753,6 +753,17 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in thumb_label
 
 
+def test_workspace_empty_state_spacing_uses_theme_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        empty_state = css.split("#workspace_empty_state {", 1)[1].split("}", 1)[0]
+
+        assert f"color: {t['text_soft']};" in empty_state
+        assert f"padding: {t['space_xl']}px;" in empty_state
+
+
 def test_property_panel_styles_use_engineering_surface_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)
