@@ -1252,6 +1252,7 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         buttons_disabled = css.split("#animations_panel_actions_strip QPushButton:disabled {", 1)[1].split("}", 1)[0]
         table = css.split("QTableWidget#animations_panel_table {", 1)[1].split("}", 1)[0]
         detail = css.split("QGroupBox#animations_panel_detail_group {", 1)[1].split("}", 1)[0]
+        detail_inputs = css.split("QWidget#animations_dock QComboBox,", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
@@ -1272,6 +1273,7 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in detail
         assert "border: none;" in detail
         assert "border-radius: 0px;" in detail
+        assert f"padding: 0px {t['pad_input_h']}px;" in detail_inputs
 
 
 def test_project_workspace_styles_use_engineering_surface_tokens():

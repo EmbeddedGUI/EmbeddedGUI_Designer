@@ -2720,7 +2720,7 @@ QWidget#animations_dock QComboBox,
 QWidget#animations_dock QSpinBox,
 QWidget#animations_dock QLineEdit {{
     border-radius: 0px;
-    padding: 0px 6px;
+    padding: 0px {t['pad_input_h']}px;
     min-height: 20px;
     max-height: 20px;
     font-size: {t['fs_body_sm']}px;
