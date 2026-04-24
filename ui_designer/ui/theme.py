@@ -2212,7 +2212,7 @@ QFrame#workspace_bottom_header QLabel#workspace_section_title {{
 #resource_panel_status,
 #resource_panel_summary {{
     color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
 }}
 
 #resource_panel_card {{

@@ -872,6 +872,7 @@ def test_resource_panel_styles_use_engineering_surface_tokens():
         header = css.split("#resource_panel_header {", 1)[1].split("}", 1)[0]
         card = css.split("#resource_panel_card {", 1)[1].split("}", 1)[0]
         metric_card = css.split("#resource_panel_metric_card {", 1)[1].split("}", 1)[0]
+        summary = css.split("#resource_panel_status,\n#resource_panel_summary {", 1)[1].split("}", 1)[0]
         list_surface = css.split("QListWidget#resource_panel_list,", 1)[1].split("}", 1)[0]
         preview = css.split("#resource_panel_preview {", 1)[1].split("}", 1)[0]
 
@@ -882,6 +883,8 @@ def test_resource_panel_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in card
         assert "background-color: transparent;" in metric_card
         assert "border-radius: 0px;" in metric_card
+        assert f"color: {t['text_muted']};" in summary
+        assert f"font-size: {t['fs_caption']}px;" in summary
         assert f"background-color: {t['panel_alt']};" in list_surface
         assert f"background-color: {t['panel_alt']};" in preview
         assert "border-radius: 0px;" in preview
