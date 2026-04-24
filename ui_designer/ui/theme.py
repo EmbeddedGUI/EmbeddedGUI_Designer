@@ -1281,7 +1281,7 @@ QStatusBar {{
 
 QStatusBar QLabel {{
     color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
 }}
 
 QGroupBox {{

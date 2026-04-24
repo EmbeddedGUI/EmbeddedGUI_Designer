@@ -284,6 +284,7 @@ def test_secondary_typography_uses_expected_weights_for_dense_views():
         welcome_metric_label = css.split("#welcome_metric_label {", 1)[1].split("}", 1)[0]
         welcome_metric_value = css.split("#welcome_metric_value {", 1)[1].split("}", 1)[0]
         welcome_recent_name = css.split("#welcome_recent_name {", 1)[1].split("}", 1)[0]
+        status_bar_label = css.split("QStatusBar QLabel {", 1)[1].split("}", 1)[0]
 
         assert f"font-weight: {t['fw_semibold']};" in property_grid_section
         assert f"font-weight: {t['fw_regular']};" in resource_metric_label
@@ -300,6 +301,7 @@ def test_secondary_typography_uses_expected_weights_for_dense_views():
         assert f"font-weight: {t['fw_regular']};" in welcome_metric_label
         assert f"font-weight: {t['fw_medium']};" in welcome_metric_value
         assert f"font-weight: {t['fw_medium']};" in welcome_recent_name
+        assert f"font-size: {t['fs_caption']}px;" in status_bar_label
 
 
 def test_font_preference_scales_typography_tokens_consistently():
