@@ -11,7 +11,7 @@ from ui_designer.utils.scaffold import add_widget_children as _add_widget_childr
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QEvent, Qt
-    from PyQt5.QtGui import QColor, QFont, QKeyEvent
+    from PyQt5.QtGui import QColor, QFont, QIcon, QKeyEvent
     from PyQt5.QtWidgets import QApplication, QAbstractItemView, QToolButton
 
 _skip_no_qt = skip_if_no_qt
@@ -148,6 +148,30 @@ class TestWidgetTreePanel:
         assert nested_item.font(0).weight() == QFont.DemiBold
         assert leaf_item.font(0).weight() == QFont.Normal
         assert nested_leaf_item.font(0).weight() == QFont.Normal
+        panel.deleteLater()
+
+    def test_tree_items_use_compact_icon_scale(self, qapp, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.theme import app_theme_tokens
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+        import ui_designer.ui.widget_tree as widget_tree_module
+
+        leaf = WidgetModel("label", name="field_label")
+        project, root = _build_project_with_widgets(widgets=[leaf])
+        captured = []
+
+        def _capture_make_icon(icon_key, size=None, mode=None):
+            captured.append((icon_key, size, mode))
+            return QIcon()
+
+        monkeypatch.setattr(widget_tree_module, "make_icon", _capture_make_icon)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        expected_size = int(app_theme_tokens()["icon_sm"])
+
+        assert ("text", expected_size, None) in captured
         panel.deleteLater()
 
     def test_header_metadata_tracks_selection_and_filter_context(self, qapp):

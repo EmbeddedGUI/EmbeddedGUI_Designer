@@ -101,6 +101,44 @@ def test_make_icon_uses_lucide_by_default(qapp, monkeypatch):
     assert icon is sentinel
 
 
+def test_make_icon_defaults_to_tighter_semantic_size(qapp, monkeypatch):
+    module = _reload_iconography()
+    monkeypatch.delenv("EMBEDDEDGUI_LEGACY_ICONS", raising=False)
+    sentinel = _sentinel_icon(size=18)
+    captured = {}
+
+    def _capture(name, color=None, size=None):
+        captured["args"] = (name, color, size)
+        return sentinel
+
+    monkeypatch.setattr(module, "load_lucide_icon", _capture)
+
+    icon = module.make_icon("toolbar.save")
+
+    assert icon is sentinel
+    assert captured["args"][0] == "save"
+    assert captured["args"][2] == 18
+
+
+def test_widget_icon_defaults_to_tighter_small_size(qapp, monkeypatch):
+    module = _reload_iconography()
+    monkeypatch.delenv("EMBEDDEDGUI_LEGACY_ICONS", raising=False)
+    sentinel = _sentinel_icon(size=14)
+    captured = {}
+
+    def _capture(name, color=None, size=None):
+        captured["args"] = (name, color, size)
+        return sentinel
+
+    monkeypatch.setattr(module, "load_lucide_icon", _capture)
+
+    icon = module.icon_for_widget("button")
+
+    assert icon is sentinel
+    assert captured["args"][0] == "square-minus"
+    assert captured["args"][2] == 14
+
+
 def test_legacy_icon_mode_falls_back(qapp, monkeypatch):
     module = _reload_iconography()
     monkeypatch.setenv("EMBEDDEDGUI_LEGACY_ICONS", "1")

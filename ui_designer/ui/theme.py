@@ -5,7 +5,7 @@ Aligned with ``UI_UIX_REDESIGN_MASTER_PLAN.md`` (UIX-001):
 - Typography scale: Display / Heading / Section / Body / Meta / Caption (px sizes).
 - Spacing: 4pt baseline; 8/12/16/20/24 via space_* keys.
 - Radii: r_sm=inputs(6), r_md/cards/buttons(8), r_xl≈elevated(12).
-- Icons: icon_sm/md/lg = 16/18/20 (toolbar leans toward lg).
+- Icons: icon_xs/sm/md/lg = 12/14/16/18 for tighter IDE/Figma density.
 """
 
 from __future__ import annotations
@@ -279,10 +279,10 @@ _TOKENS = {
         "fw_medium": 500,
         "fw_semibold": 600,
         "fw_bold": 700,
-        "icon_xs": 14,
-        "icon_sm": 16,
-        "icon_md": 18,
-        "icon_lg": 20,
+        "icon_xs": 12,
+        "icon_sm": 14,
+        "icon_md": 16,
+        "icon_lg": 18,
     },
     "light": {
         "bg": "#EEF2F6",
@@ -349,10 +349,10 @@ _TOKENS = {
         "fw_medium": 500,
         "fw_semibold": 600,
         "fw_bold": 700,
-        "icon_xs": 14,
-        "icon_sm": 16,
-        "icon_md": 18,
-        "icon_lg": 20,
+        "icon_xs": 12,
+        "icon_sm": 14,
+        "icon_md": 16,
+        "icon_lg": 18,
     },
 }
 

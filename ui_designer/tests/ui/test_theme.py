@@ -266,6 +266,19 @@ def test_compact_typography_scale_stays_consistent():
         assert f"font-weight: {t['fw_regular']};" in welcome_subtitle
 
 
+def test_icon_scale_uses_tighter_figma_density():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+        favorite_button = css.split("#widget_browser_favorite_button {", 1)[1].split("}", 1)[0]
+
+        assert int(t["icon_xs"]) == 12
+        assert int(t["icon_sm"]) == 14
+        assert int(t["icon_md"]) == 16
+        assert int(t["icon_lg"]) == 18
+        assert f"font-size: {t['icon_sm']}px;" in favorite_button
+
+
 def test_secondary_typography_uses_expected_weights_for_dense_views():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)

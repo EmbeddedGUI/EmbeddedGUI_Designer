@@ -373,6 +373,26 @@ _MATERIAL_FONT_LOADED = False
 _MATERIAL_ACTIVE_FONT_FAMILY = _MATERIAL_FONT_FAMILY
 
 
+def _icon_scale_tokens() -> dict:
+    from .theme import theme_tokens
+
+    tokens = theme_tokens("dark")
+    return {
+        "xs": max(int(tokens.get("icon_xs", 12)), 1),
+        "sm": max(int(tokens.get("icon_sm", 14)), 1),
+        "md": max(int(tokens.get("icon_md", 16)), 1),
+        "lg": max(int(tokens.get("icon_lg", 18)), 1),
+    }
+
+
+def _default_semantic_icon_size() -> int:
+    return _icon_scale_tokens()["lg"]
+
+
+def _default_widget_icon_size() -> int:
+    return _icon_scale_tokens()["sm"]
+
+
 def _theme_mode() -> str:
     app = QApplication.instance()
     mode = app.property("designer_theme_mode") if app is not None else None
@@ -618,7 +638,8 @@ def _fluent_icon_for_key(icon_key: str) -> QIcon | None:
         return None
 
 
-def _legacy_make_icon(icon_key: str, size: int = 20, mode: str | None = None) -> QIcon:
+def _legacy_make_icon(icon_key: str, size: int | None = None, mode: str | None = None) -> QIcon:
+    size = _default_semantic_icon_size() if size is None else max(int(size), 1)
     spec = _resolve_icon_spec(icon_key)
     if spec is not None:
         # Full modern replacement: semantic keys do NOT fall back to legacy painter path.
@@ -634,7 +655,8 @@ def _legacy_make_icon(icon_key: str, size: int = 20, mode: str | None = None) ->
     return QIcon(pixmap)
 
 
-def _legacy_make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixmap:
+def _legacy_make_pixmap(icon_key: str, size: int | None = None, mode: str | None = None) -> QPixmap:
+    size = _default_semantic_icon_size() if size is None else max(int(size), 1)
     mode = mode or _theme_mode()
     palette = _palette_for_mode(mode)
     pixmap = QPixmap(size, size)
@@ -667,7 +689,8 @@ def _legacy_make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) 
     return pixmap
 
 
-def icon_for_semantic(icon_key: str, *, color=None, size: int = 20, mode: str | None = None) -> QIcon:
+def icon_for_semantic(icon_key: str, *, color=None, size: int | None = None, mode: str | None = None) -> QIcon:
+    size = _default_semantic_icon_size() if size is None else max(int(size), 1)
     lucide_name = None if _legacy_icon_mode_enabled() else _lucide_name_for_key(icon_key)
     if lucide_name:
         icon = load_lucide_icon(lucide_name, color=_icon_color_value(icon_key, mode=mode, color=color), size=size)
@@ -676,17 +699,19 @@ def icon_for_semantic(icon_key: str, *, color=None, size: int = 20, mode: str | 
     return _legacy_make_icon(icon_key, size=size, mode=mode)
 
 
-def icon_for_widget(widget_key: str, *, color=None, size: int = 16, mode: str | None = None) -> QIcon:
+def icon_for_widget(widget_key: str, *, color=None, size: int | None = None, mode: str | None = None) -> QIcon:
+    size = _default_widget_icon_size() if size is None else max(int(size), 1)
     key = str(widget_key or "").strip()
     semantic = _WIDGET_ICON_KEYS.get(key, key)
     return icon_for_semantic(semantic, color=color, size=size, mode=mode)
 
 
-def make_icon(icon_key: str, size: int = 20, mode: str | None = None) -> QIcon:
+def make_icon(icon_key: str, size: int | None = None, mode: str | None = None) -> QIcon:
     return icon_for_semantic(icon_key, size=size, mode=mode)
 
 
-def make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixmap:
+def make_pixmap(icon_key: str, size: int | None = None, mode: str | None = None) -> QPixmap:
+    size = _default_semantic_icon_size() if size is None else max(int(size), 1)
     icon = icon_for_semantic(icon_key, size=size, mode=mode)
     if not icon.isNull():
         pixmap = icon.pixmap(size, size)
