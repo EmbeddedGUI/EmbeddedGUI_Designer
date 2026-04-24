@@ -7,6 +7,7 @@ from PyQt5.QtCore import pyqtSignal, Qt, QSize
 from PyQt5.QtGui import QColor, QPainter, QBrush, QPalette
 
 from ...model.widget_model import COLORS, COLOR_RGB
+from ..theme import app_theme_tokens
 
 
 # Regex to parse EGUI_COLOR_HEX(0xRRGGBB)
@@ -52,13 +53,30 @@ def qcolor_to_egui_hex(qcolor):
     return f"EGUI_COLOR_HEX(0x{qcolor.red():02X}{qcolor.green():02X}{qcolor.blue():02X})"
 
 
+def _color_swatch_size() -> int:
+    tokens = app_theme_tokens()
+    try:
+        return max(int(tokens.get("space_xl", 20)), 1)
+    except (TypeError, ValueError):
+        return 20
+
+
+def _color_picker_spacing() -> int:
+    tokens = app_theme_tokens()
+    try:
+        return max(int(tokens.get("space_3xs", 2)), 0)
+    except (TypeError, ValueError):
+        return 2
+
+
 class ColorSwatch(QWidget):
     """Small square widget that displays a solid color."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._color = QColor(Qt.white)
-        self.setFixedSize(QSize(20, 20))
+        swatch_size = _color_swatch_size()
+        self.setFixedSize(QSize(swatch_size, swatch_size))
         _set_widget_metadata(
             self,
             tooltip="Color swatch preview.",
@@ -83,7 +101,7 @@ class ColorSwatch(QWidget):
         p = QPainter(self)
         p.setBrush(QBrush(self._color))
         p.setPen(self._border_color())
-        p.drawRect(1, 1, 18, 18)
+        p.drawRect(self.rect().adjusted(1, 1, -1, -1))
         p.end()
 
 
@@ -101,7 +119,7 @@ class EguiColorPicker(QWidget):
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
+        layout.setSpacing(_color_picker_spacing())
 
         self._swatch = ColorSwatch()
         layout.addWidget(self._swatch)

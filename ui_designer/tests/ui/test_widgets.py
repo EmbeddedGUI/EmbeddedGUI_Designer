@@ -281,13 +281,17 @@ class TestEguiColorPicker:
 
     def test_picker_uses_compact_square_swatch_and_text_button(self, qapp):
         from ui_designer.ui.widgets.color_picker import EguiColorPicker
+        from ui_designer.ui.theme import app_theme_tokens
 
         picker = EguiColorPicker()
         layout = picker.layout()
+        tokens = app_theme_tokens()
+        expected_spacing = int(tokens["space_3xs"])
+        expected_swatch_size = int(tokens["space_xl"])
 
-        assert layout.spacing() == 2
-        assert picker._swatch.width() == 20
-        assert picker._swatch.height() == 20
+        assert layout.spacing() == expected_spacing
+        assert picker._swatch.width() == expected_swatch_size
+        assert picker._swatch.height() == expected_swatch_size
         assert picker._btn.text() == "Pick"
         picker.deleteLater()
 
