@@ -5,6 +5,8 @@ import pytest
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
 if HAS_PYQT5:
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QPixmap
     from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QLabel, QPushButton
 
@@ -454,6 +456,61 @@ class TestWidgetBrowserPanel:
         button_card = next(card for card in panel._cards.values() if card.type_name == "button")
         assert button_card._favorite_btn.toolTip() == f"Remove {display_name} from favorites."
         assert f"Selected: {display_name}." in panel.accessibleName()
+        panel.deleteLater()
+
+    def test_drag_preview_icon_uses_compact_small_scale(self, qapp, isolated_config, monkeypatch):
+        import ui_designer.ui.widget_browser as widget_browser_module
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        captured = {}
+
+        class _FakeIcon:
+            def pixmap(self, width, height):
+                captured["pixmap_request"] = (width, height)
+                return QPixmap(width, height)
+
+        class _FakeDrag:
+            def __init__(self, parent):
+                captured["parent"] = parent
+
+            def setMimeData(self, mime):
+                captured["mime"] = mime
+
+            def setPixmap(self, pixmap):
+                captured["pixmap_size"] = (pixmap.width(), pixmap.height())
+
+            def setHotSpot(self, hotspot):
+                captured["hotspot"] = (hotspot.x(), hotspot.y())
+
+            def exec_(self, action):
+                captured["action"] = action
+                return action
+
+        def _capture_make_icon(icon_key, size=None, mode=None):
+            captured["icon_request"] = (icon_key, size, mode)
+            return _FakeIcon()
+
+        panel = WidgetBrowserPanel()
+        monkeypatch.setattr(widget_browser_module, "QDrag", _FakeDrag)
+        monkeypatch.setattr(widget_browser_module, "make_icon", _capture_make_icon)
+
+        panel._start_widget_drag("button")
+
+        assert captured["icon_request"][1] == widget_browser_module._DRAG_ICON_SIZE
+        assert captured["pixmap_request"] == (
+            widget_browser_module._DRAG_ICON_SIZE,
+            widget_browser_module._DRAG_ICON_SIZE,
+        )
+        assert captured["pixmap_size"] == (
+            widget_browser_module._DRAG_ICON_SIZE,
+            widget_browser_module._DRAG_ICON_SIZE,
+        )
+        assert captured["hotspot"] == (
+            widget_browser_module._DRAG_HOTSPOT_OFFSET,
+            widget_browser_module._DRAG_HOTSPOT_OFFSET,
+        )
+        assert bytes(captured["mime"].data(panel.WIDGET_DRAG_MIME)) == b"button"
+        assert captured["action"] == Qt.CopyAction
         panel.deleteLater()
 
     def test_select_widget_type_only_updates_changed_cards(self, qapp, isolated_config, monkeypatch):

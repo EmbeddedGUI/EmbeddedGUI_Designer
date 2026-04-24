@@ -33,7 +33,8 @@ _SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
 _SPACE_LG = int(_DEFAULT_UI_TOKENS.get("space_lg", 16))
-_ICON_MD = int(_DEFAULT_UI_TOKENS.get("icon_md", 18))
+_DRAG_ICON_SIZE = int(_DEFAULT_UI_TOKENS.get("icon_sm", 16))
+_DRAG_HOTSPOT_OFFSET = max(_DRAG_ICON_SIZE // 2, 1)
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -733,8 +734,8 @@ class WidgetBrowserPanel(QWidget):
         item = self._catalog.by_type(widget_type)
         if item is not None:
             icon_key = item.icon_key or widget_icon_key(widget_type)
-            drag.setPixmap(make_icon(icon_key, size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD))
-            drag.setHotSpot(QPoint(9, 9))
+            drag.setPixmap(make_icon(icon_key, size=_DRAG_ICON_SIZE).pixmap(_DRAG_ICON_SIZE, _DRAG_ICON_SIZE))
+            drag.setHotSpot(QPoint(_DRAG_HOTSPOT_OFFSET, _DRAG_HOTSPOT_OFFSET))
         if global_pos is not None:
             self.statusTip()
         drag.exec_(Qt.CopyAction)
