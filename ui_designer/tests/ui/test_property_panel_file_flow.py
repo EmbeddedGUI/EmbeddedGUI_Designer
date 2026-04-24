@@ -431,6 +431,7 @@ class TestPropertyPanelFileFlow:
         layout_section = panel._property_sections["Layout"]
         header_layout = layout_section["header_frame"].layout()
         header_margins = header_layout.contentsMargins()
+        header_indicator = layout_section["arrow_label"]
         x_row = panel._property_grid_row_data(panel._editors["x"])
         label_layout = x_row["label_frame"].layout()
         label_margins = label_layout.contentsMargins()
@@ -440,6 +441,10 @@ class TestPropertyPanelFileFlow:
         assert layout_section["item"].sizeHint(0).height() == 24
         assert header_layout.spacing() == 2
         assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (5, 1, 5, 1)
+        assert header_indicator.iconSize().width() == 7
+        assert header_indicator.iconSize().height() == 7
+        assert header_indicator.width() == 12
+        assert header_indicator.height() == 12
         assert x_row["item"].sizeHint(0).height() == 24
         assert (label_margins.left(), label_margins.top(), label_margins.right(), label_margins.bottom()) == (5, 0, 5, 0)
         assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (3, 0, 3, 0)

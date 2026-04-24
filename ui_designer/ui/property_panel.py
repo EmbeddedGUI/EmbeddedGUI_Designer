@@ -932,7 +932,7 @@ class PropertyPanel(QWidget):
         arrow_button.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         arrow_button.setAutoRaise(True)
         arrow_button.setArrowType(Qt.RightArrow)
-        arrow_button.setIconSize(QSize(8, 8))
+        arrow_button.setIconSize(QSize(7, 7))
         arrow_button.setFixedSize(12, 12)
         header_layout.addWidget(arrow_button)
         title_label = QLabel(title)
