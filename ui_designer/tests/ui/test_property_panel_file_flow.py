@@ -441,8 +441,8 @@ class TestPropertyPanelFileFlow:
         assert layout_section["item"].sizeHint(0).height() == 24
         assert header_layout.spacing() == 2
         assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (5, 1, 5, 1)
-        assert header_indicator.iconSize().width() == 7
-        assert header_indicator.iconSize().height() == 7
+        assert header_indicator.iconSize().width() == 6
+        assert header_indicator.iconSize().height() == 6
         assert header_indicator.width() == 12
         assert header_indicator.height() == 12
         assert x_row["item"].sizeHint(0).height() == 24
