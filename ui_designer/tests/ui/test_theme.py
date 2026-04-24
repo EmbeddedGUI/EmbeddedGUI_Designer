@@ -1219,6 +1219,7 @@ def test_history_panel_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['panel']};" in tone_header
         assert f"border-color: {t['border']};" in tone_header
         assert f"color: {t['text_muted']};" in meta
+        assert f"font-size: {t['fs_caption']}px;" in meta
         assert f"background-color: {t['panel_alt']};" in list_block
         assert "border-radius: 0px;" in list_block
 

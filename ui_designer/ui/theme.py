@@ -2598,7 +2598,7 @@ QPlainTextEdit#debug_output_surface {{
 
 #history_panel_meta {{
     color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
 }}
 
 QListWidget#history_panel_list {{
