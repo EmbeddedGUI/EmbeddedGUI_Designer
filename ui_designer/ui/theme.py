@@ -66,6 +66,7 @@ _PROPERTY_PANEL_SPIN_BUTTON_QSS = (
 )
 _ENGINEERING_FS_BODY_SENTINEL = "__FS_BODY__"
 _ENGINEERING_RADIUS_SM_SENTINEL = "__R_SM__"
+_ENGINEERING_INPUT_PAD_H_SENTINEL = "__PAD_INPUT_H__"
 
 _FLUENT_BUTTON_RADIUS_QSS = f"""
 PushButton,
@@ -114,7 +115,7 @@ TextEdit,
 PlainTextEdit,
 TextBrowser {{
     border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
-    padding: 0px 8px;
+    padding: 0px {_ENGINEERING_INPUT_PAD_H_SENTINEL}px;
     font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
 
@@ -130,7 +131,7 @@ PlainTextEdit,
 TextBrowser {
     border-radius: __R_SM__px;
     min-height: 24px;
-    padding: 0px 6px;
+    padding: 0px __PAD_INPUT_H__px;
 }
 
 #lineEditButton {
@@ -144,7 +145,7 @@ ComboBox,
 ModelComboBox {{
     border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
     min-height: 24px;
-    padding: 0px 8px;
+    padding: 0px {_ENGINEERING_INPUT_PAD_H_SENTINEL}px;
     font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
 """
@@ -154,7 +155,7 @@ ComboBox,
 ModelComboBox {
     border-radius: __R_SM__px;
     min-height: 24px;
-    padding: 0px 6px;
+    padding: 0px __PAD_INPUT_H__px;
 }
 """
 
@@ -171,7 +172,7 @@ CompactDateTimeEdit,
 CompactTimeEdit {{
     border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
     min-height: 24px;
-    padding: 0px 8px;
+    padding: 0px {_ENGINEERING_INPUT_PAD_H_SENTINEL}px;
     font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
 
@@ -193,7 +194,7 @@ CompactDateTimeEdit,
 CompactTimeEdit {
     border-radius: __R_SM__px;
     min-height: 24px;
-    padding: 0px 6px;
+    padding: 0px __PAD_INPUT_H__px;
 }
 
 SpinButton {
@@ -379,6 +380,10 @@ def _resolve_engineering_radius_sm_qss(template: str) -> str:
     return str(template).replace(_ENGINEERING_RADIUS_SM_SENTINEL, str(int(_TOKENS["dark"]["r_sm"])))
 
 
+def _resolve_engineering_input_pad_h_qss(template: str) -> str:
+    return str(template).replace(_ENGINEERING_INPUT_PAD_H_SENTINEL, str(int(_TOKENS["dark"]["pad_input_h"])))
+
+
 _FLUENT_BUTTON_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_BUTTON_RADIUS_QSS)
 _FLUENT_LINE_EDIT_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_LINE_EDIT_RADIUS_QSS)
 _FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_COMBO_BOX_RADIUS_QSS)
@@ -391,6 +396,12 @@ _FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_COMBO_
 _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS)
 _FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
 _FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS)
+_FLUENT_LINE_EDIT_RADIUS_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_LINE_EDIT_RADIUS_QSS)
+_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS)
+_FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_COMBO_BOX_RADIUS_QSS)
+_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS)
+_FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
+_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS)
 
 _WINDOWS_FONTDIR_CANDIDATES = (
     os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts"),
