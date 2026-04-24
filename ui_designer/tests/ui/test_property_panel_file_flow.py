@@ -423,10 +423,15 @@ class TestPropertyPanelFileFlow:
     def test_property_grid_sections_and_rows_use_compact_cell_gutters(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
+        from ui_designer.ui.theme import app_theme_tokens
 
         widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
         panel = PropertyPanel()
         panel.set_widget(widget)
+        tokens = app_theme_tokens()
+        expected_row_height = int(tokens["h_tab_min"])
+        expected_indicator_box = int(tokens["icon_xs"])
+        expected_indicator_icon = max(expected_indicator_box // 2, 1)
 
         layout_section = panel._property_sections["Layout"]
         header_layout = layout_section["header_frame"].layout()
@@ -438,14 +443,14 @@ class TestPropertyPanelFileFlow:
         editor_layout = x_row["editor_host"].layout()
         editor_margins = editor_layout.contentsMargins()
 
-        assert layout_section["item"].sizeHint(0).height() == 24
+        assert layout_section["item"].sizeHint(0).height() == expected_row_height
         assert header_layout.spacing() == 2
         assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (5, 1, 5, 1)
-        assert header_indicator.iconSize().width() == 6
-        assert header_indicator.iconSize().height() == 6
-        assert header_indicator.width() == 12
-        assert header_indicator.height() == 12
-        assert x_row["item"].sizeHint(0).height() == 24
+        assert header_indicator.iconSize().width() == expected_indicator_icon
+        assert header_indicator.iconSize().height() == expected_indicator_icon
+        assert header_indicator.width() == expected_indicator_box
+        assert header_indicator.height() == expected_indicator_box
+        assert x_row["item"].sizeHint(0).height() == expected_row_height
         assert (label_margins.left(), label_margins.top(), label_margins.right(), label_margins.bottom()) == (5, 0, 5, 0)
         assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (3, 0, 3, 0)
         panel.deleteLater()

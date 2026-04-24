@@ -107,6 +107,22 @@ def _property_section_header_font():
         pixel_size = 12
     return designer_ui_font(pixel_size=pixel_size, weight=QFont.DemiBold)
 
+
+def _property_grid_row_height() -> int:
+    tokens = app_theme_tokens()
+    try:
+        return max(int(tokens.get("h_tab_min", 24)), 1)
+    except (TypeError, ValueError):
+        return 24
+
+
+def _property_grid_indicator_box_size() -> int:
+    tokens = app_theme_tokens()
+    try:
+        return max(int(tokens.get("icon_xs", 12)), 1)
+    except (TypeError, ValueError):
+        return 12
+
 # UIX-005: default expanded groups <=2 — keep first-edit path focused.
 _DEFAULT_EXPANDED_INSPECTOR_TITLES = frozenset({"Basic", "Layout"})
 
@@ -907,6 +923,9 @@ class PropertyPanel(QWidget):
         section = self._property_sections.get(title)
         if section is not None:
             return section["handle"]
+        row_height = _property_grid_row_height()
+        indicator_box_size = _property_grid_indicator_box_size()
+        indicator_icon_size = max(indicator_box_size // 2, 1)
 
         item = QTreeWidgetItem([title, ""])
         item.setFirstColumnSpanned(True)
@@ -918,7 +937,7 @@ class PropertyPanel(QWidget):
         section_brush = QBrush(self.palette().alternateBase())
         item.setBackground(0, section_brush)
         item.setBackground(1, section_brush)
-        item.setSizeHint(0, QSize(0, 24))
+        item.setSizeHint(0, QSize(0, row_height))
         self._property_tree.addTopLevelItem(item)
 
         header_frame = QFrame()
@@ -932,8 +951,8 @@ class PropertyPanel(QWidget):
         arrow_button.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         arrow_button.setAutoRaise(True)
         arrow_button.setArrowType(Qt.RightArrow)
-        arrow_button.setIconSize(QSize(6, 6))
-        arrow_button.setFixedSize(12, 12)
+        arrow_button.setIconSize(QSize(indicator_icon_size, indicator_icon_size))
+        arrow_button.setFixedSize(indicator_box_size, indicator_box_size)
         header_layout.addWidget(arrow_button)
         title_label = QLabel(title)
         title_label.setObjectName("property_grid_section_text")
@@ -974,10 +993,11 @@ class PropertyPanel(QWidget):
         if section is None:
             return
         stripe = "odd" if len(section["rows"]) % 2 else "even"
+        row_height = _property_grid_row_height()
 
         row_item = QTreeWidgetItem(section["item"], [str(label_text or ""), ""])
         row_item.setFlags(Qt.ItemIsEnabled)
-        row_item.setSizeHint(0, QSize(0, 24))
+        row_item.setSizeHint(0, QSize(0, row_height))
 
         label_frame = QFrame()
         label_frame.setObjectName("property_grid_label_cell")
