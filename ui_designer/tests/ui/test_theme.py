@@ -1185,6 +1185,17 @@ def test_generic_header_section_spacing_uses_theme_tokens():
         assert f"padding: 6px {t['space_sm']}px;" in header
 
 
+def test_menu_separator_spacing_uses_theme_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        separator = css.split("QMenu::separator {", 1)[1].split("}", 1)[0]
+
+        assert f"background: {t['border']};" in separator
+        assert f"margin: 6px {t['space_sm']}px;" in separator
+
+
 def test_diagnostics_panel_styles_use_engineering_surface_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)

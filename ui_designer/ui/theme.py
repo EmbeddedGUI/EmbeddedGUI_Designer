@@ -1210,7 +1210,7 @@ QMenu::item:selected:disabled {{
 QMenu::separator {{
     height: 1px;
     background: {t['border']};
-    margin: 6px 8px;
+    margin: 6px {t['space_sm']}px;
 }}
 
 QScrollBar:vertical {{
