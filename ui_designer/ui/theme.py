@@ -3369,7 +3369,7 @@ QPushButton#widget_browser_insert_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: 2px 4px;
+    padding: {t['pad_btn_v']}px {t['space_xs']}px;
 }}
 
 QPushButton#widget_browser_insert_button:hover {{

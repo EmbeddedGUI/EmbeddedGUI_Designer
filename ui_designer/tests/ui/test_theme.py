@@ -1077,7 +1077,7 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         assert "border-radius: 0px;" in card
         assert f"font-size: {t['fs_body']}px;" in card_title
         assert "border-radius: 0px;" in insert_button
-        assert "padding: 2px 4px;" in insert_button
+        assert f"padding: {t['pad_btn_v']}px {t['space_xs']}px;" in insert_button
 
 
 def test_widget_tree_styles_use_engineering_surface_tokens():
