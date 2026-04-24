@@ -1131,6 +1131,10 @@ def test_item_selection_styles_use_theme_tokens():
         t = theme_tokens(mode)
         css = _build_stylesheet(mode)
 
+        base_item = css.split(
+            "QListView::item, QTreeView::item, QTableView::item, QListWidget::item, QTreeWidget::item {",
+            1,
+        )[1].split("}", 1)[0]
         hover_state = css.split(
             "QListView::item:hover, QTreeView::item:hover, QListWidget::item:hover, QTreeWidget::item:hover {",
             1,
@@ -1148,6 +1152,7 @@ def test_item_selection_styles_use_theme_tokens():
             1,
         )[1].split("}", 1)[0]
 
+        assert f"padding: {t['space_xxs']}px {t['space_sm']}px;" in base_item
         assert f"background-color: {t['selection_hover']};" in hover_state
         assert f"background-color: {t['selection']};" in selected
         assert f"color: {t['selection_text']};" in selected

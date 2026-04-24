@@ -1082,7 +1082,7 @@ QListView, QTreeView, QTableView, QListWidget, QTreeWidget, QTableWidget {{
 }}
 
 QListView::item, QTreeView::item, QTableView::item, QListWidget::item, QTreeWidget::item {{
-    padding: 4px 8px;
+    padding: {t['space_xxs']}px {t['space_sm']}px;
     min-height: 24px;
 }}
 
