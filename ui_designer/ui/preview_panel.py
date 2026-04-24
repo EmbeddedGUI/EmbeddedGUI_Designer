@@ -2151,10 +2151,11 @@ class PreviewPanel(QWidget):
         sbl.addWidget(self._status_label)
 
         sbl.addStretch()
+        status_button_size = max(int(app_theme_tokens().get("h_tab_min", 24)), 1)
 
         self._btn_zoom_out = QPushButton("-")
         self._btn_zoom_out.setObjectName("preview_status_button")
-        self._btn_zoom_out.setFixedSize(24, 24)
+        self._btn_zoom_out.setFixedSize(status_button_size, status_button_size)
         self._btn_zoom_out.clicked.connect(self._on_zoom_out)
 
         self._zoom_label = QLabel("100% (4px)")
@@ -2164,7 +2165,7 @@ class PreviewPanel(QWidget):
 
         self._btn_zoom_in = QPushButton("+")
         self._btn_zoom_in.setObjectName("preview_status_button")
-        self._btn_zoom_in.setFixedSize(24, 24)
+        self._btn_zoom_in.setFixedSize(status_button_size, status_button_size)
         self._btn_zoom_in.clicked.connect(self._on_zoom_in)
 
         sbl.addWidget(self._btn_zoom_out)

@@ -64,8 +64,11 @@ class TestPreviewPanelFallback:
 
     def test_preview_status_bar_uses_compact_flat_controls(self, qapp):
         from ui_designer.ui.preview_panel import PreviewPanel
+        from ui_designer.ui.theme import app_theme_tokens
 
         panel = PreviewPanel(screen_width=240, screen_height=320)
+        tokens = app_theme_tokens()
+        expected_button_size = int(tokens["h_tab_min"])
 
         margins = panel._status_bar.layout().contentsMargins()
 
@@ -74,10 +77,10 @@ class TestPreviewPanelFallback:
         assert margins.right() == 2
         assert margins.bottom() == 2
         assert panel._status_bar.layout().spacing() == 2
-        assert panel._btn_zoom_out.width() == 24
-        assert panel._btn_zoom_out.height() == 24
-        assert panel._btn_zoom_in.width() == 24
-        assert panel._btn_zoom_in.height() == 24
+        assert panel._btn_zoom_out.width() == expected_button_size
+        assert panel._btn_zoom_out.height() == expected_button_size
+        assert panel._btn_zoom_in.width() == expected_button_size
+        assert panel._btn_zoom_in.height() == expected_button_size
         _dispose_widget(panel)
 
     def test_preview_panel_exposes_initial_accessibility_metadata(self, qapp):
