@@ -116,9 +116,11 @@ class TestResourceGeneratorWindow:
     @_skip_no_qt
     def test_simple_mode_uses_resizable_vertical_panels_and_compact_category_headers(self, qapp):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+        from ui_designer.ui.theme import app_theme_tokens
 
         window = ResourceGeneratorWindow("")
         tab_bar = window._simple_action_tabs.tabBar()
+        tokens = app_theme_tokens()
 
         assert window._simple_workspace_splitter.orientation() == Qt.Vertical
         assert window._simple_workspace_splitter.count() == 3
@@ -126,6 +128,10 @@ class TestResourceGeneratorWindow:
         assert window._simple_workspace_splitter.handleWidth() == 8
         assert window._simple_action_tabs.documentMode() is True
         assert window._simple_actions_scroll.widget() is window._simple_action_tabs
+        assert (
+            f"QTabBar::tab {{ min-height: 18px; padding: {tokens['pad_tab_compact_v']}px {tokens['space_sm']}px; }}"
+            in window._simple_action_tabs.styleSheet()
+        )
         assert tab_bar.minimumHeight() == 24
         assert tab_bar.maximumHeight() == 24
         assert tab_bar.font().pixelSize() == 10

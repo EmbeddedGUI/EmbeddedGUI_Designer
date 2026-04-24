@@ -1958,7 +1958,12 @@ class ResourceGeneratorWindow(QDialog):
 
         self._simple_action_tabs = QTabWidget()
         self._simple_action_tabs.setDocumentMode(True)
-        self._simple_action_tabs.setStyleSheet("QTabBar::tab { min-height: 18px; padding: 1px 8px; }")
+        simple_tab_tokens = app_theme_tokens()
+        self._simple_action_tabs.setStyleSheet(
+            "QTabBar::tab { "
+            f"min-height: 18px; padding: {simple_tab_tokens['pad_tab_compact_v']}px {simple_tab_tokens['space_sm']}px; "
+            "}"
+        )
         tab_bar = self._simple_action_tabs.tabBar()
         tab_font = _resource_generator_ui_font("fs_caption", 10, weight=tab_bar.font().weight())
         tab_font.setItalic(tab_bar.font().italic())
