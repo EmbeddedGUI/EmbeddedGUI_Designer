@@ -269,6 +269,8 @@ _TOKENS = {
         "pad_btn_h": 8,
         "pad_input_v": 2,
         "pad_input_h": 6,
+        "pad_tab_compact_v": 1,
+        "pad_tab_compact_h": 5,
         "h_tab_min": 24,
         "fs_display": 18,
         "fs_h1": 13,
@@ -339,6 +341,8 @@ _TOKENS = {
         "pad_btn_h": 10,
         "pad_input_v": 3,
         "pad_input_h": 10,
+        "pad_tab_compact_v": 1,
+        "pad_tab_compact_h": 5,
         "h_tab_min": 24,
         "fs_display": 20,
         "fs_h1": 14,
@@ -651,7 +655,7 @@ def _density_adjusted_tokens(tokens: dict, density="standard"):
             out[key] = int(out.get(key, 0)) + text_delta
         except Exception:
             pass
-    for key in ("pad_btn_v", "pad_btn_h", "pad_input_v", "pad_input_h"):
+    for key in ("pad_btn_v", "pad_btn_h", "pad_input_v", "pad_input_h", "pad_tab_compact_v", "pad_tab_compact_h"):
         try:
             out[key] = int(out.get(key, 0)) + control_delta
         except Exception:
@@ -681,7 +685,7 @@ def _font_adjusted_tokens(tokens: dict, font_size_pt=0):
         except Exception:
             pass
 
-    for key in ("pad_btn_v", "pad_btn_h", "pad_input_v", "pad_input_h"):
+    for key in ("pad_btn_v", "pad_btn_h", "pad_input_v", "pad_input_h", "pad_tab_compact_v", "pad_tab_compact_h"):
         try:
             out[key] = max(1, int(round(float(out.get(key, 0)) * scale)))
         except Exception:
@@ -1943,7 +1947,7 @@ QTabWidget#workspace_left_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
     min-height: 24px;
-    padding: 1px 5px;
+    padding: {t['pad_tab_compact_v']}px {t['pad_tab_compact_h']}px;
 }}
 
 QTabWidget#workspace_inspector_tabs::pane {{
@@ -1958,7 +1962,7 @@ QTabWidget#workspace_inspector_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
     min-height: 24px;
-    padding: 1px 5px;
+    padding: {t['pad_tab_compact_v']}px {t['pad_tab_compact_h']}px;
 }}
 
 QTabWidget#workspace_bottom_tabs::pane {{
@@ -1973,7 +1977,7 @@ QTabWidget#workspace_bottom_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
     min-height: 24px;
-    padding: 1px 5px;
+    padding: {t['pad_tab_compact_v']}px {t['pad_tab_compact_h']}px;
 }}
 
 #workspace_status_chip {{
