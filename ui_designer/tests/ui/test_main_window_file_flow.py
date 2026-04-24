@@ -14214,6 +14214,46 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
         _close_window(window)
 
+    def test_arrange_and_structure_menu_icons_use_extra_small_scale(self, qapp, isolated_config, monkeypatch):
+        from PyQt5.QtGui import QIcon
+        import ui_designer.ui.main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        captured = []
+
+        def _capture_make_icon(icon_key, size=None, mode=None):
+            captured.append((icon_key, size, mode))
+            return QIcon()
+
+        monkeypatch.setattr(main_window_module, "make_icon", _capture_make_icon)
+
+        window = MainWindow("")
+        expected_size = main_window_module._MENU_ACTION_ICON_SIZE
+        expected_keys = {
+            "layout.align.left",
+            "layout.align.right",
+            "layout.align.top",
+            "layout.align.bottom",
+            "layout.align.center",
+            "layout.align.middle",
+            "layout.distribute.h",
+            "layout.distribute.v",
+            "canvas.layer.top",
+            "canvas.layer.bottom",
+            "edit.lock",
+            "edit.hidden",
+            "nav.page_group",
+            "nav.component_library",
+            "canvas.layer.up",
+            "canvas.layer.down",
+        }
+
+        assert expected_keys.issubset({icon_key for icon_key, _, _ in captured})
+        for icon_key in expected_keys:
+            assert (icon_key, expected_size, None) in captured
+
+        _close_window(window)
+
     def test_toolbar_and_top_level_actions_expose_dynamic_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         import ui_designer.ui.main_window as main_window_module
