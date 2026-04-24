@@ -134,6 +134,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert "QTabBar::tab:selected" in css
         selected_tab = css.split("QTabBar::tab:selected", 1)[1].split("}", 1)[0]
         workspace_section_title = css.split("#workspace_section_title {", 1)[1].split("}", 1)[0]
+        workspace_section_subtitle = css.split("#workspace_section_subtitle {", 1)[1].split("}", 1)[0]
         assert f"background-color: {t['panel']};" in selected_tab
         assert f"border-top: 2px solid {t['accent']};" in selected_tab
         left_tabs_pane = css.split("QTabWidget#workspace_left_tabs::pane {", 1)[1].split("}", 1)[0]
@@ -143,6 +144,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert "border: none;" in left_tabs_pane
         assert "padding: 1px 5px;" in left_tabs_tab
         assert f"font-weight: {t['fw_semibold']};" in workspace_section_title
+        assert f"font-size: {t['fs_caption']}px;" in workspace_section_subtitle
         assert f"font-size: {t['fs_panel_title']}px;" in compact_panel_title
         assert "QFrame#workspace_bottom_header QLabel#workspace_section_title" in css
         indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]

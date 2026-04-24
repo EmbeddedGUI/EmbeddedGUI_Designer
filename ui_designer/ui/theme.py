@@ -2127,7 +2127,7 @@ QFrame#workspace_bottom_header QLabel#workspace_section_title {{
 
 #workspace_section_subtitle {{
     color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
     font-weight: {t['fw_regular']};
 }}
 
