@@ -986,7 +986,7 @@ def test_project_dock_styles_use_engineering_surface_tokens():
         assert "border: none;" in settings
         assert "border-radius: 0px;" in settings
         assert "border-radius: 0px;" in controls
-        assert "padding: 2px 6px;" in controls
+        assert f"padding: {t['pad_btn_v']}px {t['pad_input_h']}px;" in controls
         assert "min-height: 26px;" in controls
         assert "background-color: transparent;" in metric_card
         assert "border: none;" in metric_card

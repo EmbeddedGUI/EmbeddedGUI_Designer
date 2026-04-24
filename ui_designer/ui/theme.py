@@ -2374,7 +2374,7 @@ QPushButton#project_dock_add_page_button {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 2px 6px;
+    padding: {t['pad_btn_v']}px {t['pad_input_h']}px;
     min-height: 26px;
 }}
 
