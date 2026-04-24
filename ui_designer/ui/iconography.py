@@ -386,7 +386,7 @@ def _icon_scale_tokens() -> dict:
 
 
 def _default_semantic_icon_size() -> int:
-    return _icon_scale_tokens()["lg"]
+    return _icon_scale_tokens()["md"]
 
 
 def _default_widget_icon_size() -> int:
