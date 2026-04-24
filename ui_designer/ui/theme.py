@@ -2704,7 +2704,7 @@ QTableWidget#animations_panel_table {{
 
 QTableWidget#animations_panel_table QHeaderView::section,
 QTableWidget#page_editor_table QHeaderView::section {{
-    padding: 2px 6px;
+    padding: {t['pad_btn_v']}px {t['pad_input_h']}px;
     font-size: {t['fs_caption']}px;
 }}
 
