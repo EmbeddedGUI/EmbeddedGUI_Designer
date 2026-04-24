@@ -2729,8 +2729,9 @@ class WidgetTreePanel(QWidget):
         menu.addAction(rename_action)
 
         preferred_parent = widget if widget.is_container else getattr(widget, "parent", None)
+        menu_icon_size = max(int(app_theme_tokens().get("icon_xs", 12)), 1)
         insert_action = QAction("Insert Component...", self)
-        insert_action.setIcon(make_icon("widgets"))
+        insert_action.setIcon(make_icon("widgets", size=menu_icon_size))
         _set_action_metadata(insert_action, tooltip=self._context_insert_tooltip(preferred_parent))
         insert_action.triggered.connect(lambda: self.browse_widgets_requested.emit(preferred_parent))
         menu.addAction(insert_action)
@@ -2744,7 +2745,7 @@ class WidgetTreePanel(QWidget):
             for type_name in recent_types[:8]:
                 display_name = display_names.get(type_name, WidgetRegistry.instance().display_name(type_name))
                 action = QAction(display_name, self)
-                action.setIcon(make_icon(widget_icon_key(type_name)))
+                action.setIcon(make_icon(widget_icon_key(type_name), size=menu_icon_size))
                 _set_action_metadata(action, tooltip=self._context_recent_widget_tooltip(display_name, preferred_parent))
                 action.triggered.connect(lambda checked=False, t=type_name, p=preferred_parent: self.insert_widget(t, parent=p))
                 recent_menu.addAction(action)

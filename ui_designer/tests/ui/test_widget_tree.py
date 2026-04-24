@@ -473,6 +473,34 @@ class TestWidgetTreePanel:
         menu.deleteLater()
         panel.deleteLater()
 
+    def test_context_menu_widget_icons_use_extra_small_scale(self, qapp, monkeypatch):
+        from ui_designer.model.config import DesignerConfig
+        from ui_designer.ui.theme import app_theme_tokens
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+        import ui_designer.ui.widget_tree as widget_tree_module
+
+        project, root = _build_project_with_root()
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        DesignerConfig.instance().widget_browser_recent = ["label"]
+        captured = []
+
+        def _capture_make_icon(icon_key, size=None, mode=None):
+            captured.append((icon_key, size, mode))
+            return QIcon()
+
+        monkeypatch.setattr(widget_tree_module, "make_icon", _capture_make_icon)
+
+        menu = panel._build_context_menu(root)
+        expected_size = int(app_theme_tokens()["icon_xs"])
+
+        assert ("widgets", expected_size, None) in captured
+        assert ("text", expected_size, None) in captured
+
+        DesignerConfig.instance().widget_browser_recent = []
+        menu.deleteLater()
+        panel.deleteLater()
+
     def test_rename_widget_resolves_duplicate_name(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
