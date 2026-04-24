@@ -1078,7 +1078,7 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in drag_hint
         assert "border: none;" in drag_hint
         assert "border-radius: 0px;" in drag_hint
-        assert f"font-size: {t['fs_body_sm']}px;" in structure_label
+        assert f"font-size: {t['fs_caption']}px;" in structure_label
         assert "border-radius: 0px;" in buttons
         assert "min-height: 26px;" in buttons
         assert f"padding: 2px {t['space_sm']}px;" in buttons

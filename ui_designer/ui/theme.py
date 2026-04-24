@@ -2400,7 +2400,7 @@ QTreeWidget#project_dock_tree {{
 
 #structure_panel_label {{
     color: {t['text']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
     font-weight: {t['fw_medium']};
 }}
 
