@@ -169,7 +169,7 @@ class TestWidgetTreePanel:
         panel = WidgetTreePanel()
         panel.set_project(project)
 
-        expected_size = int(app_theme_tokens()["icon_sm"])
+        expected_size = int(app_theme_tokens()["icon_xs"])
 
         assert ("text", expected_size, None) in captured
         panel.deleteLater()

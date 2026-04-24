@@ -546,7 +546,7 @@ class WidgetTreePanel(QWidget):
         self.blockSignals(True)
 
     def _add_widget_to_tree(self, widget, parent_item):
-        icon_size = max(int(app_theme_tokens().get("icon_sm", 14)), 1)
+        icon_size = max(int(app_theme_tokens().get("icon_xs", 12)), 1)
         item = QTreeWidgetItem()
         item.setText(0, self._display_name(widget))
         item.setIcon(0, make_icon(widget_icon_key(widget.widget_type), size=icon_size))
