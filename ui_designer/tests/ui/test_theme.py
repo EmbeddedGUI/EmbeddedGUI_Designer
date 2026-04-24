@@ -647,7 +647,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "margin-right: 2px;" in host_separator
         assert "background-color: transparent;" in insert_button
         assert "border-radius: 0px;" in insert_button
-        assert "padding: 0px 6px;" in insert_button
+        assert f"padding: 0px {t['pad_input_h']}px;" in insert_button
         assert "min-width: 48px;" in insert_button
         assert "max-width: 48px;" in insert_button
         assert "min-height: 20px;" in insert_button
@@ -684,13 +684,13 @@ def test_workspace_chrome_corner_radii_stay_flat():
         thumb_label = css.split("QLabel#page_navigator_thumb_label {", 1)[1].split("}", 1)[0]
 
         assert "border-radius: 0px;" in mode_button
-        assert "padding: 0px 6px;" in mode_button
+        assert f"padding: 0px {t['pad_input_h']}px;" in mode_button
         assert "min-width: 48px;" in mode_button
         assert "max-width: 48px;" in mode_button
         assert "min-height: 20px;" in mode_button
         assert "max-height: 20px;" in mode_button
         assert "border-radius: 0px;" in bottom_toggle_button
-        assert "padding: 0px 6px;" in bottom_toggle_button
+        assert f"padding: 0px {t['pad_input_h']}px;" in bottom_toggle_button
         assert "min-width: 48px;" in bottom_toggle_button
         assert "min-height: 20px;" in bottom_toggle_button
         assert "max-height: 20px;" in bottom_toggle_button

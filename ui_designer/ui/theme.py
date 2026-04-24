@@ -1798,7 +1798,7 @@ QPushButton#workspace_mode_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px 6px;
+    padding: 0px {t['pad_input_h']}px;
     min-width: 48px;
     max-width: 48px;
     min-height: 20px;
@@ -1821,7 +1821,7 @@ QPushButton#workspace_bottom_toggle_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px 6px;
+    padding: 0px {t['pad_input_h']}px;
     min-width: 48px;
     min-height: 20px;
     max-height: 20px;
@@ -1848,7 +1848,7 @@ QPushButton#workspace_insert_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px 6px;
+    padding: 0px {t['pad_input_h']}px;
     min-width: 48px;
     max-width: 48px;
     min-height: 20px;
