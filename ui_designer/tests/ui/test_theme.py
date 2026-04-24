@@ -1173,6 +1173,18 @@ def test_item_selection_styles_use_theme_tokens():
         assert f"color: {t['selection_text']};" in hover
 
 
+def test_generic_header_section_spacing_uses_theme_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split("QHeaderView::section {", 1)[1].split("}", 1)[0]
+
+        assert f"background-color: {t['panel_alt']};" in header
+        assert f"color: {t['text_muted']};" in header
+        assert f"padding: 6px {t['space_sm']}px;" in header
+
+
 def test_diagnostics_panel_styles_use_engineering_surface_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)

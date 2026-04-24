@@ -1129,7 +1129,7 @@ QTableView::item:selected:hover, QTableWidget::item:selected:hover {{
 QHeaderView::section {{
     background-color: {t['panel_alt']};
     color: {t['text_muted']};
-    padding: 6px 8px;
+    padding: 6px {t['space_sm']}px;
     border: none;
     border-right: 1px solid {t['border']};
     border-bottom: 1px solid {t['border']};
