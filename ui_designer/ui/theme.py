@@ -105,7 +105,7 @@ TransparentToggleButton,
 TransparentToggleToolButton {
     border-radius: __R_SM__px;
     min-height: 22px;
-    padding: 1px 6px;
+    padding: 1px __PAD_INPUT_H__px;
 }
 """
 
@@ -396,6 +396,7 @@ _FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_COMBO_
 _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS)
 _FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
 _FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS)
+_FLUENT_PROPERTY_PANEL_BUTTON_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_PROPERTY_PANEL_BUTTON_QSS)
 _FLUENT_LINE_EDIT_RADIUS_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_LINE_EDIT_RADIUS_QSS)
 _FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS)
 _FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_COMBO_BOX_RADIUS_QSS)
