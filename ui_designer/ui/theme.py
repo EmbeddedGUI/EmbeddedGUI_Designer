@@ -2301,7 +2301,7 @@ QTabWidget#resource_panel_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
     min-height: 26px;
-    padding: 4px 10px;
+    padding: {t['space_xxs']}px {t['pad_btn_h']}px;
 }}
 
 QTabWidget#resource_panel_details_tabs::pane {{
@@ -2315,7 +2315,7 @@ QTabWidget#resource_panel_details_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
     min-height: 26px;
-    padding: 4px 10px;
+    padding: {t['space_xxs']}px {t['pad_btn_h']}px;
 }}
 
 QTableWidget#resource_panel_table QHeaderView::section {{

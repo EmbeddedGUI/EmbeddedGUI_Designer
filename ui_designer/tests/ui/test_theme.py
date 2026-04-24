@@ -721,14 +721,14 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in resource_tabs_tab
         assert "margin-right: 0px;" in resource_tabs_tab
         assert "min-height: 26px;" in resource_tabs_tab
-        assert "padding: 4px 10px;" in resource_tabs_tab
+        assert f"padding: {t['space_xxs']}px {t['pad_btn_h']}px;" in resource_tabs_tab
         assert "background-color: transparent;" in resource_details_pane
         assert "border: none;" in resource_details_pane
         assert "border-radius: 0px;" in resource_details_pane
         assert "border-radius: 0px;" in resource_details_tab
         assert "margin-right: 0px;" in resource_details_tab
         assert "min-height: 26px;" in resource_details_tab
-        assert "padding: 4px 10px;" in resource_details_tab
+        assert f"padding: {t['space_xxs']}px {t['pad_btn_h']}px;" in resource_details_tab
         assert "background-color: transparent;" in inspector_tabs_pane
         assert "border: none;" in inspector_tabs_pane
         assert "border-radius: 0px;" in inspector_tabs_pane
