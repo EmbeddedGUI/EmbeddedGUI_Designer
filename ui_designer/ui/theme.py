@@ -3136,7 +3136,7 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
     color: {t['text_muted']};
     border: none;
     border-bottom: 1px solid {t['border']};
-    padding: 8px;
+    padding: {t['space_sm']}px;
     font-size: {t['fs_caption']}px;
     font-weight: {t['fw_medium']};
 }}

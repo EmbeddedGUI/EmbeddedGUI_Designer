@@ -921,6 +921,7 @@ def test_resource_dialog_styles_use_engineering_surface_tokens():
         metric_card = css.split("#resource_dialog_metric_card {", 1)[1].split("}", 1)[0]
         summary = css.split("#resource_dialog_summary {", 1)[1].split("}", 1)[0]
         table = css.split("QTableWidget#resource_dialog_table {", 1)[1].split("}", 1)[0]
+        table_header = css.split("QTableWidget#resource_dialog_table QHeaderView::section {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         assert "border-radius: 0px;" in header
@@ -934,6 +935,7 @@ def test_resource_dialog_styles_use_engineering_surface_tokens():
         assert f"font-size: {t['fs_caption']}px;" in summary
         assert f"background-color: {t['panel_alt']};" in table
         assert "border-radius: 0px;" in table
+        assert f"padding: {t['space_sm']}px;" in table_header
 
 
 def test_welcome_page_styles_use_engineering_surface_tokens():
