@@ -85,6 +85,7 @@ def test_light_palette_unchanged():
 
 def test_fluent_qss_templates_use_4px_radius_and_12px_font():
     """Buttons/inputs/combos must have 4px radius and 12px font (IDE density)."""
+    expected_font_px = theme_tokens("dark")["fs_body"]
     fragments = [
         _theme_mod._FLUENT_BUTTON_RADIUS_QSS,
         _theme_mod._FLUENT_LINE_EDIT_RADIUS_QSS,
@@ -93,7 +94,7 @@ def test_fluent_qss_templates_use_4px_radius_and_12px_font():
     ]
     for qss in fragments:
         assert "border-radius: 4px" in qss, f"missing 4px radius: {qss[:80]}"
-        assert "font-size: 12px" in qss, f"missing 12px font: {qss[:80]}"
+        assert f"font-size: {expected_font_px}px" in qss, f"missing token body font: {qss[:80]}"
         assert "border-radius: 0px" not in qss
 
 

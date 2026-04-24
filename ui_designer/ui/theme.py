@@ -64,6 +64,7 @@ _PROPERTY_PANEL_SPIN_BUTTON_QSS = (
     "margin: 0px;"
     "border-radius: 0px;"
 )
+_ENGINEERING_FS_BODY_SENTINEL = "__FS_BODY__"
 
 _FLUENT_BUTTON_RADIUS_QSS = f"""
 PushButton,
@@ -81,7 +82,7 @@ TransparentToolButton,
 TransparentToggleButton,
 TransparentToggleToolButton {{
     border-radius: 4px;
-    font-size: 12px;
+    font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
 """
 
@@ -113,7 +114,7 @@ PlainTextEdit,
 TextBrowser {{
     border-radius: 4px;
     padding: 0px 8px;
-    font-size: 12px;
+    font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
 
 #lineEditButton {{
@@ -143,7 +144,7 @@ ModelComboBox {{
     border-radius: 4px;
     min-height: 24px;
     padding: 0px 8px;
-    font-size: 12px;
+    font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
 """
 
@@ -170,7 +171,7 @@ CompactTimeEdit {{
     border-radius: 4px;
     min-height: 24px;
     padding: 0px 8px;
-    font-size: 12px;
+    font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
 
 SpinButton {{
@@ -367,6 +368,16 @@ _FONT_SIZE_KEYS = (
     "fs_caption",
     "fs_micro",
 )
+
+
+def _resolve_engineering_fs_body_qss(template: str) -> str:
+    return str(template).replace(_ENGINEERING_FS_BODY_SENTINEL, str(int(_TOKENS["dark"]["fs_body"])))
+
+
+_FLUENT_BUTTON_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_BUTTON_RADIUS_QSS)
+_FLUENT_LINE_EDIT_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_LINE_EDIT_RADIUS_QSS)
+_FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_COMBO_BOX_RADIUS_QSS)
+_FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
 
 _WINDOWS_FONTDIR_CANDIDATES = (
     os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts"),
