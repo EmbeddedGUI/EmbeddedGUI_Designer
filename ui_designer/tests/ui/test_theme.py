@@ -1047,6 +1047,7 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         assert f"background-color: {t['panel']};" in tone_header
         assert f"border-color: {t['border']};" in tone_header
         assert f"color: {t['text_muted']};" in meta
+        assert f"font-size: {t['fs_caption']}px;" in meta
         assert "background-color: transparent;" in target
         assert "border: none;" in target
         assert f"color: {t['text_soft']};" in target

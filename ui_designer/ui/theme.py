@@ -1644,7 +1644,7 @@ QFrame#inspector_group_body {{
 
 #widget_browser_header_meta {{
     color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
 }}
 
 #widget_browser_header_target {{
