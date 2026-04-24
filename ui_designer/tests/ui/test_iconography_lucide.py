@@ -104,7 +104,7 @@ def test_make_icon_uses_lucide_by_default(qapp, monkeypatch):
 def test_make_icon_defaults_to_tighter_semantic_size(qapp, monkeypatch):
     module = _reload_iconography()
     monkeypatch.delenv("EMBEDDEDGUI_LEGACY_ICONS", raising=False)
-    sentinel = _sentinel_icon(size=16)
+    sentinel = _sentinel_icon(size=14)
     captured = {}
 
     def _capture(name, color=None, size=None):
@@ -117,7 +117,7 @@ def test_make_icon_defaults_to_tighter_semantic_size(qapp, monkeypatch):
 
     assert icon is sentinel
     assert captured["args"][0] == "save"
-    assert captured["args"][2] == 16
+    assert captured["args"][2] == 14
 
 
 def test_widget_icon_defaults_to_tighter_small_size(qapp, monkeypatch):
