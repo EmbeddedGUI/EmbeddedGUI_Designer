@@ -893,6 +893,7 @@ def test_resource_dialog_styles_use_engineering_surface_tokens():
         header = css.split("#resource_dialog_header {", 1)[1].split("}", 1)[0]
         card = css.split("#resource_dialog_card {", 1)[1].split("}", 1)[0]
         metric_card = css.split("#resource_dialog_metric_card {", 1)[1].split("}", 1)[0]
+        summary = css.split("#resource_dialog_summary {", 1)[1].split("}", 1)[0]
         table = css.split("QTableWidget#resource_dialog_table {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -903,6 +904,8 @@ def test_resource_dialog_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in metric_card
         assert "border: none;" in metric_card
         assert "border-radius: 0px;" in metric_card
+        assert f"color: {t['text_muted']};" in summary
+        assert f"font-size: {t['fs_caption']}px;" in summary
         assert f"background-color: {t['panel_alt']};" in table
         assert "border-radius: 0px;" in table
 

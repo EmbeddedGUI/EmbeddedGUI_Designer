@@ -3086,7 +3086,7 @@ QListWidget#app_selector_list::item:hover {{
 
 #resource_dialog_summary {{
     color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
 }}
 
 QTableWidget#resource_dialog_table {{
