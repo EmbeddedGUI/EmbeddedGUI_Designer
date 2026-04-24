@@ -149,7 +149,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert "QFrame#workspace_bottom_header QLabel#workspace_section_title" in css
         indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
         metrics = css.split("#preview_metrics_strip {", 1)[1].split("}", 1)[0]
-        assert str(t["space_xs"]) in indicator
+        assert f"padding: {t['pad_tab_compact_v']}px {t['space_xs']}px;" in indicator
 
 
         assert "border-radius: 0px;" in metrics
@@ -449,7 +449,7 @@ def test_engineering_theme_radii_remove_pill_shapes():
         status_button = css.split("QPushButton#preview_status_button {", 1)[1].split("}", 1)[0]
 
         assert "border-radius: 0px;" in chip
-        assert "padding: 1px 4px;" in chip
+        assert f"padding: {tokens['pad_tab_compact_v']}px {tokens['space_xs']}px;" in chip
         assert "min-height: 24px;" in chip
         assert "border-radius: 0px;" in browser_card
         assert "border-radius: 0px;" in insert_button
@@ -858,6 +858,7 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "border-right: none;" in property_chip
         assert "border-bottom: none;" in property_chip
         assert "border-left: none;" in property_chip
+        assert f"padding: {t['pad_tab_compact_v']}px {t['space_xs']}px;" in property_chip
         assert "background-color: transparent;" in property_chip_accent
         assert f"border-top-color: {t['accent']};" in property_chip_accent
         assert "background-color: transparent;" in property_chip_success
@@ -1223,7 +1224,7 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in controls
         assert "border-radius: 0px;" in buttons
         assert "min-height: 24px;" in buttons
-        assert f"padding: 1px {t['space_sm']}px;" in buttons
+        assert f"padding: {t['pad_tab_compact_v']}px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['shell_bg']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in list_block
         assert "border-radius: 0px;" in list_block
@@ -1255,7 +1256,7 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in controls
         assert "border-radius: 0px;" in button
         assert "min-height: 24px;" in button
-        assert f"padding: 1px {t['space_sm']}px;" in button
+        assert f"padding: {t['pad_tab_compact_v']}px {t['space_sm']}px;" in button
         assert f"background-color: {t['shell_bg']};" in button_disabled
         assert f"background-color: {t['canvas_stage']};" in surface
         assert "border-radius: 0px;" in surface

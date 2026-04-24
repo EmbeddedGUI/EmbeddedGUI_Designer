@@ -2066,7 +2066,7 @@ QToolButton#workspace_status_chip:focus {{
     border-bottom: none;
     border-left: none;
     color: {t['text_muted']};
-    padding: 1px {t['space_xs']}px;
+    padding: {t['pad_tab_compact_v']}px {t['space_xs']}px;
 }}
 
 #workspace_status_chip[chipVariant="property"][chipTone="accent"] {{
@@ -2141,7 +2141,7 @@ QToolButton#workspace_summary_indicator {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
-    padding: 1px {t['space_xs']}px;
+    padding: {t['pad_tab_compact_v']}px {t['space_xs']}px;
     min-height: 24px;
 }}
 
@@ -2556,7 +2556,7 @@ QTreeWidget#project_dock_tree {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 1px {t['space_sm']}px;
+    padding: {t['pad_tab_compact_v']}px {t['space_sm']}px;
     min-height: 24px;
 }}
 
@@ -2617,7 +2617,7 @@ QListWidget#diagnostics_list {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 1px {t['space_sm']}px;
+    padding: {t['pad_tab_compact_v']}px {t['space_sm']}px;
     min-height: 24px;
 }}
 
