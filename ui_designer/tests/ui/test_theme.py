@@ -276,7 +276,7 @@ def test_icon_scale_uses_tighter_figma_density():
         assert int(t["icon_sm"]) == 14
         assert int(t["icon_md"]) == 16
         assert int(t["icon_lg"]) == 18
-        assert f"font-size: {t['icon_sm']}px;" in favorite_button
+        assert f"font-size: {t['icon_xs']}px;" in favorite_button
 
 
 def test_secondary_typography_uses_expected_weights_for_dense_views():

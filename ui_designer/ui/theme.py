@@ -3351,7 +3351,7 @@ QPushButton#widget_browser_insert_button:pressed {{
     border: none;
     background: transparent;
     color: {t['text_soft']};
-    font-size: {t['icon_sm']}px;
+    font-size: {t['icon_xs']}px;
     padding: 0;
 }}
 
