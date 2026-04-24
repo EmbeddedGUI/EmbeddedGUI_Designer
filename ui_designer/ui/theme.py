@@ -258,6 +258,7 @@ _TOKENS = {
         "r_xl": 6,
         "r_2xl": 8,
         "r_3xl": 8,
+        "space_3xs": 2,
         "space_xxs": 4,
         "space_xs": 4,
         "space_sm": 8,
@@ -330,6 +331,7 @@ _TOKENS = {
         "r_xl": 8,
         "r_2xl": 12,
         "r_3xl": 14,
+        "space_3xs": 2,
         "space_xxs": 4,
         "space_xs": 4,
         "space_sm": 8,
@@ -1564,7 +1566,7 @@ QGroupBox#inspector_collapsible_group {{
     border: 1px solid transparent;
     border-radius: 0px;
     margin-top: 12px;
-    padding-top: 2px;
+    padding-top: {t['space_3xs']}px;
     font-size: {t['fs_panel_title']}px;
     font-weight: {t['fw_medium']};
 }}
@@ -1931,8 +1933,8 @@ QFrame#toolbar_host_separator {{
     min-width: 1px;
     max-width: 1px;
     border: none;
-    margin-left: 2px;
-    margin-right: 2px;
+    margin-left: {t['space_3xs']}px;
+    margin-right: {t['space_3xs']}px;
 }}
 
 QTabWidget#workspace_left_tabs::pane {{
@@ -2473,7 +2475,7 @@ QTreeWidget#project_dock_tree {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 2px {t['space_sm']}px;
+    padding: {t['space_3xs']}px {t['space_sm']}px;
     min-height: 26px;
 }}
 
@@ -2942,7 +2944,7 @@ QLabel#page_navigator_thumb_label {{
     background-color: {t['canvas_stage']};
     border: 1px solid {t['border']};
     border-radius: 0px;
-    padding: 2px;
+    padding: {t['space_3xs']}px;
 }}
 
 QLabel#page_navigator_thumb_label[startup="true"] {{

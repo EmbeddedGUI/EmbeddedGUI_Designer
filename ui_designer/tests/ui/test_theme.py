@@ -486,7 +486,7 @@ def test_page_navigator_styles_use_token_driven_cards():
         assert "border-radius: 0px;" in empty
         assert f"padding: {t['space_md']}px;" in empty
         assert "border-radius: 0px;" in thumb_label
-        assert "padding: 2px;" in thumb_label
+        assert f"padding: {t['space_3xs']}px;" in thumb_label
         assert f"font-size: {t['fs_body_sm']}px;" in page_name
 
 
@@ -643,8 +643,8 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert f"border-color: {t['border_strong']};" in toolbar_button_disabled
         assert "min-width: 1px;" in host_separator
         assert "max-width: 1px;" in host_separator
-        assert "margin-left: 2px;" in host_separator
-        assert "margin-right: 2px;" in host_separator
+        assert f"margin-left: {t['space_3xs']}px;" in host_separator
+        assert f"margin-right: {t['space_3xs']}px;" in host_separator
         assert "background-color: transparent;" in insert_button
         assert "border-radius: 0px;" in insert_button
         assert f"padding: 0px {t['pad_input_h']}px;" in insert_button
@@ -888,7 +888,7 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "border: 1px solid transparent;" in inspector_group
         assert "border-radius: 0px;" in inspector_group
         assert "margin-top: 12px;" in inspector_group
-        assert "padding-top: 2px;" in inspector_group
+        assert f"padding-top: {t['space_3xs']}px;" in inspector_group
         assert "left: 0px;" in inspector_group_title
         assert "padding: 0px 0px 1px 0px;" in inspector_group_title
         assert "width: 0px;" in inspector_group_indicator
@@ -1129,7 +1129,7 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         assert f"font-size: {t['fs_caption']}px;" in structure_label
         assert "border-radius: 0px;" in buttons
         assert "min-height: 26px;" in buttons
-        assert f"padding: 2px {t['space_sm']}px;" in buttons
+        assert f"padding: {t['space_3xs']}px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['shell_bg']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in tree
         _assert_default_border(tree, t)

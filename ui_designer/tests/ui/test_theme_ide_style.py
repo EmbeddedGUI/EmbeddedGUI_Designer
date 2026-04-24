@@ -62,6 +62,7 @@ def test_dark_typography_uses_compact_ide_scale():
 
 def test_dark_spacing_and_radii_tightened():
     t = theme_tokens("dark")
+    assert t["space_3xs"] == 2
     assert t["pad_btn_v"] == 2
     assert t["pad_btn_h"] == 8
     assert t["pad_input_v"] == 2
