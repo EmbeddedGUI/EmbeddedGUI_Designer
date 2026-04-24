@@ -2219,7 +2219,7 @@ QFrame#workspace_bottom_header QLabel#workspace_section_title {{
 #resource_dialog_shell QToolButton,
 #resource_dialog_shell QComboBox {{
     border-radius: 0px;
-    padding: 0px 6px;
+    padding: 0px {t['pad_input_h']}px;
     min-height: 20px;
     max-height: 20px;
     font-size: {t['fs_body_sm']}px;

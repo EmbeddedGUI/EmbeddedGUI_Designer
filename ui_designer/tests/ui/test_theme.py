@@ -716,6 +716,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in resource_tabs_pane
         assert "border-radius: 0px;" in resource_control_shell
         assert "border-radius: 0px;" in resource_dialog_control_shell
+        assert f"padding: 0px {t['pad_input_h']}px;" in resource_control_shell
+        assert f"padding: 0px {t['pad_input_h']}px;" in resource_dialog_control_shell
         assert "border-radius: 0px;" in resource_tabs_tab
         assert "margin-right: 0px;" in resource_tabs_tab
         assert "min-height: 26px;" in resource_tabs_tab
