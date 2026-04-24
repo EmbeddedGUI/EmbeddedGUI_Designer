@@ -1390,6 +1390,7 @@ def test_apply_theme_patches_new_fluent_widgets_after_theme_install():
 def test_apply_theme_flattens_property_panel_fluent_widgets():
     from ui_designer.model.widget_model import WidgetModel
     from ui_designer.ui.property_panel import PropertyPanel
+    import ui_designer.ui.theme as theme_module
 
     app = _app()
     apply_theme(app)
@@ -1426,6 +1427,7 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
         assert "border-radius: 4px;" in alpha_combo.styleSheet()
         assert "min-height: 24px;" in alpha_combo.styleSheet()
         assert x_spin.minimumHeight() >= 24
+        assert theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE == 8
         assert "border-radius: 4px;" in browse_button.styleSheet()
         assert "min-height: 22px;" in browse_button.styleSheet()
         assert "padding: 1px 6px;" in browse_button.styleSheet()
