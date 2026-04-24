@@ -3191,7 +3191,7 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
 
 #welcome_hero_hint {{
     color: {t['text_soft']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
     font-weight: {t['fw_regular']};
 }}
 

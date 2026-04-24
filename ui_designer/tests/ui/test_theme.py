@@ -279,6 +279,7 @@ def test_secondary_typography_uses_expected_weights_for_dense_views():
         app_selector_item_title = css.split("#app_selector_item_title {", 1)[1].split("}", 1)[0]
         app_selector_item_kind = css.split("#app_selector_item_kind {", 1)[1].split("}", 1)[0]
         welcome_eyebrow = css.split("#welcome_eyebrow {", 1)[1].split("}", 1)[0]
+        welcome_hint = css.split("#welcome_hero_hint {", 1)[1].split("}", 1)[0]
         welcome_metric_label = css.split("#welcome_metric_label {", 1)[1].split("}", 1)[0]
         welcome_metric_value = css.split("#welcome_metric_value {", 1)[1].split("}", 1)[0]
         welcome_recent_name = css.split("#welcome_recent_name {", 1)[1].split("}", 1)[0]
@@ -291,6 +292,8 @@ def test_secondary_typography_uses_expected_weights_for_dense_views():
         assert f"font-weight: {t['fw_medium']};" in app_selector_item_title
         assert f"font-weight: {t['fw_medium']};" in app_selector_item_kind
         assert f"font-weight: {t['fw_medium']};" in welcome_eyebrow
+        assert f"font-size: {t['fs_caption']}px;" in welcome_hint
+        assert f"font-weight: {t['fw_regular']};" in welcome_hint
         assert f"font-weight: {t['fw_regular']};" in welcome_metric_label
         assert f"font-weight: {t['fw_medium']};" in welcome_metric_value
         assert f"font-weight: {t['fw_medium']};" in welcome_recent_name
