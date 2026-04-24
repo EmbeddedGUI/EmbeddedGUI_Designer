@@ -1020,8 +1020,8 @@ QDoubleSpinBox[propertyPanelSpin="true"]::up-button:pressed, QDoubleSpinBox[prop
 
 QSpinBox[propertyPanelSpin="true"]::up-arrow, QSpinBox[propertyPanelSpin="true"]::down-arrow,
 QDoubleSpinBox[propertyPanelSpin="true"]::up-arrow, QDoubleSpinBox[propertyPanelSpin="true"]::down-arrow {{
-    width: 8px;
-    height: 8px;
+    width: {_PROPERTY_PANEL_SPIN_ICON_SIZE}px;
+    height: {_PROPERTY_PANEL_SPIN_ICON_SIZE}px;
 }}
 
 QPushButton, QToolButton {{

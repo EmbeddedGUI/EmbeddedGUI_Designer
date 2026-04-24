@@ -1437,6 +1437,19 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
         app.processEvents()
 
 
+def test_property_panel_spin_arrow_qss_tracks_compact_icon_size():
+    import ui_designer.ui.theme as theme_module
+
+    css = _build_stylesheet("dark")
+    spin_arrow = css.split(
+        'QSpinBox[propertyPanelSpin="true"]::up-arrow, QSpinBox[propertyPanelSpin="true"]::down-arrow,',
+        1,
+    )[1].split("}", 1)[0]
+
+    assert f"width: {theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE}px;" in spin_arrow
+    assert f"height: {theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE}px;" in spin_arrow
+
+
 def test_icon_semantic_dictionary_contains_core_workspace_keys():
     keys = set(semantic_icon_keys())
     assert {
