@@ -141,7 +141,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert "background-color: transparent;" in left_tabs_pane
         assert "border: none;" in left_tabs_pane
         assert "padding: 1px 5px;" in left_tabs_tab
-        assert f"font-size: {t['fs_body_sm']}px;" in compact_panel_title
+        assert f"font-size: {t['fs_panel_title']}px;" in compact_panel_title
         assert "QFrame#workspace_bottom_header QLabel#workspace_section_title" in css
         indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
         metrics = css.split("#preview_metrics_strip {", 1)[1].split("}", 1)[0]

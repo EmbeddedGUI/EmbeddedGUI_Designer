@@ -2122,7 +2122,7 @@ QWidget#animations_dock QLabel#workspace_section_title,
 QWidget#page_fields_dock QLabel#workspace_section_title,
 QWidget#page_timers_dock QLabel#workspace_section_title,
 QFrame#workspace_bottom_header QLabel#workspace_section_title {{
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_panel_title']}px;
 }}
 
 #workspace_section_subtitle {{
