@@ -2477,7 +2477,7 @@ QTreeWidget#project_dock_tree {{
 
 #diagnostics_header_meta {{
     color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_caption']}px;
 }}
 
 #diagnostics_controls_strip,

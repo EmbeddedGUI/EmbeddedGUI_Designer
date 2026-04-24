@@ -1140,6 +1140,7 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['panel']};" in tone_header
         assert f"border-color: {t['border']};" in tone_header
         assert f"color: {t['text_muted']};" in meta
+        assert f"font-size: {t['fs_caption']}px;" in meta
         assert "background-color: transparent;" in controls
         assert "border: none;" in controls
         assert "border-radius: 0px;" in controls
