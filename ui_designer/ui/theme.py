@@ -2895,7 +2895,7 @@ QScrollArea#page_navigator_scroll,
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_soft']};
-    padding: 12px;
+    padding: {t['space_md']}px;
 }}
 
 #page_navigator_thumbnail {{

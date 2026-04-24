@@ -484,7 +484,7 @@ def test_page_navigator_styles_use_token_driven_cards():
         assert f"border-color: {t['accent']};" in selected
         assert f"border: 1px solid {t['border']};" in empty
         assert "border-radius: 0px;" in empty
-        assert "padding: 12px;" in empty
+        assert f"padding: {t['space_md']}px;" in empty
         assert "border-radius: 0px;" in thumb_label
         assert "padding: 2px;" in thumb_label
         assert f"font-size: {t['fs_body_sm']}px;" in page_name
