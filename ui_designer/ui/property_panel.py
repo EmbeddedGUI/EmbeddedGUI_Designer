@@ -314,7 +314,7 @@ def _create_property_panel_spin_box():
     """Use a standard Qt spin box so arrows and layout stay stable under stylesheet changes."""
     editor = QSpinBox()
     editor.setProperty("propertyPanelSpin", True)
-    editor.setMinimumHeight(24)
+    editor.setMinimumHeight(_property_grid_row_height())
     return editor
 
 
@@ -327,7 +327,7 @@ def _create_property_panel_action_button(text, parent=None):
     button.setToolButtonStyle(Qt.ToolButtonTextOnly)
     button.setAutoRaise(False)
     button.setCursor(Qt.PointingHandCursor)
-    button.setMinimumHeight(24)
+    button.setMinimumHeight(_property_grid_row_height())
     return button
 
 

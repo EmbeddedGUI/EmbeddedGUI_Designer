@@ -451,6 +451,7 @@ class TestPropertyPanelFileFlow:
         assert header_indicator.width() == expected_indicator_box
         assert header_indicator.height() == expected_indicator_box
         assert x_row["item"].sizeHint(0).height() == expected_row_height
+        assert panel._editors["x"].minimumHeight() == expected_row_height
         assert (label_margins.left(), label_margins.top(), label_margins.right(), label_margins.bottom()) == (5, 0, 5, 0)
         assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (3, 0, 3, 0)
         panel.deleteLater()
@@ -657,6 +658,7 @@ class TestPropertyPanelFileFlow:
     def test_file_selector_sets_accessibility_metadata(self, qapp):
         from PyQt5.QtWidgets import QToolButton
         from ui_designer.ui.property_panel import PropertyPanel
+        from ui_designer.ui.theme import app_theme_tokens
 
         panel = PropertyPanel()
         selector = panel._create_file_selector("font_file", "title.ttf", ["title.ttf"], "Font files (*.ttf *.otf)")
@@ -665,12 +667,14 @@ class TestPropertyPanelFileFlow:
             (button for button in selector.findChildren(QToolButton) if button.objectName() == "property_panel_action_button"),
             None,
         )
+        expected_row_height = int(app_theme_tokens()["h_tab_min"])
 
         assert combo.toolTip() == "Font File: title.ttf. Choose a project resource file or type a filename."
         assert combo.statusTip() == combo.toolTip()
         assert combo.accessibleName() == "Font File selector: title.ttf"
         assert browse_btn is not None
         assert browse_btn.text() == "Pick"
+        assert browse_btn.minimumHeight() == expected_row_height
         assert browse_btn.toolTip() == "Pick font files for Font File."
         assert browse_btn.statusTip() == browse_btn.toolTip()
         assert browse_btn.accessibleName() == "Pick Font File"
