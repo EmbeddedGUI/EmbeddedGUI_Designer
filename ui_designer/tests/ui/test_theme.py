@@ -117,6 +117,7 @@ def test_disabled_menu_items_and_combo_boxes_use_panel_alt_backgrounds():
             1,
         )[1].split("}", 1)[0]
         menu_item = css.split("QMenu::item {", 1)[1].split("}", 1)[0]
+        menu_separator = css.split("QMenu::separator {", 1)[1].split("}", 1)[0]
         menu_item_disabled = css.split("QMenu::item:disabled {", 1)[1].split("}", 1)[0]
         menu_item_selected_disabled = css.split("QMenu::item:selected:disabled {", 1)[1].split("}", 1)[0]
 
@@ -126,6 +127,7 @@ def test_disabled_menu_items_and_combo_boxes_use_panel_alt_backgrounds():
             f"{t['space_md'] + t['icon_sm']}px "
             f"{t['space_sm'] - t['pad_tab_compact_v']}px {t['space_md']}px;"
         ) in menu_item
+        assert f"height: {t['space_toolbar_separator']}px;" in menu_separator
         assert f"background-color: {t['shell_bg']};" in menu_item_disabled
         assert f"color: {t['text_soft']};" in menu_item_disabled
         assert f"background-color: {t['shell_bg']};" in menu_item_selected_disabled
@@ -640,7 +642,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "border: none;" in context
         assert f"border-radius: {t['r_md']}px;" in context
         assert "spacing: 1px;" in toolbar
-        assert "width: 1px;" in toolbar_separator
+        assert f"width: {t['space_toolbar_separator']}px;" in toolbar_separator
         assert f"margin: {t['space_toolbar_separator']}px {t['space_toolbar_separator']}px;" in toolbar_separator
         assert "background-color: transparent;" in toolbar_button
         assert "border-radius: 0px;" in toolbar_button
@@ -649,8 +651,8 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
         assert f"background-color: {t['shell_bg']};" in toolbar_button_disabled
         assert f"border-color: {t['border_strong']};" in toolbar_button_disabled
-        assert "min-width: 1px;" in host_separator
-        assert "max-width: 1px;" in host_separator
+        assert f"min-width: {t['space_toolbar_separator']}px;" in host_separator
+        assert f"max-width: {t['space_toolbar_separator']}px;" in host_separator
         assert f"margin-left: {t['space_3xs']}px;" in host_separator
         assert f"margin-right: {t['space_3xs']}px;" in host_separator
         assert "background-color: transparent;" in insert_button

@@ -1267,7 +1267,7 @@ QMenu::item:selected:disabled {{
 }}
 
 QMenu::separator {{
-    height: 1px;
+    height: {t['space_toolbar_separator']}px;
     background: {t['border']};
     margin: {t['space_sm'] - t['space_3xs']}px {t['space_sm']}px;
 }}
@@ -1816,7 +1816,7 @@ QToolBar#main_toolbar {{
 
 QToolBar#main_toolbar::separator {{
     background-color: {t['border']};
-    width: 1px;
+    width: {t['space_toolbar_separator']}px;
     margin: {t['space_toolbar_separator']}px {t['space_toolbar_separator']}px;
 }}
 
@@ -1983,8 +1983,8 @@ QSplitter#editor_tabs_splitter::handle {{
 
 QFrame#toolbar_host_separator {{
     background-color: {t['border']};
-    min-width: 1px;
-    max-width: 1px;
+    min-width: {t['space_toolbar_separator']}px;
+    max-width: {t['space_toolbar_separator']}px;
     border: none;
     margin-left: {t['space_3xs']}px;
     margin-right: {t['space_3xs']}px;
