@@ -93,6 +93,7 @@ def test_scrollbars_follow_theme_surface_tokens():
         assert "border: none;" in horizontal
         assert f"background-color: {t['border_strong']};" in horizontal_handle
         assert "border-radius: 0px;" in horizontal_handle
+        assert f"min-height: {t['h_tab_min']}px;" in vertical_handle
         assert f"background-color: {t['surface_hover']};" in horizontal_disabled
         assert "width: 0px;" in horizontal_lines
         assert "background-color: transparent;" in horizontal_lines

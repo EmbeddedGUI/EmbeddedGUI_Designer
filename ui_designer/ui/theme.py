@@ -1274,7 +1274,7 @@ QScrollBar:vertical {{
 
 QScrollBar::handle:vertical {{
     background-color: {t['border_strong']};
-    min-height: 24px;
+    min-height: {t['h_tab_min']}px;
     border: none;
     border-radius: 0px;
 }}
