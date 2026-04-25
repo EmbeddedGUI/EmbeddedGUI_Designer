@@ -15,11 +15,17 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-_PROJECT_WORKSPACE_BUTTON_HEIGHT = 22
+from .theme import app_theme_tokens
+
 _PROJECT_WORKSPACE_METRICS_SPACING = 1
 _PROJECT_WORKSPACE_PREFS_BUTTON_WIDTH = 44
 _PROJECT_WORKSPACE_LIST_BUTTON_WIDTH = 36
 _PROJECT_WORKSPACE_THUMBS_BUTTON_WIDTH = 54
+
+
+def _project_workspace_button_height() -> int:
+    tokens = app_theme_tokens()
+    return max(int(tokens.get("h_tab_min", 24)) - int(tokens.get("space_3xs", 2)), 1)
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -39,7 +45,7 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
 
 
 def _set_compact_button_chrome(button, *, width=0):
-    button.setFixedHeight(_PROJECT_WORKSPACE_BUTTON_HEIGHT)
+    button.setFixedHeight(_project_workspace_button_height())
     if width:
         button.setFixedWidth(int(width))
     button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
