@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import QEvent, Qt, pyqtSignal
 from PyQt5.QtWidgets import QFrame, QLabel, QHBoxLayout, QVBoxLayout, QWidget
 
 from qfluentwidgets import PrimaryPushButton, PushButton
@@ -17,6 +17,7 @@ from ..model.sdk_bootstrap import (
     sdk_root_source_kind,
 )
 from ..model.workspace import describe_sdk_root, resolve_configured_sdk_root
+from .theme import app_theme_tokens
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -46,7 +47,6 @@ class RecentProjectItem(QWidget):
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_Hover, True)
         self.setCursor(Qt.PointingHandCursor)
-        self.setMinimumHeight(84)
         self.setObjectName("welcome_recent_item")
 
         layout = QHBoxLayout(self)
@@ -87,7 +87,35 @@ class RecentProjectItem(QWidget):
         text_layout.addWidget(self._status_label)
 
         layout.addLayout(text_layout, 1)
+        self._sync_min_height()
         self._update_accessibility_summary()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_min_height()
+
+    def _target_min_height(self) -> int:
+        tokens = app_theme_tokens()
+        token_floor = (int(tokens.get("h_tab_min", 24)) * 3) + int(tokens.get("space_md", 12))
+        try:
+            name_height = self._name_label.fontMetrics().height()
+            status_height = self._status_label.fontMetrics().height()
+            content_floor = (
+                name_height
+                + status_height
+                + int(tokens.get("space_3xs", 2))
+                + (int(tokens.get("space_xl", 20)) * 2)
+            )
+            return max(token_floor, content_floor, 1)
+        except Exception:
+            return max(token_floor, 1)
+
+    def _sync_min_height(self):
+        target_height = self._target_min_height()
+        if self.minimumHeight() == target_height:
+            return
+        self.setMinimumHeight(target_height)
 
     def _update_accessibility_summary(self):
         summary = (

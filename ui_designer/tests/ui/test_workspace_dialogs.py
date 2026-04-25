@@ -1201,7 +1201,7 @@ class TestWelcomePage:
 
         assert widget is not None
         recent_margins = widget.layout().contentsMargins()
-        assert widget.minimumHeight() == 84
+        assert widget.minimumHeight() == widget._target_min_height()
         assert (recent_margins.left(), recent_margins.top(), recent_margins.right(), recent_margins.bottom()) == (0, 0, 0, 0)
         assert widget.layout().spacing() == 6
         assert page._recent_list.spacing() == 2
@@ -1221,6 +1221,31 @@ class TestWelcomePage:
         assert page._overview_recent_value._welcome_metric_card.accessibleName() == "Recent Work metric: 1 recent item."
         assert "1 recent item." in page.accessibleName()
         page.deleteLater()
+
+    def test_recent_project_item_min_height_follows_runtime_tokens(self, qapp, isolated_config, tmp_path, monkeypatch):
+        import ui_designer.ui.welcome_page as welcome_page_module
+        from ui_designer.ui.welcome_page import RecentProjectItem
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_path = tmp_path / "DemoApp" / "DemoApp.egui"
+        project_path.parent.mkdir()
+        project_path.write_text("")
+
+        baseline_item = RecentProjectItem(str(project_path), str(sdk_root), "DemoApp")
+        baseline_height = baseline_item.minimumHeight()
+        baseline_item.deleteLater()
+
+        metric_tokens = dict(welcome_page_module.app_theme_tokens())
+        metric_tokens["h_tab_min"] = 26
+        metric_tokens["space_md"] = 14
+        monkeypatch.setattr(welcome_page_module, "app_theme_tokens", lambda *args, **kwargs: metric_tokens)
+
+        item = RecentProjectItem(str(project_path), str(sdk_root), "DemoApp")
+
+        assert item.minimumHeight() == item._target_min_height()
+        assert item.minimumHeight() > baseline_height
+        item.deleteLater()
 
     def test_refresh_shows_no_recent_state(self, qapp, isolated_config):
         from ui_designer.ui.welcome_page import WelcomePage
