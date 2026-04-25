@@ -1700,6 +1700,7 @@ class ResourceGeneratorWindow(QDialog):
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange, QEvent.FontChange}:
             self._sync_simple_action_button_minimum_heights()
             self._sync_simple_preview_minimum_heights()
+            self._sync_entry_summary_minimum_height()
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange}:
             if self.isVisible() and not getattr(self, "_suppress_window_chrome_theme_changes", False):
                 self._sync_window_chrome_theme()
@@ -1813,6 +1814,23 @@ class ResourceGeneratorWindow(QDialog):
             preview_label.setMinimumHeight(preview_label_height)
         if preview_meta.minimumHeight() != preview_meta_height:
             preview_meta.setMinimumHeight(preview_meta_height)
+
+    def _entry_summary_minimum_height_target(self) -> int:
+        tokens = app_theme_tokens(QApplication.instance())
+        chrome = (int(tokens.get("space_sm", 8)) * 2) + (int(self._entry_summary.frameWidth() or 0) * 2)
+        return self._minimum_text_block_height(
+            self._entry_summary,
+            visible_lines=9,
+            chrome=chrome,
+        )
+
+    def _sync_entry_summary_minimum_height(self):
+        entry_summary = getattr(self, "_entry_summary", None)
+        if entry_summary is None:
+            return
+        target_height = self._entry_summary_minimum_height_target()
+        if entry_summary.minimumHeight() != target_height:
+            entry_summary.setMinimumHeight(target_height)
 
     # -- Public API -----------------------------------------------------
 
@@ -3105,8 +3123,8 @@ class ResourceGeneratorWindow(QDialog):
 
         self._entry_summary = QPlainTextEdit()
         self._entry_summary.setReadOnly(True)
-        self._entry_summary.setMinimumHeight(180)
         layout.addWidget(self._entry_summary)
+        self._sync_entry_summary_minimum_height()
 
         self._form_host = QWidget()
         self._form_layout = QFormLayout(self._form_host)

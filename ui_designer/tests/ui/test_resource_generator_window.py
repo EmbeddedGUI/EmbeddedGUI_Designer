@@ -246,6 +246,42 @@ class TestResourceGeneratorWindow:
             _close_window(window)
 
     @_skip_no_qt
+    def test_entry_summary_height_follows_runtime_metrics(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        try:
+            assert window._entry_summary.minimumHeight() == window._entry_summary_minimum_height_target()
+        finally:
+            _close_window(window)
+
+    @_skip_no_qt
+    def test_entry_summary_height_resyncs_on_font_change(self, qapp, monkeypatch):
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        try:
+            baseline_height = window._entry_summary.minimumHeight()
+
+            summary_tokens = dict(resource_generator_window_module.app_theme_tokens())
+            summary_tokens["h_tab_min"] = 30
+            summary_tokens["space_xxs"] = 4
+            summary_tokens["space_sm"] = 10
+            monkeypatch.setattr(
+                resource_generator_window_module,
+                "app_theme_tokens",
+                lambda *args, **kwargs: summary_tokens,
+            )
+
+            window.changeEvent(QEvent(QEvent.FontChange))
+
+            assert window._entry_summary.minimumHeight() == window._entry_summary_minimum_height_target()
+            assert window._entry_summary.minimumHeight() > baseline_height
+        finally:
+            _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_filter_counts_use_dense_ui_typography(self, qapp):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
         from ui_designer.ui.theme import app_theme_tokens, designer_ui_font
