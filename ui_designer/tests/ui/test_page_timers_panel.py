@@ -14,7 +14,7 @@ _skip_no_qt = skip_if_no_qt
 @_skip_no_qt
 class TestPageTimersPanel:
     def test_panel_displays_current_page_timers(self, qapp):
-        from ui_designer.ui.page_timers_panel import PageTimersPanel, _PAGE_TIMERS_CONTROL_HEIGHT
+        from ui_designer.ui.page_timers_panel import PageTimersPanel
         from ui_designer.ui.theme import app_theme_tokens
 
         page, _title = build_test_page_with_title()
@@ -24,7 +24,9 @@ class TestPageTimersPanel:
 
         panel = PageTimersPanel()
         panel.set_page(page)
-        expected_row_height = int(app_theme_tokens()["h_tab_min"])
+        tokens = app_theme_tokens()
+        expected_row_height = int(tokens["h_tab_min"])
+        expected_control_height = max(int(tokens["h_tab_min"]) - int(tokens["space_xxs"]), 1)
 
         header_margins = panel._header_frame.layout().contentsMargins()
         chip_margins = panel._header_chip_row.contentsMargins()
@@ -68,21 +70,21 @@ class TestPageTimersPanel:
         assert panel._table.toolTip() == panel.accessibleName()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page. Selected timer: none."
-        assert panel._table.horizontalHeader().height() == _PAGE_TIMERS_CONTROL_HEIGHT
+        assert panel._table.horizontalHeader().height() == expected_control_height
         assert panel._table.verticalHeader().defaultSectionSize() == expected_row_height
         assert panel._add_button.toolTip() == "Add a page timer."
         assert panel._add_button.accessibleName() == "Add page timer to main_page"
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
-        assert panel._add_button.minimumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
-        assert panel._add_button.maximumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
+        assert panel._add_button.minimumHeight() == expected_control_height
+        assert panel._add_button.maximumHeight() == expected_control_height
         assert panel._remove_button.toolTip() == "Select a timer to remove it."
         assert panel._remove_button.accessibleName() == "Remove page timer unavailable"
-        assert panel._remove_button.minimumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
-        assert panel._remove_button.maximumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
+        assert panel._remove_button.minimumHeight() == expected_control_height
+        assert panel._remove_button.maximumHeight() == expected_control_height
         assert panel._open_code_button.toolTip() == "Select a timer to open its user code."
         assert panel._open_code_button.accessibleName() == "Open timer user code unavailable"
-        assert panel._open_code_button.minimumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
-        assert panel._open_code_button.maximumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
+        assert panel._open_code_button.minimumHeight() == expected_control_height
+        assert panel._open_code_button.maximumHeight() == expected_control_height
         assert panel._table.rowCount() == 1
         assert panel._table.rowHeight(0) == expected_row_height
         assert panel._table.item(0, 0).text() == "refresh_timer"
@@ -101,12 +103,18 @@ class TestPageTimersPanel:
 
         row_tokens = dict(page_timers_panel_module.app_theme_tokens())
         row_tokens["h_tab_min"] = 26
+        row_tokens["space_xxs"] = 3
         monkeypatch.setattr(page_timers_panel_module, "app_theme_tokens", lambda *args, **kwargs: row_tokens)
 
         panel = PageTimersPanel()
 
         assert panel._table.verticalHeader().defaultSectionSize() == 26
         assert panel._table.verticalHeader().minimumSectionSize() == 26
+        assert panel._table.horizontalHeader().height() == 23
+        assert panel._add_button.minimumHeight() == 23
+        assert panel._add_button.maximumHeight() == 23
+        assert panel._open_code_button.minimumHeight() == 23
+        assert panel._open_code_button.maximumHeight() == 23
         panel.deleteLater()
 
     def test_panel_marks_actions_unavailable_without_active_page(self, qapp):

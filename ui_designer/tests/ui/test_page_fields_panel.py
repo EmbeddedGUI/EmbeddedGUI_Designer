@@ -14,7 +14,7 @@ _skip_no_qt = skip_if_no_qt
 @_skip_no_qt
 class TestPageFieldsPanel:
     def test_panel_displays_current_page_fields(self, qapp):
-        from ui_designer.ui.page_fields_panel import PageFieldsPanel, _PAGE_FIELDS_CONTROL_HEIGHT
+        from ui_designer.ui.page_fields_panel import PageFieldsPanel
         from ui_designer.ui.theme import app_theme_tokens
 
         page, _title = build_test_page_with_title()
@@ -25,7 +25,9 @@ class TestPageFieldsPanel:
 
         panel = PageFieldsPanel()
         panel.set_page(page)
-        expected_row_height = int(app_theme_tokens()["h_tab_min"])
+        tokens = app_theme_tokens()
+        expected_row_height = int(tokens["h_tab_min"])
+        expected_control_height = max(int(tokens["h_tab_min"]) - int(tokens["space_xxs"]), 1)
 
         header_margins = panel._header_frame.layout().contentsMargins()
         chip_margins = panel._header_chip_row.contentsMargins()
@@ -77,28 +79,28 @@ class TestPageFieldsPanel:
         assert panel._table.toolTip() == panel.accessibleName()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page fields table: Page Fields: 2 fields on main_page. Selected field: none."
-        assert panel._table.horizontalHeader().height() == _PAGE_FIELDS_CONTROL_HEIGHT
+        assert panel._table.horizontalHeader().height() == expected_control_height
         assert panel._table.verticalHeader().defaultSectionSize() == expected_row_height
         assert panel._open_on_open_button.toolTip() == "Open the on_open section in main_page user code."
         assert panel._open_on_open_button.statusTip() == panel._open_on_open_button.toolTip()
         assert panel._open_on_open_button.accessibleName() == "Open on_open user code for main_page"
-        assert panel._open_on_open_button.minimumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
-        assert panel._open_on_open_button.maximumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
+        assert panel._open_on_open_button.minimumHeight() == expected_control_height
+        assert panel._open_on_open_button.maximumHeight() == expected_control_height
         assert panel._open_on_close_button.accessibleName() == "Open on_close user code for main_page"
-        assert panel._open_on_close_button.minimumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
-        assert panel._open_on_close_button.maximumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
+        assert panel._open_on_close_button.minimumHeight() == expected_control_height
+        assert panel._open_on_close_button.maximumHeight() == expected_control_height
         assert panel._open_init_button.accessibleName() == "Open init user code for main_page"
-        assert panel._open_init_button.minimumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
-        assert panel._open_init_button.maximumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
+        assert panel._open_init_button.minimumHeight() == expected_control_height
+        assert panel._open_init_button.maximumHeight() == expected_control_height
         assert panel._add_button.toolTip() == "Add a page field."
         assert panel._add_button.accessibleName() == "Add page field to main_page"
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
-        assert panel._add_button.minimumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
-        assert panel._add_button.maximumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
+        assert panel._add_button.minimumHeight() == expected_control_height
+        assert panel._add_button.maximumHeight() == expected_control_height
         assert panel._remove_button.toolTip() == "Select a field to remove it."
         assert panel._remove_button.accessibleName() == "Remove page field unavailable"
-        assert panel._remove_button.minimumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
-        assert panel._remove_button.maximumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
+        assert panel._remove_button.minimumHeight() == expected_control_height
+        assert panel._remove_button.maximumHeight() == expected_control_height
         assert panel._table.rowCount() == 2
         assert panel._table.rowHeight(0) == expected_row_height
         assert panel._table.item(0, 0).text() == "counter"
@@ -118,12 +120,18 @@ class TestPageFieldsPanel:
 
         row_tokens = dict(page_fields_panel_module.app_theme_tokens())
         row_tokens["h_tab_min"] = 26
+        row_tokens["space_xxs"] = 3
         monkeypatch.setattr(page_fields_panel_module, "app_theme_tokens", lambda *args, **kwargs: row_tokens)
 
         panel = PageFieldsPanel()
 
         assert panel._table.verticalHeader().defaultSectionSize() == 26
         assert panel._table.verticalHeader().minimumSectionSize() == 26
+        assert panel._table.horizontalHeader().height() == 23
+        assert panel._add_button.minimumHeight() == 23
+        assert panel._add_button.maximumHeight() == 23
+        assert panel._open_on_open_button.minimumHeight() == 23
+        assert panel._open_on_open_button.maximumHeight() == 23
         panel.deleteLater()
 
     def test_panel_marks_actions_unavailable_without_active_page(self, qapp):
