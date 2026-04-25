@@ -1044,19 +1044,19 @@ QSpinBox[propertyPanelSpin="true"], QDoubleSpinBox[propertyPanelSpin="true"] {{
 QSpinBox[propertyPanelSpin="true"]::up-button, QSpinBox[propertyPanelSpin="true"]::down-button,
 QDoubleSpinBox[propertyPanelSpin="true"]::up-button, QDoubleSpinBox[propertyPanelSpin="true"]::down-button {{
     subcontrol-origin: border;
-    width: 20px;
+    width: {_PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;
     border: none;
     background-color: transparent;
 }}
 
 QSpinBox[propertyPanelSpin="true"]::up-button, QDoubleSpinBox[propertyPanelSpin="true"]::up-button {{
     subcontrol-position: top right;
-    margin: 2px 2px 0px 0px;
+    margin: {_PROPERTY_PANEL_SPIN_LAYOUT_SPACING}px {_PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN}px 0px 0px;
 }}
 
 QSpinBox[propertyPanelSpin="true"]::down-button, QDoubleSpinBox[propertyPanelSpin="true"]::down-button {{
     subcontrol-position: bottom right;
-    margin: 0px 2px 2px 0px;
+    margin: 0px {_PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN}px {_PROPERTY_PANEL_SPIN_LAYOUT_SPACING}px 0px;
 }}
 
 QSpinBox[propertyPanelSpin="true"]::up-button:hover, QSpinBox[propertyPanelSpin="true"]::down-button:hover,

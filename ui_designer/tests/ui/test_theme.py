@@ -1496,11 +1496,32 @@ def test_property_panel_spin_arrow_qss_tracks_compact_icon_size():
     import ui_designer.ui.theme as theme_module
 
     css = _build_stylesheet("dark")
+    spin_button = css.split(
+        'QSpinBox[propertyPanelSpin="true"]::up-button, QSpinBox[propertyPanelSpin="true"]::down-button,',
+        1,
+    )[1].split("}", 1)[0]
+    spin_up = css.split(
+        'QSpinBox[propertyPanelSpin="true"]::up-button, QDoubleSpinBox[propertyPanelSpin="true"]::up-button {',
+        1,
+    )[1].split("}", 1)[0]
+    spin_down = css.split(
+        'QSpinBox[propertyPanelSpin="true"]::down-button, QDoubleSpinBox[propertyPanelSpin="true"]::down-button {',
+        1,
+    )[1].split("}", 1)[0]
     spin_arrow = css.split(
         'QSpinBox[propertyPanelSpin="true"]::up-arrow, QSpinBox[propertyPanelSpin="true"]::down-arrow,',
         1,
     )[1].split("}", 1)[0]
 
+    assert f"width: {theme_module._PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;" in spin_button
+    assert (
+        f"margin: {theme_module._PROPERTY_PANEL_SPIN_LAYOUT_SPACING}px "
+        f"{theme_module._PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN}px 0px 0px;"
+    ) in spin_up
+    assert (
+        f"margin: 0px {theme_module._PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN}px "
+        f"{theme_module._PROPERTY_PANEL_SPIN_LAYOUT_SPACING}px 0px;"
+    ) in spin_down
     assert f"width: {theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE}px;" in spin_arrow
     assert f"height: {theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE}px;" in spin_arrow
 
