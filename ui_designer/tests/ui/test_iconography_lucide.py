@@ -68,6 +68,19 @@ def test_lucide_mapping_covers_canonical_semantics_and_assets():
     assert missing_assets == []
 
 
+def test_plan_toolbar_aliases_resolve_to_lucide_assets():
+    module = _reload_iconography()
+    expected = {
+        "run": "play",
+        "debug": "bug",
+        "refresh": "rotate-cw",
+        "stop": "square",
+    }
+    for key, lucide_name in expected.items():
+        assert module._lucide_name_for_key(key) == lucide_name
+        assert (module._LUCIDE_DIR / f"{lucide_name}.svg").is_file()
+
+
 def test_icon_definitions_do_not_encode_stale_size_hints():
     module = _reload_iconography()
 

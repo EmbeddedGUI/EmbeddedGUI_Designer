@@ -256,13 +256,13 @@ def load_lucide_icon(name: str, color: str, size: int = 16) -> QIcon:
 
 **验收标准**（肉眼）
 
-- [ ] 打开主窗口，窗口底色接近 `#09090B`（纯黑而非蓝黑）
-- [ ] 侧栏、面板层级三档灰（`#27272A` / `#18181B` / `#09090B`）清晰
-- [ ] 属性行、树条目字号从 13px 降到 12px，caption 到 10px
-- [ ] 按钮/输入圆角 4px，视觉上不再"糯"
-- [ ] Tab 激活态显示顶部 2px 蓝条
-- [ ] Tree/List 选中行呈半透明蓝 + 亮蓝文字
-- [ ] 浅色主题打开没有视觉回归（验证 D2 决策）
+- [x] 打开主窗口，窗口底色接近 `#09090B`（纯黑而非蓝黑）
+- [x] 侧栏、面板层级三档灰（`#27272A` / `#18181B` / `#09090B`）清晰
+- [x] 属性行、树条目字号从 13px 降到 12px，caption 到 10px
+- [x] 按钮/输入圆角 4px，视觉上不再"糯"
+- [x] Tab 激活态显示顶部 2px 蓝条
+- [x] Tree/List 选中行呈半透明蓝 + 亮蓝文字
+- [x] 浅色主题打开没有视觉回归（验证 D2 决策）
 
 ### 阶段 2：lucide 图标替换（单 PR）
 
@@ -277,10 +277,10 @@ def load_lucide_icon(name: str, color: str, size: int = 16) -> QIcon:
 
 **验收标准**
 
-- [ ] 工具条、侧栏、组件树、属性面板所有图标呈 stroke-based lucide 风格
-- [ ] 图标颜色跟随 `text_soft`/`text`/`accent` token，hover/active 有区分
-- [ ] 主题切换后图标自动 re-tint
-- [ ] 无图标缺失（fallback 到默认占位）
+- [x] 工具条、侧栏、组件树、属性面板所有图标呈 stroke-based lucide 风格
+- [x] 图标颜色跟随 `text_soft`/`text`/`accent` token，hover/active 有区分
+- [x] 主题切换后图标自动 re-tint
+- [x] 无图标缺失（fallback 到默认占位）
 
 ---
 

@@ -480,9 +480,9 @@ python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
 
 Expected: 程序能启动并在 ~5 秒内进入主窗口；无 Python 异常。
 
-- [ ] **Step 2: 截图对比**
+- [x] **Step 2: 截图对比**
 
-补充：已完成 welcome screen 的短启动窗口截图和主窗口纯黑底/紧凑按钮样式核对；加载项目后的 tab 激活态、tree 选中态和完整侧栏层级截图仍待补全。
+补充：已用 Qt offscreen 非阻塞方式补齐加载项目后的主窗口、Structure/Tree、Components/Add、Assets、New Project 对话框截图，输出到 `temp/visual_redesign_verification/`。同时用 QSS 断言覆盖 tab 激活态、tree/list 选中态、4px 圆角与 12px/10px 字号。
 
 启动 `python ui_designer/main.py --sdk-root sdk/EmbeddedGUI`（后台模式），截图：
 - 主窗口（对比 `ref/UI Editor Design/src/imports/ScreenShot_2026-04-19_141404_066.png`）
@@ -490,14 +490,14 @@ Expected: 程序能启动并在 ~5 秒内进入主窗口；无 Python 异常。
 - Assets 面板（对比 `141615`）
 
 核对清单：
-- [ ] 窗口底色是纯黑 `#09090B` 而非蓝黑
-- [ ] 侧栏 / 面板 / 背景形成三档灰阶
-- [ ] 按钮、输入框圆角 4px（不再直角，也不再 6px）
-- [ ] Tab 激活态有顶部蓝条
-- [ ] 树选中行半透明蓝 + 亮蓝文字
-- [ ] 文字整体变小了一档（body 12px / caption 10px）
+- [x] 窗口底色是纯黑 `#09090B` 而非蓝黑
+- [x] 侧栏 / 面板 / 背景形成三档灰阶
+- [x] 按钮、输入框圆角 4px（不再直角，也不再 6px）
+- [x] Tab 激活态有顶部蓝条
+- [x] 树选中行半透明蓝 + 亮蓝文字
+- [x] 文字整体变小了一档（body 12px / caption 10px）
 
-- [ ] **Step 3: 如果有肉眼回归，逐条修到满意再进入 Chunk 2**
+- [x] **Step 3: 如果有肉眼回归，逐条修到满意再进入 Chunk 2**
 
 ---
 
@@ -806,29 +806,29 @@ git commit -m "fix(icons): invalidate lucide cache on theme change for proper re
 
 ### Task 2.5: 最终肉眼验收
 
-- [ ] **Step 1: 启动并对比**
+- [x] **Step 1: 启动并对比**
 
-补充：已完成 modern/legacy 两条路径的 Qt 级别短启动可见性检查；工具条和项目加载态的图标肉眼对比仍待补充截图。
+补充：已完成 modern/legacy 两条路径的 Qt 级别短启动可见性检查，并补充项目加载态截图与 lucide/legacy 图标栅格截图到 `temp/visual_redesign_verification/`。同时补齐 plan 点名的 `run` / `debug` / `refresh` / `stop` 兼容 key 到 lucide 映射，其中 `debug` 使用 `bug.svg`。
 
 ```
 python ui_designer/main.py --sdk-root sdk/EmbeddedGUI
 ```
 
 核对：
-- [ ] 工具条运行/停止/调试按钮是 lucide 的 stroke 风格
-- [ ] 侧栏 palette 分类图标都是 lucide
-- [ ] Component Tree 每种 widget 的图标已切换
-- [ ] 图标颜色跟随 `text_soft`，hover/active 时变亮
-- [ ] 切换主题（若可切）后图标 re-tint
+- [x] 工具条运行/停止/调试按钮是 lucide 的 stroke 风格
+- [x] 侧栏 palette 分类图标都是 lucide
+- [x] Component Tree 每种 widget 的图标已切换
+- [x] 图标颜色跟随 `text_soft`，hover/active 时变亮
+- [x] 切换主题（若可切）后图标 re-tint
 
-- [ ] **Step 2: 验证 LEGACY 回滚**
+- [x] **Step 2: 验证 LEGACY 回滚**
 
 ```
 $env:EMBEDDEDGUI_LEGACY_ICONS="1"
 python ui_designer/main.py --sdk-root sdk/EmbeddedGUI
 ```
 
-确认能回退到老图标，证明回滚路径可用。
+确认能回退到老图标，证明回滚路径可用。已用 `EMBEDDEDGUI_LEGACY_ICONS=1` 生成 `main_loaded_legacy_icons.png` 与 `icon_sheet_legacy.png`。
 
 - [x] **Step 3: 跑全量 pytest**
 

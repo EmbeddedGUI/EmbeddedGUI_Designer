@@ -65,12 +65,14 @@
 | toggle | toggle-left | toggle-left.svg |
 | toolbar.compile | play | play.svg |
 | toolbar.copy | copy | copy.svg |
+| toolbar.debug | bug | bug.svg |
 | toolbar.delete | trash-2 | trash-2.svg |
 | toolbar.export | upload | upload.svg |
 | toolbar.new | plus | plus.svg |
 | toolbar.open | folder-open | folder-open.svg |
 | toolbar.paste | clipboard-paste | clipboard-paste.svg |
 | toolbar.preview | view | view.svg |
+| toolbar.refresh | rotate-cw | rotate-cw.svg |
 | toolbar.redo | redo-2 | redo-2.svg |
 | toolbar.save | save | save.svg |
 | toolbar.settings.global | settings-2 | settings-2.svg |
