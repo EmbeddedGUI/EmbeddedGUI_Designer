@@ -13,7 +13,7 @@ from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF,
 from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage, QRegion
 
 
-from .theme import app_theme_tokens, designer_monospace_font, designer_ui_font, theme_tokens
+from .theme import app_theme_tokens, designer_monospace_font, designer_ui_font
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_registry import WidgetRegistry
 from ..engine.python_renderer import render_page
@@ -74,12 +74,6 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         if str(widget.property("_preview_accessible_snapshot") or "") != name:
             widget.setAccessibleName(name)
             widget.setProperty("_preview_accessible_snapshot", name)
-
-
-_DEFAULT_UI_TOKENS = theme_tokens("dark")
-_SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
-_SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
-_SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
 
 
 def _theme_color(color_value, alpha=None):

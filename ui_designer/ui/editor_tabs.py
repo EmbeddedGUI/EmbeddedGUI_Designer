@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .preview_panel import PreviewPanel
-from .theme import designer_font_size_pt, designer_monospace_font, theme_tokens
+from .theme import designer_font_size_pt, designer_monospace_font
 from .xml_highlighter import XmlSyntaxHighlighter
 
 
@@ -25,10 +25,6 @@ MODE_DESIGN = "design"
 MODE_SPLIT = "split"
 MODE_CODE = "code"
 
-_DEFAULT_UI_TOKENS = theme_tokens("dark")
-_SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
-_SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
-_SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
 _DEFAULT_EDITOR_FONT_PT = 9
 
 

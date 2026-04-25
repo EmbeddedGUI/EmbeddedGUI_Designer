@@ -3,16 +3,6 @@
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 
-from .theme import theme_tokens
-
-
-_TOKENS = theme_tokens("dark")
-_SPACE_XS = int(_TOKENS.get("space_xs", 4))
-_SPACE_SM = int(_TOKENS.get("space_sm", 8))
-_SPACE_MD = int(_TOKENS.get("space_md", 12))
-_ICON_SM = int(_TOKENS.get("icon_sm", 16))
-
-
 _SEVERITY_PREFIX = {
     "error": "Error",
     "warning": "Warning",
