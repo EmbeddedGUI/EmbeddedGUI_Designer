@@ -525,8 +525,8 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         assert f"border: 1px solid {t['border']};" in table
         assert "border-radius: 0px;" in table
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 20px;" in buttons
-        assert "max-height: 20px;" in buttons
+        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in buttons
+        assert f"max-height: {t['h_tab_min'] - t['space_xxs']}px;" in buttons
         assert f"padding: 0px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['shell_bg']};" in buttons_disabled
 
@@ -559,8 +559,8 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         assert f"border: 1px solid {t['border']};" in table
         assert "border-radius: 0px;" in table
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 20px;" in buttons
-        assert "max-height: 20px;" in buttons
+        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in buttons
+        assert f"max-height: {t['h_tab_min'] - t['space_xxs']}px;" in buttons
         assert f"padding: 0px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['shell_bg']};" in buttons_disabled
 
@@ -644,7 +644,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in toolbar_button
         assert "border-radius: 0px;" in toolbar_button
         assert f"padding: 0px {t['pad_toolbar_h']}px;" in toolbar_button
-        assert "min-height: 20px;" in toolbar_button
+        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
         assert f"background-color: {t['shell_bg']};" in toolbar_button_disabled
         assert f"border-color: {t['border_strong']};" in toolbar_button_disabled
@@ -655,10 +655,10 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in insert_button
         assert "border-radius: 0px;" in insert_button
         assert f"padding: 0px {t['pad_input_h']}px;" in insert_button
-        assert "min-width: 48px;" in insert_button
-        assert "max-width: 48px;" in insert_button
-        assert "min-height: 20px;" in insert_button
-        assert "max-height: 20px;" in insert_button
+        assert f"min-width: {t['h_tab_min'] * 2}px;" in insert_button
+        assert f"max-width: {t['h_tab_min'] * 2}px;" in insert_button
+        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in insert_button
+        assert f"max-height: {t['h_tab_min'] - t['space_xxs']}px;" in insert_button
         assert f"background-color: {t['surface_hover']};" in insert_button_hover
         assert "background-color: transparent;" in mode_strip
         assert "border: none;" in mode_strip
@@ -694,15 +694,15 @@ def test_workspace_chrome_corner_radii_stay_flat():
 
         assert "border-radius: 0px;" in mode_button
         assert f"padding: 0px {t['pad_input_h']}px;" in mode_button
-        assert "min-width: 48px;" in mode_button
-        assert "max-width: 48px;" in mode_button
-        assert "min-height: 20px;" in mode_button
-        assert "max-height: 20px;" in mode_button
+        assert f"min-width: {t['h_tab_min'] * 2}px;" in mode_button
+        assert f"max-width: {t['h_tab_min'] * 2}px;" in mode_button
+        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in mode_button
+        assert f"max-height: {t['h_tab_min'] - t['space_xxs']}px;" in mode_button
         assert "border-radius: 0px;" in bottom_toggle_button
         assert f"padding: 0px {t['pad_input_h']}px;" in bottom_toggle_button
-        assert "min-width: 48px;" in bottom_toggle_button
-        assert "min-height: 20px;" in bottom_toggle_button
-        assert "max-height: 20px;" in bottom_toggle_button
+        assert f"min-width: {t['h_tab_min'] * 2}px;" in bottom_toggle_button
+        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in bottom_toggle_button
+        assert f"max-height: {t['h_tab_min'] - t['space_xxs']}px;" in bottom_toggle_button
         assert "background-color: transparent;" in left_tabs_pane
         assert "border: none;" in left_tabs_pane
         assert "border-radius: 0px;" in left_tabs_pane
@@ -1334,8 +1334,8 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in actions
         assert "border-radius: 0px;" in actions
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 20px;" in buttons
-        assert "max-height: 20px;" in buttons
+        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in buttons
+        assert f"max-height: {t['h_tab_min'] - t['space_xxs']}px;" in buttons
         assert f"padding: 0px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['shell_bg']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in table
@@ -1368,8 +1368,8 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         assert f"font-size: {t['fs_body_sm']}px;" in buttons
         assert f"padding: 0px {t['space_xs']}px;" in buttons
         assert "text-align: center;" in buttons
-        assert "min-height: 20px;" in buttons
-        assert "max-height: 20px;" in buttons
+        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in buttons
+        assert f"max-height: {t['h_tab_min'] - t['space_xxs']}px;" in buttons
         assert f"background-color: {t['shell_bg']};" in add_page_disabled
 
 

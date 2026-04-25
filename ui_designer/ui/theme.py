@@ -1771,8 +1771,8 @@ QPushButton#project_workspace_view_button {{
     font-size: {t['fs_body_sm']}px;
     padding: 0px {t['space_xs']}px;
     text-align: center;
-    min-height: 20px;
-    max-height: 20px;
+    min-height: {t['h_tab_min'] - t['space_xxs']}px;
+    max-height: {t['h_tab_min'] - t['space_xxs']}px;
 }}
 
 QPushButton#project_workspace_view_button:hover {{
@@ -1826,8 +1826,8 @@ QToolBar#main_toolbar QToolButton {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: 0px {t['pad_toolbar_h']}px;
-    min-height: 20px;
-    max-height: 20px;
+    min-height: {t['h_tab_min'] - t['space_xxs']}px;
+    max-height: {t['h_tab_min'] - t['space_xxs']}px;
     font-size: {t['fs_body_sm']}px;
 }}
 
@@ -1859,10 +1859,10 @@ QPushButton#workspace_mode_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: 0px {t['pad_input_h']}px;
-    min-width: 48px;
-    max-width: 48px;
-    min-height: 20px;
-    max-height: 20px;
+    min-width: {t['h_tab_min'] * 2}px;
+    max-width: {t['h_tab_min'] * 2}px;
+    min-height: {t['h_tab_min'] - t['space_xxs']}px;
+    max-height: {t['h_tab_min'] - t['space_xxs']}px;
 }}
 
 QPushButton#workspace_mode_button:hover {{
@@ -1882,9 +1882,9 @@ QPushButton#workspace_bottom_toggle_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: 0px {t['pad_input_h']}px;
-    min-width: 48px;
-    min-height: 20px;
-    max-height: 20px;
+    min-width: {t['h_tab_min'] * 2}px;
+    min-height: {t['h_tab_min'] - t['space_xxs']}px;
+    max-height: {t['h_tab_min'] - t['space_xxs']}px;
 }}
 
 QPushButton#workspace_bottom_toggle_button:hover {{
@@ -1909,10 +1909,10 @@ QPushButton#workspace_insert_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: 0px {t['pad_input_h']}px;
-    min-width: 48px;
-    max-width: 48px;
-    min-height: 20px;
-    max-height: 20px;
+    min-width: {t['h_tab_min'] * 2}px;
+    max-width: {t['h_tab_min'] * 2}px;
+    min-height: {t['h_tab_min'] - t['space_xxs']}px;
+    max-height: {t['h_tab_min'] - t['space_xxs']}px;
 }}
 
 QPushButton#workspace_insert_button:hover {{
@@ -2280,8 +2280,8 @@ QFrame#workspace_bottom_header QLabel#workspace_section_title {{
 #resource_dialog_shell QComboBox {{
     border-radius: 0px;
     padding: 0px {t['pad_input_h']}px;
-    min-height: 20px;
-    max-height: 20px;
+    min-height: {t['h_tab_min'] - t['space_xxs']}px;
+    max-height: {t['h_tab_min'] - t['space_xxs']}px;
     font-size: {t['fs_body_sm']}px;
 }}
 
@@ -2738,8 +2738,8 @@ QListWidget#history_panel_list {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: 0px {t['space_sm']}px;
-    min-height: 20px;
-    max-height: 20px;
+    min-height: {t['h_tab_min'] - t['space_xxs']}px;
+    max-height: {t['h_tab_min'] - t['space_xxs']}px;
     font-size: {t['fs_body_sm']}px;
 }}
 
@@ -2781,13 +2781,13 @@ QWidget#animations_dock QSpinBox,
 QWidget#animations_dock QLineEdit {{
     border-radius: 0px;
     padding: 0px {t['pad_input_h']}px;
-    min-height: 20px;
-    max-height: 20px;
+    min-height: {t['h_tab_min'] - t['space_xxs']}px;
+    max-height: {t['h_tab_min'] - t['space_xxs']}px;
     font-size: {t['fs_body_sm']}px;
 }}
 
 QWidget#animations_dock QCheckBox {{
-    min-height: 20px;
+    min-height: {t['h_tab_min'] - t['space_xxs']}px;
     font-size: {t['fs_body_sm']}px;
 }}
 
@@ -2891,8 +2891,8 @@ QTreeWidget#widget_tree_panel_tree {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: 0px {t['space_sm']}px;
-    min-height: 20px;
-    max-height: 20px;
+    min-height: {t['h_tab_min'] - t['space_xxs']}px;
+    max-height: {t['h_tab_min'] - t['space_xxs']}px;
     font-size: {t['fs_body_sm']}px;
 }}
 
