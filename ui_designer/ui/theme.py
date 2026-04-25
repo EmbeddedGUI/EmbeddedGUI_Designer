@@ -67,6 +67,9 @@ _PROPERTY_PANEL_SPIN_BUTTON_QSS = (
 _ENGINEERING_FS_BODY_SENTINEL = "__FS_BODY__"
 _ENGINEERING_RADIUS_SM_SENTINEL = "__R_SM__"
 _ENGINEERING_INPUT_PAD_H_SENTINEL = "__PAD_INPUT_H__"
+_ENGINEERING_H_TAB_MIN_SENTINEL = "__H_TAB_MIN__"
+_ENGINEERING_H_TAB_MIN_COMPACT_SENTINEL = "__H_TAB_MIN_COMPACT__"
+_ENGINEERING_PAD_TAB_COMPACT_V_SENTINEL = "__PAD_TAB_COMPACT_V__"
 
 _FLUENT_BUTTON_RADIUS_QSS = f"""
 PushButton,
@@ -104,8 +107,8 @@ TransparentToolButton,
 TransparentToggleButton,
 TransparentToggleToolButton {
     border-radius: __R_SM__px;
-    min-height: 22px;
-    padding: 1px __PAD_INPUT_H__px;
+    min-height: __H_TAB_MIN_COMPACT__px;
+    padding: __PAD_TAB_COMPACT_V__px __PAD_INPUT_H__px;
 }
 """
 
@@ -130,7 +133,7 @@ TextEdit,
 PlainTextEdit,
 TextBrowser {
     border-radius: __R_SM__px;
-    min-height: 24px;
+    min-height: __H_TAB_MIN__px;
     padding: 0px __PAD_INPUT_H__px;
 }
 
@@ -154,7 +157,7 @@ _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = """
 ComboBox,
 ModelComboBox {
     border-radius: __R_SM__px;
-    min-height: 24px;
+    min-height: __H_TAB_MIN__px;
     padding: 0px __PAD_INPUT_H__px;
 }
 """
@@ -193,7 +196,7 @@ CompactDateEdit,
 CompactDateTimeEdit,
 CompactTimeEdit {
     border-radius: __R_SM__px;
-    min-height: 24px;
+    min-height: __H_TAB_MIN__px;
     padding: 0px __PAD_INPUT_H__px;
 }
 
@@ -394,6 +397,22 @@ def _resolve_engineering_input_pad_h_qss(template: str) -> str:
     return str(template).replace(_ENGINEERING_INPUT_PAD_H_SENTINEL, str(int(_TOKENS["dark"]["pad_input_h"])))
 
 
+def _resolve_engineering_h_tab_min_qss(template: str) -> str:
+    return str(template).replace(_ENGINEERING_H_TAB_MIN_SENTINEL, str(int(_TOKENS["dark"]["h_tab_min"])))
+
+
+def _resolve_engineering_h_tab_min_compact_qss(template: str) -> str:
+    compact_height = max(int(_TOKENS["dark"]["h_tab_min"]) - int(_TOKENS["dark"]["space_3xs"]), 1)
+    return str(template).replace(_ENGINEERING_H_TAB_MIN_COMPACT_SENTINEL, str(compact_height))
+
+
+def _resolve_engineering_pad_tab_compact_v_qss(template: str) -> str:
+    return str(template).replace(
+        _ENGINEERING_PAD_TAB_COMPACT_V_SENTINEL,
+        str(int(_TOKENS["dark"]["pad_tab_compact_v"])),
+    )
+
+
 _FLUENT_BUTTON_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_BUTTON_RADIUS_QSS)
 _FLUENT_LINE_EDIT_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_LINE_EDIT_RADIUS_QSS)
 _FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_COMBO_BOX_RADIUS_QSS)
@@ -406,6 +425,10 @@ _FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_COMBO_
 _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS)
 _FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
 _FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS)
+_FLUENT_PROPERTY_PANEL_BUTTON_QSS = _resolve_engineering_h_tab_min_compact_qss(_FLUENT_PROPERTY_PANEL_BUTTON_QSS)
+_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS = _resolve_engineering_h_tab_min_qss(_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS)
+_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = _resolve_engineering_h_tab_min_qss(_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS)
+_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = _resolve_engineering_h_tab_min_qss(_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS)
 _FLUENT_PROPERTY_PANEL_BUTTON_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_PROPERTY_PANEL_BUTTON_QSS)
 _FLUENT_LINE_EDIT_RADIUS_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_LINE_EDIT_RADIUS_QSS)
 _FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS)
@@ -413,6 +436,7 @@ _FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_COMB
 _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS)
 _FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
 _FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS)
+_FLUENT_PROPERTY_PANEL_BUTTON_QSS = _resolve_engineering_pad_tab_compact_v_qss(_FLUENT_PROPERTY_PANEL_BUTTON_QSS)
 
 _WINDOWS_FONTDIR_CANDIDATES = (
     os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts"),

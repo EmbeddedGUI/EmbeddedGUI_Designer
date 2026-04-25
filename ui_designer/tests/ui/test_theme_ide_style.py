@@ -112,8 +112,12 @@ def test_fluent_qss_templates_use_4px_radius_and_12px_font():
 
 
 def test_property_panel_qss_templates_use_4px_radius():
-    expected_radius_px = theme_tokens("dark")["r_sm"]
-    expected_input_pad_h = theme_tokens("dark")["pad_input_h"]
+    tokens = theme_tokens("dark")
+    expected_radius_px = tokens["r_sm"]
+    expected_input_pad_h = tokens["pad_input_h"]
+    expected_tab_min = tokens["h_tab_min"]
+    expected_tab_compact_min = expected_tab_min - tokens["space_3xs"]
+    expected_pad_tab_compact_v = tokens["pad_tab_compact_v"]
     fragments = [
         _theme_mod._FLUENT_PROPERTY_PANEL_BUTTON_QSS,
         _theme_mod._FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS,
@@ -128,7 +132,10 @@ def test_property_panel_qss_templates_use_4px_radius():
         _theme_mod._FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS,
         _theme_mod._FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS,
     ):
+        assert f"min-height: {expected_tab_min}px" in qss
         assert f"padding: 0px {expected_input_pad_h}px" in qss
+    assert f"min-height: {expected_tab_compact_min}px" in _theme_mod._FLUENT_PROPERTY_PANEL_BUTTON_QSS
+    assert f"padding: {expected_pad_tab_compact_v}px {expected_input_pad_h}px" in _theme_mod._FLUENT_PROPERTY_PANEL_BUTTON_QSS
 
 
 def test_dark_stylesheet_includes_ide_accent_features():

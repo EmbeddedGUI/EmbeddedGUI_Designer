@@ -1450,6 +1450,7 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
 
     app = _app()
     apply_theme(app)
+    tokens = theme_module.theme_tokens("dark")
 
     panel = PropertyPanel()
     panel.set_widget(WidgetModel("label", name="title", x=10, y=20, width=80, height=24))
@@ -1475,18 +1476,18 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
 
         assert "#lineEditButton" in search.styleSheet()
         assert "border-radius: 4px;" in search.styleSheet()
-        assert "min-height: 24px;" in search.styleSheet()
-        assert "padding: 0px 6px;" in search.styleSheet()
+        assert f"min-height: {tokens['h_tab_min']}px;" in search.styleSheet()
+        assert f"padding: 0px {tokens['pad_input_h']}px;" in search.styleSheet()
         assert "min-width: 18px;" in search.styleSheet()
         assert "border-radius: 4px;" in name_edit.styleSheet()
-        assert "min-height: 24px;" in name_edit.styleSheet()
+        assert f"min-height: {tokens['h_tab_min']}px;" in name_edit.styleSheet()
         assert "border-radius: 4px;" in alpha_combo.styleSheet()
-        assert "min-height: 24px;" in alpha_combo.styleSheet()
-        assert x_spin.minimumHeight() >= 24
+        assert f"min-height: {tokens['h_tab_min']}px;" in alpha_combo.styleSheet()
+        assert x_spin.minimumHeight() >= tokens["h_tab_min"]
         assert theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE == 7
         assert "border-radius: 4px;" in browse_button.styleSheet()
-        assert "min-height: 22px;" in browse_button.styleSheet()
-        assert "padding: 1px 6px;" in browse_button.styleSheet()
+        assert f"min-height: {tokens['h_tab_min'] - tokens['space_3xs']}px;" in browse_button.styleSheet()
+        assert f"padding: {tokens['pad_tab_compact_v']}px {tokens['pad_input_h']}px;" in browse_button.styleSheet()
     finally:
         panel.close()
         panel.deleteLater()
