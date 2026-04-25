@@ -35,7 +35,7 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtGui import (
     QPixmap, QIcon, QPixmapCache, QFontDatabase, QFont,
-    QPainter, QColor, QDrag, QPen,
+    QPainter, QColor, QDrag, QFontMetrics, QPen,
 )
 
 from qfluentwidgets import TabWidget, CaptionLabel
@@ -2158,6 +2158,9 @@ class ResourcePanel(QWidget):
         if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
             for resource_type in ("image", "font", "text"):
                 self._refresh_resource_list(resource_type, selection_fallback="keep")
+            self._sync_locale_combo_width()
+        elif event.type() == QEvent.FontChange:
+            self._sync_locale_combo_width()
 
     # -- UI construction --
 
@@ -2485,7 +2488,6 @@ class ResourcePanel(QWidget):
         locale_label.setObjectName("resource_panel_field_label")
         locale_row.addWidget(locale_label)
         self._locale_combo = QComboBox()
-        self._locale_combo.setMinimumWidth(96)
         self._locale_combo.currentIndexChanged.connect(self._on_locale_changed)
         locale_row.addWidget(self._locale_combo)
         self._add_locale_btn = QPushButton("Add...")
@@ -2620,6 +2622,7 @@ class ResourcePanel(QWidget):
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 2)
         self._apply_compact_shell_metrics()
+        self._sync_locale_combo_width()
         self._update_resource_action_metadata()
         self._update_string_action_metadata()
         self._update_usage_accessibility_metadata()
@@ -2663,6 +2666,36 @@ class ResourcePanel(QWidget):
             self._generate_charset_text_btn,
         ):
             _set_compact_control_height(widget)
+
+    def _locale_combo_target_width(self) -> int:
+        labels = [
+            str(self._locale_combo.itemText(index) or "").strip()
+            for index in range(self._locale_combo.count())
+        ]
+        labels = [label for label in labels if label]
+        if not labels:
+            labels = [str(self._selected_locale_label() or "").strip() or "Default"]
+        tokens = app_theme_tokens()
+        horizontal_padding = (
+            int(tokens.get("space_2xl", 24))
+            + int(tokens.get("space_sm", 8))
+            + int(tokens.get("icon_sm", 14))
+            + (int(tokens.get("pad_input_h", 6)) * 2)
+        )
+        try:
+            metrics = QFontMetrics(self._locale_combo.font())
+            widest = max(metrics.horizontalAdvance(label) for label in labels)
+            return max(widest + horizontal_padding, 1)
+        except Exception:
+            return max(int(tokens.get("h_tab_min", 24)) * 4, 1)
+
+    def _sync_locale_combo_width(self):
+        if not hasattr(self, "_locale_combo"):
+            return
+        target_width = self._locale_combo_target_width()
+        if self._locale_combo.minimumWidth() == target_width:
+            return
+        self._locale_combo.setMinimumWidth(target_width)
 
     def _add_resource_filter_row(self, parent_layout, resource_type, statuses):
         row = QHBoxLayout()
@@ -4714,6 +4747,7 @@ class ResourcePanel(QWidget):
             if idx >= 0:
                 self._locale_combo.setCurrentIndex(idx)
             self._locale_combo.blockSignals(False)
+            self._sync_locale_combo_width()
 
             self._refresh_string_table()
             self._update_tab_titles()

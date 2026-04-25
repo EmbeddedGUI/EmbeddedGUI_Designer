@@ -110,6 +110,7 @@ class TestResourcePanelFileFlow:
         assert image_reset.height() == expected_control_height
         assert panel._generate_charset_btn.height() == expected_control_height
         assert panel._locale_combo.height() == expected_control_height
+        assert panel._locale_combo.minimumWidth() == panel._locale_combo_target_width()
         assert panel._add_locale_btn.height() == expected_control_height
         assert panel._add_key_btn.height() == expected_control_height
         assert panel._clean_unused_string_btn.height() == expected_control_height
@@ -129,6 +130,37 @@ class TestResourcePanelFileFlow:
         assert panel._resource_action_buttons["image"]["import"].height() == 25
         assert panel._resource_search_inputs["image"].height() == 25
         assert panel._locale_combo.height() == 25
+        panel.deleteLater()
+
+    def test_locale_combo_width_tracks_runtime_option_metrics(self, qapp):
+        from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        class _VerboseLocaleCatalog(StringResourceCatalog):
+            @property
+            def locale_display_names(self):
+                names = dict(super().locale_display_names)
+                names["zh_hans_review"] = "Simplified Chinese Localization Review"
+                return names
+
+        baseline_catalog = StringResourceCatalog()
+        baseline_catalog.add_locale(DEFAULT_LOCALE)
+        baseline_catalog.add_locale("zh")
+
+        baseline_panel = ResourcePanel()
+        baseline_panel.set_string_catalog(baseline_catalog)
+        baseline_width = baseline_panel._locale_combo.minimumWidth()
+        baseline_panel.deleteLater()
+
+        verbose_catalog = _VerboseLocaleCatalog()
+        verbose_catalog.add_locale(DEFAULT_LOCALE)
+        verbose_catalog.add_locale("zh_hans_review")
+
+        panel = ResourcePanel()
+        panel.set_string_catalog(verbose_catalog)
+
+        assert panel._locale_combo.minimumWidth() == panel._locale_combo_target_width()
+        assert panel._locale_combo.minimumWidth() > baseline_width
         panel.deleteLater()
 
     def test_header_exposes_workspace_and_metric_metadata(self, qapp, tmp_path):
