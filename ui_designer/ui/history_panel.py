@@ -3,16 +3,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFrame, QLabel, QListWidget, QListWidgetItem, QVBoxLayout, QWidget, QHBoxLayout
 
-from .theme import theme_tokens
-
-
-_TOKENS = theme_tokens("dark")
-_SPACE_XS = int(_TOKENS.get("space_xs", 4))
-_SPACE_SM = int(_TOKENS.get("space_sm", 8))
-_SPACE_MD = int(_TOKENS.get("space_md", 12))
-
-
-
 class HistoryPanel(QWidget):
     """Read-only panel that visualizes the current page undo stack."""
 

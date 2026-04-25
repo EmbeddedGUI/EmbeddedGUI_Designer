@@ -15,13 +15,6 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from .theme import theme_tokens
-
-
-_TOKENS = theme_tokens("dark")
-_SPACE_XS = int(_TOKENS.get("space_xs", 4))
-_SPACE_SM = int(_TOKENS.get("space_sm", 8))
-_SPACE_MD = int(_TOKENS.get("space_md", 12))
 _PROJECT_WORKSPACE_BUTTON_HEIGHT = 22
 _PROJECT_WORKSPACE_METRICS_SPACING = 1
 _PROJECT_WORKSPACE_PREFS_BUTTON_WIDTH = 44

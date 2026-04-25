@@ -15,13 +15,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QEvent, Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QTextCharFormat, QColor
 
-from .theme import app_theme_tokens, designer_font_size_pt, designer_monospace_font, theme_tokens
-
-
-_TOKENS = theme_tokens("dark")
-_SPACE_XS = int(_TOKENS.get("space_xs", 4))
-_SPACE_SM = int(_TOKENS.get("space_sm", 8))
-_SPACE_MD = int(_TOKENS.get("space_md", 12))
+from .theme import app_theme_tokens, designer_font_size_pt, designer_monospace_font
 _DEFAULT_DEBUG_FONT_PT = 9
 
 
