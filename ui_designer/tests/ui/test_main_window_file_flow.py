@@ -13913,6 +13913,7 @@ class TestMainWindowFileFlow:
     def test_workspace_chips_use_sentence_case_and_humanized_counts(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
+        from ui_designer.ui.theme import app_theme_tokens
 
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
@@ -13932,6 +13933,9 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window.preview_panel, "is_python_preview_active", lambda: False)
         window._update_workspace_chips()
         window._clear_selection(sync_tree=False, sync_preview=False)
+        tokens = app_theme_tokens()
+        expected_control_height = max(int(tokens["h_tab_min"]) - int(tokens["space_xxs"]), 1)
+        expected_command_width = int(tokens["h_tab_min"]) * 2
 
         assert window._workspace_context_label.text() == "WorkspaceChipDemo / main_page"
         assert window._workspace_context_label.toolTip() == (
@@ -13958,8 +13962,8 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
         assert window._insert_widget_button.objectName() == "workspace_insert_button"
         assert window._insert_widget_button.text() == "Add"
-        assert window._insert_widget_button.width() == 48
-        assert window._insert_widget_button.height() == 20
+        assert window._insert_widget_button.width() == expected_command_width
+        assert window._insert_widget_button.height() == expected_control_height
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
         assert all(window._left_panel_stack.tabIcon(i).isNull() for i in range(window._left_panel_stack.count()))
@@ -14260,11 +14264,15 @@ class TestMainWindowFileFlow:
     def test_toolbar_and_top_level_actions_expose_dynamic_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         import ui_designer.ui.main_window as main_window_module
-        from ui_designer.ui.main_window import MainWindow, WORKSPACE_CONTROL_HEIGHT
+        from ui_designer.ui.main_window import MainWindow
+        from ui_designer.ui.theme import app_theme_tokens
 
         window = MainWindow("")
         mode_host = window._mode_buttons["design"].parentWidget()
         separator = window._toolbar_host.findChild(type(window._toolbar_header), "toolbar_host_separator")
+        tokens = app_theme_tokens()
+        expected_control_height = max(int(tokens["h_tab_min"]) - int(tokens["space_xxs"]), 1)
+        expected_command_width = int(tokens["h_tab_min"]) * 2
 
         assert window._toolbar.accessibleName() == "Main toolbar: insert, save, edit, and preview commands."
         assert window._toolbar.toolTip() == window._toolbar.accessibleName()
@@ -14273,11 +14281,11 @@ class TestMainWindowFileFlow:
         assert window._toolbar_command_row_layout.spacing() == 1
         assert mode_host.layout().spacing() == 1
         assert window._toolbar.height() == 22
-        assert window._toolbar.widgetForAction(window._save_action).height() == 20
-        assert window._mode_buttons["design"].width() == 48
-        assert window._mode_buttons["design"].height() == 20
-        assert separator.minimumHeight() == WORKSPACE_CONTROL_HEIGHT
-        assert separator.maximumHeight() == WORKSPACE_CONTROL_HEIGHT
+        assert window._toolbar.widgetForAction(window._save_action).height() == expected_control_height
+        assert window._mode_buttons["design"].width() == expected_command_width
+        assert window._mode_buttons["design"].height() == expected_control_height
+        assert separator.minimumHeight() == expected_control_height
+        assert separator.maximumHeight() == expected_control_height
         assert window._workspace_context_label.text() == "No project open"
         assert all(
             action.icon().isNull()
@@ -14496,12 +14504,16 @@ class TestMainWindowFileFlow:
     def test_editor_mode_buttons_track_current_workspace_mode(self, qapp, isolated_config):
         from ui_designer.ui.editor_tabs import MODE_CODE, MODE_DESIGN, MODE_SPLIT
         from ui_designer.ui.main_window import MainWindow
+        from ui_designer.ui.theme import app_theme_tokens
 
         window = MainWindow("")
+        tokens = app_theme_tokens()
+        expected_control_height = max(int(tokens["h_tab_min"]) - int(tokens["space_xxs"]), 1)
+        expected_command_width = int(tokens["h_tab_min"]) * 2
 
         assert window._mode_buttons[MODE_DESIGN].toolTip() == "Currently showing Design mode."
-        assert window._mode_buttons[MODE_DESIGN].width() == 48
-        assert window._mode_buttons[MODE_DESIGN].height() == 20
+        assert window._mode_buttons[MODE_DESIGN].width() == expected_command_width
+        assert window._mode_buttons[MODE_DESIGN].height() == expected_control_height
         assert window._mode_buttons[MODE_DESIGN].accessibleName() == "Editor mode button: Design. Current mode."
         assert window._mode_buttons[MODE_CODE].toolTip() == "Switch the workspace editor to Code mode."
         assert window._mode_buttons[MODE_CODE].statusTip() == window._mode_buttons[MODE_CODE].toolTip()
@@ -14670,15 +14682,18 @@ class TestMainWindowFileFlow:
 
     def test_workspace_left_tabs_and_bottom_toggle_buttons_expose_current_state(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
+        from ui_designer.ui.theme import app_theme_tokens
 
         window = MainWindow("")
+        tokens = app_theme_tokens()
+        expected_control_height = max(int(tokens["h_tab_min"]) - int(tokens["space_xxs"]), 1)
 
         assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "project")) == "Pages"
         assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "structure")) == "Tree"
         assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "widgets")) == "Add"
         assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "assets")) == "Assets"
         assert window._workspace_nav_frame.height() >= 24
-        assert window._bottom_toggle_button.height() == 20
+        assert window._bottom_toggle_button.height() == expected_control_height
         assert window.project_dock.minimumWidth() == 256
         assert window._left_panel_stack.minimumWidth() == 256
         assert window._left_shell.minimumWidth() == 256
@@ -14778,6 +14793,30 @@ class TestMainWindowFileFlow:
         assert window._bottom_shell.accessibleName() == (
             "Workspace bottom shell. Current section: Diagnostics. Panel visible. Current page: none."
         )
+        _close_window(window)
+
+    def test_workspace_command_metrics_follow_runtime_tokens(self, qapp, isolated_config, monkeypatch):
+        import ui_designer.ui.main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        metric_tokens = dict(main_window_module.app_theme_tokens())
+        metric_tokens["h_tab_min"] = 26
+        metric_tokens["space_xxs"] = 3
+        monkeypatch.setattr(main_window_module, "app_theme_tokens", lambda *args, **kwargs: metric_tokens)
+
+        window = MainWindow("")
+        separator = window._toolbar_host.findChild(type(window._toolbar_header), "toolbar_host_separator")
+
+        assert window._insert_widget_button.width() == 52
+        assert window._insert_widget_button.height() == 23
+        assert window._toolbar.widgetForAction(window._save_action).height() == 23
+        assert window._mode_buttons["design"].width() == 52
+        assert window._mode_buttons["design"].height() == 23
+        assert window._bottom_toggle_button.width() == 52
+        assert window._bottom_toggle_button.height() == 23
+        assert separator.minimumHeight() == 23
+        assert separator.maximumHeight() == 23
+
         _close_window(window)
 
     def test_bottom_toggle_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
