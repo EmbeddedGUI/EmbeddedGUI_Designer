@@ -823,7 +823,7 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in property_tree
         assert "padding: 0px;" in property_tree
         assert f"border-bottom: 1px solid {t['border']};" in property_tree_item
-        assert "min-height: 24px;" in property_tree_item
+        assert f"min-height: {t['h_tab_min']}px;" in property_tree_item
         assert f"background-color: {t['panel_alt']};" in property_tree_header
         assert f"color: {t['text_muted']};" in property_tree_header
         assert f"background-color: {t['panel_alt']};" in property_grid_section
@@ -1166,6 +1166,7 @@ def test_item_selection_styles_use_theme_tokens():
         )[1].split("}", 1)[0]
 
         assert f"padding: {t['space_xxs']}px {t['space_sm']}px;" in base_item
+        assert f"min-height: {t['h_tab_min']}px;" in base_item
         assert f"background-color: {t['selection_hover']};" in hover_state
         assert f"background-color: {t['selection']};" in selected
         assert f"color: {t['selection_text']};" in selected
@@ -1223,7 +1224,7 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in controls
         assert "border-radius: 0px;" in controls
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 24px;" in buttons
+        assert f"min-height: {t['h_tab_min']}px;" in buttons
         assert f"padding: {t['pad_tab_compact_v']}px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['shell_bg']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in list_block
@@ -1255,7 +1256,7 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in controls
         assert "border-radius: 0px;" in controls
         assert "border-radius: 0px;" in button
-        assert "min-height: 24px;" in button
+        assert f"min-height: {t['h_tab_min']}px;" in button
         assert f"padding: {t['pad_tab_compact_v']}px {t['space_sm']}px;" in button
         assert f"background-color: {t['shell_bg']};" in button_disabled
         assert f"background-color: {t['canvas_stage']};" in surface

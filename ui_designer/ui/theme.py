@@ -1110,7 +1110,7 @@ QListView, QTreeView, QTableView, QListWidget, QTreeWidget, QTableWidget {{
 
 QListView::item, QTreeView::item, QTableView::item, QListWidget::item, QTreeWidget::item {{
     padding: {t['space_xxs']}px {t['space_sm']}px;
-    min-height: 24px;
+    min-height: {t['h_tab_min']}px;
 }}
 
 QListView::item:hover, QTreeView::item:hover, QListWidget::item:hover, QTreeWidget::item:hover {{
@@ -1391,7 +1391,7 @@ QTreeWidget#property_panel_tree {{
 QTreeWidget#property_panel_tree::item {{
     border-bottom: 1px solid {t['border']};
     padding: 0px;
-    min-height: 24px;
+    min-height: {t['h_tab_min']}px;
 }}
 
 QTreeWidget#property_panel_tree::item:selected {{
@@ -2557,7 +2557,7 @@ QTreeWidget#project_dock_tree {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: {t['pad_tab_compact_v']}px {t['space_sm']}px;
-    min-height: 24px;
+    min-height: {t['h_tab_min']}px;
 }}
 
 #diagnostics_controls_strip QComboBox:hover,
@@ -2618,7 +2618,7 @@ QListWidget#diagnostics_list {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: {t['pad_tab_compact_v']}px {t['space_sm']}px;
-    min-height: 24px;
+    min-height: {t['h_tab_min']}px;
 }}
 
 #debug_panel_controls_strip QPushButton:hover {{
