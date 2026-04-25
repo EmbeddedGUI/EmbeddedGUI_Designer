@@ -1274,7 +1274,7 @@ QMenu::separator {{
 
 QScrollBar:vertical {{
     background-color: {t['panel_alt']};
-    width: 10px;
+    width: {t['space_sm'] + t['space_3xs']}px;
     margin: 0px;
     border: none;
 }}
@@ -1312,7 +1312,7 @@ QScrollBar::sub-page:vertical {{
 
 QScrollBar:horizontal {{
     background-color: {t['panel_alt']};
-    height: 10px;
+    height: {t['space_sm'] + t['space_3xs']}px;
     margin: 0px;
     border: none;
 }}

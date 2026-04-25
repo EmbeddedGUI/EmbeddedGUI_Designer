@@ -77,7 +77,7 @@ def test_scrollbars_follow_theme_surface_tokens():
         table_corner = css.split("QTableCornerButton::section {", 1)[1].split("}", 1)[0]
 
         assert f"background-color: {t['panel_alt']};" in vertical
-        assert "width: 10px;" in vertical
+        assert f"width: {t['space_sm'] + t['space_3xs']}px;" in vertical
         assert "margin: 0px;" in vertical
         assert "border: none;" in vertical
         assert f"background-color: {t['border_strong']};" in vertical_handle
@@ -88,7 +88,7 @@ def test_scrollbars_follow_theme_surface_tokens():
         assert "background-color: transparent;" in vertical_pages
 
         assert f"background-color: {t['panel_alt']};" in horizontal
-        assert "height: 10px;" in horizontal
+        assert f"height: {t['space_sm'] + t['space_3xs']}px;" in horizontal
         assert "margin: 0px;" in horizontal
         assert "border: none;" in horizontal
         assert f"background-color: {t['border_strong']};" in horizontal_handle
