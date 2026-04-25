@@ -291,11 +291,22 @@ def _create_compact_dialog_form() -> QFormLayout:
     return form
 
 
+def _compact_dialog_minimum_width_target(dialog: QDialog, *, floor_space_units: int) -> int:
+    tokens = app_theme_tokens(QApplication.instance())
+    layout = dialog.layout()
+    if layout is not None:
+        layout.activate()
+        content_width = int(layout.sizeHint().width() or 0)
+    else:
+        content_width = 0
+    floor_width = max(int(tokens.get("space_2xl", 24)) * max(int(floor_space_units), 1), 1)
+    return max(content_width, floor_width, 1)
+
+
 class _QuickImageResizeDialog(QDialog):
     def __init__(self, *, width: int, height: int, output_filename: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Resize Image")
-        self.setMinimumWidth(360)
         self._aspect_ratio = (float(width) / float(height)) if width and height else 1.0
         self._syncing_size = False
 
@@ -331,6 +342,20 @@ class _QuickImageResizeDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=15)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def _on_width_changed(self, value: int):
         if self._syncing_size or not self._keep_ratio_check.isChecked():
@@ -366,7 +391,6 @@ class _QuickImageRotateDialog(QDialog):
     def __init__(self, *, width: int, height: int, output_filename: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Rotate Image")
-        self.setMinimumWidth(360)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -393,6 +417,20 @@ class _QuickImageRotateDialog(QDialog):
         layout.addWidget(buttons)
 
         self._update_summary(width, height)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=15)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def _update_summary(self, width: int, height: int):
         rotation = self.rotation_degrees()
@@ -411,7 +449,6 @@ class _QuickImageFlipDialog(QDialog):
     def __init__(self, *, output_filename: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Flip Image")
-        self.setMinimumWidth(360)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -435,6 +472,20 @@ class _QuickImageFlipDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=15)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def flip_mode(self) -> str:
         return str(self._mode_combo.currentData() or "horizontal")

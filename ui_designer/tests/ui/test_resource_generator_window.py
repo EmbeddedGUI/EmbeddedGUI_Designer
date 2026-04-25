@@ -3018,6 +3018,56 @@ class TestResourceGeneratorWindow:
             dialog.close()
 
     @_skip_no_qt
+    @pytest.mark.parametrize(
+        ("dialog_name", "kwargs"),
+        [
+            ("_QuickImageResizeDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageRotateDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageFlipDialog", {"output_filename": "hero.png"}),
+        ],
+    )
+    def test_quick_image_transform_dialog_widths_follow_runtime_metrics(self, qapp, dialog_name, kwargs):
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+
+        dialog_cls = getattr(resource_generator_window_module, dialog_name)
+        dialog = dialog_cls(parent=None, **kwargs)
+        try:
+            assert dialog.minimumWidth() == dialog._minimum_width_target()
+        finally:
+            dialog.close()
+
+    @_skip_no_qt
+    @pytest.mark.parametrize(
+        ("dialog_name", "kwargs"),
+        [
+            ("_QuickImageResizeDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageRotateDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageFlipDialog", {"output_filename": "hero.png"}),
+        ],
+    )
+    def test_quick_image_transform_dialog_widths_resync_on_font_change(self, qapp, monkeypatch, dialog_name, kwargs):
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+
+        dialog_cls = getattr(resource_generator_window_module, dialog_name)
+        dialog = dialog_cls(parent=None, **kwargs)
+        try:
+            baseline_width = dialog.minimumWidth()
+            compact_tokens = dict(resource_generator_window_module.app_theme_tokens())
+            compact_tokens["space_2xl"] = 40
+            monkeypatch.setattr(
+                resource_generator_window_module,
+                "app_theme_tokens",
+                lambda *args, **kwargs: compact_tokens,
+            )
+
+            dialog.changeEvent(QEvent(QEvent.FontChange))
+
+            assert dialog.minimumWidth() == dialog._minimum_width_target()
+            assert dialog.minimumWidth() > baseline_width
+        finally:
+            dialog.close()
+
+    @_skip_no_qt
     def test_font_text_dialogs_use_compact_shell_spacing(self, qapp, tmp_path):
         from ui_designer.ui.resource_generator_window import _FontTextEditorDialog, _FontTextLinksDialog
 
