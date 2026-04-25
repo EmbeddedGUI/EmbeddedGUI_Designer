@@ -14,7 +14,7 @@ _skip_no_qt = skip_if_no_qt
 @_skip_no_qt
 class TestPageTimersPanel:
     def test_panel_displays_current_page_timers(self, qapp):
-        from ui_designer.ui.page_timers_panel import PageTimersPanel
+        from ui_designer.ui.page_timers_panel import PageTimersPanel, _PAGE_TIMERS_CONTROL_HEIGHT
 
         page, _title = build_test_page_with_title()
         page.timers = [
@@ -66,21 +66,21 @@ class TestPageTimersPanel:
         assert panel._table.toolTip() == panel.accessibleName()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page. Selected timer: none."
-        assert panel._table.horizontalHeader().height() == 20
+        assert panel._table.horizontalHeader().height() == _PAGE_TIMERS_CONTROL_HEIGHT
         assert panel._table.verticalHeader().defaultSectionSize() == 24
         assert panel._add_button.toolTip() == "Add a page timer."
         assert panel._add_button.accessibleName() == "Add page timer to main_page"
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
-        assert panel._add_button.minimumHeight() == 20
-        assert panel._add_button.maximumHeight() == 20
+        assert panel._add_button.minimumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
+        assert panel._add_button.maximumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
         assert panel._remove_button.toolTip() == "Select a timer to remove it."
         assert panel._remove_button.accessibleName() == "Remove page timer unavailable"
-        assert panel._remove_button.minimumHeight() == 20
-        assert panel._remove_button.maximumHeight() == 20
+        assert panel._remove_button.minimumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
+        assert panel._remove_button.maximumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
         assert panel._open_code_button.toolTip() == "Select a timer to open its user code."
         assert panel._open_code_button.accessibleName() == "Open timer user code unavailable"
-        assert panel._open_code_button.minimumHeight() == 20
-        assert panel._open_code_button.maximumHeight() == 20
+        assert panel._open_code_button.minimumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
+        assert panel._open_code_button.maximumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
         assert panel._table.rowCount() == 1
         assert panel._table.rowHeight(0) == 24
         assert panel._table.item(0, 0).text() == "refresh_timer"
