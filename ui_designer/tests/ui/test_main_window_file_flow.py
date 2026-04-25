@@ -11730,6 +11730,7 @@ class TestMainWindowFileFlow:
 
     def test_dirty_page_indicators_sync_across_tabs_navigator_and_project_tree(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
+        from ui_designer.ui.theme import app_theme_tokens
 
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
@@ -11745,11 +11746,12 @@ class TestMainWindowFileFlow:
         _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
+        tokens = app_theme_tokens()
 
         assert window.page_tab_bar.accessibleName() == (
             "Page tabs: 1 open page. Current page: main_page. Startup page: main_page. No dirty pages."
         )
-        assert window.page_tab_bar.height() == 36
+        assert window.page_tab_bar.height() == int(tokens["h_tab_min"]) + int(tokens["space_md"])
         assert window.page_tab_bar.tabMaximumWidth() == 188
         assert window.page_tab_bar.tabRect(0).height() <= window.page_tab_bar.height()
         assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
@@ -14803,6 +14805,7 @@ class TestMainWindowFileFlow:
         metric_tokens = dict(main_window_module.app_theme_tokens())
         metric_tokens["h_tab_min"] = 26
         metric_tokens["space_xxs"] = 3
+        metric_tokens["space_md"] = 11
         metric_tokens["space_toolbar_separator"] = 2
         monkeypatch.setattr(main_window_module, "app_theme_tokens", lambda *args, **kwargs: metric_tokens)
 
@@ -14811,6 +14814,7 @@ class TestMainWindowFileFlow:
 
         assert window._insert_widget_button.width() == 52
         assert window._insert_widget_button.height() == 23
+        assert window.page_tab_bar.height() == 37
         assert window._toolbar.height() == 27
         assert window._toolbar.widgetForAction(window._save_action).height() == 23
         assert window._mode_buttons["design"].width() == 52

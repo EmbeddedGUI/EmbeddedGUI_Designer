@@ -198,6 +198,11 @@ def _workspace_command_button_width() -> int:
     return max(int(app_theme_tokens().get("h_tab_min", 24)) * 2, 1)
 
 
+def _page_tab_bar_height() -> int:
+    tokens = app_theme_tokens()
+    return max(int(tokens.get("h_tab_min", 24)) + int(tokens.get("space_md", 12)), 1)
+
+
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 from ..settings.ui_prefs import UIPreferences
 from ..core.state_store import StateStore
@@ -223,7 +228,6 @@ WORKSPACE_TOP_VISIBLE_HEIGHT = 860
 WORKSPACE_BOTTOM_VISIBLE_HEIGHT = 200
 WORKSPACE_TOP_HIDDEN_HEIGHT = 1000
 WORKSPACE_BOTTOM_HIDDEN_HEIGHT = 0
-PAGE_TAB_BAR_HEIGHT = 36
 PAGE_TAB_BAR_MAX_WIDTH = 188
 
 NEW_SHELL_ENABLED = os.environ.get("EGUI_NEW_SHELL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
@@ -3510,7 +3514,7 @@ class MainWindow(QMainWindow):
         page_tab_bar.setCloseButtonDisplayMode(TabCloseButtonDisplayMode.ON_HOVER)
         page_tab_bar.setTabMaximumWidth(PAGE_TAB_BAR_MAX_WIDTH)
         page_tab_bar.setTabShadowEnabled(False)
-        page_tab_bar.setFixedHeight(PAGE_TAB_BAR_HEIGHT)
+        page_tab_bar.setFixedHeight(_page_tab_bar_height())
         page_tab_bar.tabCloseRequested.connect(self._on_page_tab_closed)
         page_tab_bar.currentChanged.connect(self._on_page_tab_changed)
         page_tab_bar.setContextMenuPolicy(Qt.CustomContextMenu)
