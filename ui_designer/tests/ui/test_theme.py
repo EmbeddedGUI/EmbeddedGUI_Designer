@@ -1481,7 +1481,7 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
         assert "border-radius: 4px;" in search.styleSheet()
         assert f"min-height: {tokens['h_tab_min']}px;" in search.styleSheet()
         assert f"padding: 0px {tokens['pad_input_h']}px;" in search.styleSheet()
-        assert "min-width: 18px;" in search.styleSheet()
+        assert f"min-width: {tokens['icon_lg']}px;" in search.styleSheet()
         assert "border-radius: 4px;" in name_edit.styleSheet()
         assert f"min-height: {tokens['h_tab_min']}px;" in name_edit.styleSheet()
         assert "border-radius: 4px;" in alpha_combo.styleSheet()

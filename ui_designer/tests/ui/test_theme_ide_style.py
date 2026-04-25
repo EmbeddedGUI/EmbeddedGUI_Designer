@@ -123,6 +123,7 @@ def test_property_panel_qss_templates_use_4px_radius():
     expected_tab_min = tokens["h_tab_min"]
     expected_tab_compact_min = expected_tab_min - tokens["space_3xs"]
     expected_pad_tab_compact_v = tokens["pad_tab_compact_v"]
+    expected_icon_lg = tokens["icon_lg"]
     fragments = [
         _theme_mod._FLUENT_PROPERTY_PANEL_BUTTON_QSS,
         _theme_mod._FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS,
@@ -139,6 +140,8 @@ def test_property_panel_qss_templates_use_4px_radius():
     ):
         assert f"min-height: {expected_tab_min}px" in qss
         assert f"padding: 0px {expected_input_pad_h}px" in qss
+    assert f"min-width: {expected_icon_lg}px" in _theme_mod._FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS
+    assert f"min-width: {expected_icon_lg}px" in _theme_mod._FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS
     assert f"min-height: {expected_tab_compact_min}px" in _theme_mod._FLUENT_PROPERTY_PANEL_BUTTON_QSS
     assert f"padding: {expected_pad_tab_compact_v}px {expected_input_pad_h}px" in _theme_mod._FLUENT_PROPERTY_PANEL_BUTTON_QSS
 

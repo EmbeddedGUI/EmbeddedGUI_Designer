@@ -70,6 +70,7 @@ _ENGINEERING_INPUT_PAD_H_SENTINEL = "__PAD_INPUT_H__"
 _ENGINEERING_H_TAB_MIN_SENTINEL = "__H_TAB_MIN__"
 _ENGINEERING_H_TAB_MIN_COMPACT_SENTINEL = "__H_TAB_MIN_COMPACT__"
 _ENGINEERING_PAD_TAB_COMPACT_V_SENTINEL = "__PAD_TAB_COMPACT_V__"
+_ENGINEERING_ICON_LG_SENTINEL = "__ICON_LG__"
 
 _FLUENT_BUTTON_RADIUS_QSS = f"""
 PushButton,
@@ -139,7 +140,7 @@ TextBrowser {
 
 #lineEditButton {
     border-radius: __R_SM__px;
-    min-width: 18px;
+    min-width: __ICON_LG__px;
 }
 """
 
@@ -202,7 +203,7 @@ CompactTimeEdit {
 
 SpinButton {
     border-radius: __R_SM__px;
-    min-width: 18px;
+    min-width: __ICON_LG__px;
 }
 """
 
@@ -413,6 +414,10 @@ def _resolve_engineering_pad_tab_compact_v_qss(template: str) -> str:
     )
 
 
+def _resolve_engineering_icon_lg_qss(template: str) -> str:
+    return str(template).replace(_ENGINEERING_ICON_LG_SENTINEL, str(int(_TOKENS["dark"]["icon_lg"])))
+
+
 _FLUENT_BUTTON_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_BUTTON_RADIUS_QSS)
 _FLUENT_LINE_EDIT_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_LINE_EDIT_RADIUS_QSS)
 _FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_fs_body_qss(_FLUENT_COMBO_BOX_RADIUS_QSS)
@@ -439,6 +444,8 @@ _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = _resolve_engineering_input_pad_h_qss(_FLU
 _FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
 _FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = _resolve_engineering_input_pad_h_qss(_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS)
 _FLUENT_PROPERTY_PANEL_BUTTON_QSS = _resolve_engineering_pad_tab_compact_v_qss(_FLUENT_PROPERTY_PANEL_BUTTON_QSS)
+_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS = _resolve_engineering_icon_lg_qss(_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS)
+_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = _resolve_engineering_icon_lg_qss(_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS)
 
 _WINDOWS_FONTDIR_CANDIDATES = (
     os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts"),
