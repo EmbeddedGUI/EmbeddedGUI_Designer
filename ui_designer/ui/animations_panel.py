@@ -36,9 +36,13 @@ from ..model.widget_animations import (
 from .theme import app_theme_tokens
 
 
-_ANIMATIONS_CONTROL_HEIGHT = 22
 _ANIMATIONS_TABLE_ROW_HEIGHT = 26
 _ANIMATIONS_TABLE_HEADER_HEIGHT = 20
+
+
+def _animations_control_height() -> int:
+    tokens = app_theme_tokens()
+    return max(int(tokens.get("h_tab_min", 24)) - int(tokens.get("space_3xs", 2)), 1)
 
 
 def _animations_detail_form_horizontal_spacing() -> int:
@@ -70,17 +74,17 @@ def _set_item_metadata(item, tooltip):
 
 
 def _set_compact_button_metrics(button):
-    button.setFixedHeight(_ANIMATIONS_CONTROL_HEIGHT)
+    button.setFixedHeight(_animations_control_height())
     button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
     return button
 
 
 def _set_compact_editor_metrics(editor):
     if isinstance(editor, QCheckBox):
-        editor.setFixedHeight(_ANIMATIONS_CONTROL_HEIGHT)
+        editor.setFixedHeight(_animations_control_height())
         editor.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
     else:
-        editor.setFixedHeight(_ANIMATIONS_CONTROL_HEIGHT)
+        editor.setFixedHeight(_animations_control_height())
     return editor
 
 

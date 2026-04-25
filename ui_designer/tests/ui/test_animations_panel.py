@@ -33,12 +33,15 @@ class TestAnimationsPanel:
     def test_panel_shows_selected_widget_animations(self, qapp):
         from ui_designer.model.widget_animations import create_default_animation
         from ui_designer.ui.animations_panel import AnimationsPanel
+        from ui_designer.ui.theme import app_theme_tokens
 
         widget = _make_widget()
         widget.animations = [create_default_animation("alpha")]
 
         panel = AnimationsPanel()
         panel.set_selection([widget], primary=widget)
+        tokens = app_theme_tokens()
+        expected_control_height = int(tokens["h_tab_min"]) - int(tokens["space_3xs"])
         header_layout = panel._header_frame.layout()
         header_margins = header_layout.contentsMargins()
         title_row = header_layout.itemAt(1).layout()
@@ -73,18 +76,18 @@ class TestAnimationsPanel:
         assert panel._add_button.toolTip() == "Add an animation to label title."
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
         assert panel._add_button.accessibleName() == "Add animation to label title"
-        assert panel._add_button.minimumHeight() == 22
-        assert panel._add_button.maximumHeight() == 22
+        assert panel._add_button.minimumHeight() == expected_control_height
+        assert panel._add_button.maximumHeight() == expected_control_height
         assert panel._duplicate_button.toolTip() == "Duplicate the selected animation: alpha."
         assert panel._duplicate_button.statusTip() == panel._duplicate_button.toolTip()
         assert panel._duplicate_button.accessibleName() == "Duplicate animation: alpha"
-        assert panel._duplicate_button.minimumHeight() == 22
-        assert panel._duplicate_button.maximumHeight() == 22
+        assert panel._duplicate_button.minimumHeight() == expected_control_height
+        assert panel._duplicate_button.maximumHeight() == expected_control_height
         assert panel._remove_button.toolTip() == "Remove the selected animation: alpha."
         assert panel._remove_button.statusTip() == panel._remove_button.toolTip()
         assert panel._remove_button.accessibleName() == "Remove animation: alpha"
-        assert panel._remove_button.minimumHeight() == 22
-        assert panel._remove_button.maximumHeight() == 22
+        assert panel._remove_button.minimumHeight() == expected_control_height
+        assert panel._remove_button.maximumHeight() == expected_control_height
         assert panel._detail_group.title() == ""
         assert panel._detail_group.isFlat() is True
         assert panel._detail_group.toolTip() == "Selected animation details: alpha. Duration 500 ms. Interpolator linear."
@@ -104,23 +107,23 @@ class TestAnimationsPanel:
         assert type_label.toolTip() == "Animation field label: Type."
         assert type_label.statusTip() == type_label.toolTip()
         assert type_label.accessibleName() == type_label.toolTip()
-        assert type_combo.minimumHeight() == 22
-        assert type_combo.maximumHeight() == 22
+        assert type_combo.minimumHeight() == expected_control_height
+        assert type_combo.maximumHeight() == expected_control_height
         assert type_combo.toolTip() == "Type for animation alpha on label title. Current value: alpha."
         assert type_combo.statusTip() == type_combo.toolTip()
         assert type_combo.accessibleName() == "Animation Type: alpha."
         duration_label, duration_spin = _detail_row_widgets(panel, "Duration (ms):")
         assert isinstance(duration_spin, QSpinBox)
         assert duration_label.accessibleName() == "Animation field label: Duration (ms)."
-        assert duration_spin.minimumHeight() == 22
-        assert duration_spin.maximumHeight() == 22
+        assert duration_spin.minimumHeight() == expected_control_height
+        assert duration_spin.maximumHeight() == expected_control_height
         assert duration_spin.toolTip() == "Duration (ms) for animation alpha on label title. Current value: 500."
         assert duration_spin.accessibleName() == "Animation Duration (ms): 500."
         interpolator_label, interpolator_combo = _detail_row_widgets(panel, "Interpolator:")
         assert isinstance(interpolator_combo, QComboBox)
         assert interpolator_label.accessibleName() == "Animation field label: Interpolator."
-        assert interpolator_combo.minimumHeight() == 22
-        assert interpolator_combo.maximumHeight() == 22
+        assert interpolator_combo.minimumHeight() == expected_control_height
+        assert interpolator_combo.maximumHeight() == expected_control_height
         assert interpolator_combo.toolTip() == (
             "Interpolator for animation alpha on label title. Current value: linear."
         )
@@ -128,8 +131,8 @@ class TestAnimationsPanel:
         repeat_count_label, repeat_count_spin = _detail_row_widgets(panel, "Repeat Count:")
         assert isinstance(repeat_count_spin, QSpinBox)
         assert repeat_count_label.accessibleName() == "Animation field label: Repeat Count."
-        assert repeat_count_spin.minimumHeight() == 22
-        assert repeat_count_spin.maximumHeight() == 22
+        assert repeat_count_spin.minimumHeight() == expected_control_height
+        assert repeat_count_spin.maximumHeight() == expected_control_height
         assert repeat_count_spin.toolTip() == (
             "Repeat Count for animation alpha on label title. Current value: 0."
         )
@@ -137,8 +140,8 @@ class TestAnimationsPanel:
         repeat_mode_label, repeat_mode_combo = _detail_row_widgets(panel, "Repeat Mode:")
         assert isinstance(repeat_mode_combo, QComboBox)
         assert repeat_mode_label.accessibleName() == "Animation field label: Repeat Mode."
-        assert repeat_mode_combo.minimumHeight() == 22
-        assert repeat_mode_combo.maximumHeight() == 22
+        assert repeat_mode_combo.minimumHeight() == expected_control_height
+        assert repeat_mode_combo.maximumHeight() == expected_control_height
         assert repeat_mode_combo.toolTip() == (
             "Repeat Mode for animation alpha on label title. Current value: restart."
         )
@@ -146,8 +149,8 @@ class TestAnimationsPanel:
         auto_start_check = next(
             check for check in panel.findChildren(QCheckBox) if check.text() == "Start automatically"
         )
-        assert auto_start_check.minimumHeight() == 22
-        assert auto_start_check.maximumHeight() == 22
+        assert auto_start_check.minimumHeight() == expected_control_height
+        assert auto_start_check.maximumHeight() == expected_control_height
         assert auto_start_check.toolTip() == (
             "Auto Start for animation alpha on label title. Current value: enabled."
         )
@@ -250,6 +253,26 @@ class TestAnimationsPanel:
 
         assert panel._detail_form.horizontalSpacing() == 7
         assert panel._detail_form.verticalSpacing() == 3
+        panel.deleteLater()
+
+    def test_control_height_follows_runtime_compact_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.animations_panel as animations_panel_module
+        from ui_designer.ui.animations_panel import AnimationsPanel
+
+        control_tokens = dict(animations_panel_module.app_theme_tokens())
+        control_tokens["h_tab_min"] = 28
+        control_tokens["space_3xs"] = 3
+        monkeypatch.setattr(animations_panel_module, "app_theme_tokens", lambda *args, **kwargs: control_tokens)
+
+        widget = _make_widget()
+        panel = AnimationsPanel()
+        panel.set_selection([widget], primary=widget)
+
+        assert panel._add_button.height() == 25
+        panel._on_add_animation()
+        qapp.processEvents()
+        _type_label, type_combo = _detail_row_widgets(panel, "Type:")
+        assert type_combo.height() == 25
         panel.deleteLater()
 
     def test_panel_type_change_rebuilds_detail_params(self, qapp):
