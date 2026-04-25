@@ -942,7 +942,6 @@ class _QuickFontPrerenderDialog(QDialog):
     def __init__(self, *, output_folder: str, suffix: str, sample_text: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Pre-Render Fonts")
-        self.setMinimumWidth(420)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -969,6 +968,20 @@ class _QuickFontPrerenderDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=18)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def output_folder(self) -> str:
         return str(self._folder_edit.text() or "").strip()
@@ -984,7 +997,6 @@ class _QuickImagePlaceholderDialog(QDialog):
     def __init__(self, *, width: int, height: int, output_folder: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Generate Placeholders")
-        self.setMinimumWidth(400)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -1015,6 +1027,20 @@ class _QuickImagePlaceholderDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=17)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def width_value(self) -> int:
         return int(self._width_spin.value())
