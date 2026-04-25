@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
     QScrollArea, QSizePolicy, QPushButton, QSplitter,
 )
 from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF, QEvent
-from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage, QRegion
+from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage, QRegion, QFontMetrics
 
 
 from .theme import app_theme_tokens, designer_monospace_font, designer_ui_font
@@ -2154,7 +2154,6 @@ class PreviewPanel(QWidget):
 
         self._zoom_label = QLabel("100% (4px)")
         self._zoom_label.setObjectName("preview_status_value")
-        self._zoom_label.setFixedWidth(90)
         self._zoom_label.setAlignment(Qt.AlignCenter)
 
         self._btn_zoom_in = QPushButton("+")
@@ -2447,11 +2446,41 @@ class PreviewPanel(QWidget):
             accessible_name=zoom_in_accessible_name,
         )
 
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange, QEvent.PaletteChange):
+            self._sync_zoom_label_width()
+
+    def _zoom_label_target_width(self) -> int:
+        zoom_min_pct = int(self.overlay._zoom_min * 100)
+        zoom_max_pct = int(self.overlay._zoom_max * 100)
+        grid = int(self.overlay._effective_grid_size())
+        samples = (
+            str(self._zoom_label.text() or "").strip() or "100% (8px)",
+            f"{zoom_min_pct}% ({grid}px)",
+            f"{zoom_max_pct}% ({grid}px)",
+        )
+        tokens = app_theme_tokens()
+        horizontal_padding = max(int(tokens.get("space_md", 12)), 0)
+        try:
+            metrics = QFontMetrics(self._zoom_label.font())
+            widest = max(metrics.horizontalAdvance(sample) for sample in samples)
+            return max(widest + horizontal_padding, 1)
+        except Exception:
+            return max(int(tokens.get("h_tab_min", 24)) * 3, 1)
+
+    def _sync_zoom_label_width(self):
+        target_width = self._zoom_label_target_width()
+        if self._zoom_label.minimumWidth() == target_width and self._zoom_label.maximumWidth() == target_width:
+            return
+        self._zoom_label.setFixedWidth(target_width)
+
     def _update_zoom_label(self, factor=None):
         del factor
         pct = int(self.overlay._zoom * 100)
         grid = self.overlay._effective_grid_size()
         self._zoom_label.setText(f"{pct}% ({grid}px)")
+        self._sync_zoom_label_width()
         self._update_accessibility_summary()
 
     def _update_status_label(self, x, y, widget):

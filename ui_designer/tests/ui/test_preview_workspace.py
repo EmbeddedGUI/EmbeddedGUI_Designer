@@ -81,6 +81,24 @@ class TestPreviewPanelFallback:
         assert panel._btn_zoom_out.height() == expected_button_size
         assert panel._btn_zoom_in.width() == expected_button_size
         assert panel._btn_zoom_in.height() == expected_button_size
+        assert panel._zoom_label.width() == panel._zoom_label_target_width()
+        assert panel._zoom_label.minimumWidth() == panel._zoom_label_target_width()
+        assert panel._zoom_label.maximumWidth() == panel._zoom_label_target_width()
+        _dispose_widget(panel)
+
+    def test_zoom_label_width_tracks_runtime_text_metrics(self, qapp):
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+        initial_width = panel._zoom_label.width()
+
+        panel.set_grid_size(1024)
+
+        assert panel._zoom_label.text() == "100% (1024px)"
+        assert panel._zoom_label.width() == panel._zoom_label_target_width()
+        assert panel._zoom_label.minimumWidth() == panel._zoom_label_target_width()
+        assert panel._zoom_label.maximumWidth() == panel._zoom_label_target_width()
+        assert panel._zoom_label.width() > initial_width
         _dispose_widget(panel)
 
     def test_preview_panel_exposes_initial_accessibility_metadata(self, qapp):
