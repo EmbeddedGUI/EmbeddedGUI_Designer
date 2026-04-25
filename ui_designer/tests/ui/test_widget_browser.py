@@ -79,10 +79,35 @@ class TestWidgetBrowserPanel:
         assert filter_layout.spacing() == 2
         assert panel._cards_layout.spacing() == 2
         assert panel._search.placeholderText() == "Search"
-        assert panel._category_combo.minimumWidth() == 144
+        assert panel._category_combo.minimumWidth() == panel._category_combo_target_width()
         assert panel._insert_target.wordWrap() is False
         assert (card_margins.left(), card_margins.top(), card_margins.right(), card_margins.bottom()) == (1, 1, 1, 1)
         assert card_layout.spacing() == 2
+        panel.deleteLater()
+
+    def test_category_combo_width_tracks_runtime_option_metrics(self, qapp, isolated_config, monkeypatch):
+        import ui_designer.ui.widget_browser as widget_browser_module
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        baseline_panel = WidgetBrowserPanel()
+        baseline_width = baseline_panel._category_combo.minimumWidth()
+        baseline_panel.deleteLater()
+
+        longer_options = tuple(
+            (
+                category_id,
+                "Display and Instrumentation Audit Trail"
+                if category_id == "display & data"
+                else label,
+            )
+            for category_id, label in WidgetBrowserPanel._CATEGORY_OPTIONS
+        )
+        monkeypatch.setattr(widget_browser_module.WidgetBrowserPanel, "_CATEGORY_OPTIONS", longer_options)
+
+        panel = WidgetBrowserPanel()
+
+        assert panel._category_combo.minimumWidth() == panel._category_combo_target_width()
+        assert panel._category_combo.minimumWidth() > baseline_width
         panel.deleteLater()
 
     def test_category_combo_exposes_expected_simplified_options(self, qapp, isolated_config):

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import QMimeData, QPoint, QSignalBlocker, Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QDrag
+from PyQt5.QtCore import QEvent, QMimeData, QPoint, QSignalBlocker, Qt, QTimer, pyqtSignal
+from PyQt5.QtGui import QDrag, QFontMetrics
 from PyQt5.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -259,6 +259,11 @@ class WidgetBrowserPanel(QWidget):
         self._populate_categories()
         self.refresh()
 
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange, QEvent.PaletteChange):
+            self._sync_category_combo_width()
+
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -329,7 +334,6 @@ class WidgetBrowserPanel(QWidget):
 
         self._category_combo = ComboBox()
         self._category_combo.setObjectName("widget_browser_category_combo")
-        self._category_combo.setMinimumWidth(144)
         self._category_combo.currentIndexChanged.connect(self._on_category_changed)
         filter_layout.addWidget(self._category_combo, 0)
         header_layout.addWidget(self._filter_bar)
@@ -369,6 +373,33 @@ class WidgetBrowserPanel(QWidget):
             self._category_ids.append(category_id)
         self._set_category_by_id(getattr(self._config, "widget_browser_active_category", "all"))
         del blocker
+        self._sync_category_combo_width()
+
+    def _category_combo_target_width(self) -> int:
+        labels = [
+            str(self._category_combo.itemText(index) or "").strip()
+            for index in range(self._category_combo.count())
+        ] or [str(label or "").strip() for _category_id, label in self._CATEGORY_OPTIONS]
+        labels = [label for label in labels if label] or ["All"]
+        tokens = app_theme_tokens()
+        horizontal_padding = (
+            int(tokens.get("space_2xl", 24))
+            + int(tokens.get("space_sm", 8))
+            + int(tokens.get("icon_sm", 14))
+            + (int(tokens.get("pad_input_h", 6)) * 2)
+        )
+        try:
+            metrics = QFontMetrics(self._category_combo.font())
+            widest = max(metrics.horizontalAdvance(label) for label in labels)
+            return max(widest + horizontal_padding, 1)
+        except Exception:
+            return max(int(tokens.get("h_tab_min", 24)) * 6, 1)
+
+    def _sync_category_combo_width(self):
+        target_width = self._category_combo_target_width()
+        if self._category_combo.minimumWidth() == target_width:
+            return
+        self._category_combo.setMinimumWidth(target_width)
 
     def _selected_category(self):
         index = self._category_combo.currentIndex()
