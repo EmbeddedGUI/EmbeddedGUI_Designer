@@ -42,6 +42,8 @@ class TestAnimationsPanel:
         panel.set_selection([widget], primary=widget)
         tokens = app_theme_tokens()
         expected_control_height = int(tokens["h_tab_min"]) - int(tokens["space_3xs"])
+        expected_table_header_height = int(tokens["h_tab_min"]) - int(tokens["space_xxs"])
+        expected_table_row_height = int(tokens["h_tab_min"]) + int(tokens["space_3xs"])
         header_layout = panel._header_frame.layout()
         header_margins = header_layout.contentsMargins()
         title_row = header_layout.itemAt(1).layout()
@@ -70,8 +72,8 @@ class TestAnimationsPanel:
         assert panel._table.toolTip() == panel._summary_label.text()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Animations table: Animations: 1 animation on label title"
-        assert panel._table.horizontalHeader().height() == 20
-        assert panel._table.verticalHeader().defaultSectionSize() == 26
+        assert panel._table.horizontalHeader().height() == expected_table_header_height
+        assert panel._table.verticalHeader().defaultSectionSize() == expected_table_row_height
         assert panel._actions_strip.accessibleName() == "Animation actions: add, duplicate, or remove the selected animation."
         assert panel._add_button.toolTip() == "Add an animation to label title."
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
@@ -93,7 +95,7 @@ class TestAnimationsPanel:
         assert panel._detail_group.toolTip() == "Selected animation details: alpha. Duration 500 ms. Interpolator linear."
         assert panel._detail_group.accessibleName() == panel._detail_group.toolTip()
         assert panel._table.rowCount() == 1
-        assert panel._table.rowHeight(0) == 26
+        assert panel._table.rowHeight(0) == expected_table_row_height
         assert panel._table.item(0, 0).text() == "alpha"
         assert panel._table.item(0, 2).text() == "linear"
         assert panel._table.item(0, 0).toolTip() == "Animation Type: alpha."
@@ -273,6 +275,23 @@ class TestAnimationsPanel:
         qapp.processEvents()
         _type_label, type_combo = _detail_row_widgets(panel, "Type:")
         assert type_combo.height() == 25
+        panel.deleteLater()
+
+    def test_table_metrics_follow_runtime_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.animations_panel as animations_panel_module
+        from ui_designer.ui.animations_panel import AnimationsPanel
+
+        metric_tokens = dict(animations_panel_module.app_theme_tokens())
+        metric_tokens["h_tab_min"] = 28
+        metric_tokens["space_3xs"] = 3
+        metric_tokens["space_xxs"] = 5
+        monkeypatch.setattr(animations_panel_module, "app_theme_tokens", lambda *args, **kwargs: metric_tokens)
+
+        panel = AnimationsPanel()
+
+        assert panel._table.horizontalHeader().height() == 23
+        assert panel._table.verticalHeader().defaultSectionSize() == 31
+        assert panel._table.verticalHeader().minimumSectionSize() == 31
         panel.deleteLater()
 
     def test_panel_type_change_rebuilds_detail_params(self, qapp):

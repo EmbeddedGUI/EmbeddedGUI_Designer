@@ -36,8 +36,14 @@ from ..model.widget_animations import (
 from .theme import app_theme_tokens
 
 
-_ANIMATIONS_TABLE_ROW_HEIGHT = 26
-_ANIMATIONS_TABLE_HEADER_HEIGHT = 20
+def _animations_table_row_height() -> int:
+    tokens = app_theme_tokens()
+    return max(int(tokens.get("h_tab_min", 24)) + int(tokens.get("space_3xs", 2)), 1)
+
+
+def _animations_table_header_height() -> int:
+    tokens = app_theme_tokens()
+    return max(int(tokens.get("h_tab_min", 24)) - int(tokens.get("space_xxs", 4)), 1)
 
 
 def _animations_control_height() -> int:
@@ -153,13 +159,13 @@ class AnimationsPanel(QWidget):
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
         self._table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self._table.verticalHeader().setVisible(False)
-        self._table.verticalHeader().setDefaultSectionSize(_ANIMATIONS_TABLE_ROW_HEIGHT)
-        self._table.verticalHeader().setMinimumSectionSize(_ANIMATIONS_TABLE_ROW_HEIGHT)
+        self._table.verticalHeader().setDefaultSectionSize(_animations_table_row_height())
+        self._table.verticalHeader().setMinimumSectionSize(_animations_table_row_height())
         self._table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self._table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self._table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self._table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self._table.horizontalHeader().setFixedHeight(_ANIMATIONS_TABLE_HEADER_HEIGHT)
+        self._table.horizontalHeader().setFixedHeight(_animations_table_header_height())
         self._table.itemSelectionChanged.connect(self._on_row_selected)
         self._table.setAccessibleName("Animations table")
 
