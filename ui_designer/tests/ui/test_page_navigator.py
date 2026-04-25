@@ -183,6 +183,21 @@ class TestPageNavigator:
         )
         navigator.deleteLater()
 
+    def test_page_navigator_header_chip_spacing_follows_runtime_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.widgets.page_navigator as page_navigator_module
+        from ui_designer.ui.widgets.page_navigator import PageNavigator
+
+        spacing_tokens = dict(page_navigator_module.app_theme_tokens())
+        spacing_tokens["space_xs"] = 5
+        monkeypatch.setattr(page_navigator_module, "app_theme_tokens", lambda *args, **kwargs: spacing_tokens)
+
+        navigator = PageNavigator()
+        header_layout = navigator._header_frame.layout()
+        chip_row = header_layout.itemAt(3).layout()
+
+        assert chip_row.spacing() == 5
+        navigator.deleteLater()
+
     def test_page_navigator_empty_state_uses_remaining_vertical_space(self, qapp):
         from ui_designer.ui.widgets.page_navigator import PageNavigator
 

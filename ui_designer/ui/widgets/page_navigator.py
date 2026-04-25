@@ -6,17 +6,15 @@ from PyQt5.QtGui import QPixmap, QImage
 
 from ...engine.python_renderer import render_page
 from ..iconography import make_widget_preview
-from ..theme import theme_tokens
+from ..theme import app_theme_tokens
 
 
 # Thumbnail size (kept minimal; preview is secondary to page names)
 THUMB_WIDTH = 76
 THUMB_HEIGHT = 100
 
-_TOKENS = theme_tokens("dark")
-_SPACE_XS = int(_TOKENS.get("space_xs", 4))
-_SPACE_SM = int(_TOKENS.get("space_sm", 8))
-_SPACE_MD = int(_TOKENS.get("space_md", 12))
+def _page_navigator_header_chip_spacing() -> int:
+    return max(int(app_theme_tokens().get("space_xs", 4)), 0)
 
 
 def _pil_to_qpixmap(pil_image):
@@ -342,7 +340,7 @@ class PageNavigator(QWidget):
 
         chip_row = QHBoxLayout()
         chip_row.setContentsMargins(0, 0, 0, 0)
-        chip_row.setSpacing(_SPACE_XS)
+        chip_row.setSpacing(_page_navigator_header_chip_spacing())
         self._startup_chip = self._make_status_chip("Startup: none")
         self._dirty_chip = self._make_status_chip("Clean")
         chip_row.addWidget(self._startup_chip)

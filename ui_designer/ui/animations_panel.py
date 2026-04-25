@@ -33,17 +33,20 @@ from ..model.widget_animations import (
     create_default_animation,
     normalize_widget_animations,
 )
-from .theme import theme_tokens
+from .theme import app_theme_tokens
 
 
-_TOKENS = theme_tokens("dark")
-_SPACE_XS = int(_TOKENS.get("space_xs", 4))
-_SPACE_SM = int(_TOKENS.get("space_sm", 8))
-_SPACE_MD = int(_TOKENS.get("space_md", 12))
 _ANIMATIONS_CONTROL_HEIGHT = 22
 _ANIMATIONS_TABLE_ROW_HEIGHT = 26
 _ANIMATIONS_TABLE_HEADER_HEIGHT = 20
 
+
+def _animations_detail_form_horizontal_spacing() -> int:
+    return max(int(app_theme_tokens().get("space_sm", 8)), 0)
+
+
+def _animations_detail_form_vertical_spacing() -> int:
+    return max(int(app_theme_tokens().get("space_xs", 4)), 0)
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -179,8 +182,8 @@ class AnimationsPanel(QWidget):
         self._detail_group.setFlat(True)
         self._detail_form = QFormLayout()
         self._detail_form.setContentsMargins(0, 0, 0, 0)
-        self._detail_form.setHorizontalSpacing(_SPACE_SM)
-        self._detail_form.setVerticalSpacing(_SPACE_XS)
+        self._detail_form.setHorizontalSpacing(_animations_detail_form_horizontal_spacing())
+        self._detail_form.setVerticalSpacing(_animations_detail_form_vertical_spacing())
         self._detail_group.setLayout(self._detail_form)
 
         layout.addWidget(self._header_frame)

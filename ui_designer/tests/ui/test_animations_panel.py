@@ -237,6 +237,21 @@ class TestAnimationsPanel:
         assert accessible_calls == 2
         panel.deleteLater()
 
+    def test_detail_form_spacing_follows_runtime_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.animations_panel as animations_panel_module
+        from ui_designer.ui.animations_panel import AnimationsPanel
+
+        spacing_tokens = dict(animations_panel_module.app_theme_tokens())
+        spacing_tokens["space_sm"] = 7
+        spacing_tokens["space_xs"] = 3
+        monkeypatch.setattr(animations_panel_module, "app_theme_tokens", lambda *args, **kwargs: spacing_tokens)
+
+        panel = AnimationsPanel()
+
+        assert panel._detail_form.horizontalSpacing() == 7
+        assert panel._detail_form.verticalSpacing() == 3
+        panel.deleteLater()
+
     def test_panel_type_change_rebuilds_detail_params(self, qapp):
         from ui_designer.ui.animations_panel import AnimationsPanel
 
