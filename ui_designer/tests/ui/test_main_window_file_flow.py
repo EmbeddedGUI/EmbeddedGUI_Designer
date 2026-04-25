@@ -14260,7 +14260,7 @@ class TestMainWindowFileFlow:
     def test_toolbar_and_top_level_actions_expose_dynamic_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         import ui_designer.ui.main_window as main_window_module
-        from ui_designer.ui.main_window import MainWindow
+        from ui_designer.ui.main_window import MainWindow, WORKSPACE_CONTROL_HEIGHT
 
         window = MainWindow("")
         mode_host = window._mode_buttons["design"].parentWidget()
@@ -14276,8 +14276,8 @@ class TestMainWindowFileFlow:
         assert window._toolbar.widgetForAction(window._save_action).height() == 20
         assert window._mode_buttons["design"].width() == 48
         assert window._mode_buttons["design"].height() == 20
-        assert separator.minimumHeight() == 20
-        assert separator.maximumHeight() == 20
+        assert separator.minimumHeight() == WORKSPACE_CONTROL_HEIGHT
+        assert separator.maximumHeight() == WORKSPACE_CONTROL_HEIGHT
         assert window._workspace_context_label.text() == "No project open"
         assert all(
             action.icon().isNull()
