@@ -4,6 +4,7 @@ import re
 
 from PyQt5.QtWidgets import QApplication, QWidget, QHBoxLayout, QLabel
 from PyQt5.QtCore import QEvent, pyqtSignal, Qt
+from PyQt5.QtGui import QFontMetrics
 
 from qfluentwidgets import EditableComboBox, BodyLabel
 
@@ -63,7 +64,6 @@ class EguiFontSelector(QWidget):
 
         self._preview = self._create_preview_label()
         self._preview.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self._preview.setFixedWidth(60)
         layout.addWidget(self._preview)
         self._update_preview(self.value())
         self._update_accessibility_metadata(self.value())
@@ -110,6 +110,30 @@ class EguiFontSelector(QWidget):
         self._update_preview(self.value())
         self._update_accessibility_metadata(self.value())
 
+    def _preview_target_width(self):
+        samples = (
+            str(self._preview.text() or "").strip() or "Custom",
+            "Default",
+            "Custom",
+        )
+        tokens = app_theme_tokens(QApplication.instance())
+        try:
+            horizontal_padding = max(int(tokens.get("space_sm", 8)), 0)
+        except (TypeError, ValueError):
+            horizontal_padding = 8
+        try:
+            metrics = QFontMetrics(self._preview.font())
+            widest = max(metrics.horizontalAdvance(sample) for sample in samples)
+            return max(widest + horizontal_padding, 1)
+        except Exception:
+            return max(horizontal_padding * 4, 1)
+
+    def _sync_preview_width(self):
+        target_width = self._preview_target_width()
+        if self._preview.minimumWidth() == target_width and self._preview.maximumWidth() == target_width:
+            return
+        self._preview.setFixedWidth(target_width)
+
     def _update_preview(self, text):
         info = _font_display_info(text)
         if info:
@@ -126,6 +150,7 @@ class EguiFontSelector(QWidget):
         else:
             self._preview.setText("Custom")
             self._preview.setStyleSheet("")
+        self._sync_preview_width()
 
     def _font_summary(self, text):
         text = str(text or "").strip()

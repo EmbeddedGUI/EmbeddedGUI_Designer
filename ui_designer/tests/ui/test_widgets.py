@@ -162,10 +162,31 @@ class TestEguiFontSelector:
         layout = selector.layout()
 
         assert layout.spacing() == 2
-        assert selector._preview.width() == 60
-        assert selector._preview.minimumWidth() == 60
-        assert selector._preview.maximumWidth() == 60
+        assert selector._preview.width() == selector._preview_target_width()
+        assert selector._preview.minimumWidth() == selector._preview_target_width()
+        assert selector._preview.maximumWidth() == selector._preview_target_width()
         assert selector._preview.alignment() == (Qt.AlignRight | Qt.AlignVCenter)
+        selector.deleteLater()
+
+    def test_selector_preview_width_tracks_runtime_text_metrics(self, qapp):
+        from ui_designer.ui.widgets.font_selector import EguiFontSelector
+
+        selector = EguiFontSelector(
+            fonts=[
+                "EGUI_CONFIG_FONT_DEFAULT",
+                "&egui_res_font_montserrat_14_4",
+                "&egui_res_font_montserrat_102400_4",
+            ]
+        )
+        default_width = selector._preview.width()
+
+        selector.set_value("&egui_res_font_montserrat_102400_4")
+
+        assert selector._preview.text() == "102400px"
+        assert selector._preview.width() == selector._preview_target_width()
+        assert selector._preview.minimumWidth() == selector._preview_target_width()
+        assert selector._preview.maximumWidth() == selector._preview_target_width()
+        assert selector._preview.width() > default_width
         selector.deleteLater()
 
     def test_selector_preview_font_size_respects_ui_floor(self, qapp):
