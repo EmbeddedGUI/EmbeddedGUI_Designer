@@ -188,6 +188,12 @@ def _workspace_control_height() -> int:
     return max(int(tokens.get("h_tab_min", 24)) - int(tokens.get("space_xxs", 4)), 1)
 
 
+def _workspace_toolbar_height() -> int:
+    tokens = app_theme_tokens()
+    vertical_padding = int(tokens.get("space_toolbar_separator", 1)) * 2
+    return max(_workspace_control_height() + vertical_padding, 1)
+
+
 def _workspace_command_button_width() -> int:
     return max(int(app_theme_tokens().get("h_tab_min", 24)) * 2, 1)
 
@@ -217,7 +223,6 @@ WORKSPACE_TOP_VISIBLE_HEIGHT = 860
 WORKSPACE_BOTTOM_VISIBLE_HEIGHT = 200
 WORKSPACE_TOP_HIDDEN_HEIGHT = 1000
 WORKSPACE_BOTTOM_HIDDEN_HEIGHT = 0
-WORKSPACE_TOOLBAR_HEIGHT = 22
 PAGE_TAB_BAR_HEIGHT = 36
 PAGE_TAB_BAR_MAX_WIDTH = 188
 
@@ -4184,7 +4189,7 @@ class MainWindow(QMainWindow):
         tb.setObjectName("main_toolbar")
         tb.setMovable(False)
         tb.setToolButtonStyle(Qt.ToolButtonTextOnly)
-        tb.setFixedHeight(WORKSPACE_TOOLBAR_HEIGHT)
+        tb.setFixedHeight(_workspace_toolbar_height())
         self._toolbar_command_row_layout.addWidget(tb, 1)
 
         toolbar_rail_sep = QFrame()

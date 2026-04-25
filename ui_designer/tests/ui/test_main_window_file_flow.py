@@ -14273,6 +14273,7 @@ class TestMainWindowFileFlow:
         tokens = app_theme_tokens()
         expected_control_height = max(int(tokens["h_tab_min"]) - int(tokens["space_xxs"]), 1)
         expected_command_width = int(tokens["h_tab_min"]) * 2
+        expected_toolbar_height = expected_control_height + (int(tokens["space_toolbar_separator"]) * 2)
 
         assert window._toolbar.accessibleName() == "Main toolbar: insert, save, edit, and preview commands."
         assert window._toolbar.toolTip() == window._toolbar.accessibleName()
@@ -14280,7 +14281,7 @@ class TestMainWindowFileFlow:
         assert window._toolbar_host.statusTip() == window._toolbar_host.toolTip()
         assert window._toolbar_command_row_layout.spacing() == 1
         assert mode_host.layout().spacing() == 1
-        assert window._toolbar.height() == 22
+        assert window._toolbar.height() == expected_toolbar_height
         assert window._toolbar.widgetForAction(window._save_action).height() == expected_control_height
         assert window._mode_buttons["design"].width() == expected_command_width
         assert window._mode_buttons["design"].height() == expected_control_height
@@ -14802,6 +14803,7 @@ class TestMainWindowFileFlow:
         metric_tokens = dict(main_window_module.app_theme_tokens())
         metric_tokens["h_tab_min"] = 26
         metric_tokens["space_xxs"] = 3
+        metric_tokens["space_toolbar_separator"] = 2
         monkeypatch.setattr(main_window_module, "app_theme_tokens", lambda *args, **kwargs: metric_tokens)
 
         window = MainWindow("")
@@ -14809,6 +14811,7 @@ class TestMainWindowFileFlow:
 
         assert window._insert_widget_button.width() == 52
         assert window._insert_widget_button.height() == 23
+        assert window._toolbar.height() == 27
         assert window._toolbar.widgetForAction(window._save_action).height() == 23
         assert window._mode_buttons["design"].width() == 52
         assert window._mode_buttons["design"].height() == 23
