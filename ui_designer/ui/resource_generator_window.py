@@ -1697,6 +1697,8 @@ class ResourceGeneratorWindow(QDialog):
 
     def changeEvent(self, event):
         super().changeEvent(event)
+        if event.type() in {QEvent.StyleChange, QEvent.PaletteChange, QEvent.FontChange}:
+            self._sync_simple_preview_minimum_heights()
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange}:
             if self.isVisible() and not getattr(self, "_suppress_window_chrome_theme_changes", False):
                 self._sync_window_chrome_theme()
@@ -1752,6 +1754,45 @@ class ResourceGeneratorWindow(QDialog):
 
     def _simple_mode_is_active(self) -> bool:
         return getattr(self, "_workspace_stack", None) is not None and self._workspace_stack.currentWidget() is self._simple_page
+
+    def _minimum_text_block_height(self, widget, *, visible_lines: int, chrome: int = 0) -> int:
+        tokens = app_theme_tokens(QApplication.instance())
+        line_height = max(
+            int(widget.fontMetrics().lineSpacing() or 0),
+            int(tokens.get("h_tab_min", 24)) - int(tokens.get("space_xxs", 4)),
+            1,
+        )
+        return max((line_height * max(int(visible_lines), 1)) + max(int(chrome), 0), 1)
+
+    def _simple_asset_preview_label_minimum_height_target(self) -> int:
+        tokens = app_theme_tokens(QApplication.instance())
+        chrome = int(tokens.get("space_md", 12)) + int(tokens.get("space_sm", 8))
+        return self._minimum_text_block_height(
+            self._simple_asset_preview_label,
+            visible_lines=4,
+            chrome=chrome,
+        )
+
+    def _simple_asset_meta_minimum_height_target(self) -> int:
+        tokens = app_theme_tokens(QApplication.instance())
+        chrome = (int(tokens.get("space_sm", 8)) * 2) + (int(self._simple_asset_meta.frameWidth() or 0) * 2)
+        return self._minimum_text_block_height(
+            self._simple_asset_meta,
+            visible_lines=3,
+            chrome=chrome,
+        )
+
+    def _sync_simple_preview_minimum_heights(self):
+        preview_label = getattr(self, "_simple_asset_preview_label", None)
+        preview_meta = getattr(self, "_simple_asset_meta", None)
+        if preview_label is None or preview_meta is None:
+            return
+        preview_label_height = self._simple_asset_preview_label_minimum_height_target()
+        preview_meta_height = self._simple_asset_meta_minimum_height_target()
+        if preview_label.minimumHeight() != preview_label_height:
+            preview_label.setMinimumHeight(preview_label_height)
+        if preview_meta.minimumHeight() != preview_meta_height:
+            preview_meta.setMinimumHeight(preview_meta_height)
 
     # -- Public API -----------------------------------------------------
 
@@ -2179,14 +2220,13 @@ class ResourceGeneratorWindow(QDialog):
 
         self._simple_asset_preview_label = QLabel("Select an image, font, or video entry to inspect it here.")
         self._simple_asset_preview_label.setAlignment(Qt.AlignCenter)
-        self._simple_asset_preview_label.setMinimumHeight(96)
         self._simple_asset_preview_label.setWordWrap(True)
         asset_preview_layout.addWidget(self._simple_asset_preview_label, 1)
 
         self._simple_asset_meta = QPlainTextEdit()
         self._simple_asset_meta.setReadOnly(True)
-        self._simple_asset_meta.setMinimumHeight(72)
         asset_preview_layout.addWidget(self._simple_asset_meta, 1)
+        self._sync_simple_preview_minimum_heights()
         self._simple_preview_splitter.addWidget(asset_preview_group)
 
         preview_group = QGroupBox("Merged Preview")

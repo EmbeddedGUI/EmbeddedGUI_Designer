@@ -153,6 +153,51 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_preview_panel_heights_follow_runtime_metrics(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        try:
+            assert window._simple_asset_preview_label.minimumHeight() == (
+                window._simple_asset_preview_label_minimum_height_target()
+            )
+            assert window._simple_asset_meta.minimumHeight() == window._simple_asset_meta_minimum_height_target()
+        finally:
+            _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_preview_panel_heights_resync_on_font_change(self, qapp, monkeypatch):
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        try:
+            baseline_preview_height = window._simple_asset_preview_label.minimumHeight()
+            baseline_meta_height = window._simple_asset_meta.minimumHeight()
+
+            preview_tokens = dict(resource_generator_window_module.app_theme_tokens())
+            preview_tokens["h_tab_min"] = 34
+            preview_tokens["space_xxs"] = 4
+            preview_tokens["space_sm"] = 10
+            preview_tokens["space_md"] = 16
+            monkeypatch.setattr(
+                resource_generator_window_module,
+                "app_theme_tokens",
+                lambda *args, **kwargs: preview_tokens,
+            )
+
+            window.changeEvent(QEvent(QEvent.FontChange))
+
+            assert window._simple_asset_preview_label.minimumHeight() == (
+                window._simple_asset_preview_label_minimum_height_target()
+            )
+            assert window._simple_asset_meta.minimumHeight() == window._simple_asset_meta_minimum_height_target()
+            assert window._simple_asset_preview_label.minimumHeight() > baseline_preview_height
+            assert window._simple_asset_meta.minimumHeight() > baseline_meta_height
+        finally:
+            _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_filter_counts_use_dense_ui_typography(self, qapp):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
         from ui_designer.ui.theme import app_theme_tokens, designer_ui_font
