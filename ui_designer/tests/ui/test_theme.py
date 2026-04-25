@@ -450,7 +450,7 @@ def test_engineering_theme_radii_remove_pill_shapes():
 
         assert "border-radius: 0px;" in chip
         assert f"padding: {tokens['pad_tab_compact_v']}px {tokens['space_xs']}px;" in chip
-        assert "min-height: 24px;" in chip
+        assert f"min-height: {tokens['h_tab_min']}px;" in chip
         assert "border-radius: 0px;" in browser_card
         assert "border-radius: 0px;" in insert_button
         assert "border-radius: 0px;" in status_button

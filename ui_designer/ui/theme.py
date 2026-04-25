@@ -147,7 +147,7 @@ _FLUENT_COMBO_BOX_RADIUS_QSS = f"""
 ComboBox,
 ModelComboBox {{
     border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
-    min-height: 24px;
+    min-height: {_ENGINEERING_H_TAB_MIN_SENTINEL}px;
     padding: 0px {_ENGINEERING_INPUT_PAD_H_SENTINEL}px;
     font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
@@ -174,7 +174,7 @@ CompactDateEdit,
 CompactDateTimeEdit,
 CompactTimeEdit {{
     border-radius: {_ENGINEERING_RADIUS_SM_SENTINEL}px;
-    min-height: 24px;
+    min-height: {_ENGINEERING_H_TAB_MIN_SENTINEL}px;
     padding: 0px {_ENGINEERING_INPUT_PAD_H_SENTINEL}px;
     font-size: {_ENGINEERING_FS_BODY_SENTINEL}px;
 }}
@@ -425,6 +425,8 @@ _FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_COMBO_
 _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS)
 _FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
 _FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = _resolve_engineering_radius_sm_qss(_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS)
+_FLUENT_COMBO_BOX_RADIUS_QSS = _resolve_engineering_h_tab_min_qss(_FLUENT_COMBO_BOX_RADIUS_QSS)
+_FLUENT_SPIN_BOX_RADIUS_QSS = _resolve_engineering_h_tab_min_qss(_FLUENT_SPIN_BOX_RADIUS_QSS)
 _FLUENT_PROPERTY_PANEL_BUTTON_QSS = _resolve_engineering_h_tab_min_compact_qss(_FLUENT_PROPERTY_PANEL_BUTTON_QSS)
 _FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS = _resolve_engineering_h_tab_min_qss(_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS)
 _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = _resolve_engineering_h_tab_min_qss(_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS)
@@ -2166,7 +2168,7 @@ QToolButton#workspace_summary_indicator {{
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
     padding: {t['pad_tab_compact_v']}px {t['space_xs']}px;
-    min-height: 24px;
+    min-height: {t['h_tab_min']}px;
 }}
 
 QToolButton#workspace_summary_indicator:hover {{

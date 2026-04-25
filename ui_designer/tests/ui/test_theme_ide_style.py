@@ -109,6 +109,11 @@ def test_fluent_qss_templates_use_4px_radius_and_12px_font():
         _theme_mod._FLUENT_SPIN_BOX_RADIUS_QSS,
     ):
         assert f"padding: 0px {expected_input_pad_h}px" in qss
+    for qss in (
+        _theme_mod._FLUENT_COMBO_BOX_RADIUS_QSS,
+        _theme_mod._FLUENT_SPIN_BOX_RADIUS_QSS,
+    ):
+        assert f"min-height: {theme_tokens('dark')['h_tab_min']}px" in qss
 
 
 def test_property_panel_qss_templates_use_4px_radius():
