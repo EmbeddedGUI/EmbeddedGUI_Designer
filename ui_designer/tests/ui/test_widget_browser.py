@@ -490,24 +490,29 @@ class TestWidgetBrowserPanel:
             captured["icon_request"] = (icon_key, size, mode)
             return _FakeIcon()
 
+        drag_tokens = dict(widget_browser_module.app_theme_tokens())
+        drag_tokens["icon_sm"] = 17
         panel = WidgetBrowserPanel()
         monkeypatch.setattr(widget_browser_module, "QDrag", _FakeDrag)
         monkeypatch.setattr(widget_browser_module, "make_icon", _capture_make_icon)
+        monkeypatch.setattr(widget_browser_module, "app_theme_tokens", lambda *args, **kwargs: drag_tokens)
 
         panel._start_widget_drag("button")
 
-        assert captured["icon_request"][1] == widget_browser_module._DRAG_ICON_SIZE
+        expected_icon_size = widget_browser_module._drag_icon_size()
+        expected_hotspot = widget_browser_module._drag_hotspot_offset(expected_icon_size)
+        assert captured["icon_request"][1] == expected_icon_size
         assert captured["pixmap_request"] == (
-            widget_browser_module._DRAG_ICON_SIZE,
-            widget_browser_module._DRAG_ICON_SIZE,
+            expected_icon_size,
+            expected_icon_size,
         )
         assert captured["pixmap_size"] == (
-            widget_browser_module._DRAG_ICON_SIZE,
-            widget_browser_module._DRAG_ICON_SIZE,
+            expected_icon_size,
+            expected_icon_size,
         )
         assert captured["hotspot"] == (
-            widget_browser_module._DRAG_HOTSPOT_OFFSET,
-            widget_browser_module._DRAG_HOTSPOT_OFFSET,
+            expected_hotspot,
+            expected_hotspot,
         )
         assert bytes(captured["mime"].data(panel.WIDGET_DRAG_MIME)) == b"button"
         assert captured["action"] == Qt.CopyAction

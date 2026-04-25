@@ -25,7 +25,7 @@ from ..services.favorite_service import FavoriteService
 from ..services.recent_service import RecentService
 from ..services.search_service import SearchQuery, SearchService
 from .iconography import make_icon, widget_icon_key
-from .theme import theme_tokens
+from .theme import app_theme_tokens, theme_tokens
 
 _DEFAULT_UI_TOKENS = theme_tokens("dark")
 _SPACE_XXS = int(_DEFAULT_UI_TOKENS.get("space_xxs", 2))
@@ -33,8 +33,15 @@ _SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
 _SPACE_LG = int(_DEFAULT_UI_TOKENS.get("space_lg", 16))
-_DRAG_ICON_SIZE = int(_DEFAULT_UI_TOKENS.get("icon_sm", 16))
-_DRAG_HOTSPOT_OFFSET = max(_DRAG_ICON_SIZE // 2, 1)
+
+
+def _drag_icon_size() -> int:
+    return max(int(app_theme_tokens().get("icon_sm", _DEFAULT_UI_TOKENS.get("icon_sm", 14))), 1)
+
+
+def _drag_hotspot_offset(icon_size: int | None = None) -> int:
+    resolved_size = _drag_icon_size() if icon_size is None else max(int(icon_size), 1)
+    return max(resolved_size // 2, 1)
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -734,8 +741,10 @@ class WidgetBrowserPanel(QWidget):
         item = self._catalog.by_type(widget_type)
         if item is not None:
             icon_key = item.icon_key or widget_icon_key(widget_type)
-            drag.setPixmap(make_icon(icon_key, size=_DRAG_ICON_SIZE).pixmap(_DRAG_ICON_SIZE, _DRAG_ICON_SIZE))
-            drag.setHotSpot(QPoint(_DRAG_HOTSPOT_OFFSET, _DRAG_HOTSPOT_OFFSET))
+            drag_icon_size = _drag_icon_size()
+            drag.setPixmap(make_icon(icon_key, size=drag_icon_size).pixmap(drag_icon_size, drag_icon_size))
+            drag_hotspot_offset = _drag_hotspot_offset(drag_icon_size)
+            drag.setHotSpot(QPoint(drag_hotspot_offset, drag_hotspot_offset))
         if global_pos is not None:
             self.statusTip()
         drag.exec_(Qt.CopyAction)

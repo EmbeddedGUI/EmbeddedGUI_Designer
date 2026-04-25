@@ -171,7 +171,7 @@ from ..utils.scaffold import (
     sdk_example_paths,
     sync_project_resources_and_generate_designer_resource_config,
 )
-from .theme import apply_theme, theme_tokens
+from .theme import app_theme_tokens, apply_theme, theme_tokens
 
 
 _DEFAULT_UI_TOKENS = theme_tokens("dark")
@@ -180,12 +180,15 @@ _SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
 _SPACE_LG = int(_DEFAULT_UI_TOKENS.get("space_lg", 16))
-_MENU_ACTION_ICON_SIZE = max(int(_DEFAULT_UI_TOKENS.get("icon_xs", 12)), 1)
 _RESOURCE_GENERATOR_SCRIPT_NAME = os.path.basename(SDK_RESOURCE_GENERATOR_RELPATH)
 _GENERATE_RESOURCES_HINT_PREFIX = (
     f"Run resource generation ({_RESOURCE_GENERATOR_SCRIPT_NAME}) to produce\n"
     f"C source files from {RESOURCE_DIR_RELPATH}/ assets and widget config. "
 )
+
+
+def _menu_action_icon_size() -> int:
+    return max(int(app_theme_tokens().get("icon_xs", _DEFAULT_UI_TOKENS.get("icon_xs", 12))), 1)
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 from ..settings.ui_prefs import UIPreferences
 from ..core.state_store import StateStore
@@ -3674,27 +3677,28 @@ class MainWindow(QMainWindow):
             arrange_menu.menuAction(),
             "Align, distribute, reorder, lock, and hide selected widgets.",
         )
+        menu_action_icon_size = _menu_action_icon_size()
 
         self._align_left_action = QAction("Align Left", self)
-        self._align_left_action.setIcon(make_icon("layout.align.left", size=_MENU_ACTION_ICON_SIZE))
+        self._align_left_action.setIcon(make_icon("layout.align.left", size=menu_action_icon_size))
         self._apply_action_hint(self._align_left_action, "Align the current selection to the left edge of the primary widget.")
         self._align_left_action.triggered.connect(lambda: self._align_selection("left"))
         arrange_menu.addAction(self._align_left_action)
 
         self._align_right_action = QAction("Align Right", self)
-        self._align_right_action.setIcon(make_icon("layout.align.right", size=_MENU_ACTION_ICON_SIZE))
+        self._align_right_action.setIcon(make_icon("layout.align.right", size=menu_action_icon_size))
         self._apply_action_hint(self._align_right_action, "Align the current selection to the right edge of the primary widget.")
         self._align_right_action.triggered.connect(lambda: self._align_selection("right"))
         arrange_menu.addAction(self._align_right_action)
 
         self._align_top_action = QAction("Align Top", self)
-        self._align_top_action.setIcon(make_icon("layout.align.top", size=_MENU_ACTION_ICON_SIZE))
+        self._align_top_action.setIcon(make_icon("layout.align.top", size=menu_action_icon_size))
         self._apply_action_hint(self._align_top_action, "Align the current selection to the top edge of the primary widget.")
         self._align_top_action.triggered.connect(lambda: self._align_selection("top"))
         arrange_menu.addAction(self._align_top_action)
 
         self._align_bottom_action = QAction("Align Bottom", self)
-        self._align_bottom_action.setIcon(make_icon("layout.align.bottom", size=_MENU_ACTION_ICON_SIZE))
+        self._align_bottom_action.setIcon(make_icon("layout.align.bottom", size=menu_action_icon_size))
         self._apply_action_hint(
             self._align_bottom_action,
             "Align the current selection to the bottom edge of the primary widget.",
@@ -3703,7 +3707,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._align_bottom_action)
 
         self._align_hcenter_action = QAction("Align Horizontal Center", self)
-        self._align_hcenter_action.setIcon(make_icon("layout.align.center", size=_MENU_ACTION_ICON_SIZE))
+        self._align_hcenter_action.setIcon(make_icon("layout.align.center", size=menu_action_icon_size))
         self._apply_action_hint(
             self._align_hcenter_action,
             "Align the current selection to the horizontal center of the primary widget.",
@@ -3712,7 +3716,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._align_hcenter_action)
 
         self._align_vcenter_action = QAction("Align Vertical Center", self)
-        self._align_vcenter_action.setIcon(make_icon("layout.align.middle", size=_MENU_ACTION_ICON_SIZE))
+        self._align_vcenter_action.setIcon(make_icon("layout.align.middle", size=menu_action_icon_size))
         self._apply_action_hint(
             self._align_vcenter_action,
             "Align the current selection to the vertical center of the primary widget.",
@@ -3723,7 +3727,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addSeparator()
 
         self._distribute_h_action = QAction("Distribute Horizontally", self)
-        self._distribute_h_action.setIcon(make_icon("layout.distribute.h", size=_MENU_ACTION_ICON_SIZE))
+        self._distribute_h_action.setIcon(make_icon("layout.distribute.h", size=menu_action_icon_size))
         self._apply_action_hint(
             self._distribute_h_action,
             "Distribute the current selection evenly across the horizontal axis.",
@@ -3732,7 +3736,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._distribute_h_action)
 
         self._distribute_v_action = QAction("Distribute Vertically", self)
-        self._distribute_v_action.setIcon(make_icon("layout.distribute.v", size=_MENU_ACTION_ICON_SIZE))
+        self._distribute_v_action.setIcon(make_icon("layout.distribute.v", size=menu_action_icon_size))
         self._apply_action_hint(
             self._distribute_v_action,
             "Distribute the current selection evenly across the vertical axis.",
@@ -3743,7 +3747,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addSeparator()
 
         self._bring_front_action = QAction("Bring to Front", self)
-        self._bring_front_action.setIcon(make_icon("canvas.layer.top", size=_MENU_ACTION_ICON_SIZE))
+        self._bring_front_action.setIcon(make_icon("canvas.layer.top", size=menu_action_icon_size))
         self._apply_action_hint(
             self._bring_front_action,
             "Bring the current selection to the front of its parent stack.",
@@ -3752,7 +3756,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._bring_front_action)
 
         self._send_back_action = QAction("Send to Back", self)
-        self._send_back_action.setIcon(make_icon("canvas.layer.bottom", size=_MENU_ACTION_ICON_SIZE))
+        self._send_back_action.setIcon(make_icon("canvas.layer.bottom", size=menu_action_icon_size))
         self._apply_action_hint(
             self._send_back_action,
             "Send the current selection to the back of its parent stack.",
@@ -3763,7 +3767,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addSeparator()
 
         self._toggle_lock_action = QAction("Toggle Lock", self)
-        self._toggle_lock_action.setIcon(make_icon("edit.lock", size=_MENU_ACTION_ICON_SIZE))
+        self._toggle_lock_action.setIcon(make_icon("edit.lock", size=menu_action_icon_size))
         self._apply_action_hint(
             self._toggle_lock_action,
             "Toggle the designer lock state for the current selection.",
@@ -3772,7 +3776,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._toggle_lock_action)
 
         self._toggle_hide_action = QAction("Toggle Hide", self)
-        self._toggle_hide_action.setIcon(make_icon("edit.hidden", size=_MENU_ACTION_ICON_SIZE))
+        self._toggle_hide_action.setIcon(make_icon("edit.hidden", size=menu_action_icon_size))
         self._apply_action_hint(
             self._toggle_hide_action,
             "Toggle the designer visibility state for the current selection.",
@@ -3788,13 +3792,13 @@ class MainWindow(QMainWindow):
         self._structure_menu = structure_menu
 
         self._group_selection_action = QAction("Group Selection", self)
-        self._group_selection_action.setIcon(make_icon("nav.page_group", size=_MENU_ACTION_ICON_SIZE))
+        self._group_selection_action.setIcon(make_icon("nav.page_group", size=menu_action_icon_size))
         self._group_selection_action.setShortcut("Ctrl+G")
         self._group_selection_action.triggered.connect(self._group_selection)
         structure_menu.addAction(self._group_selection_action)
 
         self._ungroup_selection_action = QAction("Ungroup", self)
-        self._ungroup_selection_action.setIcon(make_icon("nav.component_library", size=_MENU_ACTION_ICON_SIZE))
+        self._ungroup_selection_action.setIcon(make_icon("nav.component_library", size=menu_action_icon_size))
         self._ungroup_selection_action.setShortcut("Ctrl+Shift+G")
         self._ungroup_selection_action.triggered.connect(self._ungroup_selection)
         structure_menu.addAction(self._ungroup_selection_action)
@@ -3812,25 +3816,25 @@ class MainWindow(QMainWindow):
         structure_menu.addSeparator()
 
         self._move_up_action = QAction("Move Up", self)
-        self._move_up_action.setIcon(make_icon("canvas.layer.up", size=_MENU_ACTION_ICON_SIZE))
+        self._move_up_action.setIcon(make_icon("canvas.layer.up", size=menu_action_icon_size))
         self._move_up_action.setShortcut("Alt+Up")
         self._move_up_action.triggered.connect(self._move_selection_up)
         structure_menu.addAction(self._move_up_action)
 
         self._move_down_action = QAction("Move Down", self)
-        self._move_down_action.setIcon(make_icon("canvas.layer.down", size=_MENU_ACTION_ICON_SIZE))
+        self._move_down_action.setIcon(make_icon("canvas.layer.down", size=menu_action_icon_size))
         self._move_down_action.setShortcut("Alt+Down")
         self._move_down_action.triggered.connect(self._move_selection_down)
         structure_menu.addAction(self._move_down_action)
 
         self._move_top_action = QAction("Move To Top", self)
-        self._move_top_action.setIcon(make_icon("canvas.layer.top", size=_MENU_ACTION_ICON_SIZE))
+        self._move_top_action.setIcon(make_icon("canvas.layer.top", size=menu_action_icon_size))
         self._move_top_action.setShortcut("Alt+Shift+Up")
         self._move_top_action.triggered.connect(self._move_selection_to_top)
         structure_menu.addAction(self._move_top_action)
 
         self._move_bottom_action = QAction("Move To Bottom", self)
-        self._move_bottom_action.setIcon(make_icon("canvas.layer.bottom", size=_MENU_ACTION_ICON_SIZE))
+        self._move_bottom_action.setIcon(make_icon("canvas.layer.bottom", size=menu_action_icon_size))
         self._move_bottom_action.setShortcut("Alt+Shift+Down")
         self._move_bottom_action.triggered.connect(self._move_selection_to_bottom)
         structure_menu.addAction(self._move_bottom_action)

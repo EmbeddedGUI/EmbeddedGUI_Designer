@@ -14225,10 +14225,13 @@ class TestMainWindowFileFlow:
             captured.append((icon_key, size, mode))
             return QIcon()
 
+        menu_tokens = dict(main_window_module.app_theme_tokens())
+        menu_tokens["icon_xs"] = 11
         monkeypatch.setattr(main_window_module, "make_icon", _capture_make_icon)
+        monkeypatch.setattr(main_window_module, "app_theme_tokens", lambda *args, **kwargs: menu_tokens)
 
         window = MainWindow("")
-        expected_size = main_window_module._MENU_ACTION_ICON_SIZE
+        expected_size = main_window_module._menu_action_icon_size()
         expected_keys = {
             "layout.align.left",
             "layout.align.right",
