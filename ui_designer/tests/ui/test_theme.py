@@ -699,7 +699,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in left_tabs_pane
         assert "border-radius: 0px;" in left_tabs_tab
         assert "margin-right: 0px;" in left_tabs_tab
-        assert "min-height: 24px;" in left_tabs_tab
+        assert f"min-height: {t['h_tab_min']}px;" in left_tabs_tab
         assert f"padding: {t['pad_tab_compact_v']}px {t['pad_tab_compact_h']}px;" in left_tabs_tab
         assert "border-radius: 0px;" in status_chip
         assert "background-color: transparent;" in empty_state
@@ -736,7 +736,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "top: 0px;" in inspector_tabs_pane
         assert "border-radius: 0px;" in inspector_tabs_tab
         assert "margin-right: 0px;" in inspector_tabs_tab
-        assert "min-height: 24px;" in inspector_tabs_tab
+        assert f"min-height: {t['h_tab_min']}px;" in inspector_tabs_tab
         assert f"padding: {t['pad_tab_compact_v']}px {t['pad_tab_compact_h']}px;" in inspector_tabs_tab
         assert "background-color: transparent;" in bottom_tabs_pane
         assert "border: none;" in bottom_tabs_pane
@@ -745,7 +745,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "top: 0px;" in bottom_tabs_pane
         assert "border-radius: 0px;" in bottom_tabs_tab
         assert "margin-right: 0px;" in bottom_tabs_tab
-        assert "min-height: 24px;" in bottom_tabs_tab
+        assert f"min-height: {t['h_tab_min']}px;" in bottom_tabs_tab
         assert f"padding: {t['pad_tab_compact_v']}px {t['pad_tab_compact_h']}px;" in bottom_tabs_tab
         assert "background-color: transparent;" in thumb_surface
         assert "border: none;" in thumb_surface
