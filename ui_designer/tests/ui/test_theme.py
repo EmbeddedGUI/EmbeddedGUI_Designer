@@ -1500,7 +1500,12 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
 def test_property_panel_spin_arrow_qss_tracks_compact_icon_size():
     import ui_designer.ui.theme as theme_module
 
+    tokens = theme_tokens("dark")
     css = _build_stylesheet("dark")
+    spin_field = css.split(
+        'QSpinBox[propertyPanelSpin="true"], QDoubleSpinBox[propertyPanelSpin="true"] {',
+        1,
+    )[1].split("}", 1)[0]
     spin_button = css.split(
         'QSpinBox[propertyPanelSpin="true"]::up-button, QSpinBox[propertyPanelSpin="true"]::down-button,',
         1,
@@ -1527,6 +1532,7 @@ def test_property_panel_spin_arrow_qss_tracks_compact_icon_size():
         f"margin: 0px {theme_module._PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN}px "
         f"{theme_module._PROPERTY_PANEL_SPIN_LAYOUT_SPACING}px 0px;"
     ) in spin_down
+    assert f"min-height: {tokens['h_tab_min']}px;" in spin_field
     assert f"width: {theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE}px;" in spin_arrow
     assert f"height: {theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE}px;" in spin_arrow
 

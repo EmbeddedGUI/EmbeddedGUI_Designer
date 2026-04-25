@@ -1070,7 +1070,7 @@ QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBo
 
 QSpinBox[propertyPanelSpin="true"], QDoubleSpinBox[propertyPanelSpin="true"] {{
     border-radius: {t['r_sm']}px;
-    min-height: 24px;
+    min-height: {t['h_tab_min']}px;
     padding: 0px 52px 0px 6px;
 }}
 
