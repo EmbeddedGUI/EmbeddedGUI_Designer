@@ -1881,6 +1881,7 @@ class ResourceGeneratorWindow(QDialog):
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange, QEvent.FontChange}:
             self._sync_simple_action_button_minimum_heights()
             self._sync_simple_preview_minimum_heights()
+            self._sync_simple_preview_splitter_minimum_height()
             self._sync_entry_summary_minimum_height()
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange}:
             if self.isVisible() and not getattr(self, "_suppress_window_chrome_theme_changes", False):
@@ -1995,6 +1996,27 @@ class ResourceGeneratorWindow(QDialog):
             preview_label.setMinimumHeight(preview_label_height)
         if preview_meta.minimumHeight() != preview_meta_height:
             preview_meta.setMinimumHeight(preview_meta_height)
+
+    def _simple_preview_splitter_minimum_height_target(self) -> int:
+        tokens = app_theme_tokens(QApplication.instance())
+        splitter = getattr(self, "_simple_preview_splitter", None)
+        if splitter is None:
+            return max(int(tokens.get("h_tab_min", 24)) * 5, 1)
+        content_height = max(
+            int(splitter.minimumSizeHint().height() or 0),
+            int(splitter.sizeHint().height() or 0) - int(tokens.get("space_2xl", 24)),
+            0,
+        )
+        floor_height = int(tokens.get("h_tab_min", 24)) * 5
+        return max(content_height, floor_height, 1)
+
+    def _sync_simple_preview_splitter_minimum_height(self):
+        splitter = getattr(self, "_simple_preview_splitter", None)
+        if splitter is None:
+            return
+        target_height = self._simple_preview_splitter_minimum_height_target()
+        if splitter.minimumHeight() != target_height:
+            splitter.setMinimumHeight(target_height)
 
     def _entry_summary_minimum_height_target(self) -> int:
         tokens = app_theme_tokens(QApplication.instance())
@@ -2460,7 +2482,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_preview_splitter.setStretchFactor(0, 1)
         self._simple_preview_splitter.setStretchFactor(1, 1)
         self._simple_preview_splitter.setSizes(_DEFAULT_SIMPLE_PREVIEW_SPLITTER_SIZES)
-        self._simple_preview_splitter.setMinimumHeight(120)
+        self._sync_simple_preview_splitter_minimum_height()
         self._simple_workspace_splitter = QSplitter(Qt.Vertical)
         self._simple_workspace_splitter.setChildrenCollapsible(False)
         self._simple_workspace_splitter.setHandleWidth(8)

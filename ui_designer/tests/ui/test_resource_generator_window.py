@@ -162,6 +162,9 @@ class TestResourceGeneratorWindow:
                 window._simple_asset_preview_label_minimum_height_target()
             )
             assert window._simple_asset_meta.minimumHeight() == window._simple_asset_meta_minimum_height_target()
+            assert window._simple_preview_splitter.minimumHeight() == (
+                window._simple_preview_splitter_minimum_height_target()
+            )
         finally:
             _close_window(window)
 
@@ -222,9 +225,10 @@ class TestResourceGeneratorWindow:
         try:
             baseline_preview_height = window._simple_asset_preview_label.minimumHeight()
             baseline_meta_height = window._simple_asset_meta.minimumHeight()
+            baseline_splitter_height = window._simple_preview_splitter.minimumHeight()
 
             preview_tokens = dict(resource_generator_window_module.app_theme_tokens())
-            preview_tokens["h_tab_min"] = 34
+            preview_tokens["h_tab_min"] = 52
             preview_tokens["space_xxs"] = 4
             preview_tokens["space_sm"] = 10
             preview_tokens["space_md"] = 16
@@ -240,8 +244,12 @@ class TestResourceGeneratorWindow:
                 window._simple_asset_preview_label_minimum_height_target()
             )
             assert window._simple_asset_meta.minimumHeight() == window._simple_asset_meta_minimum_height_target()
+            assert window._simple_preview_splitter.minimumHeight() == (
+                window._simple_preview_splitter_minimum_height_target()
+            )
             assert window._simple_asset_preview_label.minimumHeight() > baseline_preview_height
             assert window._simple_asset_meta.minimumHeight() > baseline_meta_height
+            assert window._simple_preview_splitter.minimumHeight() > baseline_splitter_height
         finally:
             _close_window(window)
 
