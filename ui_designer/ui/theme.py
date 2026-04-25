@@ -1319,7 +1319,7 @@ QScrollBar:horizontal {{
 
 QScrollBar::handle:horizontal {{
     background-color: {t['border_strong']};
-    min-width: 24px;
+    min-width: {t['h_tab_min']}px;
     border: none;
     border-radius: 0px;
 }}
