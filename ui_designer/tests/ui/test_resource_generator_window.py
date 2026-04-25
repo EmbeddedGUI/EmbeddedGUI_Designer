@@ -2903,8 +2903,16 @@ class TestResourceGeneratorWindow:
         assert dialog._edit_file_button.text() == "Edit File..."
         assert dialog._preview_sample_label.text() == "Preview Sample: HELLO Designer\nPreview Source: ui_text.txt"
         assert dialog._preview_info_label.text() == "Preview: 2 line(s), 15 char(s)"
+        assert dialog._preview_text_edit.minimumHeight() == dialog._text_preview_minimum_height(
+            dialog._preview_text_edit,
+            visible_lines=4,
+        )
         assert dialog._preview_text_edit.toPlainText() == "HELLO\nDesigner\n"
         assert dialog._combined_preview_info_label.text() == "Combined Preview: 1 file(s), 1 missing"
+        assert dialog._combined_preview_text_edit.minimumHeight() == dialog._text_preview_minimum_height(
+            dialog._combined_preview_text_edit,
+            visible_lines=5,
+        )
         assert dialog._combined_preview_text_edit.toPlainText() == "[ui_text.txt]\nHELLO\nDesigner\n\n[missing.txt]\n(missing)"
 
         dialog._list_widget.setCurrentRow(1)
@@ -2913,6 +2921,39 @@ class TestResourceGeneratorWindow:
         assert dialog._preview_sample_label.text() == "Preview Sample: HELLO Designer\nPreview Source: ui_text.txt"
         assert dialog._preview_info_label.text() == "Preview: File is missing."
         assert dialog._preview_text_edit.toPlainText() == ""
+        dialog.close()
+
+    @_skip_no_qt
+    def test_font_text_links_dialog_preview_heights_follow_runtime_tokens(self, qapp, monkeypatch, tmp_path):
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+        from ui_designer.ui.resource_generator_window import _FontTextLinksDialog
+
+        source_dir = tmp_path / "resource" / "src"
+        source_dir.mkdir(parents=True)
+
+        baseline_dialog = _FontTextLinksDialog(initial_items=[], source_dir=str(source_dir), parent=None)
+        baseline_preview_height = baseline_dialog._preview_text_edit.minimumHeight()
+        baseline_combined_height = baseline_dialog._combined_preview_text_edit.minimumHeight()
+        baseline_dialog.close()
+
+        preview_tokens = dict(resource_generator_window_module.app_theme_tokens())
+        preview_tokens["h_tab_min"] = 28
+        preview_tokens["space_xxs"] = 5
+        preview_tokens["space_sm"] = 10
+        monkeypatch.setattr(resource_generator_window_module, "app_theme_tokens", lambda *args, **kwargs: preview_tokens)
+
+        dialog = _FontTextLinksDialog(initial_items=[], source_dir=str(source_dir), parent=None)
+
+        assert dialog._preview_text_edit.minimumHeight() == dialog._text_preview_minimum_height(
+            dialog._preview_text_edit,
+            visible_lines=4,
+        )
+        assert dialog._combined_preview_text_edit.minimumHeight() == dialog._text_preview_minimum_height(
+            dialog._combined_preview_text_edit,
+            visible_lines=5,
+        )
+        assert dialog._preview_text_edit.minimumHeight() > baseline_preview_height
+        assert dialog._combined_preview_text_edit.minimumHeight() > baseline_combined_height
         dialog.close()
 
     @_skip_no_qt

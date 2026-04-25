@@ -1085,7 +1085,6 @@ class _FontTextLinksDialog(QDialog):
 
         self._preview_text_edit = QPlainTextEdit()
         self._preview_text_edit.setReadOnly(True)
-        self._preview_text_edit.setMinimumHeight(100)
         self._preview_text_edit.setPlaceholderText("Select a linked text file to preview its UTF-8 contents.")
         selected_preview_layout.addWidget(self._preview_text_edit, 1)
         self._preview_splitter.addWidget(selected_preview_shell)
@@ -1101,7 +1100,6 @@ class _FontTextLinksDialog(QDialog):
 
         self._combined_preview_text_edit = QPlainTextEdit()
         self._combined_preview_text_edit.setReadOnly(True)
-        self._combined_preview_text_edit.setMinimumHeight(120)
         self._combined_preview_text_edit.setPlaceholderText(
             "The combined linked text preview will appear here in the current file order."
         )
@@ -1109,6 +1107,7 @@ class _FontTextLinksDialog(QDialog):
         self._preview_splitter.addWidget(combined_preview_shell)
         self._preview_splitter.setSizes([180, 240])
         layout.addWidget(self._preview_splitter, 1)
+        self._sync_preview_text_edit_heights()
 
         self._set_items(initial_items or [], selected_index=0)
 
@@ -1116,6 +1115,29 @@ class _FontTextLinksDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_preview_text_edit_heights()
+
+    def _text_preview_minimum_height(self, editor, *, visible_lines: int) -> int:
+        tokens = app_theme_tokens(QApplication.instance())
+        line_height = max(
+            int(editor.fontMetrics().lineSpacing() or 0),
+            int(tokens.get("h_tab_min", 24)) - int(tokens.get("space_xxs", 4)),
+            1,
+        )
+        chrome = (int(tokens.get("space_sm", 8)) * 2) + (int(editor.frameWidth() or 0) * 2)
+        return max((line_height * max(int(visible_lines), 1)) + chrome, 1)
+
+    def _sync_preview_text_edit_heights(self):
+        selected_height = self._text_preview_minimum_height(self._preview_text_edit, visible_lines=4)
+        combined_height = self._text_preview_minimum_height(self._combined_preview_text_edit, visible_lines=5)
+        if self._preview_text_edit.minimumHeight() != selected_height:
+            self._preview_text_edit.setMinimumHeight(selected_height)
+        if self._combined_preview_text_edit.minimumHeight() != combined_height:
+            self._combined_preview_text_edit.setMinimumHeight(combined_height)
 
     def _split_items(self, value: str) -> list[str]:
         items = []
