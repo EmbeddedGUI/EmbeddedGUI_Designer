@@ -13,6 +13,7 @@ _skip_no_qt = skip_if_no_qt
 @_skip_no_qt
 class TestProjectWorkspacePanel:
     def test_set_view_switches_stack_and_updates_view_chip(self, qapp):
+        import ui_designer.ui.project_workspace as project_workspace_module
         from ui_designer.ui.project_workspace import ProjectWorkspacePanel
         from ui_designer.ui.theme import app_theme_tokens
 
@@ -43,12 +44,12 @@ class TestProjectWorkspacePanel:
             "Display target: Display 0. Editing and preview use the primary display."
         )
         assert panel._settings_btn.height() == expected_button_height
-        assert panel._settings_btn.width() == 44
+        assert panel._settings_btn.width() == project_workspace_module._project_workspace_button_target_width(panel._settings_btn)
         assert panel._settings_btn.text() == "Prefs"
         assert panel._list_btn.height() == expected_button_height
-        assert panel._list_btn.width() == 36
+        assert panel._list_btn.width() == project_workspace_module._project_workspace_button_target_width(panel._list_btn)
         assert panel._thumb_btn.height() == expected_button_height
-        assert panel._thumb_btn.width() == 54
+        assert panel._thumb_btn.width() == project_workspace_module._project_workspace_button_target_width(panel._thumb_btn)
         assert panel._header_eyebrow.accessibleName() == "Project navigation workspace surface."
         assert panel._header_eyebrow.isHidden() is True
         assert panel._page_count_chip.text() == "0 pages"
@@ -154,16 +155,29 @@ class TestProjectWorkspacePanel:
         import ui_designer.ui.project_workspace as project_workspace_module
         from ui_designer.ui.project_workspace import ProjectWorkspacePanel
 
+        baseline_panel = ProjectWorkspacePanel(QWidget(), QWidget())
+        baseline_prefs_width = baseline_panel._settings_btn.width()
+        baseline_list_width = baseline_panel._list_btn.width()
+        baseline_thumbs_width = baseline_panel._thumb_btn.width()
+        baseline_panel.deleteLater()
+
         button_tokens = dict(project_workspace_module.app_theme_tokens())
         button_tokens["h_tab_min"] = 28
+        button_tokens["space_xxs"] = 5
         button_tokens["space_3xs"] = 3
         monkeypatch.setattr(project_workspace_module, "app_theme_tokens", lambda *args, **kwargs: button_tokens)
 
         panel = ProjectWorkspacePanel(QWidget(), QWidget())
 
         assert panel._settings_btn.height() == 25
+        assert panel._settings_btn.width() == project_workspace_module._project_workspace_button_target_width(panel._settings_btn)
+        assert panel._settings_btn.width() > baseline_prefs_width
         assert panel._list_btn.height() == 25
+        assert panel._list_btn.width() == project_workspace_module._project_workspace_button_target_width(panel._list_btn)
+        assert panel._list_btn.width() > baseline_list_width
         assert panel._thumb_btn.height() == 25
+        assert panel._thumb_btn.width() == project_workspace_module._project_workspace_button_target_width(panel._thumb_btn)
+        assert panel._thumb_btn.width() > baseline_thumbs_width
         panel.deleteLater()
 
     def test_workspace_snapshot_chips_show_page_active_and_dirty_state(self, qapp):

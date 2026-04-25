@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import QEvent, pyqtSignal
 from PyQt5.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -18,14 +18,22 @@ from PyQt5.QtWidgets import (
 from .theme import app_theme_tokens
 
 _PROJECT_WORKSPACE_METRICS_SPACING = 1
-_PROJECT_WORKSPACE_PREFS_BUTTON_WIDTH = 44
-_PROJECT_WORKSPACE_LIST_BUTTON_WIDTH = 36
-_PROJECT_WORKSPACE_THUMBS_BUTTON_WIDTH = 54
 
 
 def _project_workspace_button_height() -> int:
     tokens = app_theme_tokens()
     return max(int(tokens.get("h_tab_min", 24)) - int(tokens.get("space_3xs", 2)), 1)
+
+
+def _project_workspace_button_target_width(button) -> int:
+    tokens = app_theme_tokens()
+    horizontal_padding = (int(tokens.get("space_xxs", 4)) * 2) + (int(tokens.get("space_3xs", 2)) * 2)
+    try:
+        text_width = button.fontMetrics().horizontalAdvance(str(button.text() or "").strip())
+        compact_floor = _project_workspace_button_height() + (int(tokens.get("space_3xs", 2)) * 2)
+        return max(text_width + horizontal_padding, compact_floor, 1)
+    except Exception:
+        return max(_project_workspace_button_height() + horizontal_padding, 1)
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -74,6 +82,11 @@ class ProjectWorkspacePanel(QWidget):
         self._current_view_name = ""
         self._workspace_snapshot_initialized = False
         self._init_ui()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_button_metrics()
 
     def _init_ui(self):
         for child in (self._list_view, self._thumbnail_view):
@@ -151,10 +164,7 @@ class ProjectWorkspacePanel(QWidget):
 
         self._button_group = QButtonGroup(self)
         self._button_group.setExclusive(True)
-        self._settings_btn = _set_compact_button_chrome(
-            QPushButton("Prefs"),
-            width=_PROJECT_WORKSPACE_PREFS_BUTTON_WIDTH,
-        )
+        self._settings_btn = QPushButton("Prefs")
         self._settings_btn.setObjectName("project_workspace_view_button")
         self._settings_btn.clicked.connect(self._toggle_project_settings)
         _set_widget_metadata(
@@ -162,10 +172,7 @@ class ProjectWorkspacePanel(QWidget):
             tooltip="Show or hide low-frequency project settings.",
             accessible_name="Project settings button",
         )
-        self._list_btn = _set_compact_button_chrome(
-            QPushButton("List"),
-            width=_PROJECT_WORKSPACE_LIST_BUTTON_WIDTH,
-        )
+        self._list_btn = QPushButton("List")
         self._list_btn.setObjectName("project_workspace_view_button")
         self._list_btn.setCheckable(True)
         _set_widget_metadata(
@@ -173,10 +180,7 @@ class ProjectWorkspacePanel(QWidget):
             tooltip="Show the page list for structure-first editing.",
             accessible_name="Workspace view button: List. Structure first.",
         )
-        self._thumb_btn = _set_compact_button_chrome(
-            QPushButton("Thumbs"),
-            width=_PROJECT_WORKSPACE_THUMBS_BUTTON_WIDTH,
-        )
+        self._thumb_btn = QPushButton("Thumbs")
         self._thumb_btn.setObjectName("project_workspace_view_button")
         self._thumb_btn.setCheckable(True)
         _set_widget_metadata(
@@ -184,6 +188,7 @@ class ProjectWorkspacePanel(QWidget):
             tooltip="Show page thumbnails for a visual scan.",
             accessible_name="Workspace view button: Thumbnails. Visual scan.",
         )
+        self._sync_button_metrics()
         self._button_group.addButton(self._list_btn)
         self._button_group.addButton(self._thumb_btn)
         self._list_btn.clicked.connect(lambda: self.set_view(self.VIEW_LIST))
@@ -202,6 +207,12 @@ class ProjectWorkspacePanel(QWidget):
 
         self.set_view(self.VIEW_LIST)
         self.set_workspace_snapshot()
+
+    def _sync_button_metrics(self):
+        for button in (getattr(self, "_settings_btn", None), getattr(self, "_list_btn", None), getattr(self, "_thumb_btn", None)):
+            if button is None:
+                continue
+            _set_compact_button_chrome(button, width=_project_workspace_button_target_width(button))
 
     def _update_panel_metadata(self):
         is_thumbnail_view = self._current_view_name == self.VIEW_THUMBNAILS
