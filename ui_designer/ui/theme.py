@@ -2041,7 +2041,7 @@ QToolButton#workspace_status_chip {{
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
     padding: {t['space_xxs']}px {t['space_xs']}px;
-    min-height: 22px;
+    min-height: {t['h_tab_min'] - t['space_3xs']}px;
 }}
 
 QToolButton#workspace_status_chip:hover {{

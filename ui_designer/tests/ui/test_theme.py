@@ -668,6 +668,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         left_tabs_pane = css.split("QTabWidget#workspace_left_tabs::pane {", 1)[1].split("}", 1)[0]
         left_tabs_tab = css.split("QTabWidget#workspace_left_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
         status_chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
+        status_chip_tool = css.split("QToolButton#workspace_status_chip {", 1)[1].split("}", 1)[0]
         search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
         empty_state = css.split("#property_panel_empty_state {", 1)[1].split("}", 1)[0]
         resource_tabs_pane = css.split("QTabWidget#resource_panel_tabs::pane {", 1)[1].split("}", 1)[0]
@@ -702,6 +703,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert f"min-height: {t['h_tab_min']}px;" in left_tabs_tab
         assert f"padding: {t['pad_tab_compact_v']}px {t['pad_tab_compact_h']}px;" in left_tabs_tab
         assert "border-radius: 0px;" in status_chip
+        assert f"min-height: {t['h_tab_min'] - t['space_3xs']}px;" in status_chip_tool
         assert "background-color: transparent;" in empty_state
         assert "border-top: none;" in empty_state
         assert "border-right: none;" in empty_state
