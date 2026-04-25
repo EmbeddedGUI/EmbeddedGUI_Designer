@@ -1618,7 +1618,7 @@ QGroupBox#inspector_collapsible_group {{
     background-color: transparent;
     border: 1px solid transparent;
     border-radius: 0px;
-    margin-top: 12px;
+    margin-top: {t['space_md']}px;
     padding-top: {t['space_3xs']}px;
     font-size: {t['fs_panel_title']}px;
     font-weight: {t['fw_medium']};
@@ -1629,7 +1629,7 @@ QGroupBox#inspector_collapsible_group::title {{
     subcontrol-position: top left;
     left: 0px;
     color: {t['text']};
-    padding: 0px 0px 1px 0px;
+    padding: 0px 0px {t['space_toolbar_separator']}px 0px;
 }}
 
 QGroupBox#inspector_collapsible_group::indicator {{
@@ -1809,7 +1809,7 @@ QPushButton#project_workspace_view_button:checked {{
 }}
 
 QToolBar#main_toolbar {{
-    spacing: 1px;
+    spacing: {t['space_toolbar_separator']}px;
     background: transparent;
     border: none;
 }}

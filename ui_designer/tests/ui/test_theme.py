@@ -641,7 +641,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in context
         assert "border: none;" in context
         assert f"border-radius: {t['r_md']}px;" in context
-        assert "spacing: 1px;" in toolbar
+        assert f"spacing: {t['space_toolbar_separator']}px;" in toolbar
         assert f"width: {t['space_toolbar_separator']}px;" in toolbar_separator
         assert f"margin: {t['space_toolbar_separator']}px {t['space_toolbar_separator']}px;" in toolbar_separator
         assert "background-color: transparent;" in toolbar_button
@@ -910,10 +910,10 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in inspector_group
         assert "border: 1px solid transparent;" in inspector_group
         assert "border-radius: 0px;" in inspector_group
-        assert "margin-top: 12px;" in inspector_group
+        assert f"margin-top: {t['space_md']}px;" in inspector_group
         assert f"padding-top: {t['space_3xs']}px;" in inspector_group
         assert "left: 0px;" in inspector_group_title
-        assert "padding: 0px 0px 1px 0px;" in inspector_group_title
+        assert f"padding: 0px 0px {t['space_toolbar_separator']}px 0px;" in inspector_group_title
         assert "width: 0px;" in inspector_group_indicator
         assert "height: 0px;" in inspector_group_indicator
 
