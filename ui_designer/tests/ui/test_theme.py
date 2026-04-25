@@ -835,6 +835,10 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert f"min-height: {t['h_tab_min']}px;" in property_tree_item
         assert f"background-color: {t['panel_alt']};" in property_tree_header
         assert f"color: {t['text_muted']};" in property_tree_header
+        assert (
+            f"padding: {t['space_xs'] - t['pad_tab_compact_v']}px "
+            f"{t['space_sm'] - t['space_3xs']}px;"
+        ) in property_tree_header
         assert f"background-color: {t['panel_alt']};" in property_grid_section
         assert f"border-top: 1px solid {t['border_strong']};" in property_grid_section
         assert f"background-color: {t['panel_raised']};" in property_grid_section_expanded

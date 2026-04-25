@@ -1437,7 +1437,7 @@ QTreeWidget#property_panel_tree QHeaderView::section {{
     color: {t['text_muted']};
     border: none;
     border-bottom: 1px solid {t['border']};
-    padding: 3px 6px;
+    padding: {t['space_xs'] - t['pad_tab_compact_v']}px {t['space_sm'] - t['space_3xs']}px;
     font-size: {t['fs_caption']}px;
     font-weight: {t['fw_medium']};
 }}
