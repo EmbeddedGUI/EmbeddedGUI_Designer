@@ -1249,7 +1249,7 @@ QMenu {{
 }}
 
 QMenu::item {{
-    padding: 7px 26px 7px 12px;
+    padding: {t['space_sm'] - t['pad_tab_compact_v']}px {t['space_md'] + t['icon_sm']}px {t['space_sm'] - t['pad_tab_compact_v']}px {t['space_md']}px;
 }}
 
 QMenu::item:selected {{

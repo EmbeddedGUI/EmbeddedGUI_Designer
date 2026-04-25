@@ -115,10 +115,16 @@ def test_disabled_menu_items_and_combo_boxes_use_panel_alt_backgrounds():
             "QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled {",
             1,
         )[1].split("}", 1)[0]
+        menu_item = css.split("QMenu::item {", 1)[1].split("}", 1)[0]
         menu_item_disabled = css.split("QMenu::item:disabled {", 1)[1].split("}", 1)[0]
         menu_item_selected_disabled = css.split("QMenu::item:selected:disabled {", 1)[1].split("}", 1)[0]
 
         assert f"background-color: {t['shell_bg']};" in combo_disabled
+        assert (
+            f"padding: {t['space_sm'] - t['pad_tab_compact_v']}px "
+            f"{t['space_md'] + t['icon_sm']}px "
+            f"{t['space_sm'] - t['pad_tab_compact_v']}px {t['space_md']}px;"
+        ) in menu_item
         assert f"background-color: {t['shell_bg']};" in menu_item_disabled
         assert f"color: {t['text_soft']};" in menu_item_disabled
         assert f"background-color: {t['shell_bg']};" in menu_item_selected_disabled
