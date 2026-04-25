@@ -68,6 +68,12 @@ def test_lucide_mapping_covers_canonical_semantics_and_assets():
     assert missing_assets == []
 
 
+def test_icon_definitions_do_not_encode_stale_size_hints():
+    module = _reload_iconography()
+
+    assert all("size" not in spec for spec in module._ICON_DEFINITIONS.values())
+
+
 def test_load_lucide_icon_uses_theme_text_soft_by_default(qapp, monkeypatch):
     module = _reload_iconography()
     sentinel = _sentinel_icon(size=20)
