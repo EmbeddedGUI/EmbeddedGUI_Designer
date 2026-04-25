@@ -88,8 +88,11 @@ class TestResourcePanelFileFlow:
 
     def test_resource_panel_shell_controls_use_compact_heights(self, qapp):
         from ui_designer.ui.resource_panel import ResourcePanel
+        from ui_designer.ui.theme import app_theme_tokens
 
         panel = ResourcePanel()
+        tokens = app_theme_tokens()
+        expected_control_height = int(tokens["h_tab_min"]) - int(tokens["space_3xs"])
 
         image_buttons = panel._resource_action_buttons["image"]
         image_search = panel._resource_search_inputs["image"]
@@ -99,17 +102,33 @@ class TestResourcePanelFileFlow:
         assert isinstance(image_buttons["import"], QPushButton)
         assert isinstance(image_search, QLineEdit)
         assert isinstance(image_status, QComboBox)
-        assert image_buttons["import"].height() == 22
-        assert image_buttons["clean_unused"].height() == 22
-        assert panel._resource_more_menus["image"]["button"].height() == 22
-        assert image_search.height() == 22
-        assert image_status.height() == 22
-        assert image_reset.height() == 22
-        assert panel._generate_charset_btn.height() == 22
-        assert panel._locale_combo.height() == 22
-        assert panel._add_locale_btn.height() == 22
-        assert panel._add_key_btn.height() == 22
-        assert panel._clean_unused_string_btn.height() == 22
+        assert image_buttons["import"].height() == expected_control_height
+        assert image_buttons["clean_unused"].height() == expected_control_height
+        assert panel._resource_more_menus["image"]["button"].height() == expected_control_height
+        assert image_search.height() == expected_control_height
+        assert image_status.height() == expected_control_height
+        assert image_reset.height() == expected_control_height
+        assert panel._generate_charset_btn.height() == expected_control_height
+        assert panel._locale_combo.height() == expected_control_height
+        assert panel._add_locale_btn.height() == expected_control_height
+        assert panel._add_key_btn.height() == expected_control_height
+        assert panel._clean_unused_string_btn.height() == expected_control_height
+        panel.deleteLater()
+
+    def test_resource_panel_shell_control_height_follows_runtime_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.resource_panel as resource_panel_module
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        control_tokens = dict(resource_panel_module.app_theme_tokens())
+        control_tokens["h_tab_min"] = 28
+        control_tokens["space_3xs"] = 3
+        monkeypatch.setattr(resource_panel_module, "app_theme_tokens", lambda *args, **kwargs: control_tokens)
+
+        panel = ResourcePanel()
+
+        assert panel._resource_action_buttons["image"]["import"].height() == 25
+        assert panel._resource_search_inputs["image"].height() == 25
+        assert panel._locale_combo.height() == 25
         panel.deleteLater()
 
     def test_header_exposes_workspace_and_metric_metadata(self, qapp, tmp_path):

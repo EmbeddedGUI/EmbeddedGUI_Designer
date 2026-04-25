@@ -73,7 +73,6 @@ EGUI_RESOURCE_MIME = "application/x-egui-resource"
 
 # Regex for validating English-only filenames
 _VALID_FILENAME_RE = re.compile(r'^[A-Za-z0-9_\-]+\.[A-Za-z0-9]+$')
-_RESOURCE_PANEL_CONTROL_HEIGHT = 22
 _RESOURCE_DIALOG_SHELL_MARGINS = (12, 12, 12, 12)
 _RESOURCE_DIALOG_SHELL_SPACING = 6
 _RESOURCE_DIALOG_CONTENT_SPACING = 6
@@ -95,9 +94,15 @@ def _file_size_str(path):
         return f"{size / (1024 * 1024):.2f} MB"
 
 
-def _set_compact_control_height(widget, *, height=_RESOURCE_PANEL_CONTROL_HEIGHT):
+def _resource_panel_control_height() -> int:
+    tokens = app_theme_tokens()
+    return max(int(tokens.get("h_tab_min", 24)) - int(tokens.get("space_3xs", 2)), 1)
+
+
+def _set_compact_control_height(widget, *, height=None):
     if widget is not None:
-        widget.setFixedHeight(height)
+        resolved_height = _resource_panel_control_height() if height is None else max(int(height), 1)
+        widget.setFixedHeight(resolved_height)
     return widget
 
 
