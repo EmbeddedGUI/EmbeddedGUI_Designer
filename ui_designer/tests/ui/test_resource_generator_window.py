@@ -1479,12 +1479,63 @@ class TestResourceGeneratorWindow:
         assert {card.title() for card in cards} == {"Images: hero", "Fonts: display", "MP4: intro"}
         assert all(_layout_margins_tuple(card.layout()) == (6, 6, 6, 6) for card in cards)
         assert all(card.layout().spacing() == 4 for card in cards)
+        preview_labels = dialog.findChildren(QLabel, "quick_preview_preview")
+        assert len(preview_labels) == 3
+        assert all(
+            label.minimumHeight() == window._quick_preview_card_preview_minimum_height_target(label)
+            for label in preview_labels
+        )
         meta_labels = dialog.findChildren(QLabel, "quick_preview_meta")
         assert any("Image Size: 12 x 8" in label.text() for label in meta_labels)
         assert any("Preview Source: fonts/display.txt" in label.text() for label in meta_labels)
         assert any("Video: 24fps 320x180" in label.text() for label in meta_labels)
         dialog.close()
         _close_window(window)
+
+    @_skip_no_qt
+    def test_quick_preview_card_height_follows_runtime_tokens(self, qapp, monkeypatch):
+        from PyQt5.QtGui import QPixmap
+
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        try:
+            monkeypatch.setattr(
+                window,
+                "_asset_preview_payload",
+                lambda section, index, entry: {
+                    "title": "Images: hero",
+                    "meta_text": "Image Size: 12 x 8",
+                    "pixmap": QPixmap(),
+                    "preview_text": "Preview text",
+                },
+            )
+            baseline_card = window._build_quick_preview_card("img", 0, {"name": "hero"})
+            baseline_preview = baseline_card.findChild(QLabel, "quick_preview_preview")
+            assert baseline_preview is not None
+            baseline_height = baseline_preview.minimumHeight()
+
+            preview_tokens = dict(resource_generator_window_module.app_theme_tokens())
+            preview_tokens["fs_caption"] = 12
+            preview_tokens["space_xxs"] = 5
+            preview_tokens["space_sm"] = 10
+            preview_tokens["space_md"] = 16
+            monkeypatch.setattr(
+                resource_generator_window_module,
+                "app_theme_tokens",
+                lambda *args, **kwargs: preview_tokens,
+            )
+
+            card = window._build_quick_preview_card("img", 0, {"name": "hero"})
+            preview_label = card.findChild(QLabel, "quick_preview_preview")
+            assert preview_label is not None
+            assert preview_label.minimumHeight() == window._quick_preview_card_preview_minimum_height_target(
+                preview_label
+            )
+            assert preview_label.minimumHeight() > baseline_height
+        finally:
+            _close_window(window)
 
     @_skip_no_qt
     def test_quick_preview_board_palette_uses_active_theme_tokens(self, qapp):

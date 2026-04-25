@@ -4361,18 +4361,33 @@ class ResourceGeneratorWindow(QDialog):
         layout.setSpacing(4)
 
         preview_label = QLabel("")
+        preview_label.setObjectName("quick_preview_preview")
         preview_label.setAlignment(Qt.AlignCenter)
-        preview_label.setMinimumHeight(150)
+        preview_label.setFont(_quick_preview_board_font("preview"))
         preview_label.setWordWrap(True)
-        self._apply_preview_payload(preview_label, payload, max_width=260, max_height=150)
+        preview_height = self._quick_preview_card_preview_minimum_height_target(preview_label)
+        preview_label.setMinimumHeight(preview_height)
+        self._apply_preview_payload(preview_label, payload, max_width=260, max_height=preview_height)
         layout.addWidget(preview_label)
 
         meta_label = QLabel(payload["meta_text"])
         meta_label.setObjectName("quick_preview_meta")
+        meta_label.setFont(_quick_preview_board_font("meta"))
         meta_label.setWordWrap(True)
         meta_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout.addWidget(meta_label)
         return card
+
+    def _quick_preview_card_preview_minimum_height_target(self, label: QLabel) -> int:
+        tokens = app_theme_tokens(QApplication.instance())
+        preview_font_size = int(_quick_preview_board_font_sizes().get("preview", tokens.get("fs_caption", 10)))
+        line_height = max(
+            int(label.fontMetrics().lineSpacing() or 0),
+            preview_font_size + int(tokens.get("space_xxs", 4)),
+            1,
+        )
+        chrome = int(tokens.get("space_md", 12)) + int(tokens.get("space_sm", 8))
+        return max((line_height * 9) + chrome, 1)
 
     def _paint_quick_preview_card(
         self,
