@@ -55,6 +55,13 @@ _PROPERTY_PANEL_SPIN_ICON_SIZE = 7
 _PROPERTY_PANEL_SPIN_LAYOUT_SPACING = 2
 _PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN = 2
 _PROPERTY_PANEL_SPIN_LAYOUT_VERTICAL_MARGIN = 3
+# Native Qt spin fields need extra text padding so the value stays clear of the custom arrow column.
+_PROPERTY_PANEL_SPIN_FIELD_LEFT_PADDING = _PROPERTY_PANEL_SPIN_LAYOUT_VERTICAL_MARGIN * 2
+_PROPERTY_PANEL_SPIN_FIELD_RIGHT_PADDING = (
+    (_PROPERTY_PANEL_SPIN_BUTTON_WIDTH * 2)
+    + (_PROPERTY_PANEL_SPIN_LAYOUT_SPACING * 4)
+    + (_PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN * 2)
+)
 _PROPERTY_PANEL_SPIN_BUTTON_QSS = (
     f"min-width: {_PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;"
     f"max-width: {_PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;"
@@ -1071,7 +1078,7 @@ QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBo
 QSpinBox[propertyPanelSpin="true"], QDoubleSpinBox[propertyPanelSpin="true"] {{
     border-radius: {t['r_sm']}px;
     min-height: {t['h_tab_min']}px;
-    padding: 0px 52px 0px 6px;
+    padding: 0px {_PROPERTY_PANEL_SPIN_FIELD_RIGHT_PADDING}px 0px {_PROPERTY_PANEL_SPIN_FIELD_LEFT_PADDING}px;
 }}
 
 QSpinBox[propertyPanelSpin="true"]::up-button, QSpinBox[propertyPanelSpin="true"]::down-button,

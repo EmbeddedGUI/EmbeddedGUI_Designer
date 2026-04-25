@@ -1552,6 +1552,10 @@ def test_property_panel_spin_arrow_qss_tracks_compact_icon_size():
         f"{theme_module._PROPERTY_PANEL_SPIN_LAYOUT_SPACING}px 0px;"
     ) in spin_down
     assert f"min-height: {tokens['h_tab_min']}px;" in spin_field
+    assert (
+        f"padding: 0px {theme_module._PROPERTY_PANEL_SPIN_FIELD_RIGHT_PADDING}px "
+        f"0px {theme_module._PROPERTY_PANEL_SPIN_FIELD_LEFT_PADDING}px;"
+    ) in spin_field
     assert f"width: {theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE}px;" in spin_arrow
     assert f"height: {theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE}px;" in spin_arrow
 
