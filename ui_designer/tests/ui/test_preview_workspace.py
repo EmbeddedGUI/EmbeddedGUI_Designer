@@ -81,6 +81,8 @@ class TestPreviewPanelFallback:
         assert panel._btn_zoom_out.height() == expected_button_size
         assert panel._btn_zoom_in.width() == expected_button_size
         assert panel._btn_zoom_in.height() == expected_button_size
+        assert panel.status_label.minimumWidth() == panel._preview_status_label_target_width()
+        assert panel._status_label.minimumWidth() == panel._pointer_status_label_target_width()
         assert panel._zoom_label.width() == panel._zoom_label_target_width()
         assert panel._zoom_label.minimumWidth() == panel._zoom_label_target_width()
         assert panel._zoom_label.maximumWidth() == panel._zoom_label_target_width()
@@ -99,6 +101,36 @@ class TestPreviewPanelFallback:
         assert panel._zoom_label.minimumWidth() == panel._zoom_label_target_width()
         assert panel._zoom_label.maximumWidth() == panel._zoom_label_target_width()
         assert panel._zoom_label.width() > initial_width
+        _dispose_widget(panel)
+
+    def test_preview_status_labels_track_runtime_text_metrics(self, qapp):
+        from PyQt5.QtGui import QImage
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+        initial_status_width = panel.status_label.minimumWidth()
+        initial_pointer_width = panel._status_label.minimumWidth()
+        widget = WidgetModel(
+            "label",
+            name="runtime_status_probe_widget_with_extended_name",
+            x=12,
+            y=18,
+            width=240,
+            height=48,
+        )
+
+        panel.show_image_preview(
+            QImage(1, 1, QImage.Format_ARGB32),
+            reason="fallback renderer unavailable for oversized resource payload",
+            label_prefix="Python fallback",
+        )
+        panel._update_status_label(1234, 5678, widget)
+
+        assert panel.status_label.minimumWidth() == panel._preview_status_label_target_width()
+        assert panel._status_label.minimumWidth() == panel._pointer_status_label_target_width()
+        assert panel.status_label.minimumWidth() > initial_status_width
+        assert panel._status_label.minimumWidth() > initial_pointer_width
         _dispose_widget(panel)
 
     def test_preview_panel_exposes_initial_accessibility_metadata(self, qapp):

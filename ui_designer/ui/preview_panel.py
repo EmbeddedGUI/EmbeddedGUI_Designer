@@ -2136,12 +2136,10 @@ class PreviewPanel(QWidget):
         self.status_label = QLabel("Preview - waiting for exe...")
         self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_label.setObjectName("preview_status_value")
-        self.status_label.setMinimumWidth(220)
         sbl.addWidget(self.status_label)
 
         self._status_label = QLabel("")
         self._status_label.setObjectName("preview_status_value")
-        self._status_label.setMinimumWidth(200)
         sbl.addWidget(self._status_label)
 
         sbl.addStretch()
@@ -2164,6 +2162,7 @@ class PreviewPanel(QWidget):
         sbl.addWidget(self._btn_zoom_out)
         sbl.addWidget(self._zoom_label)
         sbl.addWidget(self._btn_zoom_in)
+        self._sync_status_text_widths()
 
         self._main_layout.addWidget(self._status_bar)
 
@@ -2449,7 +2448,56 @@ class PreviewPanel(QWidget):
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() in (QEvent.StyleChange, QEvent.FontChange, QEvent.PaletteChange):
+            self._sync_status_text_widths()
             self._sync_zoom_label_width()
+
+    def _status_text_min_width(self, label, samples) -> int:
+        tokens = app_theme_tokens()
+        horizontal_padding = max(int(tokens.get("space_md", 12)), 0)
+        try:
+            metrics = QFontMetrics(label.font())
+            widest = max(metrics.horizontalAdvance(sample) for sample in samples if str(sample or "").strip())
+            return max(widest + horizontal_padding, 1)
+        except Exception:
+            return max(int(tokens.get("h_tab_min", 24)) * 4, 1)
+
+    def _preview_status_label_target_width(self) -> int:
+        return self._status_text_min_width(
+            self.status_label,
+            (
+                str(self.status_label.text() or "").strip() or "Preview - waiting for exe...",
+                "Preview - waiting for exe...",
+                "Preview - Python fallback (fallback)",
+                "Preview - headless rendering",
+            ),
+        )
+
+    def _pointer_status_label_target_width(self) -> int:
+        return self._status_text_min_width(
+            self._status_label,
+            (
+                str(self._status_label.text() or "").strip() or "Pointer idle",
+                "Pointer idle",
+            ),
+        )
+
+    def _sync_status_text_widths(self):
+        preview_status_width = self._preview_status_label_target_width()
+        if self.status_label.minimumWidth() != preview_status_width:
+            self.status_label.setMinimumWidth(preview_status_width)
+        pointer_status_width = self._pointer_status_label_target_width()
+        if self._status_label.minimumWidth() != pointer_status_width:
+            self._status_label.setMinimumWidth(pointer_status_width)
+
+    def _set_preview_status_text(self, text):
+        if self.status_label.text() != text:
+            self.status_label.setText(text)
+        self._sync_status_text_widths()
+
+    def _set_pointer_status_text(self, text):
+        if self._status_label.text() != text:
+            self._status_label.setText(text)
+        self._sync_status_text_widths()
 
     def _zoom_label_target_width(self) -> int:
         zoom_min_pct = int(self.overlay._zoom_min * 100)
@@ -2494,8 +2542,7 @@ class PreviewPanel(QWidget):
             self._last_pointer_status_ts = -1.0
 
         if x < 0 or y < 0:
-            if self._status_label.text() != "Pointer idle":
-                self._status_label.setText("Pointer idle")
+            self._set_pointer_status_text("Pointer idle")
             self._update_accessibility_summary()
             return
 
@@ -2506,8 +2553,7 @@ class PreviewPanel(QWidget):
             # Just show mouse position
             text = f"({x}, {y})"
 
-        if self._status_label.text() != text:
-            self._status_label.setText(text)
+        self._set_pointer_status_text(text)
         if not (self.overlay._dragging or self.overlay._resizing or self.overlay._rubber_band):
             self._update_accessibility_summary()
 
@@ -2581,7 +2627,7 @@ class PreviewPanel(QWidget):
         self._runtime_error_emitted = False
         self._render_timer.start(33)  # ~30fps
         self._embedded = True
-        self.status_label.setText("Preview - headless rendering")
+        self._set_preview_status_text("Preview - headless rendering")
         self._update_accessibility_summary()
 
     def stop_rendering(self):
@@ -2603,7 +2649,7 @@ class PreviewPanel(QWidget):
 
         if page is None:
             self._preview_label.clear()
-            self.status_label.setText("Preview - Python fallback")
+            self._set_preview_status_text("Preview - Python fallback")
             self._update_accessibility_summary()
             return
 
@@ -2619,15 +2665,15 @@ class PreviewPanel(QWidget):
 
         if qimage is None or qimage.isNull():
             self._preview_label.clear()
-            self.status_label.setText(f"Preview - {label_prefix}")
+            self._set_preview_status_text(f"Preview - {label_prefix}")
             self._update_accessibility_summary()
             return
 
         self._set_preview_pixmap(QPixmap.fromImage(qimage))
         if reason:
-            self.status_label.setText(f"Preview - {label_prefix} ({reason})")
+            self._set_preview_status_text(f"Preview - {label_prefix} ({reason})")
         else:
-            self.status_label.setText(f"Preview - {label_prefix}")
+            self._set_preview_status_text(f"Preview - {label_prefix}")
         self._update_accessibility_summary()
 
     def clear_python_preview_mode(self):
