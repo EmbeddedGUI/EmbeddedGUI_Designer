@@ -853,6 +853,10 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert f"color: {t['accent_hover']};" in property_grid_section_text_expanded
         assert "background-color: transparent;" in property_grid_section_indicator_button
         assert "border: none;" in property_grid_section_indicator_button
+        assert f"min-width: {t['icon_xs']}px;" in property_grid_section_indicator_button
+        assert f"min-height: {t['icon_xs']}px;" in property_grid_section_indicator_button
+        assert f"max-width: {t['icon_xs']}px;" in property_grid_section_indicator_button
+        assert f"max-height: {t['icon_xs']}px;" in property_grid_section_indicator_button
         assert f"color: {t['text_soft']};" in property_grid_section_indicator
         assert f"color: {t['accent_hover']};" in property_grid_section_indicator_expanded
         assert f"color: {t['text']};" in property_grid_section_indicator_hover

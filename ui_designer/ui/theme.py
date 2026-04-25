@@ -1487,10 +1487,10 @@ QToolButton#property_grid_section_indicator {{
     background-color: transparent;
     border: none;
     padding: 0px;
-    min-width: 12px;
-    min-height: 12px;
-    max-width: 12px;
-    max-height: 12px;
+    min-width: {t['icon_xs']}px;
+    min-height: {t['icon_xs']}px;
+    max-width: {t['icon_xs']}px;
+    max-height: {t['icon_xs']}px;
 }}
 
 QToolButton#property_grid_section_indicator::menu-indicator {{
