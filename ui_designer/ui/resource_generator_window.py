@@ -498,7 +498,6 @@ class _QuickImageCropDialog(QDialog):
     def __init__(self, *, width: int, height: int, output_filename: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Crop Image")
-        self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -536,6 +535,20 @@ class _QuickImageCropDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=16)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def x_value(self) -> int:
         return int(self._x_spin.value())
@@ -557,7 +570,6 @@ class _QuickImageBorderDialog(QDialog):
     def __init__(self, *, output_filename: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Add Border")
-        self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -585,6 +597,20 @@ class _QuickImageBorderDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=16)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def border_size(self) -> int:
         return int(self._border_spin.value())
@@ -600,7 +626,6 @@ class _QuickImageBackgroundDialog(QDialog):
     def __init__(self, *, output_filename: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Add Background")
-        self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -623,6 +648,20 @@ class _QuickImageBackgroundDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=16)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def color_value(self) -> str:
         return str(self._color_edit.text() or "").strip()
@@ -635,7 +674,6 @@ class _QuickImageRoundCornersDialog(QDialog):
     def __init__(self, *, width: int, height: int, output_filename: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Round Corners")
-        self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -660,6 +698,20 @@ class _QuickImageRoundCornersDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=16)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def radius_value(self) -> int:
         return int(self._radius_spin.value())
@@ -672,7 +724,6 @@ class _QuickImageOpacityDialog(QDialog):
     def __init__(self, *, output_filename: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Adjust Opacity")
-        self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -697,6 +748,20 @@ class _QuickImageOpacityDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=16)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def opacity_percent(self) -> int:
         return int(self._opacity_spin.value())
@@ -709,7 +774,6 @@ class _QuickThumbnailBatchDialog(QDialog):
     def __init__(self, *, width: int, height: int, output_folder: str, suffix: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Generate Thumbnails")
-        self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -742,6 +806,20 @@ class _QuickThumbnailBatchDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=16)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def width_value(self) -> int:
         return int(self._width_spin.value())
@@ -760,7 +838,6 @@ class _QuickImageNormalizeDialog(QDialog):
     def __init__(self, *, output_folder: str, suffix: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Normalize Images")
-        self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -783,6 +860,20 @@ class _QuickImageNormalizeDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=16)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def output_folder(self) -> str:
         return str(self._folder_edit.text() or "").strip()
@@ -795,7 +886,6 @@ class _QuickImageCompressDialog(QDialog):
     def __init__(self, *, output_folder: str, suffix: str, colors: int, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Compress Images")
-        self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
         _apply_compact_dialog_layout(layout)
@@ -823,6 +913,20 @@ class _QuickImageCompressDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._sync_minimum_width()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_minimum_width()
+
+    def _minimum_width_target(self) -> int:
+        return _compact_dialog_minimum_width_target(self, floor_space_units=16)
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        if self.minimumWidth() != target_width:
+            self.setMinimumWidth(target_width)
 
     def output_folder(self) -> str:
         return str(self._folder_edit.text() or "").strip()

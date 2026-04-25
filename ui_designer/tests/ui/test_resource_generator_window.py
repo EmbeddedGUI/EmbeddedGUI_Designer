@@ -3021,6 +3021,66 @@ class TestResourceGeneratorWindow:
     @pytest.mark.parametrize(
         ("dialog_name", "kwargs"),
         [
+            ("_QuickImageCropDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageBorderDialog", {"output_filename": "hero.png"}),
+            ("_QuickImageBackgroundDialog", {"output_filename": "hero.png"}),
+            ("_QuickImageRoundCornersDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageOpacityDialog", {"output_filename": "hero.png"}),
+            ("_QuickThumbnailBatchDialog", {"width": 320, "height": 240, "output_folder": "thumbnails", "suffix": "_thumb"}),
+            ("_QuickImageNormalizeDialog", {"output_folder": "normalized", "suffix": "_normalized"}),
+            ("_QuickImageCompressDialog", {"output_folder": "compressed", "suffix": "_compressed", "colors": 64}),
+        ],
+    )
+    def test_quick_resource_dialog_widths_follow_runtime_metrics(self, qapp, dialog_name, kwargs):
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+
+        dialog_cls = getattr(resource_generator_window_module, dialog_name)
+        dialog = dialog_cls(parent=None, **kwargs)
+        try:
+            assert dialog.minimumWidth() == dialog._minimum_width_target()
+        finally:
+            dialog.close()
+
+    @_skip_no_qt
+    @pytest.mark.parametrize(
+        ("dialog_name", "kwargs"),
+        [
+            ("_QuickImageCropDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageBorderDialog", {"output_filename": "hero.png"}),
+            ("_QuickImageBackgroundDialog", {"output_filename": "hero.png"}),
+            ("_QuickImageRoundCornersDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
+            ("_QuickImageOpacityDialog", {"output_filename": "hero.png"}),
+            ("_QuickThumbnailBatchDialog", {"width": 320, "height": 240, "output_folder": "thumbnails", "suffix": "_thumb"}),
+            ("_QuickImageNormalizeDialog", {"output_folder": "normalized", "suffix": "_normalized"}),
+            ("_QuickImageCompressDialog", {"output_folder": "compressed", "suffix": "_compressed", "colors": 64}),
+        ],
+    )
+    def test_quick_resource_dialog_widths_resync_on_font_change(self, qapp, monkeypatch, dialog_name, kwargs):
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+
+        dialog_cls = getattr(resource_generator_window_module, dialog_name)
+        dialog = dialog_cls(parent=None, **kwargs)
+        try:
+            baseline_width = dialog.minimumWidth()
+            compact_tokens = dict(resource_generator_window_module.app_theme_tokens())
+            compact_tokens["space_2xl"] = 48
+            monkeypatch.setattr(
+                resource_generator_window_module,
+                "app_theme_tokens",
+                lambda *args, **kwargs: compact_tokens,
+            )
+
+            dialog.changeEvent(QEvent(QEvent.FontChange))
+
+            assert dialog.minimumWidth() == dialog._minimum_width_target()
+            assert dialog.minimumWidth() > baseline_width
+        finally:
+            dialog.close()
+
+    @_skip_no_qt
+    @pytest.mark.parametrize(
+        ("dialog_name", "kwargs"),
+        [
             ("_QuickImageResizeDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
             ("_QuickImageRotateDialog", {"width": 320, "height": 240, "output_filename": "hero.png"}),
             ("_QuickImageFlipDialog", {"output_filename": "hero.png"}),
