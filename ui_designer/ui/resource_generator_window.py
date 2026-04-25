@@ -1698,6 +1698,7 @@ class ResourceGeneratorWindow(QDialog):
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange, QEvent.FontChange}:
+            self._sync_simple_action_button_minimum_heights()
             self._sync_simple_preview_minimum_heights()
         if event.type() in {QEvent.StyleChange, QEvent.PaletteChange}:
             if self.isVisible() and not getattr(self, "_suppress_window_chrome_theme_changes", False):
@@ -1754,6 +1755,25 @@ class ResourceGeneratorWindow(QDialog):
 
     def _simple_mode_is_active(self) -> bool:
         return getattr(self, "_workspace_stack", None) is not None and self._workspace_stack.currentWidget() is self._simple_page
+
+    def _simple_action_button_minimum_height_target(self, button) -> int:
+        tokens = app_theme_tokens(QApplication.instance())
+        compact_height = int(tokens.get("h_tab_min", 24)) + (int(tokens.get("pad_btn_v", 2)) * 2)
+        content_height = int(button.fontMetrics().height() or 0) + int(tokens.get("space_md", 12))
+        return max(compact_height, content_height, 1)
+
+    def _sync_simple_action_button_minimum_heights(self):
+        action_tabs = getattr(self, "_simple_action_tabs", None)
+        if action_tabs is None:
+            return
+        for index in range(action_tabs.count()):
+            page = action_tabs.widget(index)
+            if page is None:
+                continue
+            for button in page.findChildren(QPushButton):
+                target_height = self._simple_action_button_minimum_height_target(button)
+                if button.minimumHeight() != target_height:
+                    button.setMinimumHeight(target_height)
 
     def _minimum_text_block_height(self, widget, *, visible_lines: int, chrome: int = 0) -> int:
         tokens = app_theme_tokens(QApplication.instance())
@@ -2144,6 +2164,7 @@ class ResourceGeneratorWindow(QDialog):
         self._simple_actions_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self._simple_actions_scroll.setWidget(self._simple_action_tabs)
         intro_layout.addWidget(self._simple_actions_scroll, 1)
+        self._sync_simple_action_button_minimum_heights()
 
         assets_group = QGroupBox("Assets")
         assets_layout = QVBoxLayout(assets_group)
@@ -2376,7 +2397,7 @@ class ResourceGeneratorWindow(QDialog):
         layout.setHorizontalSpacing(4)
         layout.setVerticalSpacing(4)
         for index, button in enumerate(buttons):
-            button.setMinimumHeight(30)
+            button.setMinimumHeight(self._simple_action_button_minimum_height_target(button))
             layout.addWidget(button, index // columns, index % columns)
         for column in range(columns):
             layout.setColumnStretch(column, 1)

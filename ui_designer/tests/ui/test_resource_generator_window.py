@@ -166,6 +166,54 @@ class TestResourceGeneratorWindow:
             _close_window(window)
 
     @_skip_no_qt
+    def test_simple_action_buttons_follow_runtime_metrics(self, qapp):
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        try:
+            assert window._import_assets_button.minimumHeight() == (
+                window._simple_action_button_minimum_height_target(window._import_assets_button)
+            )
+            assert window._generate_thumbnails_button.minimumHeight() == (
+                window._simple_action_button_minimum_height_target(window._generate_thumbnails_button)
+            )
+        finally:
+            _close_window(window)
+
+    @_skip_no_qt
+    def test_simple_action_buttons_resync_on_font_change(self, qapp, monkeypatch):
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        window = ResourceGeneratorWindow("")
+        try:
+            baseline_import_height = window._import_assets_button.minimumHeight()
+            baseline_thumbnail_height = window._generate_thumbnails_button.minimumHeight()
+
+            action_tokens = dict(resource_generator_window_module.app_theme_tokens())
+            action_tokens["h_tab_min"] = 28
+            action_tokens["pad_btn_v"] = 3
+            action_tokens["space_md"] = 16
+            monkeypatch.setattr(
+                resource_generator_window_module,
+                "app_theme_tokens",
+                lambda *args, **kwargs: action_tokens,
+            )
+
+            window.changeEvent(QEvent(QEvent.FontChange))
+
+            assert window._import_assets_button.minimumHeight() == (
+                window._simple_action_button_minimum_height_target(window._import_assets_button)
+            )
+            assert window._generate_thumbnails_button.minimumHeight() == (
+                window._simple_action_button_minimum_height_target(window._generate_thumbnails_button)
+            )
+            assert window._import_assets_button.minimumHeight() > baseline_import_height
+            assert window._generate_thumbnails_button.minimumHeight() > baseline_thumbnail_height
+        finally:
+            _close_window(window)
+
+    @_skip_no_qt
     def test_simple_preview_panel_heights_resync_on_font_change(self, qapp, monkeypatch):
         import ui_designer.ui.resource_generator_window as resource_generator_window_module
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
