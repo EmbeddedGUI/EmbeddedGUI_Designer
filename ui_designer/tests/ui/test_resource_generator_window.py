@@ -138,6 +138,21 @@ class TestResourceGeneratorWindow:
         _close_window(window)
 
     @_skip_no_qt
+    def test_simple_mode_action_tab_bar_height_follows_runtime_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.resource_generator_window as resource_generator_window_module
+        from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
+
+        tab_tokens = dict(resource_generator_window_module.app_theme_tokens())
+        tab_tokens["h_tab_min"] = 26
+        monkeypatch.setattr(resource_generator_window_module, "app_theme_tokens", lambda *args, **kwargs: tab_tokens)
+
+        window = ResourceGeneratorWindow("")
+
+        assert window._simple_action_tabs.tabBar().minimumHeight() == 26
+        assert window._simple_action_tabs.tabBar().maximumHeight() == 26
+        _close_window(window)
+
+    @_skip_no_qt
     def test_simple_mode_filter_counts_use_dense_ui_typography(self, qapp):
         from ui_designer.ui.resource_generator_window import ResourceGeneratorWindow
         from ui_designer.ui.theme import app_theme_tokens, designer_ui_font

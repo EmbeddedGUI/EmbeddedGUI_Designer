@@ -1970,7 +1970,7 @@ class ResourceGeneratorWindow(QDialog):
         tab_bar.setFont(tab_font)
         tab_bar.setExpanding(False)
         tab_bar.setUsesScrollButtons(False)
-        tab_bar.setFixedHeight(24)
+        tab_bar.setFixedHeight(max(int(simple_tab_tokens.get("h_tab_min", 24)), 1))
         self._simple_action_tabs.addTab(
             self._build_simple_action_tab(
                 "Start",
