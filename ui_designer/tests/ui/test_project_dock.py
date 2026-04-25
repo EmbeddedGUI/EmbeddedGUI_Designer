@@ -97,6 +97,7 @@ class TestProjectExplorerDock:
         assert dock._display_target_combo.count() == 1
         assert dock._display_target_combo.currentText() == "No project"
         assert dock._display_target_combo.isEnabled() is False
+        assert dock.minimumWidth() == dock._minimum_width_target()
         assert dock._title_label.accessibleName() == "Project panel title."
         assert dock._subtitle_label.accessibleName() == dock._subtitle_label.text()
         assert dock._subtitle_label.isHidden() is True
@@ -115,6 +116,26 @@ class TestProjectExplorerDock:
         assert dock._primary_metric_value.text() == "240 x 320"
         assert dock._display_detail_label.text() == "Primary display only."
         assert dock._status_label.accessibleName() == "Project explorer status: mode easy_page. Current page: main_page"
+        dock.deleteLater()
+
+    def test_minimum_width_follows_runtime_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.project_dock as project_dock_module
+        from ui_designer.ui.project_dock import ProjectExplorerDock
+
+        baseline_dock = ProjectExplorerDock()
+        baseline_width = baseline_dock.minimumWidth()
+        baseline_dock.deleteLater()
+
+        metric_tokens = dict(project_dock_module.app_theme_tokens())
+        metric_tokens["h_tab_min"] = 28
+        metric_tokens["space_md"] = 14
+        metric_tokens["space_xxs"] = 5
+        monkeypatch.setattr(project_dock_module, "app_theme_tokens", lambda *args, **kwargs: metric_tokens)
+
+        dock = ProjectExplorerDock()
+
+        assert dock.minimumWidth() == dock._minimum_width_target()
+        assert dock.minimumWidth() > baseline_width
         dock.deleteLater()
 
     def test_accessibility_summary_tracks_project_current_and_dirty_pages(self, qapp):

@@ -55,6 +55,37 @@ def _set_action_metadata(action, tooltip):
     action.setStatusTip(tooltip)
 
 
+def _combo_content_width(combo) -> int:
+    labels = [
+        str(combo.itemText(index) or "").strip()
+        for index in range(combo.count())
+    ]
+    labels = [label for label in labels if label]
+    if not labels:
+        labels = [str(combo.currentText() or "").strip() or "No project"]
+    tokens = app_theme_tokens()
+    horizontal_padding = (
+        int(tokens.get("space_sm", 8))
+        + int(tokens.get("icon_sm", 14))
+        + (int(tokens.get("pad_input_h", 6)) * 2)
+    )
+    try:
+        widest = max(combo.fontMetrics().horizontalAdvance(label) for label in labels)
+        return max(widest + horizontal_padding, 1)
+    except Exception:
+        return max(int(tokens.get("h_tab_min", 24)) * 4, 1)
+
+
+def _button_content_width(button) -> int:
+    tokens = app_theme_tokens()
+    horizontal_padding = int(tokens.get("space_md", 12)) + int(tokens.get("space_sm", 8))
+    try:
+        label_width = button.fontMetrics().horizontalAdvance(str(button.text() or "").strip())
+        return max(label_width + horizontal_padding, 1)
+    except Exception:
+        return max(int(tokens.get("h_tab_min", 24)) * 3, 1)
+
+
 class ProjectExplorerDock(QDockWidget):
     """Dock widget showing project pages and resources.
 
@@ -79,7 +110,6 @@ class ProjectExplorerDock(QDockWidget):
     def __init__(self, parent=None):
         super().__init__("Project Explorer", parent)
         self.setAllowedAreas(Qt.AllDockWidgetAreas)
-        self.setMinimumWidth(172)
 
         self._project = None
         self._current_page_name = None
@@ -103,8 +133,10 @@ class ProjectExplorerDock(QDockWidget):
         if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
             self._apply_page_tree_font(compact=self._compact_mode)
             self.refresh_tree_typography()
+            self._sync_minimum_width()
         elif event.type() == QEvent.FontChange:
             self.refresh_tree_typography()
+            self._sync_minimum_width()
 
     def _init_ui(self):
         container = QWidget()
@@ -254,6 +286,35 @@ class ProjectExplorerDock(QDockWidget):
 
         self.setWidget(container)
         self._update_accessibility_summary()
+
+    def _minimum_width_target(self) -> int:
+        tokens = app_theme_tokens()
+        row_spacing = 2
+        row_widths = [
+            self._mode_label.fontMetrics().horizontalAdvance(self._mode_label.text())
+            + row_spacing
+            + _combo_content_width(self._mode_combo),
+            self._display_target_label.fontMetrics().horizontalAdvance(self._display_target_label.text())
+            + row_spacing
+            + _combo_content_width(self._display_target_combo),
+            _button_content_width(self._add_page_button),
+        ]
+        token_floor = (int(tokens.get("h_tab_min", 24)) * 7) + int(tokens.get("space_xxs", 4))
+        token_ceiling = (int(tokens.get("h_tab_min", 24)) * 10) + int(tokens.get("space_md", 12))
+        return min(max(*row_widths, token_floor, 1), max(token_ceiling, token_floor, 1))
+
+    def _sync_minimum_width(self):
+        target_width = self._minimum_width_target()
+        current_width = self.minimumWidth()
+        managed_width = int(getattr(self, "_managed_minimum_width", 0) or 0)
+        if current_width > managed_width:
+            self._managed_minimum_width = target_width
+            return
+        if current_width == target_width:
+            self._managed_minimum_width = target_width
+            return
+        self.setMinimumWidth(target_width)
+        self._managed_minimum_width = target_width
 
     def _project_displays(self):
         if not self._project:
@@ -440,6 +501,7 @@ class ProjectExplorerDock(QDockWidget):
             tooltip=status_summary,
             accessible_name=status_summary,
         )
+        self._sync_minimum_width()
 
     def _apply_page_item_metadata(self, item, page_name):
         item.setText(0, self._page_item_text(page_name))
