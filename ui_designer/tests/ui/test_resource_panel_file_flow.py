@@ -2581,6 +2581,7 @@ class TestResourcePanelFileFlow:
         assert filter_layout.spacing() == 6
         assert impact_layout.spacing() == 6
         assert usage_layout.spacing() == 6
+        assert dialog._impact_table.minimumHeight() == dialog._impact_table_minimum_height_target()
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Replace Missing Resources: 2 visible rename impacts. 2 visible usages shown. "
             "Current page only: off. Current rename: missing_a.png -> renamed_a.png. "
@@ -2646,6 +2647,41 @@ class TestResourcePanelFileFlow:
         assert dialog._filter_metric_value._resource_dialog_metric_card.accessibleName() == (
             "Page Filter metric: Current page only."
         )
+        dialog.deleteLater()
+
+    def test_batch_replace_impact_table_minimum_height_follows_runtime_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.resource_panel as resource_panel_module
+        from ui_designer.ui.resource_panel import _BatchReplaceImpactDialog
+
+        baseline_dialog = _BatchReplaceImpactDialog(
+            None,
+            "Replace Missing Resources",
+            "image",
+            [],
+            0,
+            "Replace",
+        )
+        baseline_height = baseline_dialog._impact_table.minimumHeight()
+        baseline_dialog.deleteLater()
+
+        table_tokens = dict(resource_panel_module.app_theme_tokens())
+        table_tokens["h_tab_min"] = 28
+        table_tokens["space_xxs"] = 5
+        table_tokens["space_sm"] = 10
+        table_tokens["fs_caption"] = 12
+        monkeypatch.setattr(resource_panel_module, "app_theme_tokens", lambda *args, **kwargs: table_tokens)
+
+        dialog = _BatchReplaceImpactDialog(
+            None,
+            "Replace Missing Resources",
+            "image",
+            [],
+            0,
+            "Replace",
+        )
+
+        assert dialog._impact_table.minimumHeight() == dialog._impact_table_minimum_height_target()
+        assert dialog._impact_table.minimumHeight() > baseline_height
         dialog.deleteLater()
 
     def test_batch_replace_impact_dialog_can_filter_to_current_page(self, qapp):

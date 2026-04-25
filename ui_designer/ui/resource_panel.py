@@ -1766,7 +1766,6 @@ class _BatchReplaceImpactDialog(QDialog):
         self._impact_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._impact_table.setSelectionMode(QAbstractItemView.SingleSelection)
         self._impact_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self._impact_table.setMinimumHeight(160)
         self._impact_table.itemSelectionChanged.connect(self._refresh_usage_view)
         impact_layout.addWidget(self._impact_table, 1)
         layout.addWidget(impact_card, 1)
@@ -1812,7 +1811,39 @@ class _BatchReplaceImpactDialog(QDialog):
         layout.addWidget(buttons)
 
         self._metrics_frame.hide()
+        self._sync_impact_table_minimum_height()
         self._refresh_impact_view()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange):
+            self._sync_impact_table_minimum_height()
+
+    def _impact_table_minimum_height_target(self) -> int:
+        tokens = app_theme_tokens(QApplication.instance())
+        header = self._impact_table.horizontalHeader()
+        vertical = self._impact_table.verticalHeader()
+        header_height = max(
+            int(header.height() or 0),
+            int(header.sizeHint().height() or 0),
+            int(tokens.get("fs_caption", 11)) + (int(tokens.get("space_sm", 8)) * 2),
+            1,
+        )
+        row_height = max(
+            int(vertical.defaultSectionSize() or 0),
+            int(tokens.get("h_tab_min", 24)) + int(tokens.get("space_xxs", 4)),
+            1,
+        )
+        visible_rows = 4
+        frame = int(self._impact_table.frameWidth() or 0) * 2
+        breathing_room = int(tokens.get("space_sm", 8))
+        return max(header_height + (row_height * visible_rows) + frame + breathing_room, 1)
+
+    def _sync_impact_table_minimum_height(self):
+        target_height = self._impact_table_minimum_height_target()
+        if self._impact_table.minimumHeight() == target_height:
+            return
+        self._impact_table.setMinimumHeight(target_height)
 
     def selected_usage(self):
         return self._selected_usage
