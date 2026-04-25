@@ -378,10 +378,10 @@ def _icon_scale_tokens() -> dict:
 
     tokens = theme_tokens("dark")
     return {
-        "xs": max(int(tokens.get("icon_xs", 12)), 1),
-        "sm": max(int(tokens.get("icon_sm", 14)), 1),
-        "md": max(int(tokens.get("icon_md", 16)), 1),
-        "lg": max(int(tokens.get("icon_lg", 18)), 1),
+        "xs": max(int(tokens.get("icon_xs", 14)), 1),
+        "sm": max(int(tokens.get("icon_sm", 16)), 1),
+        "md": max(int(tokens.get("icon_md", 18)), 1),
+        "lg": max(int(tokens.get("icon_lg", 20)), 1),
     }
 
 
