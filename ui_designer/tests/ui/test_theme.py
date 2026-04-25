@@ -1542,6 +1542,8 @@ def test_property_panel_spin_arrow_qss_tracks_compact_icon_size():
         1,
     )[1].split("}", 1)[0]
 
+    assert theme_module._PROPERTY_PANEL_SPIN_BUTTON_WIDTH == tokens["h_tab_min"] - tokens["space_xxs"]
+    assert theme_module._PROPERTY_PANEL_SPIN_BUTTON_HEIGHT == theme_module._PROPERTY_PANEL_SPIN_BUTTON_WIDTH
     assert f"width: {theme_module._PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;" in spin_button
     assert f"min-height: {theme_module._PROPERTY_PANEL_SPIN_BUTTON_HEIGHT}px;" in theme_module._PROPERTY_PANEL_SPIN_BUTTON_QSS
     assert f"max-height: {theme_module._PROPERTY_PANEL_SPIN_BUTTON_HEIGHT}px;" in theme_module._PROPERTY_PANEL_SPIN_BUTTON_QSS

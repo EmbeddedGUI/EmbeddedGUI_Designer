@@ -49,28 +49,6 @@ except ImportError:
 _ENGINEERING_RADIUS_SM = 4
 _ENGINEERING_RADIUS_MD = 6
 _FLUENT_STYLE_MARKER = "_designer_fluent_engineering_style"
-_PROPERTY_PANEL_SPIN_BUTTON_WIDTH = 20
-_PROPERTY_PANEL_SPIN_BUTTON_HEIGHT = _PROPERTY_PANEL_SPIN_BUTTON_WIDTH
-_PROPERTY_PANEL_SPIN_ICON_SIZE = 7
-_PROPERTY_PANEL_SPIN_LAYOUT_SPACING = 2
-_PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN = 2
-_PROPERTY_PANEL_SPIN_LAYOUT_VERTICAL_MARGIN = 3
-# Native Qt spin fields need extra text padding so the value stays clear of the custom arrow column.
-_PROPERTY_PANEL_SPIN_FIELD_LEFT_PADDING = _PROPERTY_PANEL_SPIN_LAYOUT_VERTICAL_MARGIN * 2
-_PROPERTY_PANEL_SPIN_FIELD_RIGHT_PADDING = (
-    (_PROPERTY_PANEL_SPIN_BUTTON_WIDTH * 2)
-    + (_PROPERTY_PANEL_SPIN_LAYOUT_SPACING * 4)
-    + (_PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN * 2)
-)
-_PROPERTY_PANEL_SPIN_BUTTON_QSS = (
-    f"min-width: {_PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;"
-    f"max-width: {_PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;"
-    f"min-height: {_PROPERTY_PANEL_SPIN_BUTTON_HEIGHT}px;"
-    f"max-height: {_PROPERTY_PANEL_SPIN_BUTTON_HEIGHT}px;"
-    "padding: 0px;"
-    "margin: 0px;"
-    "border-radius: 0px;"
-)
 _ENGINEERING_FS_BODY_SENTINEL = "__FS_BODY__"
 _ENGINEERING_RADIUS_SM_SENTINEL = "__R_SM__"
 _ENGINEERING_INPUT_PAD_H_SENTINEL = "__PAD_INPUT_H__"
@@ -390,6 +368,35 @@ _FONT_SIZE_KEYS = (
     "fs_body_sm",
     "fs_caption",
     "fs_micro",
+)
+
+
+def _engineering_property_panel_spin_button_width() -> int:
+    tokens = _TOKENS["dark"]
+    return max(int(tokens["h_tab_min"]) - int(tokens["space_xxs"]), 1)
+
+
+_PROPERTY_PANEL_SPIN_BUTTON_WIDTH = _engineering_property_panel_spin_button_width()
+_PROPERTY_PANEL_SPIN_BUTTON_HEIGHT = _PROPERTY_PANEL_SPIN_BUTTON_WIDTH
+_PROPERTY_PANEL_SPIN_ICON_SIZE = 7
+_PROPERTY_PANEL_SPIN_LAYOUT_SPACING = 2
+_PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN = 2
+_PROPERTY_PANEL_SPIN_LAYOUT_VERTICAL_MARGIN = 3
+# Native Qt spin fields need extra text padding so the value stays clear of the custom arrow column.
+_PROPERTY_PANEL_SPIN_FIELD_LEFT_PADDING = _PROPERTY_PANEL_SPIN_LAYOUT_VERTICAL_MARGIN * 2
+_PROPERTY_PANEL_SPIN_FIELD_RIGHT_PADDING = (
+    (_PROPERTY_PANEL_SPIN_BUTTON_WIDTH * 2)
+    + (_PROPERTY_PANEL_SPIN_LAYOUT_SPACING * 4)
+    + (_PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN * 2)
+)
+_PROPERTY_PANEL_SPIN_BUTTON_QSS = (
+    f"min-width: {_PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;"
+    f"max-width: {_PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;"
+    f"min-height: {_PROPERTY_PANEL_SPIN_BUTTON_HEIGHT}px;"
+    f"max-height: {_PROPERTY_PANEL_SPIN_BUTTON_HEIGHT}px;"
+    "padding: 0px;"
+    "margin: 0px;"
+    "border-radius: 0px;"
 )
 
 
