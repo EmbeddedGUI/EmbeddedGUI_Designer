@@ -2347,7 +2347,7 @@ QTableWidget#resource_panel_table {{
 QListWidget#resource_panel_list::item,
 QListWidget#resource_panel_image_list::item,
 QTreeWidget#project_dock_tree::item {{
-    min-height: 26px;
+    min-height: {t['h_tab_min'] + t['space_3xs']}px;
 }}
 
 QTabWidget#resource_panel_tabs::pane {{
@@ -2360,7 +2360,7 @@ QTabWidget#resource_panel_tabs::pane {{
 QTabWidget#resource_panel_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
-    min-height: 26px;
+    min-height: {t['h_tab_min'] + t['space_3xs']}px;
     padding: {t['space_xxs']}px {t['pad_btn_h']}px;
 }}
 
@@ -2374,7 +2374,7 @@ QTabWidget#resource_panel_details_tabs::pane {{
 QTabWidget#resource_panel_details_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
-    min-height: 26px;
+    min-height: {t['h_tab_min'] + t['space_3xs']}px;
     padding: {t['space_xxs']}px {t['pad_btn_h']}px;
 }}
 
@@ -2435,7 +2435,7 @@ QPushButton#project_dock_add_page_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: {t['pad_btn_v']}px {t['pad_input_h']}px;
-    min-height: 26px;
+    min-height: {t['h_tab_min'] + t['space_3xs']}px;
 }}
 
 QComboBox#project_dock_mode_combo:hover,
@@ -2529,7 +2529,7 @@ QTreeWidget#project_dock_tree {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: {t['space_3xs']}px {t['space_sm']}px;
-    min-height: 26px;
+    min-height: {t['h_tab_min'] + t['space_3xs']}px;
 }}
 
 #structure_primary_strip QPushButton:hover,

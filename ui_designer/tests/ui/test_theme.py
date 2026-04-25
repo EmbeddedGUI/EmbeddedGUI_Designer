@@ -682,6 +682,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         resource_tabs_tab = css.split("QTabWidget#resource_panel_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
         resource_details_pane = css.split("QTabWidget#resource_panel_details_tabs::pane {", 1)[1].split("}", 1)[0]
         resource_details_tab = css.split("QTabWidget#resource_panel_details_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
+        resource_list_item = css.split("QListWidget#resource_panel_list::item,", 1)[1].split("}", 1)[0]
         resource_control_shell = css.split("#resource_panel_shell QPushButton,", 1)[1].split("}", 1)[0]
         resource_dialog_control_shell = css.split("#resource_dialog_shell QPushButton,", 1)[1].split("}", 1)[0]
         inspector_tabs_pane = css.split("QTabWidget#workspace_inspector_tabs::pane {", 1)[1].split("}", 1)[0]
@@ -727,16 +728,17 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in resource_dialog_control_shell
         assert f"padding: 0px {t['pad_input_h']}px;" in resource_control_shell
         assert f"padding: 0px {t['pad_input_h']}px;" in resource_dialog_control_shell
+        assert f"min-height: {t['h_tab_min'] + t['space_3xs']}px;" in resource_list_item
         assert "border-radius: 0px;" in resource_tabs_tab
         assert "margin-right: 0px;" in resource_tabs_tab
-        assert "min-height: 26px;" in resource_tabs_tab
+        assert f"min-height: {t['h_tab_min'] + t['space_3xs']}px;" in resource_tabs_tab
         assert f"padding: {t['space_xxs']}px {t['pad_btn_h']}px;" in resource_tabs_tab
         assert "background-color: transparent;" in resource_details_pane
         assert "border: none;" in resource_details_pane
         assert "border-radius: 0px;" in resource_details_pane
         assert "border-radius: 0px;" in resource_details_tab
         assert "margin-right: 0px;" in resource_details_tab
-        assert "min-height: 26px;" in resource_details_tab
+        assert f"min-height: {t['h_tab_min'] + t['space_3xs']}px;" in resource_details_tab
         assert f"padding: {t['space_xxs']}px {t['pad_btn_h']}px;" in resource_details_tab
         assert "background-color: transparent;" in inspector_tabs_pane
         assert "border: none;" in inspector_tabs_pane
@@ -1023,7 +1025,7 @@ def test_project_dock_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in settings
         assert "border-radius: 0px;" in controls
         assert f"padding: {t['pad_btn_v']}px {t['pad_input_h']}px;" in controls
-        assert "min-height: 26px;" in controls
+        assert f"min-height: {t['h_tab_min'] + t['space_3xs']}px;" in controls
         assert "background-color: transparent;" in metric_card
         assert "border: none;" in metric_card
         assert "border-radius: 0px;" in metric_card
@@ -1147,7 +1149,7 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in drag_hint
         assert f"font-size: {t['fs_caption']}px;" in structure_label
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 26px;" in buttons
+        assert f"min-height: {t['h_tab_min'] + t['space_3xs']}px;" in buttons
         assert f"padding: {t['space_3xs']}px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['shell_bg']};" in buttons_disabled
         assert f"background-color: {t['panel_alt']};" in tree
