@@ -508,18 +508,39 @@ class _PreviewWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WA_StyledBackground, True)
-        self.setMinimumHeight(140)
         self._mode = None
         self._pixmap = None
         self._meta_lines = []
         self._font_family = None
         self._font_file = None
         self._text_lines = []
+        self._sync_minimum_height()
 
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
+            self._sync_minimum_height()
             self.update()
+        elif event.type() == QEvent.FontChange:
+            self._sync_minimum_height()
+
+    def _minimum_height_target(self) -> int:
+        tokens = app_theme_tokens(QApplication.instance())
+        preview_rows = len(self._FONT_SIZES) + 1
+        return max(
+            preview_rows
+            * (
+                int(tokens.get("h_tab_min", 24))
+                + int(tokens.get("space_xxs", 4))
+            ),
+            1,
+        )
+
+    def _sync_minimum_height(self):
+        target_height = self._minimum_height_target()
+        if self.minimumHeight() == target_height:
+            return
+        self.setMinimumHeight(target_height)
 
     def _paint_palette(self):
         tokens = app_theme_tokens()

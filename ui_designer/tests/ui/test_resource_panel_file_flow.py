@@ -33,6 +33,7 @@ class TestResourcePanelFileFlow:
             assert preview._image_meta_font_pixel_size() == int(tokens["fs_body"])
             assert preview._meta_font_pixel_size() == int(tokens["fs_body_sm"])
             assert preview._text_preview_font_pixel_size() == int(tokens["fs_body"])
+            assert preview.minimumHeight() == preview._minimum_height_target()
         finally:
             preview.deleteLater()
             qapp.setProperty("designer_font_size_pt", 0)
@@ -85,6 +86,25 @@ class TestResourcePanelFileFlow:
         finally:
             preview.deleteLater()
             qapp.setProperty("designer_theme_mode", None)
+
+    def test_preview_widget_minimum_height_follows_runtime_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.resource_panel as resource_panel_module
+        from ui_designer.ui.resource_panel import _PreviewWidget
+
+        baseline_preview = _PreviewWidget()
+        baseline_height = baseline_preview.minimumHeight()
+        baseline_preview.deleteLater()
+
+        preview_tokens = dict(resource_panel_module.app_theme_tokens())
+        preview_tokens["h_tab_min"] = 26
+        preview_tokens["space_xxs"] = 5
+        monkeypatch.setattr(resource_panel_module, "app_theme_tokens", lambda *args, **kwargs: preview_tokens)
+
+        preview = _PreviewWidget()
+
+        assert preview.minimumHeight() == preview._minimum_height_target()
+        assert preview.minimumHeight() > baseline_height
+        preview.deleteLater()
 
     def test_resource_panel_shell_controls_use_compact_heights(self, qapp):
         from ui_designer.ui.resource_panel import ResourcePanel
