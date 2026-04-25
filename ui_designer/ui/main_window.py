@@ -171,15 +171,7 @@ from ..utils.scaffold import (
     sdk_example_paths,
     sync_project_resources_and_generate_designer_resource_config,
 )
-from .theme import app_theme_tokens, apply_theme, theme_tokens
-
-
-_DEFAULT_UI_TOKENS = theme_tokens("dark")
-_SPACE_XXS = int(_DEFAULT_UI_TOKENS.get("space_xxs", 2))
-_SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
-_SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
-_SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
-_SPACE_LG = int(_DEFAULT_UI_TOKENS.get("space_lg", 16))
+from .theme import app_theme_tokens, apply_theme
 _RESOURCE_GENERATOR_SCRIPT_NAME = os.path.basename(SDK_RESOURCE_GENERATOR_RELPATH)
 _GENERATE_RESOURCES_HINT_PREFIX = (
     f"Run resource generation ({_RESOURCE_GENERATOR_SCRIPT_NAME}) to produce\n"
@@ -188,7 +180,7 @@ _GENERATE_RESOURCES_HINT_PREFIX = (
 
 
 def _menu_action_icon_size() -> int:
-    return max(int(app_theme_tokens().get("icon_xs", _DEFAULT_UI_TOKENS.get("icon_xs", 12))), 1)
+    return max(int(app_theme_tokens().get("icon_xs", 12)), 1)
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 from ..settings.ui_prefs import UIPreferences
 from ..core.state_store import StateStore

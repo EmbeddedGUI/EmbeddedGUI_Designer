@@ -571,6 +571,24 @@ class TestWidgetBrowserPanel:
         assert buttons["Clear Search"].toolTip() == "Clear the widget browser search."
         panel.deleteLater()
 
+    def test_empty_state_margins_follow_runtime_spacing_tokens(self, qapp, isolated_config, monkeypatch):
+        import ui_designer.ui.widget_browser as widget_browser_module
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        empty_tokens = dict(widget_browser_module.app_theme_tokens())
+        empty_tokens["space_sm"] = 6
+        monkeypatch.setattr(widget_browser_module, "app_theme_tokens", lambda *args, **kwargs: empty_tokens)
+
+        panel = WidgetBrowserPanel()
+        panel._search.setText("__no_widget_matches__")
+        panel.refresh()
+
+        empty_layout = _find_empty_state(panel).layout()
+        empty_margins = empty_layout.contentsMargins()
+
+        assert (empty_margins.left(), empty_margins.top(), empty_margins.right(), empty_margins.bottom()) == (6, 6, 6, 6)
+        panel.deleteLater()
+
     def test_empty_state_uses_remaining_vertical_space(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 

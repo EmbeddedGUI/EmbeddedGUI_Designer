@@ -25,18 +25,15 @@ from ..services.favorite_service import FavoriteService
 from ..services.recent_service import RecentService
 from ..services.search_service import SearchQuery, SearchService
 from .iconography import make_icon, widget_icon_key
-from .theme import app_theme_tokens, theme_tokens
-
-_DEFAULT_UI_TOKENS = theme_tokens("dark")
-_SPACE_XXS = int(_DEFAULT_UI_TOKENS.get("space_xxs", 2))
-_SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
-_SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
-_SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
-_SPACE_LG = int(_DEFAULT_UI_TOKENS.get("space_lg", 16))
+from .theme import app_theme_tokens
 
 
 def _drag_icon_size() -> int:
-    return max(int(app_theme_tokens().get("icon_sm", _DEFAULT_UI_TOKENS.get("icon_sm", 14))), 1)
+    return max(int(app_theme_tokens().get("icon_sm", 14)), 1)
+
+
+def _empty_state_margin_size() -> int:
+    return max(int(app_theme_tokens().get("space_sm", 8)), 0)
 
 
 def _drag_hotspot_offset(icon_size: int | None = None) -> int:
@@ -649,7 +646,8 @@ class WidgetBrowserPanel(QWidget):
             empty = QFrame()
             empty.setObjectName("widget_browser_empty_state")
             empty_layout = QVBoxLayout(empty)
-            empty_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+            empty_margin = _empty_state_margin_size()
+            empty_layout.setContentsMargins(empty_margin, empty_margin, empty_margin, empty_margin)
             empty_layout.setSpacing(2)
 
             summary = QLabel(f"No matching widgets. {self._empty_state_hint_text()}")
