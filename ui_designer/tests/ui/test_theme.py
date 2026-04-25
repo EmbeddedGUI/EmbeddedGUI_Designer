@@ -1184,7 +1184,7 @@ def test_generic_header_section_spacing_uses_theme_tokens():
 
         assert f"background-color: {t['panel_alt']};" in header
         assert f"color: {t['text_muted']};" in header
-        assert f"padding: 6px {t['space_sm']}px;" in header
+        assert f"padding: {t['space_sm'] - t['space_3xs']}px {t['space_sm']}px;" in header
 
 
 def test_menu_separator_spacing_uses_theme_tokens():
@@ -1195,7 +1195,7 @@ def test_menu_separator_spacing_uses_theme_tokens():
         separator = css.split("QMenu::separator {", 1)[1].split("}", 1)[0]
 
         assert f"background: {t['border']};" in separator
-        assert f"margin: 6px {t['space_sm']}px;" in separator
+        assert f"margin: {t['space_sm'] - t['space_3xs']}px {t['space_sm']}px;" in separator
 
 
 def test_diagnostics_panel_styles_use_engineering_surface_tokens():

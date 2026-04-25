@@ -1155,7 +1155,7 @@ QTableView::item:selected:hover, QTableWidget::item:selected:hover {{
 QHeaderView::section {{
     background-color: {t['panel_alt']};
     color: {t['text_muted']};
-    padding: 6px {t['space_sm']}px;
+    padding: {t['space_sm'] - t['space_3xs']}px {t['space_sm']}px;
     border: none;
     border-right: 1px solid {t['border']};
     border-bottom: 1px solid {t['border']};
@@ -1236,7 +1236,7 @@ QMenu::item:selected:disabled {{
 QMenu::separator {{
     height: 1px;
     background: {t['border']};
-    margin: 6px {t['space_sm']}px;
+    margin: {t['space_sm'] - t['space_3xs']}px {t['space_sm']}px;
 }}
 
 QScrollBar:vertical {{
