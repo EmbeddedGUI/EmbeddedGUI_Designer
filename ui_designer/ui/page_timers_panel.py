@@ -22,10 +22,14 @@ from ..model.page_timers import (
     suggest_page_timer_name,
     validate_page_timers,
 )
+from .theme import app_theme_tokens
 
 
 _PAGE_TIMERS_CONTROL_HEIGHT = 20
-_PAGE_TIMERS_TABLE_ROW_HEIGHT = 24
+
+
+def _page_timers_table_row_height() -> int:
+    return max(int(app_theme_tokens().get("h_tab_min", 24)), 1)
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -132,8 +136,9 @@ class PageTimersPanel(QWidget):
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
         self._table.verticalHeader().setVisible(False)
-        self._table.verticalHeader().setDefaultSectionSize(_PAGE_TIMERS_TABLE_ROW_HEIGHT)
-        self._table.verticalHeader().setMinimumSectionSize(_PAGE_TIMERS_TABLE_ROW_HEIGHT)
+        table_row_height = _page_timers_table_row_height()
+        self._table.verticalHeader().setDefaultSectionSize(table_row_height)
+        self._table.verticalHeader().setMinimumSectionSize(table_row_height)
         self._table.horizontalHeader().setFixedHeight(_PAGE_TIMERS_CONTROL_HEIGHT)
         self._table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self._table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)

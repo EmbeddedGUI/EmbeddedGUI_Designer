@@ -15,6 +15,7 @@ _skip_no_qt = skip_if_no_qt
 class TestPageFieldsPanel:
     def test_panel_displays_current_page_fields(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel, _PAGE_FIELDS_CONTROL_HEIGHT
+        from ui_designer.ui.theme import app_theme_tokens
 
         page, _title = build_test_page_with_title()
         page.user_fields = [
@@ -24,6 +25,7 @@ class TestPageFieldsPanel:
 
         panel = PageFieldsPanel()
         panel.set_page(page)
+        expected_row_height = int(app_theme_tokens()["h_tab_min"])
 
         header_margins = panel._header_frame.layout().contentsMargins()
         chip_margins = panel._header_chip_row.contentsMargins()
@@ -76,7 +78,7 @@ class TestPageFieldsPanel:
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page fields table: Page Fields: 2 fields on main_page. Selected field: none."
         assert panel._table.horizontalHeader().height() == _PAGE_FIELDS_CONTROL_HEIGHT
-        assert panel._table.verticalHeader().defaultSectionSize() == 24
+        assert panel._table.verticalHeader().defaultSectionSize() == expected_row_height
         assert panel._open_on_open_button.toolTip() == "Open the on_open section in main_page user code."
         assert panel._open_on_open_button.statusTip() == panel._open_on_open_button.toolTip()
         assert panel._open_on_open_button.accessibleName() == "Open on_open user code for main_page"
@@ -98,7 +100,7 @@ class TestPageFieldsPanel:
         assert panel._remove_button.minimumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
         assert panel._remove_button.maximumHeight() == _PAGE_FIELDS_CONTROL_HEIGHT
         assert panel._table.rowCount() == 2
-        assert panel._table.rowHeight(0) == 24
+        assert panel._table.rowHeight(0) == expected_row_height
         assert panel._table.item(0, 0).text() == "counter"
         assert panel._table.item(0, 1).text() == "int"
         assert panel._table.item(0, 2).text() == "0"
@@ -109,6 +111,20 @@ class TestPageFieldsPanel:
         assert panel._table.item(1, 2).toolTip() == "Page field Default: none."
         assert panel._table.item(1, 2).statusTip() == panel._table.item(1, 2).toolTip()
         assert panel._table.item(1, 2).data(Qt.AccessibleTextRole) == panel._table.item(1, 2).toolTip()
+
+    def test_panel_row_height_follows_runtime_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.page_fields_panel as page_fields_panel_module
+        from ui_designer.ui.page_fields_panel import PageFieldsPanel
+
+        row_tokens = dict(page_fields_panel_module.app_theme_tokens())
+        row_tokens["h_tab_min"] = 26
+        monkeypatch.setattr(page_fields_panel_module, "app_theme_tokens", lambda *args, **kwargs: row_tokens)
+
+        panel = PageFieldsPanel()
+
+        assert panel._table.verticalHeader().defaultSectionSize() == 26
+        assert panel._table.verticalHeader().minimumSectionSize() == 26
+        panel.deleteLater()
 
     def test_panel_marks_actions_unavailable_without_active_page(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel

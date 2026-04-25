@@ -15,6 +15,7 @@ _skip_no_qt = skip_if_no_qt
 class TestPageTimersPanel:
     def test_panel_displays_current_page_timers(self, qapp):
         from ui_designer.ui.page_timers_panel import PageTimersPanel, _PAGE_TIMERS_CONTROL_HEIGHT
+        from ui_designer.ui.theme import app_theme_tokens
 
         page, _title = build_test_page_with_title()
         page.timers = [
@@ -23,6 +24,7 @@ class TestPageTimersPanel:
 
         panel = PageTimersPanel()
         panel.set_page(page)
+        expected_row_height = int(app_theme_tokens()["h_tab_min"])
 
         header_margins = panel._header_frame.layout().contentsMargins()
         chip_margins = panel._header_chip_row.contentsMargins()
@@ -67,7 +69,7 @@ class TestPageTimersPanel:
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page. Selected timer: none."
         assert panel._table.horizontalHeader().height() == _PAGE_TIMERS_CONTROL_HEIGHT
-        assert panel._table.verticalHeader().defaultSectionSize() == 24
+        assert panel._table.verticalHeader().defaultSectionSize() == expected_row_height
         assert panel._add_button.toolTip() == "Add a page timer."
         assert panel._add_button.accessibleName() == "Add page timer to main_page"
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
@@ -82,7 +84,7 @@ class TestPageTimersPanel:
         assert panel._open_code_button.minimumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
         assert panel._open_code_button.maximumHeight() == _PAGE_TIMERS_CONTROL_HEIGHT
         assert panel._table.rowCount() == 1
-        assert panel._table.rowHeight(0) == 24
+        assert panel._table.rowHeight(0) == expected_row_height
         assert panel._table.item(0, 0).text() == "refresh_timer"
         assert panel._table.item(0, 1).text() == "tick_refresh"
         assert panel._table.item(0, 4).text() == "true"
@@ -92,6 +94,20 @@ class TestPageTimersPanel:
         assert panel._table.item(0, 4).toolTip() == "Page timer Auto Start: true."
         assert panel._table.item(0, 4).statusTip() == panel._table.item(0, 4).toolTip()
         assert panel._table.item(0, 4).data(Qt.AccessibleTextRole) == panel._table.item(0, 4).toolTip()
+
+    def test_panel_row_height_follows_runtime_tokens(self, qapp, monkeypatch):
+        import ui_designer.ui.page_timers_panel as page_timers_panel_module
+        from ui_designer.ui.page_timers_panel import PageTimersPanel
+
+        row_tokens = dict(page_timers_panel_module.app_theme_tokens())
+        row_tokens["h_tab_min"] = 26
+        monkeypatch.setattr(page_timers_panel_module, "app_theme_tokens", lambda *args, **kwargs: row_tokens)
+
+        panel = PageTimersPanel()
+
+        assert panel._table.verticalHeader().defaultSectionSize() == 26
+        assert panel._table.verticalHeader().minimumSectionSize() == 26
+        panel.deleteLater()
 
     def test_panel_marks_actions_unavailable_without_active_page(self, qapp):
         from ui_designer.ui.page_timers_panel import PageTimersPanel
