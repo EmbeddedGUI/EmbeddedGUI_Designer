@@ -589,6 +589,33 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_overlay_setters_skip_noop_cache_invalidations(self, qapp, monkeypatch):
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        invalidations = []
+        updates = []
+
+        monkeypatch.setattr(overlay, "_invalidate_passive_bounds_cache", lambda: invalidations.append(True))
+        monkeypatch.setattr(overlay, "update", lambda *args, **kwargs: updates.append((args, kwargs)))
+
+        try:
+            assert overlay.set_grid_size(overlay.grid_size()) is False
+            assert overlay.set_show_grid(overlay.show_grid()) is False
+            assert overlay.set_solid_background(False) is False
+            assert overlay.set_background_image_visible(True) is False
+            assert overlay.set_background_image_opacity(0.3) is False
+            assert overlay.clear_background_image() is False
+
+            assert invalidations == []
+            assert updates == []
+
+            assert overlay.set_grid_size(12) is True
+            assert len(invalidations) == 1
+            assert len(updates) == 1
+        finally:
+            _dispose_widget(overlay)
+
     def test_overlay_passive_cache_uses_visible_scroll_viewport(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay

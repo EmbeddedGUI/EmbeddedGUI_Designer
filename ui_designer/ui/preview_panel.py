@@ -1026,9 +1026,13 @@ class WidgetOverlay(QWidget):
 
     def set_grid_size(self, size):
         """Set base grid snap size (0 to disable)."""
-        self._grid_size = max(0, size)
+        size = max(0, int(size))
+        if size == self._grid_size:
+            return False
+        self._grid_size = size
         self._invalidate_passive_bounds_cache()
         self.update()
+        return True
 
     def _effective_grid_size(self):
         """Return the configured logical grid size."""
@@ -1038,9 +1042,13 @@ class WidgetOverlay(QWidget):
 
     def set_show_grid(self, show):
         """Toggle grid visibility."""
+        show = bool(show)
+        if show == self._show_grid:
+            return False
         self._show_grid = show
         self._invalidate_passive_bounds_cache()
         self.update()
+        return True
 
     def show_grid(self):
         return self._show_grid
@@ -1050,10 +1058,14 @@ class WidgetOverlay(QWidget):
 
     def set_solid_background(self, solid):
         """Switch between transparent overlay and solid background mode."""
+        solid = bool(solid)
+        if solid == self._solid_background:
+            return False
         self._solid_background = solid
         self.setAttribute(Qt.WA_TranslucentBackground, not solid)
         self.setAutoFillBackground(bool(solid))
         self._refresh_surface_style()
+        return True
 
     # ── Background mockup image ──────────────────────────────────
 
@@ -1065,21 +1077,32 @@ class WidgetOverlay(QWidget):
 
     def set_background_image_visible(self, visible):
         """Toggle background image visibility."""
+        visible = bool(visible)
+        if visible == self._bg_image_visible:
+            return False
         self._bg_image_visible = visible
         self._invalidate_passive_bounds_cache()
         self.update()
+        return True
 
     def set_background_image_opacity(self, opacity):
         """Set background image opacity (0.0 to 1.0)."""
-        self._bg_image_opacity = max(0.0, min(1.0, opacity))
+        opacity = max(0.0, min(1.0, float(opacity)))
+        if opacity == self._bg_image_opacity:
+            return False
+        self._bg_image_opacity = opacity
         self._invalidate_passive_bounds_cache()
         self.update()
+        return True
 
     def clear_background_image(self):
         """Remove the background image."""
+        if self._bg_image is None:
+            return False
         self._bg_image = None
         self._invalidate_passive_bounds_cache()
         self.update()
+        return True
 
     def set_widgets(self, widgets):
         """Set the flat list of widgets to display."""
