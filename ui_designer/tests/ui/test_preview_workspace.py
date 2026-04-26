@@ -1075,6 +1075,27 @@ class TestWidgetOverlaySelection:
         overlay.mouseReleaseEvent(_mouse_event(QEvent.MouseButtonRelease, QPoint(20, 70), buttons=Qt.NoButton))
         _dispose_widget(overlay)
 
+    def test_pressing_widget_warms_passive_bounds_cache_before_drag(self, qapp):
+        overlay, _root, _first, second, _third = self._make_overlay()
+        overlay.set_selection([second], primary=second)
+
+        try:
+            assert overlay._passive_bounds_cache is None
+
+            overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(20, 70)))
+            qapp.processEvents()
+
+            assert overlay._dragging is False
+            assert overlay._should_use_passive_bounds_cache() is False
+            assert overlay._passive_bounds_cache is not None
+
+            warmed_cache = overlay._passive_bounds_cache
+            overlay._dragging = True
+            assert overlay._ensure_passive_bounds_cache() is warmed_cache
+        finally:
+            overlay.mouseReleaseEvent(_mouse_event(QEvent.MouseButtonRelease, QPoint(20, 70), buttons=Qt.NoButton))
+            _dispose_widget(overlay)
+
     def test_widget_drag_starts_only_after_move_threshold(self, qapp):
         overlay, _root, _first, second, _third = self._make_overlay()
         drag_events = []

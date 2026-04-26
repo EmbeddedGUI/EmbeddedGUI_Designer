@@ -146,6 +146,7 @@ class WidgetOverlay(QWidget):
         self._passive_bounds_cache = None
         self._passive_bounds_cache_key = None
         self._passive_bounds_cache_rect = QRect()
+        self._passive_cache_warmup_serial = 0
         self._label_font_cache = None
         self._label_font_cache_px = None
         self._coord_font_cache = None
@@ -265,11 +266,11 @@ class WidgetOverlay(QWidget):
     def _dynamic_paint_widgets(self):
         return self._active_paint_widgets
 
-    def _should_use_passive_bounds_cache(self):
-        return self._is_lightweight_interaction_active() and bool(self._visible_widgets)
+    def _should_use_passive_bounds_cache(self, *, force=False):
+        return (force or self._is_lightweight_interaction_active()) and bool(self._visible_widgets)
 
-    def _passive_cache_widgets(self):
-        if not self._should_use_passive_bounds_cache():
+    def _passive_cache_widgets(self, *, force=False):
+        if not self._should_use_passive_bounds_cache(force=force):
             return []
         return self._passive_cache_widget_list
 
@@ -576,6 +577,21 @@ class WidgetOverlay(QWidget):
         self._passive_bounds_cache = None
         self._passive_bounds_cache_key = None
         self._passive_bounds_cache_rect = QRect()
+        self._passive_cache_warmup_serial += 1
+
+    def _schedule_passive_bounds_cache_warmup(self):
+        if not self._visible_widgets or self._pressed_widget is None:
+            return
+        self._passive_cache_warmup_serial += 1
+        serial = self._passive_cache_warmup_serial
+        QTimer.singleShot(0, lambda serial=serial: self._warm_passive_bounds_cache(serial))
+
+    def _warm_passive_bounds_cache(self, serial):
+        if serial != self._passive_cache_warmup_serial:
+            return
+        if self._pressed_widget is None or self._dragging or self._resizing or self._rubber_band:
+            return
+        self._ensure_passive_bounds_cache(force=True)
 
     def _visible_screen_rect_for_cache(self):
         visible_region = self.visibleRegion()
@@ -737,8 +753,8 @@ class WidgetOverlay(QWidget):
                 painter.setPen(palette["label_text_focus"])
                 painter.drawText(label_rect, Qt.AlignCenter, label_text)
 
-    def _ensure_passive_bounds_cache(self):
-        if not self._should_use_passive_bounds_cache():
+    def _ensure_passive_bounds_cache(self, *, force=False):
+        if not self._should_use_passive_bounds_cache(force=force):
             return None
         cache_rect = self._visible_screen_rect_for_cache()
         if cache_rect.width() <= 0 or cache_rect.height() <= 0:
@@ -762,7 +778,7 @@ class WidgetOverlay(QWidget):
         )
         self._draw_widget_bounds(
             painter,
-            self._passive_cache_widgets(),
+            self._passive_cache_widgets(force=force),
             self._zoom,
             visible_logical_rect=self._logical_visible_rect(cache_rect, self._zoom),
             passive_only=True,
@@ -771,7 +787,7 @@ class WidgetOverlay(QWidget):
         painter.translate(-cache_rect.x(), -cache_rect.y())
         self._draw_widget_labels(
             painter,
-            self._passive_cache_widgets(),
+            self._passive_cache_widgets(force=force),
             self._zoom,
             event_rect=cache_rect,
             visible_logical_rect=self._logical_visible_rect(cache_rect, self._zoom),
@@ -1535,6 +1551,7 @@ class WidgetOverlay(QWidget):
             self._pressed_widget = w
             self._press_pos = QPoint(pos)
             self._press_drag_offset = pos - QPoint(w.display_x, w.display_y)
+            self._schedule_passive_bounds_cache_warmup()
             if selection_changed:
                 self._emit_selection_changed()
                 self.update()
