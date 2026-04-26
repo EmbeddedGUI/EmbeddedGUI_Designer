@@ -3116,7 +3116,7 @@ class TestMainWindowFileFlow:
             "property_panel_refresh_live_geometry": 2,
             "update_preview_overlay": 1,
             "sync_xml_to_editors": 1,
-            "update_resource_usage_panel": 1,
+            "update_resource_usage_panel": 0,
             "trigger_compile": 1,
         }
         window._undo_manager.mark_all_saved()
