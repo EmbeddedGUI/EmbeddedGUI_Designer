@@ -148,6 +148,41 @@ class TestPreviewPanelFallback:
         assert panel._status_label.minimumWidth() > initial_pointer_width
         _dispose_widget(panel)
 
+    def test_preview_status_setters_skip_noop_width_sync(self, qapp, monkeypatch):
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+        sync_calls = []
+        monkeypatch.setattr(panel, "_sync_status_text_widths", lambda: sync_calls.append(True))
+
+        assert panel._set_pointer_status_text(panel._status_label.text()) is False
+        assert panel._set_preview_status_text(panel.status_label.text()) is False
+        assert sync_calls == []
+
+        assert panel._set_pointer_status_text("(4, 8)") is True
+        assert panel._set_preview_status_text("Preview - Python fallback") is True
+        assert len(sync_calls) == 2
+        _dispose_widget(panel)
+
+    def test_repeated_pointer_status_skips_accessibility_refresh(self, qapp, monkeypatch):
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+        updates = []
+        original_update = panel._update_accessibility_summary
+
+        def counted_update():
+            updates.append(True)
+            return original_update()
+
+        monkeypatch.setattr(panel, "_update_accessibility_summary", counted_update)
+
+        panel._update_status_label(12, 18, None)
+        panel._update_status_label(12, 18, None)
+
+        assert updates == [True]
+        _dispose_widget(panel)
+
     def test_preview_panel_exposes_initial_accessibility_metadata(self, qapp):
         from ui_designer.ui.preview_panel import PreviewPanel
 

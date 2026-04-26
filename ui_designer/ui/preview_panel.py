@@ -2588,14 +2588,18 @@ class PreviewPanel(QWidget):
             self._status_label.setMinimumWidth(pointer_status_width)
 
     def _set_preview_status_text(self, text):
-        if self.status_label.text() != text:
-            self.status_label.setText(text)
+        if self.status_label.text() == text:
+            return False
+        self.status_label.setText(text)
         self._sync_status_text_widths()
+        return True
 
     def _set_pointer_status_text(self, text):
-        if self._status_label.text() != text:
-            self._status_label.setText(text)
+        if self._status_label.text() == text:
+            return False
+        self._status_label.setText(text)
         self._sync_status_text_widths()
+        return True
 
     def _zoom_label_target_width(self) -> int:
         zoom_min_pct = int(self.overlay._zoom_min * 100)
@@ -2643,8 +2647,8 @@ class PreviewPanel(QWidget):
             self._last_pointer_status_ts = -1.0
 
         if x < 0 or y < 0:
-            self._set_pointer_status_text("Pointer idle")
-            self._update_accessibility_summary()
+            if self._set_pointer_status_text("Pointer idle"):
+                self._update_accessibility_summary()
             return
 
         if widget is not None:
@@ -2654,8 +2658,8 @@ class PreviewPanel(QWidget):
             # Just show mouse position
             text = f"({x}, {y})"
 
-        self._set_pointer_status_text(text)
-        if not (self.overlay._dragging or self.overlay._resizing or self.overlay._rubber_band):
+        changed = self._set_pointer_status_text(text)
+        if changed and not (self.overlay._dragging or self.overlay._resizing or self.overlay._rubber_band):
             self._update_accessibility_summary()
 
     def set_widgets(self, widgets):
