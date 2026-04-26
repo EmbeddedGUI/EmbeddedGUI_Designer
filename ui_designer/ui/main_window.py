@@ -8148,7 +8148,8 @@ class MainWindow(QMainWindow):
             return
         self._update_preview_overlay()
         self._sync_xml_to_editors(xml_text)
-        self._trigger_compile(reason=source or "canvas drag")
+        if self.compiler is not None and self.compiler.can_build():
+            self._trigger_compile(reason=source or "canvas drag")
         message = self._format_page_change_message(source)
         if message and not self._undoing:
             self.statusBar().showMessage(message, 3000)
