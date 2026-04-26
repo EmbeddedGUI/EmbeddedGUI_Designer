@@ -8162,6 +8162,7 @@ class MainWindow(QMainWindow):
         message = self._format_page_change_message(source)
         if message and not self._undoing:
             self.statusBar().showMessage(message, 3000)
+        self._schedule_canvas_drag_chrome_refresh(serial)
 
     def _schedule_canvas_drag_preview_refresh(self, serial, source):
         QTimer.singleShot(
@@ -8173,6 +8174,17 @@ class MainWindow(QMainWindow):
         if serial != self._canvas_drag_finalize_serial or self._is_closing or self._canvas_drag_batch_active:
             return
         self._refresh_canvas_drag_preview_outputs(source)
+
+    def _schedule_canvas_drag_chrome_refresh(self, serial):
+        QTimer.singleShot(
+            CANVAS_DRAG_PREVIEW_REFRESH_DELAY_MS,
+            lambda serial=serial: self._finalize_canvas_drag_chrome_refresh(serial),
+        )
+
+    def _finalize_canvas_drag_chrome_refresh(self, serial):
+        if serial != self._canvas_drag_finalize_serial or self._is_closing or self._canvas_drag_batch_active:
+            return
+        self._update_window_title()
 
     def _refresh_canvas_drag_preview_outputs(self, source=""):
         """Refresh drag-dependent preview surfaces without rebuilding overlay state."""
@@ -8214,7 +8226,8 @@ class MainWindow(QMainWindow):
             self._canvas_drag_dirty = False
             self._last_drag_geometry_refresh_ts = -1.0
             self._update_undo_actions()
-            self._update_window_title()
+            if not should_finalize_canvas_refresh or xml is None:
+                self._update_window_title()
 
     # 鈹€鈹€ XML bidirectional sync 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
