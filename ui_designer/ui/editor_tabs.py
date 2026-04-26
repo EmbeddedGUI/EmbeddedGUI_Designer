@@ -84,6 +84,7 @@ class EditorTabs(QWidget):
         self._preview = preview_panel
         self._mode = MODE_DESIGN
         self._syncing = False
+        self._xml_text_cache = ""
         self._show_mode_switch = bool(show_mode_switch)
         self._mode_toolbar = None
         self._mode_buttons = {}
@@ -218,7 +219,12 @@ class EditorTabs(QWidget):
         }.get(mode, str(mode or "Unknown"))
 
     def _xml_source_summary(self):
-        text = self._split_editor.toPlainText() if self._mode == MODE_SPLIT else self._code_editor.toPlainText()
+        if self._mode == MODE_SPLIT:
+            text = self._split_editor.toPlainText()
+        elif self._mode == MODE_CODE:
+            text = self._code_editor.toPlainText()
+        else:
+            text = self._xml_text_cache
         if not text.strip():
             return "XML source is empty."
         line_count = text.count("\n") + 1
@@ -324,16 +330,20 @@ class EditorTabs(QWidget):
         """Switch between Design / Split / Code."""
         if mode == self._mode:
             return
-        self._mode = mode
         if mode == MODE_DESIGN:
             if self._parse_timer.isActive():
                 self._parse_timer.stop()
                 self._emit_xml_changed()
+            self._mode = mode
             self._design_container.layout().addWidget(self._preview)
             self._stack.setCurrentIndex(0)
         elif mode == MODE_CODE:
+            self._mode = mode
+            self._set_editor_text_if_needed(self._code_editor, self._xml_text_cache)
             self._stack.setCurrentIndex(1)
         elif mode == MODE_SPLIT:
+            self._mode = mode
+            self._set_editor_text_if_needed(self._split_editor, self._xml_text_cache)
             split_layout = self._split_preview_container.layout()
             if split_layout is None:
                 split_layout = QVBoxLayout(self._split_preview_container)
@@ -343,19 +353,31 @@ class EditorTabs(QWidget):
         self._update_accessibility_metadata()
         self.mode_changed.emit(mode)
 
+    def _set_editor_text_if_needed(self, editor, xml_text):
+        if editor.toPlainText() == xml_text:
+            return False
+        self._syncing = True
+        editor.setPlainText(xml_text)
+        self._syncing = False
+        return True
+
     def set_xml_text(self, xml_text):
         """Update both XML editors with new text from design changes."""
-        self._syncing = True
-        self._code_editor.setPlainText(xml_text)
-        self._split_editor.setPlainText(xml_text)
-        self._syncing = False
+        xml_text = str(xml_text or "")
+        if self._mode == MODE_CODE:
+            self._set_editor_text_if_needed(self._code_editor, xml_text)
+        elif self._mode == MODE_SPLIT:
+            self._set_editor_text_if_needed(self._split_editor, xml_text)
+        self._xml_text_cache = xml_text
         self._update_accessibility_metadata()
 
     def get_xml_text(self):
         """Get current XML text from the active editor."""
         if self._mode == MODE_SPLIT:
             return self._split_editor.toPlainText()
-        return self._code_editor.toPlainText()
+        if self._mode == MODE_CODE:
+            return self._code_editor.toPlainText()
+        return self._xml_text_cache
 
     @property
     def code_editor(self):
@@ -379,6 +401,7 @@ class EditorTabs(QWidget):
     def _emit_xml_changed(self):
         """Debounce expired; emit parsed XML."""
         text = self.get_xml_text()
+        self._xml_text_cache = text
         self._syncing = True
         if self._mode == MODE_CODE:
             self._split_editor.setPlainText(text)

@@ -158,6 +158,67 @@ class TestEditorTabsAccessibility:
         assert hint_calls == 2
         tabs.deleteLater()
 
+    def test_design_mode_defers_hidden_xml_editor_rewrites_until_mode_switch(self, qapp, monkeypatch):
+        from ui_designer.ui.editor_tabs import EditorTabs, MODE_CODE, MODE_SPLIT
+
+        tabs = EditorTabs(QWidget(), show_mode_switch=True)
+        code_calls = 0
+        split_calls = 0
+        original_code_set_text = tabs._code_editor.setPlainText
+        original_split_set_text = tabs._split_editor.setPlainText
+
+        def counted_code_set_text(text):
+            nonlocal code_calls
+            code_calls += 1
+            return original_code_set_text(text)
+
+        def counted_split_set_text(text):
+            nonlocal split_calls
+            split_calls += 1
+            return original_split_set_text(text)
+
+        monkeypatch.setattr(tabs._code_editor, "setPlainText", counted_code_set_text)
+        monkeypatch.setattr(tabs._split_editor, "setPlainText", counted_split_set_text)
+
+        tabs.set_xml_text("<page />")
+
+        assert code_calls == 0
+        assert split_calls == 0
+        assert tabs.get_xml_text() == "<page />"
+        assert tabs._summary_label.accessibleName() == "XML source: 8 characters across 1 line."
+
+        tabs.set_mode(MODE_CODE)
+
+        assert code_calls == 1
+        assert split_calls == 0
+        assert tabs._code_editor.toPlainText() == "<page />"
+
+        tabs.set_mode(MODE_SPLIT)
+
+        assert code_calls == 1
+        assert split_calls == 1
+        assert tabs._split_editor.toPlainText() == "<page />"
+        tabs.deleteLater()
+
+    def test_switching_from_code_to_design_flushes_pending_xml_before_lazy_cache(self, qapp):
+        from ui_designer.ui.editor_tabs import EditorTabs, MODE_CODE, MODE_DESIGN
+
+        tabs = EditorTabs(QWidget(), show_mode_switch=True)
+        emitted = []
+        tabs.xml_changed.connect(emitted.append)
+
+        tabs.set_xml_text("<page />")
+        tabs.set_mode(MODE_CODE)
+        tabs._code_editor.setPlainText("<page><label /></page>")
+
+        assert tabs._parse_timer.isActive()
+
+        tabs.set_mode(MODE_DESIGN)
+
+        assert emitted[-1] == "<page><label /></page>"
+        assert tabs.get_xml_text() == "<page><label /></page>"
+        tabs.deleteLater()
+
     def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.editor_tabs import EditorTabs
 
