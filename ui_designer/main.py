@@ -182,7 +182,7 @@ def main():
                 window._show_welcome_page()
             finally:
                 QTimer.singleShot(0, window.apply_deferred_startup_state)
-                QTimer.singleShot(0, window.ensure_chrome_initialized)
+                QTimer.singleShot(0, window.schedule_chrome_initialization)
 
         QTimer.singleShot(0, open_startup_project)
 

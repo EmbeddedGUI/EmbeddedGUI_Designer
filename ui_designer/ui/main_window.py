@@ -363,6 +363,9 @@ class MainWindow(QMainWindow):
         self._defer_chrome = bool(defer_chrome)
         self._defer_panels = bool(defer_panels)
         self._chrome_initialized = False
+        self._chrome_initialization_scheduled = False
+        self._menus_initialized = False
+        self._toolbar_initialized = False
         self._startup_state_applied = False
         self.project = None
         self.compiler = None
@@ -892,9 +895,44 @@ class MainWindow(QMainWindow):
     def ensure_chrome_initialized(self):
         if self._chrome_initialized:
             return
-        self._init_menus()
-        self._init_toolbar()
+        self._ensure_menus_initialized()
+        self._ensure_toolbar_initialized()
         self._chrome_initialized = True
+
+    def schedule_chrome_initialization(self):
+        if self._chrome_initialized or self._chrome_initialization_scheduled:
+            return
+        self._chrome_initialization_scheduled = True
+
+        def init_menus():
+            if self._chrome_initialized:
+                self._chrome_initialization_scheduled = False
+                return
+            self._ensure_menus_initialized()
+            QTimer.singleShot(0, init_toolbar)
+
+        def init_toolbar():
+            if self._chrome_initialized:
+                self._chrome_initialization_scheduled = False
+                return
+            self._ensure_toolbar_initialized()
+            self._chrome_initialized = True
+            self._chrome_initialization_scheduled = False
+
+        QTimer.singleShot(0, init_menus)
+
+    def _ensure_menus_initialized(self):
+        if self._menus_initialized:
+            return
+        self._init_menus()
+        self._menus_initialized = True
+
+    def _ensure_toolbar_initialized(self):
+        if self._toolbar_initialized:
+            return
+        self._ensure_menus_initialized()
+        self._init_toolbar()
+        self._toolbar_initialized = True
 
     def apply_deferred_startup_state(self):
         if self._startup_state_applied:
