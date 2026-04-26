@@ -44,7 +44,7 @@ COLOR_RGB = {
     "EGUI_COLOR_MAROON": (128, 0, 0),
     "EGUI_COLOR_PURPLE": (128, 0, 128),
     "EGUI_COLOR_OLIVE": (128, 128, 0),
-    # Mirrors sdk/EmbeddedGUI/src/core/egui_config_theme_default.h
+    # Mirrors sdk/EmbeddedGUI/src/config/egui_config_theme_default.h
     "EGUI_THEME_PRIMARY": (0x25, 0x63, 0xEB),
     "EGUI_THEME_PRIMARY_DARK": (0x1D, 0x4E, 0xD8),
     "EGUI_THEME_PRIMARY_LIGHT": (0x3B, 0x82, 0xF6),

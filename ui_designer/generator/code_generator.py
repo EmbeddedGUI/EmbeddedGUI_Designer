@@ -1585,7 +1585,7 @@ def _gen_uicode_easy_page(project):
 
     # Recording test actions — auto-cycle through all pages
     if len(pages) > 1:
-        lines.append("#if EGUI_CONFIG_RECORDING_TEST")
+        lines.append("#if EGUI_CONFIG_FUNCTION_RECORDING_TEST")
         lines.append(
             "// Recording actions: visit every page for visual verification"
         )

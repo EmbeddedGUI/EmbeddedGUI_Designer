@@ -653,6 +653,15 @@ class TestGenerateUicode:
         assert "egui_main_page_init" in output
         assert "uicode_create_ui" not in output
 
+    def test_uicode_source_easy_page_recording_uses_function_config_macro(self):
+        p1 = _make_page("page_a")
+        p2 = _make_page("page_b")
+        proj = _make_project([p1, p2], page_mode="easy_page")
+        output = generate_uicode_source(proj)
+        assert "#if EGUI_CONFIG_FUNCTION_RECORDING_TEST" in output
+        assert "#if EGUI_CONFIG_RECORDING_TEST" not in output
+        assert "egui_port_get_recording_action" in output
+
     def test_uicode_source_activity(self):
         page = _make_page("main_page")
         proj = _make_project([page], page_mode="activity")
