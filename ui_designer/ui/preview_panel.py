@@ -2667,24 +2667,24 @@ class PreviewPanel(QWidget):
         self._set_preview_status_text("Preview - headless rendering")
         self._update_accessibility_summary()
 
-    def stop_rendering(self):
+    def stop_rendering(self, *, update_accessibility=True):
         """Stop frame refresh."""
         self._render_timer.stop()
         self._compiler = None
         self._embedded = False
         self._frame_failure_count = 0
         self._runtime_error_emitted = False
-        self._update_accessibility_summary()
+        if update_accessibility:
+            self._update_accessibility_summary()
 
     def _set_preview_pixmap(self, pixmap):
         self._preview_label.setPixmap(pixmap)
 
     def show_python_preview(self, page, reason=""):
         """Render the current page with the Python fallback renderer."""
-        self.stop_rendering()
-        self._python_preview_active = True
-
         if page is None:
+            self.stop_rendering(update_accessibility=False)
+            self._python_preview_active = True
             self._preview_label.clear()
             self._set_preview_status_text("Preview - Python fallback")
             self._update_accessibility_summary()
@@ -2697,7 +2697,7 @@ class PreviewPanel(QWidget):
 
     def show_image_preview(self, qimage, reason="", label_prefix="Renderer"):
         """Display a pre-rendered QImage in the preview area."""
-        self.stop_rendering()
+        self.stop_rendering(update_accessibility=False)
         self._python_preview_active = True
 
         if qimage is None or qimage.isNull():
