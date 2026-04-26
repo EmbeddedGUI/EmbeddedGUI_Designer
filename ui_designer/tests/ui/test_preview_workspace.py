@@ -498,6 +498,32 @@ class TestWidgetOverlaySelection:
             _dispose_widget(overlay)
             qapp.setProperty("designer_theme_mode", None)
 
+    def test_overlay_font_token_size_is_cached_and_invalidated(self, qapp, monkeypatch):
+        from ui_designer.ui import preview_panel as preview_panel_module
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        state = {"calls": 0, "value": 13}
+
+        def fake_app_theme_tokens(_app=None):
+            state["calls"] += 1
+            return {"fs_micro": state["value"]}
+
+        monkeypatch.setattr(preview_panel_module, "app_theme_tokens", fake_app_theme_tokens)
+
+        try:
+            assert overlay._widget_label_font_pixel_size() == 13
+            state["value"] = 15
+            assert overlay._widget_label_font_pixel_size() == 13
+            assert state["calls"] == 1
+
+            overlay.changeEvent(QEvent(QEvent.FontChange))
+
+            assert overlay._widget_label_font_pixel_size() == 15
+            assert state["calls"] == 2
+        finally:
+            _dispose_widget(overlay)
+
     def test_overlay_keeps_full_feedback_during_drag_states(self, qapp):
         from ui_designer.ui.preview_panel import WidgetOverlay
 

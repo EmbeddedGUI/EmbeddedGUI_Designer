@@ -148,6 +148,7 @@ class WidgetOverlay(QWidget):
         self._passive_bounds_cache_rect = QRect()
         self._passive_cache_warmup_serial = 0
         self._paint_palette_cache = None
+        self._font_pixel_size_cache = {}
         self._label_font_cache = None
         self._label_font_cache_px = None
         self._coord_font_cache = None
@@ -209,7 +210,19 @@ class WidgetOverlay(QWidget):
         super().changeEvent(event)
         if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
             self._paint_palette_cache = None
+            self._invalidate_font_metrics_cache()
+            self._invalidate_passive_bounds_cache()
             self.update()
+        elif event.type() == QEvent.FontChange:
+            self._invalidate_font_metrics_cache()
+            self._invalidate_passive_bounds_cache()
+
+    def _invalidate_font_metrics_cache(self):
+        self._font_pixel_size_cache.clear()
+        self._label_font_cache = None
+        self._label_font_cache_px = None
+        self._coord_font_cache = None
+        self._coord_font_cache_px = None
 
     def _paint_palette(self):
         if self._paint_palette_cache is not None:
@@ -244,11 +257,16 @@ class WidgetOverlay(QWidget):
         return self._paint_palette_cache
 
     def _token_font_pixel_size(self, token_key, fallback):
+        cache_key = (token_key, int(fallback))
+        if cache_key in self._font_pixel_size_cache:
+            return self._font_pixel_size_cache[cache_key]
         tokens = app_theme_tokens(QApplication.instance())
         try:
-            return max(int(tokens.get(token_key, fallback)), 1)
+            value = max(int(tokens.get(token_key, fallback)), 1)
         except (TypeError, ValueError):
-            return max(int(fallback), 1)
+            value = max(int(fallback), 1)
+        self._font_pixel_size_cache[cache_key] = value
+        return value
 
     def _widget_label_font_pixel_size(self):
         return self._token_font_pixel_size("fs_micro", 10)
