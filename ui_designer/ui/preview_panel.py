@@ -38,6 +38,8 @@ HANDLE_LEFT = 8
 # Handle size in pixels
 HANDLE_SIZE = 8
 HIT_TEST_BUCKET_SIZE = 64
+DRAG_GEOMETRY_SIGNAL_INTERVAL_SEC = 1.0 / 30.0
+DRAG_POINTER_SIGNAL_INTERVAL_SEC = 1.0 / 15.0
 
 
 def _parent_has_layout(widget):
@@ -185,6 +187,7 @@ class WidgetOverlay(QWidget):
         self._last_geometry_signal_ts = -1.0
         self._pending_move_signal = None
         self._pending_resize_signal = None
+        self._last_pointer_signal_ts = -1.0
 
         # Background mockup image
         self._bg_image = None       # QPixmap or None
@@ -280,6 +283,9 @@ class WidgetOverlay(QWidget):
         self._pending_move_signal = None
         self._pending_resize_signal = None
 
+    def _reset_pointer_signal_state(self):
+        self._last_pointer_signal_ts = -1.0
+
     def _drag_start_distance(self):
         app = QApplication.instance()
         if app is None:
@@ -327,7 +333,10 @@ class WidgetOverlay(QWidget):
         now = time.monotonic()
         move_payload = (widget, new_x, new_y)
         resize_payload = (widget, new_w, new_h) if new_w is not None and new_h is not None else None
-        if self._last_geometry_signal_ts >= 0.0 and (now - self._last_geometry_signal_ts) < (1.0 / 60.0):
+        if (
+            self._last_geometry_signal_ts >= 0.0
+            and (now - self._last_geometry_signal_ts) < DRAG_GEOMETRY_SIGNAL_INTERVAL_SEC
+        ):
             self._pending_move_signal = move_payload
             if resize_payload is not None:
                 self._pending_resize_signal = resize_payload
@@ -1107,6 +1116,8 @@ class WidgetOverlay(QWidget):
     def set_selection(self, widgets, primary=None):
         widgets = [widget for widget in (widgets or []) if widget is not None]
         if not widgets:
+            if self._selected is None and not self._multi_selected:
+                return
             self._selected = None
             self._multi_selected.clear()
             self._refresh_paint_widget_cache()
@@ -1115,8 +1126,11 @@ class WidgetOverlay(QWidget):
             return
         if primary is None or all(widget is not primary for widget in widgets):
             primary = widgets[-1]
+        next_multi = {widget for widget in widgets if widget is not primary}
+        if primary is self._selected and next_multi == self._multi_selected:
+            return
         self._selected = primary
-        self._multi_selected = {widget for widget in widgets if widget is not primary}
+        self._multi_selected = next_multi
         self._refresh_paint_widget_cache()
         self._invalidate_passive_bounds_cache()
         self.update()
@@ -1134,6 +1148,19 @@ class WidgetOverlay(QWidget):
         widgets = self.selected_widgets()
         self.widget_selected.emit(self._selected)
         self.selection_changed.emit(widgets, self._selected)
+
+    def _emit_mouse_position_changed(self, x, y, widget):
+        if self._dragging or self._resizing or self._rubber_band:
+            now = time.monotonic()
+            if (
+                self._last_pointer_signal_ts >= 0.0
+                and (now - self._last_pointer_signal_ts) < DRAG_POINTER_SIGNAL_INTERVAL_SEC
+            ):
+                return
+            self._last_pointer_signal_ts = now
+        else:
+            self._reset_pointer_signal_state()
+        self.mouse_position_changed.emit(x, y, widget)
 
     def _is_hidden(self, widget):
         return bool(getattr(widget, "designer_hidden", False))
@@ -1498,16 +1525,19 @@ class WidgetOverlay(QWidget):
                 return
 
             # Normal click: single select + start drag
-            self._selected = w
-            self._multi_selected.clear()
-            self._refresh_paint_widget_cache()
-            self._invalidate_passive_bounds_cache()
+            selection_changed = w is not self._selected or bool(self._multi_selected)
+            if selection_changed:
+                self._selected = w
+                self._multi_selected.clear()
+                self._refresh_paint_widget_cache()
+                self._invalidate_passive_bounds_cache()
             # Plain press should select immediately, but drag visuals wait for a real move threshold.
             self._pressed_widget = w
             self._press_pos = QPoint(pos)
             self._press_drag_offset = pos - QPoint(w.display_x, w.display_y)
-            self._emit_selection_changed()
-            self.update()
+            if selection_changed:
+                self._emit_selection_changed()
+                self.update()
             return
 
         # Click on empty space: start rubber-band selection
@@ -1535,7 +1565,7 @@ class WidgetOverlay(QWidget):
             widget_under = None
         else:
             widget_under = self._widget_at(pos, allow_root=False)
-        self.mouse_position_changed.emit(pos.x(), pos.y(), widget_under)
+        self._emit_mouse_position_changed(pos.x(), pos.y(), widget_under)
 
         if self._rubber_band:
             old_rect = QRect(self._rubber_rect)
@@ -1778,6 +1808,7 @@ class WidgetOverlay(QWidget):
             self._rubber_base_selection = []
             self._rubber_base_primary = None
             self._update_regions(self._screen_rect_for_logical_rect(rect))
+            self._reset_pointer_signal_state()
             return
 
         if self._resizing:
@@ -1800,6 +1831,7 @@ class WidgetOverlay(QWidget):
             self.drag_finished.emit()
             self._update_regions(self._screen_rect_for_logical_rect(old_rect))
             self._update_regions_for_guide_rects(old_guide_rects)
+            self._reset_pointer_signal_state()
             return
 
         if self._dragging:
@@ -1839,6 +1871,7 @@ class WidgetOverlay(QWidget):
                 self._screen_rect_for_logical_rect(old_rect),
             )
             self._update_regions_for_guide_rects(old_guide_rects)
+            self._reset_pointer_signal_state()
             return
 
         if self._pressed_widget is not None:
@@ -1848,6 +1881,7 @@ class WidgetOverlay(QWidget):
         old_hover = self._hovered
         self._set_hovered_widget(None)
         self.setCursor(Qt.ArrowCursor)
+        self._reset_pointer_signal_state()
         self.mouse_position_changed.emit(-1, -1, None)  # Clear position display
         if old_hover is not None:
             self._update_regions(
@@ -2535,7 +2569,10 @@ class PreviewPanel(QWidget):
         """Update status bar with mouse position and widget info."""
         if self.overlay._dragging or self.overlay._resizing or self.overlay._rubber_band:
             now = time.monotonic()
-            if self._last_pointer_status_ts >= 0.0 and (now - self._last_pointer_status_ts) < (1.0 / 30.0):
+            if (
+                self._last_pointer_status_ts >= 0.0
+                and (now - self._last_pointer_status_ts) < DRAG_POINTER_SIGNAL_INTERVAL_SEC
+            ):
                 return
             self._last_pointer_status_ts = now
         else:

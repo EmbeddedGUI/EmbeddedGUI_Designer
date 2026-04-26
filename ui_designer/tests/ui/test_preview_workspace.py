@@ -249,7 +249,8 @@ class TestPreviewPanelFallback:
 
         panel = PreviewPanel(screen_width=240, screen_height=320)
         panel.overlay._dragging = True
-        ticks = iter([0.0, 0.01, 0.05])
+        interval = preview_panel_module.DRAG_POINTER_SIGNAL_INTERVAL_SEC
+        ticks = iter([0.0, interval / 2.0, interval + 0.01])
         monkeypatch.setattr(preview_panel_module.time, "monotonic", lambda: next(ticks))
 
         panel._update_status_label(10, 10, None)
@@ -1052,6 +1053,26 @@ class TestWidgetOverlaySelection:
         assert overlay._dragging is False
         assert overlay._show_coords is False
         assert drag_events == []
+        _dispose_widget(overlay)
+
+    def test_pressing_already_selected_widget_does_not_rebroadcast_selection(self, qapp):
+        overlay, _root, _first, second, _third = self._make_overlay()
+        overlay.set_selection([second], primary=second)
+        selection_events = []
+        selected_events = []
+
+        overlay.selection_changed.connect(lambda widgets, primary: selection_events.append((widgets, primary)))
+        overlay.widget_selected.connect(lambda widget: selected_events.append(widget))
+
+        overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(20, 70)))
+        qapp.processEvents()
+
+        assert overlay.selected_widgets() == [second]
+        assert overlay._pressed_widget is second
+        assert selection_events == []
+        assert selected_events == []
+
+        overlay.mouseReleaseEvent(_mouse_event(QEvent.MouseButtonRelease, QPoint(20, 70), buttons=Qt.NoButton))
         _dispose_widget(overlay)
 
     def test_widget_drag_starts_only_after_move_threshold(self, qapp):

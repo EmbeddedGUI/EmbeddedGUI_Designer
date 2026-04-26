@@ -231,6 +231,7 @@ WORKSPACE_BOTTOM_HIDDEN_HEIGHT = 0
 PAGE_TAB_BAR_MAX_WIDTH = 188
 
 NEW_SHELL_ENABLED = os.environ.get("EGUI_NEW_SHELL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
+CANVAS_DRAG_LIVE_GEOMETRY_INTERVAL_SEC = 1.0 / 12.0
 
 
 _DETACHED_WORKERS = set()
@@ -411,7 +412,7 @@ class MainWindow(QMainWindow):
         self._active_batch_source = ""
         self._canvas_drag_batch_active = False
         self._canvas_drag_dirty = False
-        self._last_drag_geometry_refresh_ts = 0.0
+        self._last_drag_geometry_refresh_ts = -1.0
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
         self._external_reload_changed_paths = []
@@ -7931,8 +7932,8 @@ class MainWindow(QMainWindow):
         now = time.monotonic()
         if (
             self._canvas_drag_batch_active
-            and self._last_drag_geometry_refresh_ts > 0.0
-            and (now - self._last_drag_geometry_refresh_ts) < (1.0 / 30.0)
+            and self._last_drag_geometry_refresh_ts >= 0.0
+            and (now - self._last_drag_geometry_refresh_ts) < CANVAS_DRAG_LIVE_GEOMETRY_INTERVAL_SEC
         ):
             return
         self._last_drag_geometry_refresh_ts = now
@@ -8106,7 +8107,7 @@ class MainWindow(QMainWindow):
             self._active_batch_source = ""
             self._canvas_drag_batch_active = True
             self._canvas_drag_dirty = False
-            self._last_drag_geometry_refresh_ts = 0.0
+            self._last_drag_geometry_refresh_ts = -1.0
             stack = self._undo_manager.get_stack(self._current_page.name)
             stack.begin_batch()
 
@@ -8132,7 +8133,7 @@ class MainWindow(QMainWindow):
             self._active_batch_source = ""
             self._canvas_drag_batch_active = False
             self._canvas_drag_dirty = False
-            self._last_drag_geometry_refresh_ts = 0.0
+            self._last_drag_geometry_refresh_ts = -1.0
             self._update_undo_actions()
             self._update_window_title()
 

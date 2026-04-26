@@ -3140,7 +3140,8 @@ class TestMainWindowFileFlow:
                 calls["property_panel_refresh_live_geometry"] + 1,
             ) or True,
         )
-        tick_values = iter([0.0, 0.01, 0.02, 0.06])
+        interval = main_window_module.CANVAS_DRAG_LIVE_GEOMETRY_INTERVAL_SEC
+        tick_values = iter([0.0, interval / 2.0, interval + 0.01])
         monkeypatch.setattr(main_window_module.time, "monotonic", lambda: next(tick_values))
 
         _open_project_window(window, project, project_dir, sdk_root)
