@@ -3146,8 +3146,9 @@ class TestMainWindowFileFlow:
 
         calls = {"render_page": 0, "refresh_thumbnail": 0}
 
-        def fake_render_page(_page, screen_width, screen_height):
+        def fake_render_page(_page, screen_width, screen_height, layout_ready=False):
             calls["render_page"] += 1
+            assert layout_ready is True
             return Image.new("RGBA", (screen_width, screen_height), (255, 255, 255, 255))
 
         monkeypatch.setattr(main_window_module, "render_page", fake_render_page)

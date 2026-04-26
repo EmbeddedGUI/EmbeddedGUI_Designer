@@ -130,6 +130,19 @@ class TestRenderPage:
         assert img.size == (240, 320)
         assert img.getpixel((20, 20))[:3] == (0, 0, 255)
 
+    def test_render_page_can_skip_layout_when_already_ready(self, monkeypatch):
+        page = build_test_page("test")
+        calls = {"compute_page_layout": 0}
+
+        def fake_compute_page_layout(_page):
+            calls["compute_page_layout"] += 1
+
+        monkeypatch.setattr("ui_designer.engine.python_renderer.compute_page_layout", fake_compute_page_layout)
+
+        render_page(page, 240, 320, layout_ready=True)
+
+        assert calls == {"compute_page_layout": 0}
+
     def test_label_uses_color_property_for_text(self, monkeypatch):
         recorded = self.RecordingDraw()
         monkeypatch.setattr("ui_designer.engine.python_renderer.ImageDraw.Draw", lambda *args, **kwargs: recorded)

@@ -514,13 +514,13 @@ class PageNavigator(QWidget):
             thumb.set_dirty(name in self._dirty_pages)
         self._update_accessibility_summary()
 
-    def refresh_thumbnail(self, page_name):
+    def refresh_thumbnail(self, page_name, layout_ready=False):
         """Re-render thumbnail for a specific page."""
         if page_name not in self._pages or page_name not in self._thumbnails:
             return
         page = self._pages[page_name]
         try:
-            img = render_page(page, self._screen_width, self._screen_height)
+            img = render_page(page, self._screen_width, self._screen_height, layout_ready=layout_ready)
             self.set_thumbnail_image(page_name, img)
         except Exception:
             pass

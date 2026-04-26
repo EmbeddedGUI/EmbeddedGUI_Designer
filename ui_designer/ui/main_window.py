@@ -3155,9 +3155,10 @@ class MainWindow(QMainWindow):
                 self._current_page,
                 self.preview_panel.screen_width,
                 self.preview_panel.screen_height,
+                layout_ready=True,
             )
         except Exception:
-            self.page_navigator.refresh_thumbnail(self._current_page.name)
+            self.page_navigator.refresh_thumbnail(self._current_page.name, layout_ready=True)
             self._refresh_python_preview(reason)
             return
         self.page_navigator.set_thumbnail_image(self._current_page.name, image)
@@ -8243,7 +8244,7 @@ class MainWindow(QMainWindow):
                     reason = self.compiler.get_build_error()
                 self._refresh_python_preview_and_thumbnail(reason)
             else:
-                self.page_navigator.refresh_thumbnail(self._current_page.name)
+                self.page_navigator.refresh_thumbnail(self._current_page.name, layout_ready=True)
 
     def _set_overlay_mode(self, mode):
         self.preview_panel.set_overlay_mode(mode)

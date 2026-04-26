@@ -83,11 +83,12 @@ def _draw_text(draw, position, text, color, alpha, font):
     draw.text(position, str(text), fill=color + (alpha,), font=font)
 
 
-def _draw_linear_gradient(img, bounds, start_color, end_color, alpha, direction):
+def _draw_linear_gradient(img, bounds, start_color, end_color, alpha, direction, draw=None):
     x0, y0, x1, y1 = bounds
     width = max(1, x1 - x0 + 1)
     height = max(1, y1 - y0 + 1)
-    draw = ImageDraw.Draw(img, "RGBA")
+    if draw is None:
+        draw = ImageDraw.Draw(img, "RGBA")
 
     if direction == "horizontal":
         span = max(1, width - 1)
@@ -104,35 +105,60 @@ def _draw_linear_gradient(img, bounds, start_color, end_color, alpha, direction)
         draw.line([(x0, y0 + i), (x1, y0 + i)], fill=color + (alpha,))
 
 
-def _draw_background(img, widget, x, y, w, h):
+def _composite_layer(img, layer, x, y):
+    dest_x0 = max(0, x)
+    dest_y0 = max(0, y)
+    dest_x1 = min(img.width, x + layer.width)
+    dest_y1 = min(img.height, y + layer.height)
+    if dest_x0 >= dest_x1 or dest_y0 >= dest_y1:
+        return
+
+    if dest_x0 == x and dest_y0 == y and dest_x1 == x + layer.width and dest_y1 == y + layer.height:
+        img.alpha_composite(layer, (x, y))
+        return
+
+    crop_box = (dest_x0 - x, dest_y0 - y, dest_x1 - x, dest_y1 - y)
+    img.alpha_composite(layer.crop(crop_box), (dest_x0, dest_y0))
+
+
+def _draw_background(img, widget, x, y, w, h, draw=None):
     """Draw widget background if present."""
     bg = widget.background
     if bg is None or bg.bg_type == "none" or w <= 0 or h <= 0:
         return
 
-    bounds = [x, y, x + w - 1, y + h - 1]
-    overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay, "RGBA")
-
     bg_type = getattr(bg, "bg_type", "none")
     color = _resolve_color(getattr(bg, "color", ""))
     alpha = _resolve_alpha(getattr(bg, "alpha", "EGUI_ALPHA_100"))
     fill = color + (alpha,)
+    stroke_width = max(0, int(getattr(bg, "stroke_width", 0)))
+    stroke_alpha = _resolve_alpha(getattr(bg, "stroke_alpha", "EGUI_ALPHA_100")) if stroke_width > 0 else 255
+    needs_layer = alpha < 255 or stroke_alpha < 255
+
+    if needs_layer:
+        target = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        target_draw = ImageDraw.Draw(target, "RGBA")
+        bounds = [0, 0, w - 1, h - 1]
+    else:
+        target = img
+        target_draw = draw if draw is not None else ImageDraw.Draw(img, "RGBA")
+        bounds = [x, y, x + w - 1, y + h - 1]
 
     if bg_type in ("solid", "rectangle"):
-        draw.rectangle(bounds, fill=fill)
+        target_draw.rectangle(bounds, fill=fill)
     elif bg_type == "gradient":
         _draw_linear_gradient(
-            overlay,
+            target,
             (bounds[0], bounds[1], bounds[2], bounds[3]),
             _resolve_color(getattr(bg, "start_color", "EGUI_COLOR_BLACK")),
             _resolve_color(getattr(bg, "end_color", "EGUI_COLOR_WHITE")),
             alpha,
             getattr(bg, "direction", "vertical"),
+            draw=target_draw,
         )
     elif bg_type == "round_rectangle":
         radius = max(0, int(getattr(bg, "radius", 0)))
-        draw.rounded_rectangle(bounds, radius=radius, fill=fill)
+        target_draw.rounded_rectangle(bounds, radius=radius, fill=fill)
     elif bg_type == "round_rectangle_corners":
         radius = max(
             int(getattr(bg, "radius_left_top", 0)),
@@ -140,16 +166,15 @@ def _draw_background(img, widget, x, y, w, h):
             int(getattr(bg, "radius_right_top", 0)),
             int(getattr(bg, "radius_right_bottom", 0)),
         )
-        draw.rounded_rectangle(bounds, radius=radius, fill=fill)
+        target_draw.rounded_rectangle(bounds, radius=radius, fill=fill)
     elif bg_type == "circle":
-        draw.ellipse(bounds, fill=fill)
+        target_draw.ellipse(bounds, fill=fill)
 
-    stroke_width = max(0, int(getattr(bg, "stroke_width", 0)))
     if stroke_width > 0:
         stroke = _resolve_color(getattr(bg, "stroke_color", "EGUI_COLOR_BLACK"))
-        stroke_fill = stroke + (_resolve_alpha(getattr(bg, "stroke_alpha", "EGUI_ALPHA_100")),)
+        stroke_fill = stroke + (stroke_alpha,)
         if bg_type == "circle":
-            draw.ellipse(bounds, outline=stroke_fill, width=stroke_width)
+            target_draw.ellipse(bounds, outline=stroke_fill, width=stroke_width)
         elif bg_type in ("round_rectangle", "round_rectangle_corners"):
             radius = max(
                 int(getattr(bg, "radius", 0)),
@@ -158,14 +183,15 @@ def _draw_background(img, widget, x, y, w, h):
                 int(getattr(bg, "radius_right_top", 0)),
                 int(getattr(bg, "radius_right_bottom", 0)),
             )
-            draw.rounded_rectangle(bounds, radius=radius, outline=stroke_fill, width=stroke_width)
+            target_draw.rounded_rectangle(bounds, radius=radius, outline=stroke_fill, width=stroke_width)
         else:
-            draw.rectangle(bounds, outline=stroke_fill, width=stroke_width)
+            target_draw.rectangle(bounds, outline=stroke_fill, width=stroke_width)
 
-    img.alpha_composite(overlay)
+    if needs_layer:
+        _composite_layer(img, target, x, y)
 
 
-def _render_widget(img, widget, font):
+def _render_widget(img, widget, font, draw=None):
     """Render a single widget onto the target image."""
     x = widget.display_x
     y = widget.display_y
@@ -173,9 +199,10 @@ def _render_widget(img, widget, font):
     h = widget.height
     wtype = widget.widget_type
     props = widget.properties
-    draw = ImageDraw.Draw(img, "RGBA")
+    if draw is None:
+        draw = ImageDraw.Draw(img, "RGBA")
 
-    _draw_background(img, widget, x, y, w, h)
+    _draw_background(img, widget, x, y, w, h, draw=draw)
 
     if wtype == "label":
         text = props.get("text", widget.name)
@@ -303,18 +330,19 @@ def _render_widget(img, widget, font):
             _draw_text(draw, (bx + box_size + 6, y + 2), text, text_color, 255, font)
 
 
-def render_page(page, screen_width=240, screen_height=320):
+def render_page(page, screen_width=240, screen_height=320, layout_ready=False):
     """Render a Page to a PIL RGBA Image.
 
     Args:
         page: Page object with root_widget
         screen_width: Canvas width in pixels
         screen_height: Canvas height in pixels
+        layout_ready: Set True when caller has already computed page layout
 
     Returns:
         PIL.Image.Image in RGBA mode
     """
-    if page.root_widget:
+    if page.root_widget and not layout_ready:
         compute_page_layout(page)
 
     img = Image.new("RGBA", (screen_width, screen_height), _BG_COLOR + (255,))
@@ -329,8 +357,9 @@ def render_page(page, screen_width=240, screen_height=320):
     widgets = []
     _collect(page.root_widget, widgets)
 
+    draw = ImageDraw.Draw(img, "RGBA")
     for w in widgets:
-        _render_widget(img, w, _DEFAULT_FONT)
+        _render_widget(img, w, _DEFAULT_FONT, draw=draw)
 
     return img
 
