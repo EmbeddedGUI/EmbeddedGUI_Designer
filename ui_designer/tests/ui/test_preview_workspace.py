@@ -854,6 +854,41 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_drag_reuses_unchanged_snap_guide_rects(self, qapp, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        overlay.set_base_size(240, 320)
+        moving = WidgetModel("label", name="moving", x=12, y=12, width=20, height=20)
+        target = WidgetModel("label", name="target", x=58, y=80, width=24, height=20)
+        root = build_test_page_root_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[moving, target],
+        )
+        rect_calls = []
+        original_screen_rect_for_guides = overlay._screen_rect_for_guides
+
+        def counted_screen_rect_for_guides(guides):
+            rect_calls.append(list(guides or ()))
+            return original_screen_rect_for_guides(guides)
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            overlay.set_selection([moving], primary=moving)
+            overlay._dragging = True
+            overlay._drag_offset = QPoint()
+            monkeypatch.setattr(overlay, "_screen_rect_for_guides", counted_screen_rect_for_guides)
+
+            overlay._do_free_drag(QPoint(57, 14))
+            assert rect_calls == [[("v", 58)]]
+
+            overlay._do_free_drag(QPoint(57, 18))
+            assert rect_calls == [[("v", 58)]]
+        finally:
+            _dispose_widget(overlay)
+
     def test_drag_geometry_signals_are_throttled_but_flush_on_release(self, qapp, monkeypatch):
         from ui_designer.ui import preview_panel as preview_panel_module
 

@@ -563,8 +563,12 @@ class WidgetOverlay(QWidget):
         return rects
 
     def _set_snap_guides(self, guides):
-        self._snap_guides = list(guides or [])
+        next_guides = list(guides or [])
+        if next_guides == self._snap_guides:
+            return False
+        self._snap_guides = next_guides
         self._snap_guide_rects = self._screen_rect_for_guides(self._snap_guides)
+        return True
 
     def _update_regions(self, *rects):
         first_rect = None
