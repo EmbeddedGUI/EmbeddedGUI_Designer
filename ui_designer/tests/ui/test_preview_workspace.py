@@ -967,6 +967,10 @@ class TestWidgetOverlaySelection:
             overlay._resize_handle = HANDLE_RIGHT
             overlay._resize_start_rect = QRect(moving.display_x, moving.display_y, moving.width, moving.height)
             overlay._resize_start_pos = QPoint()
+            moved = []
+            resized = []
+            overlay.widget_moved.connect(lambda widget, x, y: moved.append((widget, x, y)))
+            overlay.widget_resized.connect(lambda widget, w, h: resized.append((widget, w, h)))
 
             overlay._do_resize(QPoint(18, 0))
 
@@ -977,6 +981,8 @@ class TestWidgetOverlaySelection:
             assert moving.display_x == 20
             assert moving.display_y == 20
             assert overlay._snap_guides == [("v", 60)]
+            assert moved == []
+            assert resized == [(moving, 40, 20)]
         finally:
             _dispose_widget(overlay)
 

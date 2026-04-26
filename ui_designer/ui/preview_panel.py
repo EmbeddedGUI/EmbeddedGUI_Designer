@@ -38,7 +38,7 @@ HANDLE_LEFT = 8
 # Handle size in pixels
 HANDLE_SIZE = 8
 HIT_TEST_BUCKET_SIZE = 64
-DRAG_GEOMETRY_SIGNAL_INTERVAL_SEC = 1.0 / 30.0
+DRAG_GEOMETRY_SIGNAL_INTERVAL_SEC = 1.0 / 15.0
 DRAG_POINTER_SIGNAL_INTERVAL_SEC = 1.0 / 15.0
 
 
@@ -351,21 +351,25 @@ class WidgetOverlay(QWidget):
             self.widget_resized.emit(widget, new_w, new_h)
         self._reset_geometry_signal_state()
 
-    def _emit_geometry_signals(self, widget, new_x, new_y, *, new_w=None, new_h=None):
+    def _emit_geometry_signals(self, widget, new_x, new_y, *, new_w=None, new_h=None, emit_move=True):
         if widget is None:
             return
         now = time.monotonic()
-        move_payload = (widget, new_x, new_y)
+        move_payload = (widget, new_x, new_y) if emit_move else None
         resize_payload = (widget, new_w, new_h) if new_w is not None and new_h is not None else None
+        if move_payload is None and resize_payload is None:
+            return
         if (
             self._last_geometry_signal_ts >= 0.0
             and (now - self._last_geometry_signal_ts) < DRAG_GEOMETRY_SIGNAL_INTERVAL_SEC
         ):
-            self._pending_move_signal = move_payload
+            if move_payload is not None:
+                self._pending_move_signal = move_payload
             if resize_payload is not None:
                 self._pending_resize_signal = resize_payload
             return
-        self.widget_moved.emit(widget, new_x, new_y)
+        if move_payload is not None:
+            self.widget_moved.emit(widget, new_x, new_y)
         if resize_payload is not None:
             self.widget_resized.emit(widget, new_w, new_h)
         self._pending_move_signal = None
@@ -1830,20 +1834,28 @@ class WidgetOverlay(QWidget):
         parent_display_x, parent_display_y = self._parent_display_origin(self._selected)
         new_x = new_display_x - parent_display_x
         new_y = new_display_y - parent_display_y
-        changed = False
+        position_changed = False
+        size_changed = False
         if new_display_x != self._selected.display_x or new_display_y != self._selected.display_y:
             self._selected.x = new_x
             self._selected.y = new_y
             self._selected.display_x = new_display_x
             self._selected.display_y = new_display_y
-            changed = True
+            position_changed = True
         if new_w != self._selected.width or new_h != self._selected.height:
             self._selected.width = new_w
             self._selected.height = new_h
-            changed = True
+            size_changed = True
 
-        if changed:
-            self._emit_geometry_signals(self._selected, new_x, new_y, new_w=new_w, new_h=new_h)
+        if position_changed or size_changed:
+            self._emit_geometry_signals(
+                self._selected,
+                new_x,
+                new_y,
+                new_w=new_w,
+                new_h=new_h,
+                emit_move=position_changed,
+            )
             geometry_rects = [
                 self._screen_rect_for_logical_bounds(r.x(), r.y(), r.width(), r.height()),
                 self._screen_rect_for_logical_bounds(new_display_x, new_display_y, new_w, new_h),
