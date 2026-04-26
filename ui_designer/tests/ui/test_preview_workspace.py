@@ -103,6 +103,21 @@ class TestPreviewPanelFallback:
         assert panel._zoom_label.width() > initial_width
         _dispose_widget(panel)
 
+    def test_preview_grid_setters_skip_noop_zoom_metadata_refresh(self, qapp, monkeypatch):
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+        zoom_updates = []
+        monkeypatch.setattr(panel, "_update_zoom_label", lambda *args, **kwargs: zoom_updates.append((args, kwargs)))
+
+        assert panel.set_grid_size(panel.grid_size()) is False
+        assert panel.set_show_grid(panel.show_grid()) is False
+        assert zoom_updates == []
+
+        assert panel.set_grid_size(12) is True
+        assert len(zoom_updates) == 1
+        _dispose_widget(panel)
+
     def test_preview_status_labels_track_runtime_text_metrics(self, qapp):
         from PyQt5.QtGui import QImage
         from ui_designer.model.widget_model import WidgetModel

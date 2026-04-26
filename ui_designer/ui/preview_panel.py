@@ -2674,15 +2674,19 @@ class PreviewPanel(QWidget):
         return self.overlay.selected_widgets()
 
     def set_show_grid(self, show):
-        self.overlay.set_show_grid(show)
-        self._update_zoom_label()
+        changed = self.overlay.set_show_grid(show)
+        if changed:
+            self._update_zoom_label()
+        return changed
 
     def show_grid(self):
         return self.overlay.show_grid()
 
     def set_grid_size(self, size):
-        self.overlay.set_grid_size(size)
-        self._update_zoom_label()
+        changed = self.overlay.set_grid_size(size)
+        if changed:
+            self._update_zoom_label()
+        return changed
 
     def grid_size(self):
         return self.overlay.grid_size()
@@ -2695,15 +2699,15 @@ class PreviewPanel(QWidget):
 
     def set_background_image_visible(self, visible):
         """Toggle background image visibility."""
-        self.overlay.set_background_image_visible(visible)
+        return self.overlay.set_background_image_visible(visible)
 
     def set_background_image_opacity(self, opacity):
         """Set background image opacity (0.0 to 1.0)."""
-        self.overlay.set_background_image_opacity(opacity)
+        return self.overlay.set_background_image_opacity(opacity)
 
     def clear_background_image(self):
         """Remove the background image."""
-        self.overlay.clear_background_image()
+        return self.overlay.clear_background_image()
 
     def embed_window(self, hwnd):
         """Legacy method - no longer needed with headless rendering."""
