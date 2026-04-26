@@ -233,6 +233,7 @@ PAGE_TAB_BAR_MAX_WIDTH = 188
 
 NEW_SHELL_ENABLED = os.environ.get("EGUI_NEW_SHELL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
 CANVAS_DRAG_LIVE_GEOMETRY_INTERVAL_SEC = 1.0 / 12.0
+CANVAS_DRAG_PREVIEW_REFRESH_DELAY_MS = 80
 
 
 _DETACHED_WORKERS = set()
@@ -8128,6 +8129,7 @@ class MainWindow(QMainWindow):
     def _on_drag_started(self):
         """Preview drag/resize began 鈥?start undo batch."""
         if self._current_page:
+            self._canvas_drag_finalize_serial += 1
             self._active_batch_source = ""
             self._canvas_drag_batch_active = True
             self._canvas_drag_dirty = False
@@ -8150,13 +8152,42 @@ class MainWindow(QMainWindow):
     def _finalize_canvas_drag_outputs(self, serial, source, xml_text):
         if serial != self._canvas_drag_finalize_serial or self._is_closing:
             return
-        self._update_preview_overlay()
+        if source in {"canvas move", "canvas resize"}:
+            self._schedule_canvas_drag_preview_refresh(serial, source)
+        else:
+            self._update_preview_overlay()
         self._sync_xml_to_editors(xml_text)
         if self.compiler is not None and self.compiler.can_build():
             self._trigger_compile(reason=source or "canvas drag")
         message = self._format_page_change_message(source)
         if message and not self._undoing:
             self.statusBar().showMessage(message, 3000)
+
+    def _schedule_canvas_drag_preview_refresh(self, serial, source):
+        QTimer.singleShot(
+            CANVAS_DRAG_PREVIEW_REFRESH_DELAY_MS,
+            lambda serial=serial, source=source: self._finalize_canvas_drag_preview_refresh(serial, source),
+        )
+
+    def _finalize_canvas_drag_preview_refresh(self, serial, source):
+        if serial != self._canvas_drag_finalize_serial or self._is_closing or self._canvas_drag_batch_active:
+            return
+        self._refresh_canvas_drag_preview_outputs(source)
+
+    def _refresh_canvas_drag_preview_outputs(self, source=""):
+        """Refresh drag-dependent preview surfaces without rebuilding overlay state."""
+        if self._current_page is None:
+            return
+        use_python_preview = self.compiler is None or not self.compiler.can_build() or self.preview_panel.is_python_preview_active()
+        if use_python_preview:
+            reason = ""
+            if self.compiler is None:
+                reason = "SDK unavailable, compile preview disabled"
+            elif not self.compiler.can_build():
+                reason = self.compiler.get_build_error()
+            self._refresh_python_preview_and_thumbnail(reason)
+        else:
+            self.page_navigator.refresh_thumbnail(self._current_page.name, layout_ready=True)
 
     def _on_drag_finished(self):
         """Preview drag/resize ended 鈥?commit undo batch."""

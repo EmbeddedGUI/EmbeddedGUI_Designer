@@ -3026,6 +3026,7 @@ class TestMainWindowFileFlow:
 
     def test_canvas_move_defers_full_refresh_until_drag_finishes(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
 
         sdk_root = tmp_path / "sdk"
@@ -3044,6 +3045,7 @@ class TestMainWindowFileFlow:
 
         calls = {
             "property_panel_refresh_live_geometry": 0,
+            "refresh_canvas_drag_preview_outputs": 0,
             "update_preview_overlay": 0,
             "sync_xml_to_editors": 0,
             "update_resource_usage_panel": 0,
@@ -3062,6 +3064,14 @@ class TestMainWindowFileFlow:
             window,
             "_update_preview_overlay",
             lambda: calls.__setitem__("update_preview_overlay", calls["update_preview_overlay"] + 1),
+        )
+        monkeypatch.setattr(
+            window,
+            "_refresh_canvas_drag_preview_outputs",
+            lambda *args, **kwargs: calls.__setitem__(
+                "refresh_canvas_drag_preview_outputs",
+                calls["refresh_canvas_drag_preview_outputs"] + 1,
+            ),
         )
         monkeypatch.setattr(
             window,
@@ -3094,6 +3104,7 @@ class TestMainWindowFileFlow:
 
         assert calls == {
             "property_panel_refresh_live_geometry": 1,
+            "refresh_canvas_drag_preview_outputs": 0,
             "update_preview_overlay": 0,
             "sync_xml_to_editors": 0,
             "update_resource_usage_panel": 0,
@@ -3104,6 +3115,7 @@ class TestMainWindowFileFlow:
 
         assert calls == {
             "property_panel_refresh_live_geometry": 2,
+            "refresh_canvas_drag_preview_outputs": 0,
             "update_preview_overlay": 0,
             "sync_xml_to_editors": 0,
             "update_resource_usage_panel": 0,
@@ -3114,7 +3126,20 @@ class TestMainWindowFileFlow:
 
         assert calls == {
             "property_panel_refresh_live_geometry": 2,
-            "update_preview_overlay": 1,
+            "refresh_canvas_drag_preview_outputs": 0,
+            "update_preview_overlay": 0,
+            "sync_xml_to_editors": 1,
+            "update_resource_usage_panel": 0,
+            "trigger_compile": 0,
+        }
+
+        QTest.qWait(main_window_module.CANVAS_DRAG_PREVIEW_REFRESH_DELAY_MS + 20)
+        qapp.processEvents()
+
+        assert calls == {
+            "property_panel_refresh_live_geometry": 2,
+            "refresh_canvas_drag_preview_outputs": 1,
+            "update_preview_overlay": 0,
             "sync_xml_to_editors": 1,
             "update_resource_usage_panel": 0,
             "trigger_compile": 0,
