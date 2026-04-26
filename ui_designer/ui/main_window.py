@@ -412,6 +412,7 @@ class MainWindow(QMainWindow):
         self._selection_window_trace_summary = ""
         self._selection_window_trace_events = 0
         self._resource_generator_window = None
+        self._sdk_binding_label_cache = {}
 
         self._project_watch_timer = QTimer(self)
         self._project_watch_timer.setInterval(1000)
@@ -1465,7 +1466,7 @@ class MainWindow(QMainWindow):
     def _update_file_open_action_metadata(self, binding_label=""):
         open_app_action = getattr(self, "_open_app_action", None)
         if open_app_action is not None:
-            label = str(binding_label or format_sdk_binding_label(self.project_root or self._active_sdk_root(), _DESIGNER_REPO_ROOT))
+            label = str(binding_label or self._format_sdk_binding_label(self.project_root or self._active_sdk_root()))
             default_sdk_root = self._active_sdk_root() or "none"
             self._apply_action_hint(
                 open_app_action,
@@ -1491,7 +1492,7 @@ class MainWindow(QMainWindow):
         action = getattr(self, "_new_project_action", None)
         if action is None:
             return
-        label = str(binding_label or format_sdk_binding_label(self.project_root or self._active_sdk_root(), _DESIGNER_REPO_ROOT))
+        label = str(binding_label or self._format_sdk_binding_label(self.project_root or self._active_sdk_root()))
         default_parent = self._default_new_project_parent_dir(self.project_root or self._active_sdk_root()) or normalize_path(os.getcwd())
         self._apply_action_hint(
             action,
@@ -3019,14 +3020,31 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Using Python fallback preview.", 3000)
 
     def _persist_current_project_to_config(self):
+        previous_snapshot = (
+            self._config.last_app,
+            self._config.last_project_path,
+            self._config.sdk_root,
+            list(self._config.recent_projects),
+        )
         self._config.last_app = self.app_name or self._config.last_app
         project_path = self._get_project_file_path()
         self._config.last_project_path = normalize_path(project_path) if project_path else ""
         if self._has_valid_sdk_root():
             self._config.sdk_root = self.project_root
         if self._config.last_project_path:
-            self._config.add_recent_project(self._config.last_project_path, self.project_root, self.app_name)
-        else:
+            self._config.add_recent_project(
+                self._config.last_project_path,
+                self.project_root,
+                self.app_name,
+                save=False,
+            )
+        current_snapshot = (
+            self._config.last_app,
+            self._config.last_project_path,
+            self._config.sdk_root,
+            list(self._config.recent_projects),
+        )
+        if current_snapshot != previous_snapshot:
             self._config.save()
         self._update_recent_menu()
 
@@ -3447,7 +3465,6 @@ class MainWindow(QMainWindow):
         self._clear_editor_state()
         self._update_sdk_status_label()
         self._apply_project()
-        self._update_window_title()
         self._persist_current_project_to_config()
         self._refresh_project_watch_snapshot()
 
@@ -3456,6 +3473,8 @@ class MainWindow(QMainWindow):
             self._switch_page(startup.name)
         elif project.pages:
             self._switch_page(project.pages[0].name)
+        else:
+            self._update_window_title()
 
         project_reset = self._maybe_prompt_sdk_version_reset(
             project,
@@ -4464,7 +4483,7 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "_sdk_status_label"):
             return
         sdk_root = self.project_root or self._active_sdk_root()
-        binding_label = format_sdk_binding_label(sdk_root, _DESIGNER_REPO_ROOT)
+        binding_label = self._format_sdk_binding_label(sdk_root)
         tooltip = sdk_root or "No SDK root configured"
         accessible_name = f"SDK binding: {binding_label}."
         snapshot = (binding_label, str(tooltip or ""), accessible_name)
@@ -4476,6 +4495,20 @@ class MainWindow(QMainWindow):
         self._update_file_open_action_metadata(binding_label)
         self._update_sdk_root_action_metadata(binding_label)
         self._update_workspace_chips()
+
+    def _format_sdk_binding_label(self, sdk_root=""):
+        sdk_root = normalize_path(sdk_root)
+        if not sdk_root:
+            return format_sdk_binding_label(sdk_root, _DESIGNER_REPO_ROOT)
+        cache = getattr(self, "_sdk_binding_label_cache", None)
+        if cache is None:
+            cache = {}
+            self._sdk_binding_label_cache = cache
+        label = cache.get(sdk_root)
+        if label is None:
+            label = format_sdk_binding_label(sdk_root, _DESIGNER_REPO_ROOT)
+            cache[sdk_root] = label
+        return label
 
     def _open_app_dialog(self):
         """Show dialog to select and open a bundled or SDK example."""
@@ -5431,8 +5464,9 @@ class MainWindow(QMainWindow):
                 reason = self.compiler.get_build_error()
             self._switch_to_python_preview(reason)
             return
-        if not self._ensure_preview_build_available(auto=True):
-            return
+        if not getattr(self.compiler, "preview_probe_runs_in_precompile_worker", False):
+            if not self._ensure_preview_build_available(auto=True):
+                return
         if self._precompile_worker is not None and self._precompile_worker.isRunning():
             return
         if not self.compiler.is_exe_ready():
@@ -8428,9 +8462,6 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Compile preview unavailable")
             self._update_workspace_chips()
             return
-        if not self._ensure_preview_build_available(force_rebuild=force_rebuild):
-            self._clear_queued_compile_reasons()
-            return
         if self._compile_worker is not None and self._compile_worker.isRunning():
             if force_rebuild:
                 self._pending_rebuild = True
@@ -8452,6 +8483,9 @@ class MainWindow(QMainWindow):
                 self.debug_panel.log_info("Waiting for background compile to finish...")
                 if not self._pending_rebuild:
                     self._pending_compile = True
+            return
+        if not self._ensure_preview_build_available(force_rebuild=force_rebuild):
+            self._clear_queued_compile_reasons()
             return
 
         self._pending_compile = False

@@ -232,17 +232,17 @@ class DesignerConfig:
         except Exception as e:
             print(f"Warning: Failed to save config: {e}")
 
-    def add_recent_project(self, project_path, sdk_root="", display_name=""):
+    def add_recent_project(self, project_path, sdk_root="", display_name="", *, save=True):
         """Add a project to the MRU list."""
         project_path = normalize_path(project_path)
         sdk_root = normalize_path(sdk_root)
         if not project_path:
-            return
+            return False
         if not display_name:
             display_name = os.path.splitext(os.path.basename(project_path))[0]
 
-        self.recent_projects = [item for item in self.recent_projects if item.get("project_path") != project_path]
-        self.recent_projects.insert(
+        updated = [item for item in self.recent_projects if item.get("project_path") != project_path]
+        updated.insert(
             0,
             {
                 "project_path": project_path,
@@ -250,8 +250,12 @@ class DesignerConfig:
                 "display_name": display_name,
             },
         )
-        self.recent_projects = self.recent_projects[:10]
-        self.save()
+        updated = updated[:10]
+        changed = updated != self.recent_projects
+        self.recent_projects = updated
+        if changed and save:
+            self.save()
+        return changed
 
     def remove_recent_project(self, project_path):
         """Remove a project from the MRU list."""

@@ -294,6 +294,13 @@ class PrecompileWorker(QThread):
 
     def run(self):
         """Execute compile in background thread."""
+        ensure_available = getattr(self.compiler, "ensure_preview_build_available", None)
+        if callable(ensure_available) and not ensure_available():
+            reason_getter = getattr(self.compiler, "get_preview_build_error", None)
+            reason = reason_getter() if callable(reason_getter) else ""
+            self.finished.emit(False, reason or "Preview build unavailable")
+            return
+
         success, output = self.compiler.compile()
         if success:
             self.finished.emit(True, "Precompile OK")
@@ -308,6 +315,8 @@ class CompilerEngine:
     or designer_run_1(.exe)) so that make can freely overwrite output/main(.exe)
     while the old preview is still running. This eliminates flash on recompile.
     """
+
+    preview_probe_runs_in_precompile_worker = True
 
     def __init__(self, project_root, app_dir, app_name="HelloDesigner"):
         self.project_root = normalize_path(project_root)
@@ -332,9 +341,11 @@ class CompilerEngine:
         self._preview_build_probe_ran = False
         self._preview_build_error = ""
         self._preview_make_target = ""
+        self._stale_process_cleanup_done = False
 
-        # Clean up any stale processes from previous abnormal exits
-        self._cleanup_stale_processes()
+        # Stale preview cleanup can invoke slow Windows process probes.  Defer
+        # it until a preview is actually started, where it runs off the UI
+        # thread inside the compile worker.
 
     def _cleanup_stale_processes(self):
         """Kill any leftover designer_run_*.exe processes from previous sessions."""
@@ -366,6 +377,12 @@ class CompilerEngine:
 
         except Exception:
             pass  # Don't fail startup due to cleanup issues
+
+    def _ensure_stale_processes_cleaned(self):
+        if getattr(self, "_stale_process_cleanup_done", False):
+            return
+        self._cleanup_stale_processes()
+        self._stale_process_cleanup_done = True
 
     @property
     def uicode_path(self):
@@ -717,6 +734,8 @@ class CompilerEngine:
         """
         if not os.path.exists(self.exe_path):
             return False, f"Exe not found: {self.exe_path}"
+
+        self._ensure_stale_processes_cleaned()
 
         # Pick the OTHER slot (not the one currently running)
         new_index = 1 - self._run_index

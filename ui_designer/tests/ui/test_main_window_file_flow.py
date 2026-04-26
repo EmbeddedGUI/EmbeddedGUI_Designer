@@ -5126,6 +5126,33 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_open_project_defers_preview_probe_to_flagged_precompile_worker(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _AsyncProbeCompiler(_AutoRetryCompiler):
+            preview_probe_runs_in_precompile_worker = True
+
+            def ensure_preview_build_available(self, force=False):
+                raise AssertionError("startup precompile probe should run in the worker")
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "AsyncPreviewProbeDemo"
+        project = _create_project(project_dir, "AsyncPreviewProbeDemo", sdk_root)
+        compiler = _AsyncProbeCompiler(project_dir, exe_ready=False)
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        assert compiler.precompile_calls == 1
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_precompile_failure_with_missing_preview_target_updates_editing_only_state(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):

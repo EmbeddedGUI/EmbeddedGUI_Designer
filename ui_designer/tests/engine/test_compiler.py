@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ui_designer.engine.compiler import BuildConfig, CompilerEngine
+from ui_designer.engine.compiler import BuildConfig, CompilerEngine, PrecompileWorker
 
 
 MAKE_DRYRUN_OUTPUT = """\
@@ -523,8 +523,7 @@ class TestCompilerRuntime:
 
     def test_init_records_cross_drive_error(self, tmp_path):
         with patch("ui_designer.engine.compiler.compute_make_app_root_arg", side_effect=ValueError("cross drive")):
-            with patch.object(CompilerEngine, "_cleanup_stale_processes"):
-                engine = CompilerEngine(str(tmp_path), str(tmp_path / "app"), "TestApp")
+            engine = CompilerEngine(str(tmp_path), str(tmp_path / "app"), "TestApp")
         assert engine.get_last_runtime_error() == "cross drive"
         assert engine.get_build_error() == "cross drive"
         assert not engine.is_exe_ready()
@@ -532,8 +531,7 @@ class TestCompilerRuntime:
     def test_init_records_external_alias_creation_error(self, tmp_path):
         with patch("ui_designer.engine.compiler.compute_make_app_root_arg", return_value="../external"):
             with patch.object(CompilerEngine, "_ensure_external_app_root_alias", side_effect=RuntimeError("alias unsupported")):
-                with patch.object(CompilerEngine, "_cleanup_stale_processes"):
-                    engine = CompilerEngine(str(tmp_path), str(tmp_path / "app"), "TestApp")
+                engine = CompilerEngine(str(tmp_path), str(tmp_path / "app"), "TestApp")
         assert engine.get_last_runtime_error() == "alias unsupported"
         assert engine.get_build_error() == "alias unsupported"
         assert engine.can_build() is False
@@ -542,7 +540,59 @@ class TestCompilerRuntime:
         external_app = tmp_path.parent / "external" / "TestApp"
         with patch("ui_designer.engine.compiler.compute_make_app_root_arg", return_value="../external"):
             with patch.object(CompilerEngine, "_ensure_external_app_root_alias", return_value="build/ui_designer_external/abc123") as mock_alias:
-                with patch.object(CompilerEngine, "_cleanup_stale_processes"):
-                    engine = CompilerEngine(str(tmp_path), str(external_app), "TestApp")
+                engine = CompilerEngine(str(tmp_path), str(external_app), "TestApp")
         assert engine.app_root_arg == "build/ui_designer_external/abc123"
         mock_alias.assert_called_once_with()
+
+    def test_init_defers_stale_preview_cleanup_until_run(self, tmp_path):
+        with patch.object(CompilerEngine, "_cleanup_stale_processes") as cleanup:
+            engine = CompilerEngine(str(tmp_path), str(tmp_path / "app"), "TestApp")
+
+        cleanup.assert_not_called()
+        assert engine._stale_process_cleanup_done is False
+
+    def test_copy_and_start_runs_stale_preview_cleanup_once(self, tmp_path):
+        engine = self._make_engine(tmp_path)
+        engine._run_index = 0
+        engine._stale_process_cleanup_done = False
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        with open(engine.exe_path, "wb") as f:
+            f.write(b"preview")
+
+        old_bridge = MagicMock()
+        engine.bridge = old_bridge
+        new_bridge = MagicMock()
+
+        with patch.object(CompilerEngine, "_cleanup_stale_processes") as cleanup:
+            with patch("ui_designer.engine.compiler.DesignerBridge", return_value=new_bridge):
+                assert engine._copy_and_start()[0] is True
+                assert engine._copy_and_start()[0] is True
+
+        assert cleanup.call_count == 1
+        assert engine._stale_process_cleanup_done is True
+
+    def test_precompile_worker_reports_preview_probe_failure_before_compile(self):
+        class _ProbeFailCompiler:
+            def __init__(self):
+                self.ensure_calls = 0
+
+            def ensure_preview_build_available(self):
+                self.ensure_calls += 1
+                return False
+
+            def get_preview_build_error(self):
+                return "preview target missing"
+
+            def compile(self):
+                raise AssertionError("compile should not run after preview probe failure")
+
+        compiler = _ProbeFailCompiler()
+        worker = PrecompileWorker(compiler)
+        results = []
+        worker.finished.connect(lambda success, message: results.append((success, message)))
+
+        worker.run()
+
+        assert compiler.ensure_calls == 1
+        assert results == [(False, "preview target missing")]
