@@ -147,6 +147,7 @@ class WidgetOverlay(QWidget):
         self._passive_bounds_cache_key = None
         self._passive_bounds_cache_rect = QRect()
         self._passive_cache_warmup_serial = 0
+        self._paint_palette_cache = None
         self._label_font_cache = None
         self._label_font_cache_px = None
         self._coord_font_cache = None
@@ -207,11 +208,14 @@ class WidgetOverlay(QWidget):
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
+            self._paint_palette_cache = None
             self.update()
 
     def _paint_palette(self):
+        if self._paint_palette_cache is not None:
+            return self._paint_palette_cache
         tokens = app_theme_tokens()
-        return {
+        self._paint_palette_cache = {
             "selected_border": _theme_color(tokens["danger"], 200),
             "selected_fill": _theme_color(tokens["danger"], 40),
             "multi_border": _theme_color(tokens["warning"], 200),
@@ -237,6 +241,7 @@ class WidgetOverlay(QWidget):
             "tooltip_border": _theme_color(tokens["accent"]),
             "tooltip_text": _theme_color(tokens["text"]),
         }
+        return self._paint_palette_cache
 
     def _token_font_pixel_size(self, token_key, fallback):
         tokens = app_theme_tokens(QApplication.instance())

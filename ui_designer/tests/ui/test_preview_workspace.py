@@ -477,6 +477,7 @@ class TestWidgetOverlaySelection:
 
         try:
             dark_palette = overlay._paint_palette()
+            assert overlay._paint_palette() is dark_palette
 
             qapp.setProperty("designer_theme_mode", "light")
             overlay.changeEvent(QEvent(QEvent.StyleChange))
@@ -485,6 +486,7 @@ class TestWidgetOverlaySelection:
             light_palette = overlay._paint_palette()
 
             assert update_calls == 1
+            assert light_palette is not dark_palette
             assert light_palette["hover_border"].name().lower() == light_tokens["accent"].lower()
             assert light_palette["selected_border"].name().lower() == light_tokens["danger"].lower()
             assert light_palette["tooltip_bg"].name().lower() == light_tokens["panel"].lower()
