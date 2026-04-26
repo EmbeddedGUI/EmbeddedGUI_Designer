@@ -240,7 +240,7 @@ class WidgetBrowserPanel(QWidget):
         ("custom", "Custom"),
     )
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, defer_initial_refresh=False, defer_ui=False):
         super().__init__(parent)
         self._config = get_config()
         self._catalog = ComponentCatalog()
@@ -252,17 +252,42 @@ class WidgetBrowserPanel(QWidget):
         self._cards = {}
         self._cards_by_type = {}
         self._category_ids = []
+        self._defer_initial_refresh = bool(defer_initial_refresh)
+        self._initial_refresh_done = False
+        self._ui_initialized = False
+        self._defer_ui = bool(defer_ui)
         self._search_refresh_timer = QTimer(self)
         self._search_refresh_timer.setSingleShot(True)
         self._search_refresh_timer.timeout.connect(self.refresh)
+        if self._defer_ui:
+            return
         self._init_ui()
         self._populate_categories()
-        self.refresh()
+        self._ui_initialized = True
+        if self._defer_initial_refresh:
+            self._update_accessibility_summary(0)
+        else:
+            self.refresh()
 
     def changeEvent(self, event):
         super().changeEvent(event)
+        if not self._ui_initialized:
+            return
         if event.type() in (QEvent.StyleChange, QEvent.FontChange, QEvent.PaletteChange):
             self._sync_category_combo_width()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.ensure_initialized()
+
+    def ensure_initialized(self):
+        if not self._ui_initialized:
+            self._init_ui()
+            self._populate_categories()
+            self._ui_initialized = True
+        if self._initial_refresh_done:
+            return
+        self.refresh()
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
@@ -402,12 +427,20 @@ class WidgetBrowserPanel(QWidget):
         self._category_combo.setMinimumWidth(target_width)
 
     def _selected_category(self):
+        if not self._ui_initialized:
+            return self._normalize_category(getattr(self._config, "widget_browser_active_category", "all"))
         index = self._category_combo.currentIndex()
         if 0 <= index < len(self._category_ids):
             return self._normalize_category(self._category_ids[index])
         return "all"
 
     def _selected_category_label(self):
+        if not self._ui_initialized:
+            category = self._selected_category()
+            for category_id, label in self._CATEGORY_OPTIONS:
+                if category_id == category:
+                    return label
+            return "All"
         label = str(self._category_combo.currentText() or "").strip()
         return label or "All"
 
@@ -431,11 +464,14 @@ class WidgetBrowserPanel(QWidget):
         self.refresh()
 
     def focus_search(self):
+        self.ensure_initialized()
         self._search.setFocus()
         self._search.selectAll()
 
     def set_insert_target_label(self, label):
         self._insert_target_label = (label or "").strip() or "Current page root"
+        if not self._ui_initialized:
+            return
         self._update_insert_target()
         self._update_accessibility_summary(len(self._cards))
 
@@ -458,7 +494,13 @@ class WidgetBrowserPanel(QWidget):
         return True
 
     def select_widget_type(self, widget_type):
-        self._set_selected_type(widget_type, update_accessibility=True)
+        if self._initial_refresh_done:
+            self._set_selected_type(widget_type, update_accessibility=True)
+            return
+        self._selected_type = str(widget_type or "").strip()
+        if not self._ui_initialized:
+            return
+        self._update_accessibility_summary(0)
 
     def record_insert(self, widget_type):
         if self._recent_service.record_insert(widget_type):
@@ -471,6 +513,9 @@ class WidgetBrowserPanel(QWidget):
         return self._favorite_service.list_favorites()
 
     def refresh(self):
+        if not self._ui_initialized:
+            return
+        self._initial_refresh_done = True
         if self._search_refresh_timer.isActive():
             self._search_refresh_timer.stop()
         items = self._filtered_items()
@@ -544,6 +589,8 @@ class WidgetBrowserPanel(QWidget):
         )
 
     def _update_accessibility_summary(self, visible_count=None):
+        if not self._ui_initialized:
+            return
         visible = len(self._cards) if visible_count is None else max(int(visible_count or 0), 0)
         category_label = self._selected_category_label()
         search_text = str(self._search.text() or "").strip() or "none"

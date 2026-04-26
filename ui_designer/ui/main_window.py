@@ -346,11 +346,24 @@ def _resolve_page_callback_target(page, callback_name, signature):
 class MainWindow(QMainWindow):
     """Main designer window with project explorer, editor, tree, and properties."""
 
-    def __init__(self, project_root, app_name="HelloDesigner"):
+    def __init__(
+        self,
+        project_root,
+        app_name="HelloDesigner",
+        *,
+        defer_welcome=False,
+        defer_chrome=False,
+        defer_panels=False,
+    ):
         super().__init__()
         self._config = get_config()
         self.project_root = normalize_path(project_root)
         self.app_name = app_name
+        self._defer_welcome = bool(defer_welcome)
+        self._defer_chrome = bool(defer_chrome)
+        self._defer_panels = bool(defer_panels)
+        self._chrome_initialized = False
+        self._startup_state_applied = False
         self.project = None
         self.compiler = None
         self.auto_compile = self._config.auto_compile
@@ -422,12 +435,14 @@ class MainWindow(QMainWindow):
         self.property_panel.set_debug_logger(self.debug_panel.log_info)
         self._install_debug_window_trace()
         self._init_renderer_manager()
-        self._init_menus()
-        self._init_toolbar()
+        if not self._defer_chrome:
+            self.ensure_chrome_initialized()
         self._restore_diagnostics_view_state()
-        self._apply_saved_window_state()
+        if not self._defer_chrome:
+            self.apply_deferred_startup_state()
         # Start with welcome page (don't auto-create project)
-        self._show_welcome_page()
+        if not self._defer_welcome:
+            self._show_welcome_page()
 
     # 鈹€鈹€ UI Construction 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
@@ -468,14 +483,9 @@ class MainWindow(QMainWindow):
             lambda _index: QTimer.singleShot(0, self._apply_pending_workspace_splitter_defaults)
         )
 
-        self._welcome_page = WelcomePage()
-        self._welcome_page.open_recent.connect(self._open_recent_project)
-        self._welcome_page.new_project.connect(self._new_project)
-        self._welcome_page.open_project.connect(self._open_project)
-        self._welcome_page.open_app.connect(self._open_app_dialog)
-        self._welcome_page.open_resource_generator.connect(self._open_resource_generator_window)
-        self._welcome_page.set_sdk_root.connect(self._set_sdk_root)
-        self._central_stack.addWidget(self._welcome_page)
+        self._welcome_page = None
+        if not self._defer_welcome:
+            self._ensure_welcome_page()
 
         editor_container = QWidget()
         self._editor_container = editor_container
@@ -530,11 +540,11 @@ class MainWindow(QMainWindow):
         self.page_navigator.setObjectName("page_navigator_dock")
         self.page_nav_dock = self.page_navigator
 
-        self.widget_tree = WidgetTreePanel()
+        self.widget_tree = WidgetTreePanel(defer_ui=self._defer_panels)
         self.widget_tree.setObjectName("widget_tree_dock")
         self.tree_dock = self.widget_tree
 
-        self.res_panel = ResourcePanel()
+        self.res_panel = ResourcePanel(defer_ui=self._defer_panels)
         self.res_panel.setObjectName("resources_dock")
         self.res_dock = self.res_panel
 
@@ -546,19 +556,19 @@ class MainWindow(QMainWindow):
         right_scroll.setWidget(self.property_panel)
         self.props_dock = right_scroll
 
-        self.animations_panel = AnimationsPanel()
+        self.animations_panel = AnimationsPanel(defer_ui=self._defer_panels)
         self.animations_panel.setObjectName("animations_dock")
         self.animations_dock = self.animations_panel
 
-        self.page_fields_panel = PageFieldsPanel()
+        self.page_fields_panel = PageFieldsPanel(defer_ui=self._defer_panels)
         self.page_fields_panel.setObjectName("page_fields_dock")
         self.page_fields_dock = self.page_fields_panel
 
-        self.page_timers_panel = PageTimersPanel()
+        self.page_timers_panel = PageTimersPanel(defer_ui=self._defer_panels)
         self.page_timers_panel.setObjectName("page_timers_dock")
         self.page_timers_dock = self.page_timers_panel
 
-        self.debug_panel = DebugPanel()
+        self.debug_panel = DebugPanel(defer_ui=self._defer_panels)
         self.debug_panel.setObjectName("debug_output_dock")
         self.debug_dock = self.debug_panel
 
@@ -566,11 +576,14 @@ class MainWindow(QMainWindow):
         self.history_panel.setObjectName("history_dock")
         self.history_dock = self.history_panel
 
-        self.diagnostics_panel = DiagnosticsPanel()
+        self.diagnostics_panel = DiagnosticsPanel(defer_ui=self._defer_panels)
         self.diagnostics_panel.setObjectName("diagnostics_dock")
         self.diagnostics_dock = self.diagnostics_panel
 
-        self.widget_browser = WidgetBrowserPanel()
+        self.widget_browser = WidgetBrowserPanel(
+            defer_initial_refresh=self._defer_panels,
+            defer_ui=self._defer_panels,
+        )
         self.widget_browser.setObjectName("widgets_browser_panel")
 
         self._project_workspace = ProjectWorkspacePanel(self.project_dock, self.page_navigator)
@@ -625,7 +638,7 @@ class MainWindow(QMainWindow):
         center_shell = QWidget()
         self._center_shell = center_shell
         center_shell.setObjectName("workspace_center_shell")
-        center_shell.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        center_shell.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         center_layout = QVBoxLayout(center_shell)
         center_layout.setContentsMargins(0, 0, 0, 0)
         center_layout.setSpacing(2)
@@ -665,7 +678,7 @@ class MainWindow(QMainWindow):
         self._inspector_tabs.addTab(self.props_dock, "Properties")
         self._inspector_tabs.addTab(self.animations_panel, "Animations")
         self._inspector_tabs.addTab(self._page_tools_scroll, "Page")
-        self._inspector_tabs.currentChanged.connect(lambda _index: self._update_workspace_tab_metadata())
+        self._inspector_tabs.currentChanged.connect(self._on_inspector_tab_changed)
 
         self._top_splitter = QSplitter(Qt.Horizontal)
         self._top_splitter.setChildrenCollapsible(False)
@@ -742,7 +755,10 @@ class MainWindow(QMainWindow):
         self.statusBar().addPermanentWidget(self._workspace_status_label, 1)
         self._sdk_status_label = QLabel("SDK: missing")
         self.statusBar().addPermanentWidget(self._sdk_status_label)
-        self._update_sdk_status_label()
+        if self._defer_chrome:
+            self._sdk_status_label.setText("SDK: checking")
+        else:
+            self._update_sdk_status_label()
         self._update_status_bar_summary()
         self.statusBar().showMessage("Ready")
         self._pending_clean_all_startup_notice = True
@@ -830,6 +846,23 @@ class MainWindow(QMainWindow):
     def _apply_stylesheet(self):
         pass  # Rely entirely on the global Fusion / Fluent theme
 
+    def _ensure_welcome_page(self):
+        if self._welcome_page is not None:
+            return self._welcome_page
+        self._welcome_page = WelcomePage()
+        self._welcome_page.open_recent.connect(self._open_recent_project)
+        self._welcome_page.new_project.connect(self._new_project)
+        self._welcome_page.open_project.connect(self._open_project)
+        self._welcome_page.open_app.connect(self._open_app_dialog)
+        self._welcome_page.open_resource_generator.connect(self._open_resource_generator_window)
+        self._welcome_page.set_sdk_root.connect(self._set_sdk_root)
+        self._central_stack.insertWidget(0, self._welcome_page)
+        return self._welcome_page
+
+    def _refresh_welcome_page(self):
+        if self._welcome_page is not None:
+            self._welcome_page.refresh()
+
     def showEvent(self, event):
         super().showEvent(event)
         QTimer.singleShot(0, self._apply_pending_workspace_splitter_defaults)
@@ -855,6 +888,19 @@ class MainWindow(QMainWindow):
         """Register preview renderer and sync initial state."""
         self._renderer_manager.register(V1PythonRenderer(lambda: self._current_page))
         self._renderer_manager.switch("v1", fallback="v1")
+
+    def ensure_chrome_initialized(self):
+        if self._chrome_initialized:
+            return
+        self._init_menus()
+        self._init_toolbar()
+        self._chrome_initialized = True
+
+    def apply_deferred_startup_state(self):
+        if self._startup_state_applied:
+            return
+        self._apply_saved_window_state()
+        self._startup_state_applied = True
 
     def _prepare_workspace_dock(self, dock_widget):
         if dock_widget is None or not isinstance(dock_widget, QDockWidget):
@@ -1619,6 +1665,10 @@ class MainWindow(QMainWindow):
         self._update_view_panel_navigation_action_metadata()
         if panel_key == "widgets":
             self.widget_browser.focus_search()
+        elif panel_key == "structure":
+            self.widget_tree.ensure_initialized()
+        elif panel_key == "assets":
+            self.res_panel.ensure_initialized()
 
     def _default_insert_parent(self):
         primary = self._primary_selected_widget()
@@ -1989,6 +2039,9 @@ class MainWindow(QMainWindow):
         if scroll is None:
             return
         target = self.page_timers_panel if focus_key == "timers" else self.page_fields_panel
+        ensure = getattr(target, "ensure_initialized", None)
+        if callable(ensure):
+            ensure()
         QTimer.singleShot(0, lambda s=scroll, w=target: s.ensureWidgetVisible(w, 24, 24))
 
     def _show_inspector_tab(self, section, inner_section=None):
@@ -2063,12 +2116,40 @@ class MainWindow(QMainWindow):
                 ])
             self._bottom_toggle_button.setText("Show")
 
+        if self._bottom_panel_visible:
+            self._ensure_current_bottom_panel_initialized()
         self._update_bottom_toggle_button_metadata()
         self._update_workspace_tab_metadata()
+
+    def _on_inspector_tab_changed(self, index):
+        if int(index) == 1:
+            ensure = getattr(getattr(self, "animations_panel", None), "ensure_initialized", None)
+            if callable(ensure):
+                ensure()
+        elif int(index) == 2:
+            self._ensure_page_tools_initialized()
+        self._update_workspace_tab_metadata()
+
+    def _ensure_page_tools_initialized(self):
+        for panel in (getattr(self, "page_fields_panel", None), getattr(self, "page_timers_panel", None)):
+            ensure = getattr(panel, "ensure_initialized", None)
+            if callable(ensure):
+                ensure()
+
+    def _ensure_current_bottom_panel_initialized(self):
+        tabs = getattr(self, "_bottom_tabs", None)
+        if tabs is None:
+            return
+        widget = tabs.currentWidget()
+        ensure = getattr(widget, "ensure_initialized", None)
+        if callable(ensure):
+            ensure()
 
     def _on_bottom_tab_changed(self, index):
         titles = {0: "Diagnostics", 1: "History", 2: "Debug Output"}
         current_label = titles.get(index, "Tools")
+        if getattr(self, "_bottom_panel_visible", False):
+            self._ensure_current_bottom_panel_initialized()
         if hasattr(self, "_bottom_title"):
             self._bottom_title.setText(current_label)
         if hasattr(self, "_state_store"):
@@ -2933,7 +3014,7 @@ class MainWindow(QMainWindow):
                     self._trigger_compile(reason="sdk root change")
             self._update_compile_availability()
 
-        self._welcome_page.refresh()
+        self._refresh_welcome_page()
         self._update_sdk_status_label()
         if status_message and not (self.project is not None and self._effective_preview_unavailable_reason()):
             self.statusBar().showMessage(status_message)
@@ -2966,6 +3047,8 @@ class MainWindow(QMainWindow):
             self.compiler.set_screen_size(self.project.screen_width, self.project.screen_height)
 
     def _update_compile_availability(self):
+        if not getattr(self, "_chrome_initialized", False) and not hasattr(self, "_compile_action"):
+            return
         preview_error = self._effective_preview_unavailable_reason()
         rebuild_error = self._effective_rebuild_unavailable_reason()
         can_build = (
@@ -3511,8 +3594,9 @@ class MainWindow(QMainWindow):
         """Show the welcome page (hide editor)."""
         if self.project is None:
             WidgetRegistry.instance().clear_app_local_widgets()
-        self._central_stack.setCurrentIndex(0)
-        self._welcome_page.refresh()
+        welcome_page = self._ensure_welcome_page()
+        self._central_stack.setCurrentWidget(welcome_page)
+        welcome_page.refresh()
         self.setWindowTitle("EmbeddedGUI Designer")
         self._update_debug_rebuild_action(show=False)
         self._update_main_view_metadata()
@@ -3520,7 +3604,7 @@ class MainWindow(QMainWindow):
 
     def _show_editor(self):
         """Show the editor (hide welcome page)."""
-        self._central_stack.setCurrentIndex(1)
+        self._central_stack.setCurrentWidget(self._editor_container)
         self._update_widget_browser_target()
         self._update_main_view_metadata()
 
@@ -4429,6 +4513,8 @@ class MainWindow(QMainWindow):
 
     def _update_recent_menu(self):
         """Update the Recent Projects submenu."""
+        if not hasattr(self, "_recent_menu"):
+            return
         recent = self._config.recent_projects
         snapshot = []
         for item in recent[:10]:
@@ -4572,7 +4658,7 @@ class MainWindow(QMainWindow):
             if reply == QMessageBox.Yes:
                 if self._config.remove_recent_project(project_path):
                     self._update_recent_menu()
-                    self._welcome_page.refresh()
+                    self._refresh_welcome_page()
                 self.statusBar().showMessage("Removed missing project from recent projects")
         except Exception as exc:
             QMessageBox.critical(self, "Error", f"Failed to open project:\n{exc}")
@@ -5403,11 +5489,15 @@ class MainWindow(QMainWindow):
         self._update_preview_grid_and_mockup_action_metadata()
 
     def _set_background_toggle_state(self, visible):
+        if not hasattr(self, "_toggle_bg_action"):
+            return
         blocker = QSignalBlocker(self._toggle_bg_action)
         self._toggle_bg_action.setChecked(visible)
         del blocker
 
     def _sync_background_opacity_actions(self, opacity):
+        if not hasattr(self, "_opacity_group"):
+            return
         target_pct = int(opacity * 100)
         for act in self._opacity_group.actions():
             act.setChecked(act.text() == f"{target_pct}%")
@@ -7956,6 +8046,8 @@ class MainWindow(QMainWindow):
 
     def _update_undo_actions(self):
         """Enable/disable Undo and Redo menu actions based on stack state."""
+        if not hasattr(self, "_undo_action") or not hasattr(self, "_redo_action"):
+            return
         if self._current_page:
             stack = self._undo_manager.get_stack(self._current_page.name)
             self._undo_action.setEnabled(stack.can_undo())

@@ -43,17 +43,49 @@ class DebugPanel(QWidget):
 
     rebuild_requested = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, defer_ui=False):
         super().__init__(parent)
         self._rebuild_action_visible = False
         self._rebuild_action_enabled = False
         self._rebuild_button_tooltip = ""
         self._rebuild_button_accessible_name = ""
+        self._pending_lines = []
+        self._pending_pixel_size = None
+        self._pending_point_size = None
+        self._ui_initialized = False
+        self._defer_ui = bool(defer_ui)
+        if not self._defer_ui:
+            self.ensure_initialized()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.ensure_initialized()
+
+    def ensure_initialized(self):
+        if self._ui_initialized:
+            return
         self._init_ui()
-        self._update_accessibility_summary("No output yet.")
+        self._ui_initialized = True
+        if self._pending_pixel_size is not None:
+            self.set_output_font_size(self._pending_pixel_size)
+        if self._pending_point_size is not None:
+            self.set_output_font_size_pt(self._pending_point_size)
+        pending_lines = list(self._pending_lines)
+        self._pending_lines = []
+        for text, msg_type in pending_lines:
+            self.append_text(text, msg_type)
+        self.set_rebuild_action_state(
+            visible=self._rebuild_action_visible,
+            enabled=self._rebuild_action_enabled,
+            tooltip=self._rebuild_button_tooltip,
+            accessible_name=self._rebuild_button_accessible_name,
+        )
+        self._update_accessibility_summary(self._current_last_message())
 
     def changeEvent(self, event):
         super().changeEvent(event)
+        if not self._ui_initialized:
+            return
         if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
             self._refresh_message_formats()
 
@@ -150,6 +182,10 @@ class DebugPanel(QWidget):
         self._cmd_format.setForeground(QColor(tokens["warning"]))
 
     def _current_last_message(self):
+        if not self._ui_initialized:
+            if not self._pending_lines:
+                return "No output yet."
+            return self._pending_lines[-1][0]
         lines = self._output.toPlainText().splitlines()
         if not lines:
             return "No output yet."
@@ -160,6 +196,8 @@ class DebugPanel(QWidget):
         self._rebuild_action_enabled = bool(enabled) and self._rebuild_action_visible
         self._rebuild_button_tooltip = str(tooltip or "")
         self._rebuild_button_accessible_name = str(accessible_name or "")
+        if not self._ui_initialized:
+            return
         self._rebuild_btn.setVisible(self._rebuild_action_visible)
         self._rebuild_btn.setEnabled(self._rebuild_action_enabled)
         self._update_accessibility_summary(self._current_last_message())
@@ -168,6 +206,8 @@ class DebugPanel(QWidget):
         return bool(self._rebuild_action_visible)
 
     def _update_accessibility_summary(self, last_message):
+        if not self._ui_initialized:
+            return
         lines = self._output.toPlainText().splitlines()
         line_count = len(lines)
         line_label = f"{line_count} line" if line_count == 1 else f"{line_count} lines"
@@ -262,21 +302,31 @@ class DebugPanel(QWidget):
 
     def clear(self):
         """Clear all output."""
+        if not self._ui_initialized:
+            self._pending_lines = []
+            return
         self._output.clear()
         self._update_accessibility_summary("No output yet.")
 
     def get_output_font(self):
         """Get the current font used in the debug output."""
+        self.ensure_initialized()
         return self._output.font()
 
     def set_output_font_size(self, pixel_size):
         """Set the debug output font size (pixels)."""
+        if not self._ui_initialized:
+            self._pending_pixel_size = int(pixel_size)
+            return
         font = self._output.font()
         font.setPixelSize(int(pixel_size))
         self._output.setFont(font)
 
     def set_output_font_size_pt(self, point_size):
         """Set the debug output font size (points)."""
+        if not self._ui_initialized:
+            self._pending_point_size = int(point_size)
+            return
         font = self._output.font()
         font.setPointSize(int(point_size))
         self._output.setFont(font)
@@ -289,6 +339,11 @@ class DebugPanel(QWidget):
             msg_type: "info", "error", "success", "action", or "cmd"
         """
         text = str(text or "")
+        if not self._ui_initialized:
+            self._pending_lines.append((text, msg_type))
+            if len(self._pending_lines) > 5000:
+                self._pending_lines = self._pending_lines[-5000:]
+            return
         cursor = self._output.textCursor()
         cursor.movePosition(cursor.End)
 

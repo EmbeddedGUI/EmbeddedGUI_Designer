@@ -99,14 +99,27 @@ class AnimationsPanel(QWidget):
 
     animations_changed = pyqtSignal(list)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, defer_ui=False):
         super().__init__(parent)
         self._selection = []
         self._primary_widget = None
         self._animations = []
         self._updating = False
+        self._ui_initialized = False
+        self._defer_ui = bool(defer_ui)
+        if not self._defer_ui:
+            self.ensure_initialized()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.ensure_initialized()
+
+    def ensure_initialized(self):
+        if self._ui_initialized:
+            return
         self._init_ui()
-        self.clear()
+        self._ui_initialized = True
+        self._rebuild_table()
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
@@ -366,14 +379,18 @@ class AnimationsPanel(QWidget):
         if primary is None or all(widget is not primary for widget in widgets):
             primary = widgets[-1] if widgets else None
         self._primary_widget = primary if len(widgets) == 1 else None
-        selected_row = self._selected_row()
+        selected_row = self._selected_row() if self._ui_initialized else -1
         self._animations = normalize_widget_animations(getattr(self._primary_widget, "animations", []))
+        if not self._ui_initialized:
+            return
         self._rebuild_table(selected_row=selected_row)
 
     def refresh(self):
         self.set_selection(self._selection, primary=self._primary_widget)
 
     def _selected_row(self):
+        if not self._ui_initialized:
+            return -1
         selection_model = self._table.selectionModel()
         if selection_model is None:
             return -1
@@ -387,6 +404,8 @@ class AnimationsPanel(QWidget):
             self._detail_form.removeRow(0)
 
     def _rebuild_table(self, selected_row=-1):
+        if not self._ui_initialized:
+            return
         self._updating = True
         self._table.setRowCount(len(self._animations))
         for row, animation in enumerate(self._animations):

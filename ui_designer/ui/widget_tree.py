@@ -164,12 +164,14 @@ class WidgetTreePanel(QWidget):
     feedback_message = pyqtSignal(str)  # emits user-facing status messages
     browse_widgets_requested = pyqtSignal(object)  # preferred parent widget or None
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, defer_ui=False):
         super().__init__(parent)
         self._config = get_config()
         self.project = None
         self._widget_map = {}  # QTreeWidgetItem -> WidgetModel
         self._item_map = {}  # widget id -> QTreeWidgetItem
+        self._pending_selected_widgets = []
+        self._pending_primary_widget = None
         self._building = False
         self._syncing_selection = False
         self._expanded_widgets = set()
@@ -183,10 +185,28 @@ class WidgetTreePanel(QWidget):
         self._drag_hover_expand_timer.setSingleShot(True)
         self._drag_hover_expand_timer.setInterval(350)
         self._drag_hover_expand_timer.timeout.connect(self._expand_drag_hover_item)
+        self._ui_initialized = False
+        self._defer_ui = bool(defer_ui)
+        if not self._defer_ui:
+            self.ensure_initialized()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.ensure_initialized()
+
+    def ensure_initialized(self):
+        if self._ui_initialized:
+            return
         self._init_ui()
+        self._ui_initialized = True
+        self.rebuild_tree()
+        if self._pending_selected_widgets or self._pending_primary_widget is not None:
+            self.set_selected_widgets(self._pending_selected_widgets, primary=self._pending_primary_widget)
 
     def changeEvent(self, event):
         super().changeEvent(event)
+        if not self._ui_initialized:
+            return
         if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
             self._apply_tree_base_font()
             self.refresh_tree_typography()
@@ -502,12 +522,20 @@ class WidgetTreePanel(QWidget):
 
     def set_project(self, project):
         self.project = project
+        if not self._ui_initialized:
+            self._widget_map = {}
+            self._item_map = {}
+            self._expanded_widgets = set()
+            self._default_expand_next_rebuild = True
+            return
         self._clear_tree_drag_hover()
         self._expanded_widgets = set()
         self._default_expand_next_rebuild = True
         self.rebuild_tree()
 
     def rebuild_tree(self):
+        if not self._ui_initialized:
+            return
         self._clear_tree_drag_hover()
         self._expanded_widgets = self._collect_expanded_widget_ids()
         default_expand = self._default_expand_next_rebuild
@@ -525,6 +553,9 @@ class WidgetTreePanel(QWidget):
 
     def shutdown(self):
         self._filter_matches = []
+        if not self._ui_initialized:
+            self.blockSignals(True)
+            return
         self._clear_tree_drag_hover()
         self._suppress_expansion_tracking = True
         try:
@@ -638,12 +669,16 @@ class WidgetTreePanel(QWidget):
         self.selection_changed.emit(widgets, primary)
 
     def _get_selected_widget(self):
+        if not self._ui_initialized:
+            return self._pending_primary_widget
         item = self.tree.currentItem()
         if item is None:
             return None
         return self._widget_map.get(id(item))
 
     def selected_widgets(self):
+        if not self._ui_initialized:
+            return list(self._pending_selected_widgets)
         widgets = []
         for item in self.tree.selectedItems():
             widget = self._widget_map.get(id(item))
@@ -1966,11 +2001,17 @@ class WidgetTreePanel(QWidget):
         return (fallback_label or "").strip()
 
     def set_selected_widgets(self, widgets, primary=None):
+        widgets = [widget for widget in (widgets or []) if widget is not None]
+        if primary not in widgets:
+            primary = widgets[0] if widgets else None
+        self._pending_selected_widgets = list(widgets)
+        self._pending_primary_widget = primary
+        if not self._ui_initialized:
+            return
         self._clear_tree_drag_hover()
         self._syncing_selection = True
         try:
             self.tree.clearSelection()
-            widgets = [widget for widget in (widgets or []) if widget is not None]
             current_item = None
             for widget in widgets:
                 item = self._item_map.get(id(widget))
@@ -3064,6 +3105,8 @@ class WidgetTreePanel(QWidget):
         self._drag_hover_expand_timer.stop()
         self._drag_hover_item = None
         self._drag_hover_position = None
+        if not self._ui_initialized:
+            return
         self._set_drag_target_item(None)
         self._set_drag_target_label(self._default_drag_target_text(), tone="default")
 

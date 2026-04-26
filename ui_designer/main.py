@@ -103,6 +103,7 @@ def main():
     args = _parse_args()
 
     try:
+        from PyQt5.QtCore import QTimer
         from PyQt5.QtWidgets import QApplication
     except ImportError:
         print("Error: PyQt5 is required. Install it with:")
@@ -138,8 +139,6 @@ def main():
     app.setProperty("designer_font_size_pt", int(getattr(config, "font_size_px", 0) or 0))
     apply_theme(app, config.theme, density=getattr(config, "ui_density", "standard"))
 
-    window = MainWindow(sdk_root, app_name=app_name)
-
     project_to_open = ""
     preferred_sdk_root = sdk_root
     if cli_project:
@@ -162,13 +161,31 @@ def main():
                 if not removed:
                     config.save()
 
-    if project_to_open:
-        try:
-            window._open_project_path(project_to_open, preferred_sdk_root=preferred_sdk_root, silent=not bool(cli_project))
-        except Exception as exc:
-            print(f"Warning: Failed to load project: {exc}")
+    window = MainWindow(
+        sdk_root,
+        app_name=app_name,
+        defer_welcome=bool(project_to_open),
+        defer_chrome=bool(project_to_open),
+        defer_panels=bool(project_to_open),
+    )
 
     window.show()
+
+    if project_to_open:
+        window.statusBar().showMessage("Opening project...")
+
+        def open_startup_project():
+            try:
+                window._open_project_path(project_to_open, preferred_sdk_root=preferred_sdk_root, silent=not bool(cli_project))
+            except Exception as exc:
+                print(f"Warning: Failed to load project: {exc}")
+                window._show_welcome_page()
+            finally:
+                QTimer.singleShot(0, window.apply_deferred_startup_state)
+                QTimer.singleShot(0, window.ensure_chrome_initialized)
+
+        QTimer.singleShot(0, open_startup_project)
+
     sys.exit(app.exec_())
 
 

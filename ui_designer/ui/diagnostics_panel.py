@@ -72,14 +72,30 @@ class DiagnosticsPanel(QWidget):
     export_requested = pyqtSignal()
     export_json_requested = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, defer_ui=False):
         super().__init__(parent)
         self._entries = []
         self._visible_entries = []
         self._activated_entry = None
         self._selection_anchor_key = None
+        self._severity_filter_value = ""
+        self._summary_text = "Diagnostics: no active issues"
+        self._ui_initialized = False
+        self._defer_ui = bool(defer_ui)
+        if not self._defer_ui:
+            self.ensure_initialized()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.ensure_initialized()
+
+    def ensure_initialized(self):
+        if self._ui_initialized:
+            return
         self._init_ui()
-        self.clear()
+        self._ui_initialized = True
+        self.restore_view_state({"severity_filter": self._severity_filter_value})
+        self._apply_filter()
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
@@ -193,6 +209,9 @@ class DiagnosticsPanel(QWidget):
         self._visible_entries = []
         self._activated_entry = None
         self._selection_anchor_key = None
+        self._summary_text = "Diagnostics: no active issues"
+        if not self._ui_initialized:
+            return
         self._summary_label.setText("Diagnostics: no active issues")
         self._hint_label.setText(_DEFAULT_HINT_TEXT)
         self._reset_view_button.setEnabled(bool(self._current_filter_value()))
@@ -209,18 +228,32 @@ class DiagnosticsPanel(QWidget):
     def set_entries(self, entries):
         self._entries = list(entries or [])
         self._activated_entry = None
-        self._apply_filter()
+        if self._ui_initialized:
+            self._apply_filter()
+            return
+        self._visible_entries = [
+            entry for entry in self._entries
+            if not self._severity_filter_value or entry.severity == self._severity_filter_value
+        ]
+        if not self._entries:
+            self._summary_text = "Diagnostics: no active issues"
+        else:
+            counts = self.severity_counts()
+            self._summary_text = (
+                f"Diagnostics: {counts['error']} error(s), "
+                f"{counts['warning']} warning(s), {counts['info']} info item(s)"
+            )
 
     def has_entries(self):
         return bool(self._visible_entries)
 
     def summary_text(self):
         if not self._entries:
-            return self._summary_label.text()
-        lines = [self._summary_label.text()]
+            return self._summary_text
+        lines = [self._summary_label.text() if self._ui_initialized else self._summary_text]
         filter_value = self._current_filter_value()
         if filter_value:
-            lines.append(f"Filter: {self._severity_filter_combo.currentText().lower()} ({len(self._visible_entries)} item(s))")
+            lines.append(f"Filter: {self._current_filter_label().lower()} ({len(self._visible_entries)} item(s))")
         if not self._visible_entries:
             return "\n".join(lines)
         return "\n".join(lines + [_format_entry_text(entry) for entry in self._visible_entries])
@@ -229,6 +262,8 @@ class DiagnosticsPanel(QWidget):
         return self._activated_entry
 
     def current_selected_entry(self):
+        if not self._ui_initialized:
+            return None
         item = self._list.currentItem()
         if item is None:
             return None
@@ -236,6 +271,10 @@ class DiagnosticsPanel(QWidget):
 
     def set_severity_filter(self, severity):
         severity_value = str(severity or "")
+        self._severity_filter_value = severity_value
+        if not self._ui_initialized:
+            self.set_entries(self._entries)
+            return
         index = self._severity_filter_combo.findData(severity_value)
         self._severity_filter_combo.setCurrentIndex(index if index >= 0 else 0)
 
@@ -255,6 +294,10 @@ class DiagnosticsPanel(QWidget):
     def restore_view_state(self, state):
         view_state = state if isinstance(state, dict) else {}
         severity_value = str(view_state.get("severity_filter") or "")
+        self._severity_filter_value = severity_value
+        if not self._ui_initialized:
+            self.set_entries(self._entries)
+            return
         index = self._severity_filter_combo.findData(severity_value)
         self._severity_filter_combo.setCurrentIndex(index if index >= 0 else 0)
 
@@ -277,6 +320,12 @@ class DiagnosticsPanel(QWidget):
         return f"{value} {noun}"
 
     def _current_filter_label(self):
+        if not self._ui_initialized:
+            return {
+                "error": "Error",
+                "warning": "Warning",
+                "info": "Info",
+            }.get(self._severity_filter_value, "Any")
         return str(self._severity_filter_combo.currentText() or "Any")
 
     def _entry_tooltip(self, entry):
@@ -488,9 +537,15 @@ class DiagnosticsPanel(QWidget):
         self._set_widget_metadata(self._list, tooltip=list_summary, accessible_name=list_summary)
 
     def _current_filter_value(self):
+        if not self._ui_initialized:
+            return self._severity_filter_value
         return str(self._severity_filter_combo.currentData() or "")
 
     def _apply_filter(self):
+        if not self._ui_initialized:
+            self.set_entries(self._entries)
+            return
+        self._severity_filter_value = self._current_filter_value()
         selection_key = self._selection_anchor_key
         self._list.clear()
         self._visible_entries = [
@@ -506,7 +561,8 @@ class DiagnosticsPanel(QWidget):
         self._export_json_button.setEnabled(bool(self._visible_entries))
 
         if not self._entries:
-            self._summary_label.setText("Diagnostics: no active issues")
+            self._summary_text = "Diagnostics: no active issues"
+            self._summary_label.setText(self._summary_text)
             self._hint_label.setText(_DEFAULT_HINT_TEXT)
             self._selection_anchor_key = None
             self._open_selected_button.setEnabled(False)
@@ -516,7 +572,8 @@ class DiagnosticsPanel(QWidget):
         errors = sum(1 for entry in self._entries if entry.severity == "error")
         warnings = sum(1 for entry in self._entries if entry.severity == "warning")
         infos = sum(1 for entry in self._entries if entry.severity == "info")
-        self._summary_label.setText(f"Diagnostics: {errors} error(s), {warnings} warning(s), {infos} info item(s)")
+        self._summary_text = f"Diagnostics: {errors} error(s), {warnings} warning(s), {infos} info item(s)"
+        self._summary_label.setText(self._summary_text)
         if self._visible_entries:
             self._hint_label.setText(_DEFAULT_HINT_TEXT)
         else:
@@ -586,6 +643,7 @@ class DiagnosticsPanel(QWidget):
                 return
 
     def open_first_error(self):
+        self.ensure_initialized()
         self._open_first_error()
 
     def _open_first_warning(self):
@@ -604,6 +662,7 @@ class DiagnosticsPanel(QWidget):
                 return
 
     def open_first_warning(self):
+        self.ensure_initialized()
         self._open_first_warning()
 
     def _open_selected(self):

@@ -2179,9 +2179,11 @@ class ResourcePanel(QWidget):
     string_key_renamed = pyqtSignal(str, str)
     string_key_deleted = pyqtSignal(str, str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, defer_ui=False):
         super().__init__(parent)
         self.setAttribute(Qt.WA_StyledBackground, True)
+        self._ui_initialized = False
+        self._defer_ui = bool(defer_ui)
         self._resource_dir = ""      # .eguiproject/resources/ base directory
         self._src_dir = ""           # same as _resource_dir (fonts/text root)
         self._images_dir = ""        # .eguiproject/resources/images/ subfolder
@@ -2203,10 +2205,36 @@ class ResourcePanel(QWidget):
         self._resource_filter_reset_buttons = {}
         self._cleanup_unused_buttons = {}
         self.setAcceptDrops(True)
+        if not self._defer_ui:
+            self.ensure_initialized()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.ensure_initialized()
+
+    def ensure_initialized(self):
+        if self._ui_initialized:
+            return
         self._init_ui()
+        self._ui_initialized = True
+        self._refresh_deferred_state()
+
+    def _refresh_deferred_state(self):
+        if self._resource_dir:
+            self.set_resource_dir(self._resource_dir)
+        else:
+            self._update_tab_titles()
+            self._refresh_usage_view()
+        self._refresh_string_tab()
+        self._update_resource_action_metadata()
+        self._update_string_action_metadata()
+        self._update_usage_accessibility_metadata()
+        self._update_panel_overview()
 
     def changeEvent(self, event):
         super().changeEvent(event)
+        if not self._ui_initialized:
+            return
         if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
             for resource_type in ("image", "font", "text"):
                 self._refresh_resource_list(resource_type, selection_fallback="keep")
@@ -3084,6 +3112,8 @@ class ResourcePanel(QWidget):
         self._resource_dir = resource_dir or ""
         self._src_dir = resource_dir or ""
         self._images_dir = resource_images_dir(resource_dir)
+        if not self._ui_initialized:
+            return
         self._image_list.clear()
         self._font_list.clear()
         self._text_list.clear()
@@ -3105,6 +3135,8 @@ class ResourcePanel(QWidget):
     def set_resource_catalog(self, catalog):
         """Set the resource catalog and refresh the panel."""
         self._catalog = catalog or ResourceCatalog()
+        if not self._ui_initialized:
+            return
         if self._resource_dir:
             self.set_resource_dir(self._resource_dir)
             return
@@ -3125,6 +3157,8 @@ class ResourcePanel(QWidget):
     def set_string_catalog(self, catalog):
         """Set the i18n string catalog and refresh the Strings tab."""
         self._string_catalog = catalog or StringResourceCatalog()
+        if not self._ui_initialized:
+            return
         self._refresh_string_tab()
 
     def get_string_catalog(self):
@@ -3134,6 +3168,8 @@ class ResourcePanel(QWidget):
     def set_resource_usage_index(self, usage_index):
         """Set the current project resource usage map."""
         self._resource_usage_index = usage_index or {}
+        if not self._ui_initialized:
+            return
         if self._resource_dir:
             for resource_type in ("image", "font", "text"):
                 self._refresh_resource_list(resource_type, selection_fallback="keep")
@@ -3146,6 +3182,8 @@ class ResourcePanel(QWidget):
     def set_usage_page_context(self, page_name):
         """Set the current page name used by usage filtering."""
         self._usage_page_name = page_name or ""
+        if not self._ui_initialized:
+            return
         self._refresh_usage_view()
 
     # -- Internal helpers --
