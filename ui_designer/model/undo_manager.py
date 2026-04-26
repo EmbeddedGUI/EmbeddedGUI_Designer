@@ -138,6 +138,13 @@ class PageUndoStack:
                 if self._save_index < 0:
                     self._save_index = -2
 
+    def cancel_batch(self):
+        """End an active batch without recording a new snapshot."""
+        if not self._batch_active:
+            return
+        self._batch_active = False
+        self._batch_start_index = -1
+
     def current_label(self):
         """Return the label for the current snapshot."""
         if self._index < 0 or self._index >= len(self._labels):

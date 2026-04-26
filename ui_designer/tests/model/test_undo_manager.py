@@ -172,6 +172,18 @@ class TestBatchOperations:
         stack.end_batch("<A/>")  # same as before batch
         assert not stack.can_undo(), "batch with no net change should not add entry"
 
+    def test_cancel_batch_discards_without_snapshot(self):
+        stack = PageUndoStack()
+        stack.push("<A/>")
+        stack.begin_batch()
+        stack.push("<ignored/>")
+
+        stack.cancel_batch()
+        stack.push("<B/>")
+
+        assert stack.can_undo()
+        assert stack.undo() == "<A/>"
+
     def test_nested_begin_batch_ignored(self):
         stack = PageUndoStack()
         stack.push("<A/>")

@@ -3122,6 +3122,44 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_canvas_drag_without_dirty_skips_xml_snapshot_on_finish(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CanvasNoopDragPerfDemo"
+        widget = WidgetModel("switch", name="toggle", x=10, y=10, width=50, height=24)
+        project = _create_project_only_with_widgets(
+            project_dir,
+            "CanvasNoopDragPerfDemo",
+            sdk_root,
+            widgets=[widget],
+        )
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        calls = {"to_xml_string": 0}
+        monkeypatch.setattr(
+            window._current_page,
+            "to_xml_string",
+            lambda: calls.__setitem__("to_xml_string", calls["to_xml_string"] + 1) or "<Page />",
+        )
+
+        window._on_drag_started()
+        window._on_drag_finished()
+
+        assert calls["to_xml_string"] == 0
+
+        stack = window._undo_manager.get_stack(window._current_page.name)
+        stack.push("<after />", label="after cancel")
+        assert stack.current_label() == "after cancel"
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_canvas_layout_reorder_defers_full_refresh_until_drag_finishes(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

@@ -8161,13 +8161,17 @@ class MainWindow(QMainWindow):
     def _on_drag_finished(self):
         """Preview drag/resize ended 鈥?commit undo batch."""
         if self._current_page:
-            xml = self._current_page.to_xml_string()
             stack = self._undo_manager.get_stack(self._current_page.name)
             should_finalize_canvas_refresh = self._active_batch_source in {"canvas move", "canvas resize", "layout reorder"}
             should_refresh_live_geometry = self._active_batch_source in {"canvas move", "canvas resize"}
             finalize_source = self._active_batch_source or "canvas drag"
-            stack.end_batch(xml, label=self._active_batch_source or "canvas drag")
-            if should_finalize_canvas_refresh and self._canvas_drag_dirty:
+            xml = None
+            if self._canvas_drag_dirty:
+                xml = self._current_page.to_xml_string()
+                stack.end_batch(xml, label=self._active_batch_source or "canvas drag")
+            else:
+                stack.cancel_batch()
+            if should_finalize_canvas_refresh and xml is not None:
                 if should_refresh_live_geometry:
                     self.property_panel.refresh_live_geometry(
                         self._selection_state.widgets,
