@@ -625,8 +625,9 @@ class WidgetOverlay(QWidget):
             return self.rect()
         return rect
 
-    def _passive_bounds_cache_state_key(self):
-        cache_rect = self._visible_screen_rect_for_cache()
+    def _passive_bounds_cache_state_key(self, cache_rect=None):
+        if cache_rect is None:
+            cache_rect = self._visible_screen_rect_for_cache()
         bg_cache_key = 0
         if self._bg_image is not None:
             cache_key_getter = getattr(self._bg_image, "cacheKey", None)
@@ -782,7 +783,7 @@ class WidgetOverlay(QWidget):
         cache_rect = self._visible_screen_rect_for_cache()
         if cache_rect.width() <= 0 or cache_rect.height() <= 0:
             return None
-        cache_key = self._passive_bounds_cache_state_key()
+        cache_key = self._passive_bounds_cache_state_key(cache_rect)
         if self._passive_bounds_cache is not None and self._passive_bounds_cache_key == cache_key:
             return self._passive_bounds_cache
 
