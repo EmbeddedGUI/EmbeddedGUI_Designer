@@ -2680,6 +2680,17 @@ class PreviewPanel(QWidget):
     def _set_preview_pixmap(self, pixmap):
         self._preview_label.setPixmap(pixmap)
 
+    def show_python_preview_image(self, image, reason=""):
+        """Display an already-rendered PIL image as the Python fallback preview."""
+        if image is None:
+            self.show_python_preview(None, reason)
+            return
+        if getattr(image, "mode", "RGBA") != "RGBA":
+            image = image.convert("RGBA")
+        raw = image.tobytes("raw", "RGBA")
+        qimage = QImage(raw, image.width, image.height, image.width * 4, QImage.Format_RGBA8888).copy()
+        self.show_image_preview(qimage, reason=reason, label_prefix="Python fallback")
+
     def show_python_preview(self, page, reason=""):
         """Render the current page with the Python fallback renderer."""
         if page is None:
@@ -2690,10 +2701,8 @@ class PreviewPanel(QWidget):
             self._update_accessibility_summary()
             return
 
-        image = render_page(page, self.screen_width, self.screen_height).convert("RGBA")
-        raw = image.tobytes("raw", "RGBA")
-        qimage = QImage(raw, image.width, image.height, image.width * 4, QImage.Format_RGBA8888).copy()
-        self.show_image_preview(qimage, reason=reason, label_prefix="Python fallback")
+        image = render_page(page, self.screen_width, self.screen_height)
+        self.show_python_preview_image(image, reason=reason)
 
     def show_image_preview(self, qimage, reason="", label_prefix="Renderer"):
         """Display a pre-rendered QImage in the preview area."""

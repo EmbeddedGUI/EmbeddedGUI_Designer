@@ -3122,6 +3122,49 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_update_preview_overlay_reuses_python_render_for_preview_and_thumbnail(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        Image = pytest.importorskip("PIL.Image")
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CanvasRenderReuseDemo"
+        widget = WidgetModel("switch", name="toggle", x=10, y=10, width=50, height=24)
+        project = _create_project_only_with_widgets(
+            project_dir,
+            "CanvasRenderReuseDemo",
+            sdk_root,
+            widgets=[widget],
+        )
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        calls = {"render_page": 0, "refresh_thumbnail": 0}
+
+        def fake_render_page(_page, screen_width, screen_height):
+            calls["render_page"] += 1
+            return Image.new("RGBA", (screen_width, screen_height), (255, 255, 255, 255))
+
+        monkeypatch.setattr(main_window_module, "render_page", fake_render_page)
+        monkeypatch.setattr(
+            window.page_navigator,
+            "refresh_thumbnail",
+            lambda *args, **kwargs: calls.__setitem__("refresh_thumbnail", calls["refresh_thumbnail"] + 1),
+        )
+
+        window._update_preview_overlay()
+
+        assert calls == {"render_page": 1, "refresh_thumbnail": 0}
+        assert window.preview_panel.is_python_preview_active() is True
+        assert window.page_navigator._thumbnails["main_page"]._thumb_label.pixmap() is not None
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_canvas_move_throttles_live_geometry_refresh_during_drag(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui import main_window as main_window_module

@@ -521,10 +521,22 @@ class PageNavigator(QWidget):
         page = self._pages[page_name]
         try:
             img = render_page(page, self._screen_width, self._screen_height)
-            pixmap = _pil_to_qpixmap(img)
-            self._thumbnails[page_name].set_thumbnail(pixmap)
+            self.set_thumbnail_image(page_name, img)
         except Exception:
             pass
+
+    def set_thumbnail_image(self, page_name, image):
+        """Set a page thumbnail from an already-rendered PIL image."""
+        if page_name not in self._thumbnails or image is None:
+            return False
+        try:
+            if getattr(image, "mode", "RGBA") != "RGBA":
+                image = image.convert("RGBA")
+            pixmap = _pil_to_qpixmap(image)
+            self._thumbnails[page_name].set_thumbnail(pixmap)
+            return True
+        except Exception:
+            return False
 
     def refresh_all(self):
         for name in self._pages:

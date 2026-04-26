@@ -120,6 +120,7 @@ from ..generator.user_code_preserver import (
 )
 from ..engine.compiler import CompilerEngine
 from ..engine.layout_engine import compute_layout, compute_page_layout
+from ..engine.python_renderer import render_page
 from ..utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
@@ -3145,6 +3146,23 @@ class MainWindow(QMainWindow):
         if reason or self.preview_panel.is_python_preview_active() or self.compiler is None:
             self._switch_to_python_preview(reason)
             self.statusBar().showMessage("Using Python fallback preview.", 3000)
+
+    def _refresh_python_preview_and_thumbnail(self, reason=""):
+        if self.project is None or self._current_page is None:
+            return
+        try:
+            image = render_page(
+                self._current_page,
+                self.preview_panel.screen_width,
+                self.preview_panel.screen_height,
+            )
+        except Exception:
+            self.page_navigator.refresh_thumbnail(self._current_page.name)
+            self._refresh_python_preview(reason)
+            return
+        self.page_navigator.set_thumbnail_image(self._current_page.name, image)
+        self.preview_panel.show_python_preview_image(image, reason=reason)
+        self.statusBar().showMessage("Using Python fallback preview.", 3000)
 
     def _persist_current_project_to_config(self):
         previous_snapshot = (
@@ -8215,15 +8233,17 @@ class MainWindow(QMainWindow):
             widgets = self._current_page.get_all_widgets()
             self.preview_panel.set_widgets(widgets)
             self.preview_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
-            self.page_navigator.refresh_thumbnail(self._current_page.name)
 
-            if self.compiler is None or not self.compiler.can_build() or self.preview_panel.is_python_preview_active():
+            use_python_preview = self.compiler is None or not self.compiler.can_build() or self.preview_panel.is_python_preview_active()
+            if use_python_preview:
                 reason = ""
                 if self.compiler is None:
                     reason = "SDK unavailable, compile preview disabled"
                 elif not self.compiler.can_build():
                     reason = self.compiler.get_build_error()
-                self._refresh_python_preview(reason)
+                self._refresh_python_preview_and_thumbnail(reason)
+            else:
+                self.page_navigator.refresh_thumbnail(self._current_page.name)
 
     def _set_overlay_mode(self, mode):
         self.preview_panel.set_overlay_mode(mode)
