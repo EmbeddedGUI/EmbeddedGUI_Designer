@@ -3066,7 +3066,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(
             window,
             "_sync_xml_to_editors",
-            lambda: calls.__setitem__("sync_xml_to_editors", calls["sync_xml_to_editors"] + 1),
+            lambda *args, **kwargs: calls.__setitem__("sync_xml_to_editors", calls["sync_xml_to_editors"] + 1),
         )
         monkeypatch.setattr(
             window,
@@ -3101,6 +3101,16 @@ class TestMainWindowFileFlow:
         }
 
         window._on_drag_finished()
+
+        assert calls == {
+            "property_panel_refresh_live_geometry": 2,
+            "update_preview_overlay": 0,
+            "sync_xml_to_editors": 0,
+            "update_resource_usage_panel": 0,
+            "trigger_compile": 0,
+        }
+
+        qapp.processEvents()
 
         assert calls == {
             "property_panel_refresh_live_geometry": 2,

@@ -413,6 +413,7 @@ class MainWindow(QMainWindow):
         self._canvas_drag_batch_active = False
         self._canvas_drag_dirty = False
         self._last_drag_geometry_refresh_ts = -1.0
+        self._canvas_drag_finalize_serial = 0
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
         self._external_reload_changed_paths = []
@@ -8111,25 +8112,43 @@ class MainWindow(QMainWindow):
             stack = self._undo_manager.get_stack(self._current_page.name)
             stack.begin_batch()
 
+    def _schedule_canvas_drag_finalize(self, source, xml_text):
+        self._canvas_drag_finalize_serial += 1
+        serial = self._canvas_drag_finalize_serial
+        QTimer.singleShot(
+            0,
+            lambda serial=serial, source=source, xml_text=xml_text: self._finalize_canvas_drag_outputs(
+                serial,
+                source,
+                xml_text,
+            ),
+        )
+
+    def _finalize_canvas_drag_outputs(self, serial, source, xml_text):
+        if serial != self._canvas_drag_finalize_serial or self._is_closing:
+            return
+        self._update_preview_overlay()
+        self._sync_xml_to_editors(xml_text)
+        self._update_resource_usage_panel()
+        self._trigger_compile(reason=source or "canvas drag")
+        message = self._format_page_change_message(source)
+        if message and not self._undoing:
+            self.statusBar().showMessage(message, 3000)
+
     def _on_drag_finished(self):
         """Preview drag/resize ended 鈥?commit undo batch."""
         if self._current_page:
             xml = self._current_page.to_xml_string()
             stack = self._undo_manager.get_stack(self._current_page.name)
             should_finalize_canvas_refresh = self._active_batch_source in {"canvas move", "canvas resize"}
+            finalize_source = self._active_batch_source or "canvas drag"
             stack.end_batch(xml, label=self._active_batch_source or "canvas drag")
             if should_finalize_canvas_refresh and self._canvas_drag_dirty:
                 self.property_panel.refresh_live_geometry(
                     self._selection_state.widgets,
                     self._selection_state.primary,
                 )
-                self._update_preview_overlay()
-                self._sync_xml_to_editors()
-                self._update_resource_usage_panel()
-                self._trigger_compile(reason=self._active_batch_source or "canvas drag")
-                message = self._format_page_change_message(self._active_batch_source)
-                if message and not self._undoing:
-                    self.statusBar().showMessage(message, 3000)
+                self._schedule_canvas_drag_finalize(finalize_source, xml)
             self._active_batch_source = ""
             self._canvas_drag_batch_active = False
             self._canvas_drag_dirty = False
@@ -8139,12 +8158,13 @@ class MainWindow(QMainWindow):
 
     # 鈹€鈹€ XML bidirectional sync 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
-    def _sync_xml_to_editors(self):
+    def _sync_xml_to_editors(self, xml_text=None):
         """Push current page XML to the code editors (Design 鈫?Code)."""
         if not self._current_page:
             return
         try:
-            xml_text = self._current_page.to_xml_string()
+            if xml_text is None:
+                xml_text = self._current_page.to_xml_string()
             self.editor_tabs.set_xml_text(xml_text)
         except Exception:
             pass
