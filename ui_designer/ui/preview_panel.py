@@ -1703,8 +1703,8 @@ class WidgetOverlay(QWidget):
         """Handle free drag movement with object/page snap and grid fallback."""
         old_display_x = self._selected.display_x
         old_display_y = self._selected.display_y
-        old_guides = list(self._snap_guides)
-        old_guide_rects = list(self._snap_guide_rects)
+        old_guides = self._snap_guides
+        old_guide_rects = self._snap_guide_rects
         new_pos = pos - self._drag_offset
         eff_grid = self._effective_grid_size()
         new_display_x, guide_x = self._snap_drag_axis(
@@ -1731,7 +1731,7 @@ class WidgetOverlay(QWidget):
         if guide_y is not None:
             new_guides.append(("h", guide_y))
         self._set_snap_guides(new_guides)
-        new_guide_rects = list(self._snap_guide_rects)
+        new_guide_rects = self._snap_guide_rects
 
         parent_display_x, parent_display_y = self._parent_display_origin(self._selected)
         new_x = new_display_x - parent_display_x
@@ -1765,8 +1765,8 @@ class WidgetOverlay(QWidget):
         dy = pos.y() - self._resize_start_pos.y()
         r = self._resize_start_rect
         h = self._resize_handle
-        old_guides = list(self._snap_guides)
-        old_guide_rects = list(self._snap_guide_rects)
+        old_guides = self._snap_guides
+        old_guide_rects = self._snap_guide_rects
 
         min_size = 10  # Minimum widget size
         eff_grid = self._effective_grid_size()
@@ -1825,7 +1825,7 @@ class WidgetOverlay(QWidget):
         if guide_y is not None:
             new_guides.append(("h", guide_y))
         self._set_snap_guides(new_guides)
-        new_guide_rects = list(self._snap_guide_rects)
+        new_guide_rects = self._snap_guide_rects
 
         parent_display_x, parent_display_y = self._parent_display_origin(self._selected)
         new_x = new_display_x - parent_display_x
@@ -1880,8 +1880,8 @@ class WidgetOverlay(QWidget):
             return
 
         if self._resizing:
-            old_guides = list(self._snap_guides)
-            old_guide_rects = list(self._snap_guide_rects)
+            old_guides = self._snap_guides
+            old_guide_rects = self._snap_guide_rects
             old_rect = QRect(
                 self._selected.display_x if self._selected is not None else 0,
                 self._selected.display_y if self._selected is not None else 0,
@@ -1904,8 +1904,8 @@ class WidgetOverlay(QWidget):
 
         if self._dragging:
             old_insert_rect = QRect(self._insert_line_rect) if self._insert_line_rect is not None else QRect()
-            old_guides = list(self._snap_guides)
-            old_guide_rects = list(self._snap_guide_rects)
+            old_guides = self._snap_guides
+            old_guide_rects = self._snap_guide_rects
             old_rect = QRect(
                 self._selected.display_x if self._selected is not None else 0,
                 self._selected.display_y if self._selected is not None else 0,
