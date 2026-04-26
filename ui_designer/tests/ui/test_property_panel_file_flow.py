@@ -1431,6 +1431,33 @@ class TestPropertyPanelFileFlow:
         assert panel._header_size_chip.accessibleName() == "Widget size: 120 by 36."
         panel.deleteLater()
 
+    def test_live_geometry_refresh_skips_unchanged_size_chip_rewrite(self, qapp, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("switch", name="toggle", x=10, y=20, width=80, height=24)
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+        set_text_calls = 0
+        original_set_text = panel._header_size_chip.setText
+
+        def counted_set_text(text):
+            nonlocal set_text_calls
+            set_text_calls += 1
+            return original_set_text(text)
+
+        monkeypatch.setattr(panel._header_size_chip, "setText", counted_set_text)
+        widget.x = 32
+        widget.y = 48
+
+        refreshed = panel.refresh_live_geometry([widget], primary=widget)
+
+        assert refreshed is True
+        assert panel._editors["x"].value() == 32
+        assert panel._editors["y"].value() == 48
+        assert set_text_calls == 0
+        panel.deleteLater()
+
     def test_live_geometry_refresh_updates_multi_selection_primary_geometry_without_rebuild(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

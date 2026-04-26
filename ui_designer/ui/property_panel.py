@@ -901,6 +901,9 @@ class PropertyPanel(QWidget):
             for field in ("x", "y", "width", "height"):
                 self._update_numeric_editor_value(field, getattr(widget, field))
             if self._header_size_chip is not None:
+                size_text = f"{widget.width}×{widget.height}"
+                if self._header_size_chip.text() == size_text:
+                    return True
                 self._header_size_chip.setText(f"{widget.width}×{widget.height}")
                 _set_widget_metadata(
                     self._header_size_chip,
