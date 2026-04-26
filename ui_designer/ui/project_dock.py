@@ -14,7 +14,7 @@ as well as setting the startup page.
 
 import os
 from PyQt5.QtWidgets import (
-    QDockWidget, QWidget, QVBoxLayout, QTreeWidget, QTreeWidgetItem,
+    QWidget, QVBoxLayout, QTreeWidget, QTreeWidgetItem,
     QMenu, QAction, QInputDialog, QMessageBox, QLabel, QHBoxLayout,
     QPushButton, QComboBox, QFrame,
 )
@@ -86,7 +86,7 @@ def _button_content_width(button) -> int:
         return max(int(tokens.get("h_tab_min", 24)) * 3, 1)
 
 
-class ProjectExplorerDock(QDockWidget):
+class ProjectExplorerDock(QWidget):
     """Dock widget showing project pages and resources.
 
     Signals:
@@ -107,15 +107,56 @@ class ProjectExplorerDock(QDockWidget):
     startup_changed = pyqtSignal(str)
     page_mode_changed = pyqtSignal(str)
 
-    def __init__(self, parent=None):
-        super().__init__("Project Explorer", parent)
-        self.setAllowedAreas(Qt.AllDockWidgetAreas)
-
+    def __init__(self, parent=None, *, defer_ui=False):
+        super().__init__(parent)
+        self.setWindowTitle("Project Explorer")
         self._project = None
         self._current_page_name = None
         self._dirty_pages = set()
         self._compact_mode = False
+        self._content_widget = None
+        self._ui_initialized = False
+        self._defer_ui = bool(defer_ui)
+        if self._defer_ui:
+            self._install_deferred_placeholder()
+        else:
+            self.ensure_initialized()
+
+    def widget(self):
+        return self._content_widget
+
+    def _set_content_widget(self, widget):
+        layout = self.layout()
+        if layout is None:
+            layout = QVBoxLayout(self)
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(0)
+        while layout.count():
+            item = layout.takeAt(0)
+            old_widget = item.widget()
+            if old_widget is not None:
+                old_widget.hide()
+                old_widget.setParent(None)
+                old_widget.deleteLater()
+        self._content_widget = widget
+        layout.addWidget(widget)
+
+    def _install_deferred_placeholder(self):
+        placeholder = QWidget()
+        placeholder.setObjectName("project_dock_placeholder")
+        self._set_content_widget(placeholder)
+
+    def ensure_initialized(self):
+        if self._ui_initialized:
+            return
+        compact_mode = bool(self._compact_mode)
         self._init_ui()
+        self._ui_initialized = True
+        self.set_compact_mode(compact_mode)
+        self._rebuild_page_tree()
+        self.set_current_page(self._current_page_name or "")
+        self.set_dirty_pages(self._dirty_pages)
+        self._update_accessibility_summary()
 
     def set_compact_mode(self, compact=True):
         compact = bool(compact)
@@ -130,6 +171,8 @@ class ProjectExplorerDock(QDockWidget):
 
     def changeEvent(self, event):
         super().changeEvent(event)
+        if not getattr(self, "_ui_initialized", False):
+            return
         if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
             self._apply_page_tree_font(compact=self._compact_mode)
             self.refresh_tree_typography()
@@ -284,7 +327,7 @@ class ProjectExplorerDock(QDockWidget):
         self._status_label.hide()
         self._pages_hint.hide()
 
-        self.setWidget(container)
+        self._set_content_widget(container)
         self._update_accessibility_summary()
 
     def _minimum_width_target(self) -> int:
@@ -566,6 +609,8 @@ class ProjectExplorerDock(QDockWidget):
     def set_project(self, project):
         """Refresh the explorer from the given Project."""
         self._project = project
+        if not self._ui_initialized:
+            self.ensure_initialized()
         self._mode_combo.blockSignals(True)
         if project:
             self._mode_combo.setCurrentText(project.page_mode)
@@ -579,6 +624,8 @@ class ProjectExplorerDock(QDockWidget):
     def set_current_page(self, page_name):
         """Highlight the current page in the tree."""
         self._current_page_name = page_name
+        if not self._ui_initialized:
+            return
         for i in range(self._page_tree.topLevelItemCount()):
             item = self._page_tree.topLevelItem(i)
             name = item.data(0, Qt.UserRole)
@@ -589,6 +636,8 @@ class ProjectExplorerDock(QDockWidget):
 
     def refresh_tree_typography(self):
         """Re-apply page item emphasis using the current tree font."""
+        if not self._ui_initialized:
+            return
         for i in range(self._page_tree.topLevelItemCount()):
             item = self._page_tree.topLevelItem(i)
             name = item.data(0, Qt.UserRole)
@@ -596,6 +645,8 @@ class ProjectExplorerDock(QDockWidget):
 
     def set_dirty_pages(self, page_names):
         self._dirty_pages = set(page_names or [])
+        if not self._ui_initialized:
+            return
         for i in range(self._page_tree.topLevelItemCount()):
             item = self._page_tree.topLevelItem(i)
             name = item.data(0, Qt.UserRole)

@@ -352,7 +352,7 @@ class PropertyPanel(QWidget):
     validation_message = pyqtSignal(str)  # emits lightweight validation/normalization feedback
     user_code_requested = pyqtSignal(str, str)  # emits callback_name, signature
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, defer_ui=False):
         super().__init__(parent)
         self._widget = None
         self._selection = []
@@ -372,8 +372,48 @@ class PropertyPanel(QWidget):
         self._debug_logger = None
         self._merged_fonts_cache_key = None
         self._merged_fonts_cache = None
+        self._property_sections = OrderedDict()
+        self._property_tree_items = {}
+        self._property_grid_rows_by_widget = {}
+        self._hovered_property_section_title = ""
+        self._ui_initialized = False
+        self._defer_ui = bool(defer_ui)
         self.setAcceptDrops(True)
+        if self._defer_ui:
+            self._install_deferred_placeholder()
+        else:
+            self.ensure_initialized()
+
+    def _clear_root_layout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            child_layout = item.layout()
+            if widget is not None:
+                widget.hide()
+                widget.setParent(None)
+                widget.deleteLater()
+            elif child_layout is not None:
+                self._clear_root_layout(child_layout)
+
+    def _install_deferred_placeholder(self):
+        self.setObjectName("property_panel_root")
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(2, 2, 2, 2)
+        outer.setSpacing(2)
+        placeholder = QLabel("No selection")
+        placeholder.setObjectName("workspace_section_subtitle")
+        placeholder.setWordWrap(True)
+        outer.addWidget(placeholder)
+        outer.addStretch(1)
+
+    def ensure_initialized(self):
+        if self._ui_initialized:
+            return
         self._init_ui()
+        self._ui_initialized = True
+        if self._primary_widget is not None:
+            self._rebuild_form()
 
     # ── Resource integration API ───────────────────────────────────
 
@@ -391,7 +431,7 @@ class PropertyPanel(QWidget):
         """Set the resource catalog for populating file selectors."""
         self._resource_catalog = catalog
         # Rebuild form if currently displaying a widget (to update combos)
-        if self._primary_widget is not None:
+        if self._ui_initialized and self._primary_widget is not None:
             self._updating = True
             self._rebuild_form()
             self._updating = False
@@ -400,7 +440,8 @@ class PropertyPanel(QWidget):
         """Set i18n string keys for @string/ completions in text properties."""
         self._string_keys = list(keys) if keys else []
         # Rebuild form if currently displaying a label/button
-        if (self._primary_widget is not None and
+        if (self._ui_initialized and
+                self._primary_widget is not None and
                 self._primary_widget.widget_type in ("label", "button")):
             self._updating = True
             self._rebuild_form()
@@ -414,7 +455,7 @@ class PropertyPanel(QWidget):
         self._custom_fonts = list(font_exprs) if font_exprs else []
         self._invalidate_merged_fonts_cache()
         # Rebuild form if currently displaying a widget (to update font combos)
-        if self._primary_widget is not None:
+        if self._ui_initialized and self._primary_widget is not None:
             self._updating = True
             self._rebuild_form()
             self._updating = False
@@ -704,7 +745,11 @@ class PropertyPanel(QWidget):
 
     def _init_ui(self):
         self.setObjectName("property_panel_root")
-        outer = QVBoxLayout(self)
+        outer = self.layout()
+        if outer is None:
+            outer = QVBoxLayout(self)
+        else:
+            self._clear_root_layout(outer)
         outer.setContentsMargins(2, 2, 2, 2)
         outer.setSpacing(2)
 
@@ -813,6 +858,10 @@ class PropertyPanel(QWidget):
             primary = widgets[-1] if widgets else None
         self._primary_widget = primary
         self._widget = primary
+        if not self._ui_initialized:
+            if self._primary_widget is not None:
+                self.ensure_initialized()
+            return
         self._rebuild_form()
 
     def _selection_matches(self, widgets, primary=None):
@@ -840,6 +889,8 @@ class PropertyPanel(QWidget):
 
     def refresh_live_geometry(self, widgets, primary=None):
         """Refresh geometry editors for the current selection without rebuilding the form."""
+        if not self._ui_initialized:
+            return False
         if not self._selection_matches(widgets, primary=primary):
             return False
         if self._primary_widget is None:

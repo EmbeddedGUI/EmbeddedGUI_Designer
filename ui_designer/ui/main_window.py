@@ -531,7 +531,7 @@ class MainWindow(QMainWindow):
         self._toolbar_host_layout.addWidget(self._toolbar_command_row)
         editor_layout.addWidget(self._toolbar_host)
 
-        self.project_dock = ProjectExplorerDock(self)
+        self.project_dock = ProjectExplorerDock(self, defer_ui=self._defer_panels)
         self.project_dock.setObjectName("project_explorer_dock")
         self.project_dock.setMinimumWidth(LEFT_PANEL_STACK_MIN_WIDTH)
         self._prepare_workspace_dock(self.project_dock)
@@ -552,7 +552,7 @@ class MainWindow(QMainWindow):
         right_scroll.setWidgetResizable(True)
         right_scroll.setMinimumWidth(INSPECTOR_SCROLL_MIN_WIDTH)
         right_scroll.setObjectName("properties_dock")
-        self.property_panel = PropertyPanel()
+        self.property_panel = PropertyPanel(defer_ui=self._defer_panels)
         right_scroll.setWidget(self.property_panel)
         self.props_dock = right_scroll
 
@@ -2122,7 +2122,11 @@ class MainWindow(QMainWindow):
         self._update_workspace_tab_metadata()
 
     def _on_inspector_tab_changed(self, index):
-        if int(index) == 1:
+        if int(index) == 0:
+            ensure = getattr(getattr(self, "property_panel", None), "ensure_initialized", None)
+            if callable(ensure):
+                ensure()
+        elif int(index) == 1:
             ensure = getattr(getattr(self, "animations_panel", None), "ensure_initialized", None)
             if callable(ensure):
                 ensure()
