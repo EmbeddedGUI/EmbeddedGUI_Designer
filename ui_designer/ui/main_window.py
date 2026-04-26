@@ -7996,6 +7996,10 @@ class MainWindow(QMainWindow):
         """Widget reordered within a layout container."""
         self.widget_tree.rebuild_tree()
         self.widget_tree.set_selected_widgets(self._selection_state.widgets, self._selection_state.primary)
+        if self._canvas_drag_batch_active:
+            self._active_batch_source = "layout reorder"
+            self._canvas_drag_dirty = True
+            return
         self._on_model_changed(source="layout reorder")
 
     def _on_tree_changed(self, source="widget tree change"):
@@ -8159,14 +8163,16 @@ class MainWindow(QMainWindow):
         if self._current_page:
             xml = self._current_page.to_xml_string()
             stack = self._undo_manager.get_stack(self._current_page.name)
-            should_finalize_canvas_refresh = self._active_batch_source in {"canvas move", "canvas resize"}
+            should_finalize_canvas_refresh = self._active_batch_source in {"canvas move", "canvas resize", "layout reorder"}
+            should_refresh_live_geometry = self._active_batch_source in {"canvas move", "canvas resize"}
             finalize_source = self._active_batch_source or "canvas drag"
             stack.end_batch(xml, label=self._active_batch_source or "canvas drag")
             if should_finalize_canvas_refresh and self._canvas_drag_dirty:
-                self.property_panel.refresh_live_geometry(
-                    self._selection_state.widgets,
-                    self._selection_state.primary,
-                )
+                if should_refresh_live_geometry:
+                    self.property_panel.refresh_live_geometry(
+                        self._selection_state.widgets,
+                        self._selection_state.primary,
+                    )
                 self._schedule_canvas_drag_finalize(finalize_source, xml)
             self._active_batch_source = ""
             self._canvas_drag_batch_active = False

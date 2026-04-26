@@ -3122,6 +3122,112 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_canvas_layout_reorder_defers_full_refresh_until_drag_finishes(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CanvasReorderPerfDemo"
+        first = WidgetModel("label", name="first", x=10, y=10, width=50, height=24)
+        second = WidgetModel("label", name="second", x=10, y=40, width=50, height=24)
+        project = _create_project_only_with_widgets(
+            project_dir,
+            "CanvasReorderPerfDemo",
+            sdk_root,
+            widgets=[first, second],
+        )
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+
+        calls = {
+            "model_changed": 0,
+            "property_panel_refresh_live_geometry": 0,
+            "update_preview_overlay": 0,
+            "sync_xml_to_editors": 0,
+            "update_resource_usage_panel": 0,
+            "trigger_compile": 0,
+        }
+
+        monkeypatch.setattr(
+            window.property_panel,
+            "refresh_live_geometry",
+            lambda *args, **kwargs: calls.__setitem__(
+                "property_panel_refresh_live_geometry",
+                calls["property_panel_refresh_live_geometry"] + 1,
+            ) or True,
+        )
+        monkeypatch.setattr(
+            window,
+            "_on_model_changed",
+            lambda *args, **kwargs: calls.__setitem__("model_changed", calls["model_changed"] + 1),
+        )
+        monkeypatch.setattr(
+            window,
+            "_update_preview_overlay",
+            lambda: calls.__setitem__("update_preview_overlay", calls["update_preview_overlay"] + 1),
+        )
+        monkeypatch.setattr(
+            window,
+            "_sync_xml_to_editors",
+            lambda *args, **kwargs: calls.__setitem__("sync_xml_to_editors", calls["sync_xml_to_editors"] + 1),
+        )
+        monkeypatch.setattr(
+            window,
+            "_update_resource_usage_panel",
+            lambda: calls.__setitem__(
+                "update_resource_usage_panel",
+                calls["update_resource_usage_panel"] + 1,
+            ),
+        )
+        monkeypatch.setattr(
+            window,
+            "_trigger_compile",
+            lambda *args, **kwargs: calls.__setitem__("trigger_compile", calls["trigger_compile"] + 1),
+        )
+
+        _open_project_window(window, project, project_dir, sdk_root)
+        window._set_selection([second], primary=second, sync_tree=False, sync_preview=False)
+        for key in calls:
+            calls[key] = 0
+
+        window._on_drag_started()
+        window._on_widget_reordered(second, 0)
+
+        assert calls == {
+            "model_changed": 0,
+            "property_panel_refresh_live_geometry": 0,
+            "update_preview_overlay": 0,
+            "sync_xml_to_editors": 0,
+            "update_resource_usage_panel": 0,
+            "trigger_compile": 0,
+        }
+
+        window._on_drag_finished()
+
+        assert calls == {
+            "model_changed": 0,
+            "property_panel_refresh_live_geometry": 0,
+            "update_preview_overlay": 0,
+            "sync_xml_to_editors": 0,
+            "update_resource_usage_panel": 0,
+            "trigger_compile": 0,
+        }
+
+        qapp.processEvents()
+
+        assert calls == {
+            "model_changed": 0,
+            "property_panel_refresh_live_geometry": 0,
+            "update_preview_overlay": 1,
+            "sync_xml_to_editors": 1,
+            "update_resource_usage_panel": 0,
+            "trigger_compile": 0,
+        }
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_update_preview_overlay_reuses_python_render_for_preview_and_thumbnail(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui import main_window as main_window_module
