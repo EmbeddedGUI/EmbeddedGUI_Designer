@@ -1106,6 +1106,40 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_click_selects_widget_at_new_position_after_drag_release(self, qapp):
+        overlay, _root, first, second, _third = self._make_overlay()
+        overlay.set_grid_size(0)
+        overlay.set_selection([first], primary=first)
+
+        try:
+            overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(15, 15)))
+            overlay.mouseMoveEvent(
+                _mouse_event(
+                    QEvent.MouseMove,
+                    QPoint(135, 135),
+                    button=Qt.NoButton,
+                    buttons=Qt.LeftButton,
+                )
+            )
+            overlay.mouseReleaseEvent(
+                _mouse_event(QEvent.MouseButtonRelease, QPoint(135, 135), buttons=Qt.NoButton)
+            )
+            qapp.processEvents()
+
+            assert first.display_x == 130
+            assert first.display_y == 130
+
+            overlay.set_selection([second], primary=second)
+            overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(135, 135)))
+            overlay.mouseReleaseEvent(
+                _mouse_event(QEvent.MouseButtonRelease, QPoint(135, 135), buttons=Qt.NoButton)
+            )
+            qapp.processEvents()
+
+            assert overlay.selected_widgets() == [first]
+        finally:
+            _dispose_widget(overlay)
+
     def test_visible_candidates_for_rect_keep_widget_order(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay

@@ -442,6 +442,56 @@ class WidgetOverlay(QWidget):
                 for by in range(top, bottom + 1):
                     self._selection_buckets.setdefault((bx, by), []).append(widget)
 
+    def _rebuild_snap_edge_indexes(self):
+        self._snap_target_edges = [
+            (widget, self._widget_edge_triplets(widget, axis="x"), self._widget_edge_triplets(widget, axis="y"))
+            for widget in self._visible_widgets
+        ]
+        self._snap_edges_x = sorted(
+            (edge, id(widget))
+            for widget, x_edges, _ in self._snap_target_edges
+            for edge in x_edges
+        )
+        self._snap_edges_y = sorted(
+            (edge, id(widget))
+            for widget, _, y_edges in self._snap_target_edges
+            for edge in y_edges
+        )
+        self._snap_edges_x_values = [edge for edge, _ in self._snap_edges_x]
+        self._snap_edges_y_values = [edge for edge, _ in self._snap_edges_y]
+        root_entries_x = []
+        root_entries_y = []
+        if self._root_widget is not None:
+            root_id = id(self._root_widget)
+            root_entries_x = [(edge, root_id) for edge in self._widget_edge_triplets(self._root_widget, axis="x")]
+            root_entries_y = [(edge, root_id) for edge in self._widget_edge_triplets(self._root_widget, axis="y")]
+        self._snap_edges_x_lookup_by_parent = {}
+        self._snap_edges_x_values_lookup_by_parent = {}
+        self._snap_edges_y_lookup_by_parent = {}
+        self._snap_edges_y_values_lookup_by_parent = {}
+        widgets_by_parent = {}
+        for widget in self._visible_widgets:
+            if widget.parent is not None:
+                widgets_by_parent.setdefault(id(widget.parent), []).append(widget)
+        for parent_id, widgets in widgets_by_parent.items():
+            entries_x = sorted(
+                [(edge, id(widget)) for widget in widgets for edge in self._widget_edge_triplets(widget, axis="x")]
+                + root_entries_x
+            )
+            entries_y = sorted(
+                [(edge, id(widget)) for widget in widgets for edge in self._widget_edge_triplets(widget, axis="y")]
+                + root_entries_y
+            )
+            self._snap_edges_x_lookup_by_parent[parent_id] = entries_x
+            self._snap_edges_x_values_lookup_by_parent[parent_id] = [edge for edge, _ in entries_x]
+            self._snap_edges_y_lookup_by_parent[parent_id] = entries_y
+            self._snap_edges_y_values_lookup_by_parent[parent_id] = [edge for edge, _ in entries_y]
+
+    def _rebuild_geometry_indexes(self):
+        self._rebuild_hit_test_buckets()
+        self._rebuild_selection_buckets()
+        self._rebuild_snap_edge_indexes()
+
     def _hit_test_candidates(self, pos):
         cell_size = HIT_TEST_BUCKET_SIZE
         return self._hit_test_buckets.get((int(pos.x() // cell_size), int(pos.y() // cell_size)), [])
@@ -1118,8 +1168,6 @@ class WidgetOverlay(QWidget):
         self._visible_widgets = [widget for widget in self._widgets if not self._is_hidden(widget)]
         self._interactive_widgets = [widget for widget in self._visible_widgets if not self._is_locked(widget)]
         self._interactive_widgets_reversed = list(reversed(self._interactive_widgets))
-        self._rebuild_hit_test_buckets()
-        self._rebuild_selection_buckets()
         self._visible_non_root_widgets = any(widget.parent is not None for widget in self._visible_widgets)
         self._root_widget = next((widget for widget in self._visible_widgets if widget.parent is None), None)
         self._widget_label_text_by_id = {}
@@ -1129,47 +1177,7 @@ class WidgetOverlay(QWidget):
             if self._is_locked(widget):
                 label_text += " [L]"
             self._widget_label_text_by_id[id(widget)] = label_text
-        self._snap_target_edges = [
-            (widget, self._widget_edge_triplets(widget, axis="x"), self._widget_edge_triplets(widget, axis="y"))
-            for widget in self._visible_widgets
-        ]
-        self._snap_edges_x = sorted(
-            (edge, id(widget))
-            for widget, x_edges, _ in self._snap_target_edges
-            for edge in x_edges
-        )
-        self._snap_edges_y = sorted(
-            (edge, id(widget))
-            for widget, _, y_edges in self._snap_target_edges
-            for edge in y_edges
-        )
-        self._snap_edges_x_values = [edge for edge, _ in self._snap_edges_x]
-        self._snap_edges_y_values = [edge for edge, _ in self._snap_edges_y]
-        root_entries_x = []
-        root_entries_y = []
-        if self._root_widget is not None:
-            root_id = id(self._root_widget)
-            root_entries_x = [(edge, root_id) for edge in self._widget_edge_triplets(self._root_widget, axis="x")]
-            root_entries_y = [(edge, root_id) for edge in self._widget_edge_triplets(self._root_widget, axis="y")]
-        self._snap_edges_x_lookup_by_parent = {}
-        self._snap_edges_x_values_lookup_by_parent = {}
-        self._snap_edges_y_lookup_by_parent = {}
-        self._snap_edges_y_values_lookup_by_parent = {}
-        widgets_by_parent = {}
-        for widget in self._visible_widgets:
-            if widget.parent is not None:
-                widgets_by_parent.setdefault(id(widget.parent), []).append(widget)
-        for parent_id, widgets in widgets_by_parent.items():
-            entries_x = sorted(
-                [(edge, id(widget)) for widget in widgets for edge in self._widget_edge_triplets(widget, axis="x")] + root_entries_x
-            )
-            entries_y = sorted(
-                [(edge, id(widget)) for widget in widgets for edge in self._widget_edge_triplets(widget, axis="y")] + root_entries_y
-            )
-            self._snap_edges_x_lookup_by_parent[parent_id] = entries_x
-            self._snap_edges_x_values_lookup_by_parent[parent_id] = [edge for edge, _ in entries_x]
-            self._snap_edges_y_lookup_by_parent[parent_id] = entries_y
-            self._snap_edges_y_values_lookup_by_parent[parent_id] = [edge for edge, _ in entries_y]
+        self._rebuild_geometry_indexes()
         valid_ids = {id(widget) for widget in self._widgets}
         self._multi_selected = {widget for widget in self._multi_selected if id(widget) in valid_ids}
         if self._selected is not None and id(self._selected) not in valid_ids:
@@ -1907,6 +1915,7 @@ class WidgetOverlay(QWidget):
             self._resize_start_pos = None
             self._show_coords = False
             self._set_snap_guides([])
+            self._rebuild_geometry_indexes()
             self.setCursor(Qt.ArrowCursor)
             self.drag_finished.emit()
             self._update_regions(self._screen_rect_for_logical_rect(old_rect))
@@ -1915,6 +1924,7 @@ class WidgetOverlay(QWidget):
             return
 
         if self._dragging:
+            was_reorder_mode = self._reorder_mode
             old_insert_rect = QRect(self._insert_line_rect) if self._insert_line_rect is not None else QRect()
             old_guides = self._snap_guides
             old_guide_rects = self._snap_guide_rects
@@ -1944,6 +1954,8 @@ class WidgetOverlay(QWidget):
             self._insert_line_rect = None
             self._show_coords = False
             self._set_snap_guides([])
+            if not was_reorder_mode:
+                self._rebuild_geometry_indexes()
             self.setCursor(Qt.ArrowCursor)
             self.drag_finished.emit()
             self._update_regions(
