@@ -5100,15 +5100,48 @@ class TestMainWindowFileFlow:
         window._on_widget_selected(window._current_page.root_widget)
 
         debug_output = window.debug_panel._output.toPlainText()
-        assert "Selection event (tree):" in debug_output
-        assert "Property panel rebuild: mode=single" in debug_output
-        assert "Selection pipeline:" in debug_output
-        assert "Selection applied (tree):" in debug_output
-        assert "No compile queued." in debug_output
         assert "Auto compile trigger" not in debug_output
         assert "Compile trigger:" not in debug_output
         assert window._compile_timer.isActive() is False
         assert window._queued_compile_reasons == []
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_widget_selection_change_reuses_cached_page_diagnostics(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SelectionDiagnosticsCacheDemo"
+        locked = WidgetModel("label", name="locked_label", x=8, y=8, width=60, height=20)
+        locked.designer_locked = True
+        project = _create_project_only_with_widgets(
+            project_dir,
+            "SelectionDiagnosticsCacheDemo",
+            sdk_root,
+            widgets=[locked],
+        )
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+
+        _open_project_window(window, project, project_dir, sdk_root)
+        window._update_diagnostics_panel()
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.analyze_page",
+            lambda *args, **kwargs: pytest.fail("selection changes should not re-analyze the full page"),
+        )
+
+        window._set_selection([locked], primary=locked, sync_tree=True, sync_preview=True)
+
+        items = [
+            window.diagnostics_panel._list.item(i).text()
+            for i in range(window.diagnostics_panel._list.count())
+        ]
+        assert any("canvas drag and resize are disabled" in item for item in items)
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -7540,6 +7573,43 @@ class TestMainWindowFileFlow:
         assert f"font-size: {font_selector._preview_font_floor_px()}px;" in font_selector._preview.styleSheet()
         _close_window(window)
 
+    def test_debug_output_ctrl_c_copies_selected_text_when_widget_selection_exists(
+        self, qapp, isolated_config, tmp_path
+    ):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DebugCopyShortcutDemo"
+        label = WidgetModel("label", name="title", x=8, y=8, width=60, height=20)
+        project = _create_project_only_with_widgets(
+            project_dir,
+            "DebugCopyShortcutDemo",
+            sdk_root,
+            widgets=[label],
+        )
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+        _open_project_window(window, project, project_dir, sdk_root)
+        window._set_selection([label], primary=label, sync_tree=True, sync_preview=True)
+
+        window.debug_panel.log_info("debug copy sentinel")
+        output = window.debug_panel._output
+        output.setFocus()
+        cursor = output.textCursor()
+        cursor.select(cursor.Document)
+        output.setTextCursor(cursor)
+        QApplication.clipboard().clear()
+
+        QTest.keyClick(output, Qt.Key_C, Qt.ControlModifier)
+        qapp.processEvents()
+
+        assert "debug copy sentinel" in QApplication.clipboard().text()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_view_appearance_refreshes_tree_typography_helpers(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
@@ -9322,6 +9392,47 @@ class TestMainWindowFileFlow:
         )
 
         assert window._run_resource_generation(silent=True) is False
+
+        window._poll_project_files()
+
+        assert reload_calls == []
+        assert window._external_reload_pending is False
+        assert window._external_reload_changed_paths == []
+        _close_window(window)
+
+    def test_run_resource_generation_syncs_watch_snapshot_after_sdk_generator_writes_merged_config(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        gen_script = sdk_root / "scripts" / "tools" / "app_resource_generate.py"
+        gen_script.parent.mkdir(parents=True, exist_ok=True)
+        gen_script.write_text("print('ok')\n", encoding="utf-8")
+        project_dir = tmp_path / "ResourceWatchPostGeneratorSyncDemo"
+        project = _create_project(project_dir, "ResourceWatchPostGeneratorSyncDemo", sdk_root)
+        merged_config = project_dir / "resource" / "src" / ".designer" / ".app_resource_config_merged.json"
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        def _fake_generator_run(*args, **kwargs):
+            merged_config.parent.mkdir(parents=True, exist_ok=True)
+            merged_config.write_text('{"img": [], "font": [], "mp4": []}\n', encoding="utf-8")
+            return build_completed_process_result()
+
+        reload_calls = []
+        monkeypatch.setattr(subprocess, "run", _fake_generator_run)
+        monkeypatch.setattr(
+            window,
+            "_reload_project_from_disk",
+            lambda *args, **kwargs: reload_calls.append(kwargs) or True,
+        )
+
+        assert window._run_resource_generation(silent=True) is True
 
         window._poll_project_files()
 
@@ -14526,7 +14637,10 @@ class TestMainWindowFileFlow:
         tokens = app_theme_tokens()
         expected_control_height = max(int(tokens["h_tab_min"]) - int(tokens["space_xxs"]), 1)
         expected_command_width = int(tokens["h_tab_min"]) * 2
-        expected_toolbar_height = expected_control_height + (int(tokens["space_toolbar_separator"]) * 2)
+        expected_toolbar_height = expected_control_height + max(
+            int(tokens["space_toolbar_separator"]) * 2,
+            int(tokens["space_xxs"]),
+        )
 
         assert window._toolbar.accessibleName() == "Main toolbar: insert, save, edit, and preview commands."
         assert window._toolbar.toolTip() == window._toolbar.accessibleName()
@@ -15049,6 +15163,35 @@ class TestMainWindowFileFlow:
         )
         _close_window(window)
 
+    def test_workspace_toolbar_buttons_center_in_command_row(self, qapp, isolated_config):
+        from PyQt5.QtCore import QPoint
+
+        from ui_designer.ui.main_window import MainWindow
+
+        if str(qapp.platformName()).lower() in {"offscreen", "minimal"}:
+            pytest.skip("Offscreen Qt styles place QToolBar actions differently from the native shell.")
+
+        window = MainWindow("", defer_welcome=True)
+        window.resize(960, 620)
+        window.show()
+        qapp.processEvents()
+        qapp.processEvents()
+
+        toolbar_center_y = window._toolbar.rect().center().y()
+        for button in (
+            window._insert_widget_button,
+            window._toolbar.widgetForAction(window._save_action),
+            window._toolbar_more_button,
+        ):
+            assert abs(button.geometry().center().y() - toolbar_center_y) <= 1
+
+        row_center_y = window._toolbar_command_row.rect().center().y()
+        mode_button_y = window._mode_buttons["design"].mapTo(window._toolbar_command_row, QPoint(0, 0)).y()
+        mode_button_center_y = mode_button_y + window._mode_buttons["design"].rect().center().y()
+        assert abs(mode_button_center_y - row_center_y) <= 1
+
+        _close_window(window)
+
     def test_workspace_command_metrics_follow_runtime_tokens(self, qapp, isolated_config, monkeypatch):
         import ui_designer.ui.main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
@@ -15280,6 +15423,14 @@ class TestMainWindowFileFlow:
 
         window._show_widget_browser_for_parent(container)
         window._show_inspector_tab("animations")
+        refresh_calls = 0
+
+        def counted_refresh():
+            nonlocal refresh_calls
+            refresh_calls += 1
+
+        monkeypatch.setattr(window.widget_browser, "refresh", counted_refresh)
+        window.statusBar().showMessage("status sentinel")
         window._insert_widget_from_browser("button")
 
         assert window._current_left_panel == "widgets"
@@ -15289,6 +15440,48 @@ class TestMainWindowFileFlow:
         assert inserted.widget_type == "button"
         assert window._selection_state.primary is inserted
         assert isolated_config.widget_browser_recent[0] == "button"
+        assert refresh_calls == 0
+        assert window.statusBar().currentMessage() == "status sentinel"
+        _close_window(window)
+
+    def test_widget_browser_first_show_populates_visible_add_panel(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "WidgetBrowserFirstShowDemo"
+        container = WidgetModel("group", name="container", x=0, y=0, width=200, height=200)
+        project = _create_project_only_with_widgets(
+            project_dir,
+            "WidgetBrowserFirstShowDemo",
+            sdk_root,
+            widgets=[container],
+        )
+
+        window = MainWindow(
+            str(sdk_root),
+            defer_welcome=True,
+            defer_chrome=True,
+            defer_panels=True,
+        )
+        _disable_window_compile(window, _DisabledCompiler)
+        window.show()
+        qapp.processEvents()
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window._select_left_panel("project")
+        qapp.processEvents()
+        window._select_left_panel("widgets")
+        qapp.processEvents()
+
+        assert window._current_left_panel == "widgets"
+        assert window._left_panel_stack.currentWidget() is window.widget_browser
+        assert window.widget_browser.updatesEnabled() is True
+        assert window.widget_browser._ui_initialized is True
+        assert window.widget_browser._initial_refresh_done is True
+        assert len(window.widget_browser._cards) > 0
+        assert window.widget_browser._cards_layout.count() == len(window.widget_browser._cards)
         _close_window(window)
 
     def test_widget_browser_reveal_selects_first_matching_widget_in_structure(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -15367,6 +15560,7 @@ class TestMainWindowFileFlow:
         _open_project_window(window, project, project_dir, sdk_root)
 
         before_count = len(window._current_page.root_widget.children)
+        window.statusBar().showMessage("status sentinel")
         window._on_widget_type_dropped("button", 9999, 9999, None)
 
         assert len(window._current_page.root_widget.children) == before_count + 1
@@ -15374,6 +15568,7 @@ class TestMainWindowFileFlow:
         assert inserted.widget_type == "button"
         assert inserted.x == max(project.screen_width - inserted.width, 0)
         assert inserted.y == max(project.screen_height - inserted.height, 0)
+        assert window.statusBar().currentMessage() == "status sentinel"
         _close_window(window)
 
     @pytest.mark.parametrize(

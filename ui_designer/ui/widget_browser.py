@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import time
+
 from PyQt5.QtCore import QEvent, QMimeData, QPoint, QSignalBlocker, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QDrag, QFontMetrics
 from PyQt5.QtWidgets import (
+    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMenu,
     QPushButton,
     QScrollArea,
@@ -16,8 +20,6 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from qfluentwidgets import ComboBox, SearchLineEdit
 
 from ..model.config import get_config
 from ..services.component_catalog import ComponentCatalog
@@ -72,6 +74,20 @@ def _count_label(count, singular, plural=None):
     return f"{value} {noun}"
 
 
+class SearchLineEdit(QLineEdit):
+    """Lightweight search field; qfluent search edits are expensive on first panel load."""
+
+
+class ComboBox(QComboBox):
+    """Lightweight combo with the small qfluent-compatible API surface this panel uses."""
+
+    def text(self):
+        return self.currentText()
+
+    def setText(self, text):
+        self.setCurrentText(str(text or ""))
+
+
 class WidgetBrowserCard(QFrame):
     """Single simplified widget row."""
 
@@ -91,6 +107,20 @@ class WidgetBrowserCard(QFrame):
     @property
     def type_name(self):
         return self._item.get("type_name", "")
+
+    def update_item(self, item):
+        resolved_item = dict(item or {})
+        if resolved_item == self._item:
+            return
+        self._item = resolved_item
+        display_name = self._item.get("display_name", self.type_name)
+        if self._title_label.text() != display_name:
+            self._title_label.setText(display_name)
+        meta_text = "Container" if bool(self._item.get("is_container")) else ""
+        if self._meta_label.text() != meta_text:
+            self._meta_label.setText(meta_text)
+            _set_widget_visible(self._meta_label, False)
+        self._update_accessibility_summary()
 
     def _init_ui(self):
         self.setObjectName("widget_browser_card")
@@ -178,7 +208,10 @@ class WidgetBrowserCard(QFrame):
         )
 
     def set_selected(self, selected):
-        self._selected = bool(selected)
+        selected = bool(selected)
+        if self._selected == selected and bool(self.property("selected")) == selected:
+            return
+        self._selected = selected
         self.setProperty("selected", self._selected)
         self.style().unpolish(self)
         self.style().polish(self)
@@ -251,6 +284,10 @@ class WidgetBrowserPanel(QWidget):
         self._insert_target_label = "Current page root"
         self._cards = {}
         self._cards_by_type = {}
+        self._visible_type_order = []
+        self._component_metas_cache = None
+        self._debug_logger = None
+        self._paint_probe_started = 0.0
         self._category_ids = []
         self._defer_initial_refresh = bool(defer_initial_refresh)
         self._initial_refresh_done = False
@@ -280,14 +317,83 @@ class WidgetBrowserPanel(QWidget):
         super().showEvent(event)
         self.ensure_initialized()
 
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self._paint_probe_started <= 0.0:
+            return
+        elapsed_ms = (time.perf_counter() - self._paint_probe_started) * 1000.0
+        self._paint_probe_started = 0.0
+        self._emit_timing_log(
+            f"Widget browser first paint: elapsed={elapsed_ms:.1f}ms, {self._debug_state_summary()}",
+            elapsed_ms,
+        )
+
+    def begin_paint_probe(self, started=None):
+        self._paint_probe_started = float(started or time.perf_counter())
+
     def ensure_initialized(self):
+        total_started = time.perf_counter()
+        init_ms = 0.0
+        refresh_ms = 0.0
         if not self._ui_initialized:
+            step_started = time.perf_counter()
             self._init_ui()
             self._populate_categories()
             self._ui_initialized = True
+            init_ms = (time.perf_counter() - step_started) * 1000.0
         if self._initial_refresh_done:
             return
+        step_started = time.perf_counter()
         self.refresh()
+        refresh_ms = (time.perf_counter() - step_started) * 1000.0
+        total_ms = (time.perf_counter() - total_started) * 1000.0
+        self._emit_timing_log(
+            "Widget browser initialize: "
+            f"init={init_ms:.1f}ms, refresh={refresh_ms:.1f}ms, total={total_ms:.1f}ms, "
+            f"{self._debug_state_summary()}",
+            total_ms,
+        )
+
+    def set_debug_logger(self, logger):
+        self._debug_logger = logger if callable(logger) else None
+
+    def _emit_timing_log(self, message, elapsed_ms=None):
+        if self._debug_logger is None:
+            return
+        try:
+            self._debug_logger(message, elapsed_ms)
+        except TypeError:
+            self._debug_logger(message)
+
+    def invalidate_catalog(self, *, refresh=False):
+        self._component_metas_cache = None
+        if bool(refresh) and self._ui_initialized and self._initial_refresh_done:
+            self.refresh()
+
+    def _debug_state_summary(self):
+        if not self._ui_initialized:
+            return (
+                f"ui=0, initial={int(self._initial_refresh_done)}, visible={int(self.isVisible())}, "
+                f"updates={int(self.updatesEnabled())}, size={self.width()}x{self.height()}"
+            )
+        layout_count = self._cards_layout.count() if hasattr(self, "_cards_layout") else -1
+        scroll_size = (
+            f"{self._scroll.width()}x{self._scroll.height()}"
+            if hasattr(self, "_scroll")
+            else "n/a"
+        )
+        container_size = (
+            f"{self._cards_container.width()}x{self._cards_container.height()}"
+            if hasattr(self, "_cards_container")
+            else "n/a"
+        )
+        return (
+            f"ui=1, initial={int(self._initial_refresh_done)}, visible={int(self.isVisible())}, "
+            f"updates={int(self.updatesEnabled())}, size={self.width()}x{self.height()}, "
+            f"scroll={scroll_size}, container={container_size}, layout={layout_count}, "
+            f"cards={len(self._cards)}, cards_by_type={len(self._cards_by_type)}, "
+            f"order={len(self._visible_type_order)}"
+        )
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
@@ -503,8 +609,15 @@ class WidgetBrowserPanel(QWidget):
         self._update_accessibility_summary(0)
 
     def record_insert(self, widget_type):
-        if self._recent_service.record_insert(widget_type):
-            self.refresh()
+        if not self._recent_service.record_insert(widget_type):
+            return False
+        if self._ui_initialized and self._initial_refresh_done:
+            search_active = bool(str(self._search.text() or "").strip())
+            if self._selected_category() == "recent" or search_active:
+                self.refresh()
+            else:
+                self._update_accessibility_summary(len(self._cards))
+        return True
 
     def recent_types(self):
         return list(self._recent_service.list_recent_types())
@@ -515,12 +628,31 @@ class WidgetBrowserPanel(QWidget):
     def refresh(self):
         if not self._ui_initialized:
             return
+        total_started = time.perf_counter()
         self._initial_refresh_done = True
         if self._search_refresh_timer.isActive():
             self._search_refresh_timer.stop()
+        step_started = time.perf_counter()
         items = self._filtered_items()
-        self._rebuild_cards(items)
+        filter_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
+        reused_cards = self._sync_cards(items)
+        cards_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
         self._update_accessibility_summary(len(items))
+        summary_ms = (time.perf_counter() - step_started) * 1000.0
+        total_ms = (time.perf_counter() - total_started) * 1000.0
+        category = self._selected_category()
+        search = str(self._search.text() or "").strip()
+        self._emit_timing_log(
+            "Widget browser refresh: "
+            f"category={category}, search={'yes' if search else 'no'}, items={len(items)}, "
+            f"cards={'reuse' if reused_cards else 'rebuild'}, "
+            f"filter={filter_ms:.1f}ms, cards={cards_ms:.1f}ms, "
+            f"summary={summary_ms:.1f}ms, total={total_ms:.1f}ms, "
+            f"{self._debug_state_summary()}",
+            total_ms,
+        )
 
     def _update_insert_target(self):
         _set_widget_visible(self._insert_target, self._insert_target_label != "Current page root")
@@ -636,7 +768,7 @@ class WidgetBrowserPanel(QWidget):
         favorite_types = set(self._favorite_service.list_favorites())
         recent_types = list(self._recent_service.list_recent_types())
         recent_lookup = set(recent_types)
-        metas = self._catalog.list_components(addable_only=True)
+        metas = self._cached_component_metas()
 
         if category == "favorites":
             filtered = [item for item in metas if item.type_name in favorite_types]
@@ -660,6 +792,11 @@ class WidgetBrowserPanel(QWidget):
             favorite_types=favorite_types,
             recent_types=recent_types,
         )
+
+    def _cached_component_metas(self):
+        if self._component_metas_cache is None:
+            self._component_metas_cache = self._catalog.list_components(addable_only=True)
+        return list(self._component_metas_cache)
 
     def _filtered_items(self):
         return [
@@ -689,6 +826,7 @@ class WidgetBrowserPanel(QWidget):
                 widget.deleteLater()
         self._cards = {}
         self._cards_by_type = {}
+        self._visible_type_order = []
 
     def _empty_state_hint_text(self):
         search_active = bool((self._search.text() or "").strip())
@@ -715,6 +853,33 @@ class WidgetBrowserPanel(QWidget):
         if getattr(self._config, "widget_browser_active_category", "all") != "all":
             self._config.set_widget_browser_active_category("all")
         self.refresh()
+
+    def _sync_cards(self, items):
+        visible_types = [item.get("type_name", "") for item in items]
+        if items and visible_types == self._visible_type_order and all(
+            widget_type in self._cards_by_type for widget_type in visible_types
+        ):
+            self._update_cards(items)
+            return True
+        self._rebuild_cards(items)
+        return False
+
+    def _update_cards(self, items):
+        favorites = set(self._config.widget_browser_favorites)
+        visible_types = [item.get("type_name", "") for item in items]
+        if self._selected_type not in visible_types:
+            self._selected_type = visible_types[0] if visible_types else ""
+        self._cards = {}
+        for index, item in enumerate(items):
+            type_name = item.get("type_name", "")
+            card = self._cards_by_type.get(type_name)
+            if card is None:
+                self._rebuild_cards(items)
+                return
+            card.update_item(item)
+            card.set_favorite(type_name in favorites)
+            card.set_selected(type_name == self._selected_type)
+            self._cards[index] = card
 
     def _rebuild_cards(self, items):
         self._clear_cards()
@@ -778,14 +943,22 @@ class WidgetBrowserPanel(QWidget):
             self._cards[index] = card
             self._cards_by_type[card.type_name] = card
             card.set_selected(card.type_name == self._selected_type)
+        self._visible_type_order = visible_types
 
 
     def _select_card(self, widget_type):
         self._set_selected_type(widget_type, update_accessibility=True)
 
     def _toggle_favorite(self, widget_type):
-        self._favorite_service.toggle(widget_type)
-        self.refresh()
+        enabled = self._favorite_service.toggle(widget_type)
+        search_active = bool(str(self._search.text() or "").strip())
+        if self._selected_category() == "favorites" or search_active:
+            self.refresh()
+            return
+        card = self._cards_by_type.get(widget_type)
+        if card is not None:
+            card.set_favorite(enabled)
+        self._update_accessibility_summary(len(self._cards))
 
     def _show_card_menu(self, widget_type, global_pos):
         self._select_card(widget_type)

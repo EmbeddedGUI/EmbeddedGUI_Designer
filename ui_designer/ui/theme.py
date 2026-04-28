@@ -15,7 +15,7 @@ import sys
 
 from PyQt5.QtCore import QEvent, QObject, QSize
 from PyQt5.QtGui import QColor, QFont, QFontDatabase
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QDialog, QMainWindow, QWidget
 try:
     from PyQt5 import sip as pyqt_sip
 except ImportError:
@@ -49,6 +49,7 @@ except ImportError:
 _ENGINEERING_RADIUS_SM = 4
 _ENGINEERING_RADIUS_MD = 6
 _FLUENT_STYLE_MARKER = "_designer_fluent_engineering_style"
+_WINDOW_CHROME_THEME_MARKER = "_designer_window_chrome_theme_signature"
 _ENGINEERING_FS_BODY_SENTINEL = "__FS_BODY__"
 _ENGINEERING_RADIUS_SM_SENTINEL = "__R_SM__"
 _ENGINEERING_INPUT_PAD_H_SENTINEL = "__PAD_INPUT_H__"
@@ -809,9 +810,43 @@ def _qt_widget_is_usable(widget) -> bool:
     return True
 
 
+def _is_window_chrome_target(widget) -> bool:
+    if not isinstance(widget, (QMainWindow, QDialog)):
+        return False
+    try:
+        return bool(widget.isWindow())
+    except Exception:
+        return False
+
+
+def _window_chrome_theme_signature(app=None) -> str:
+    app = QApplication.instance() if app is None else app
+    mode = str(app.property("designer_theme_mode") or "dark").strip().lower() if app is not None else "dark"
+    density = str(app.property("designer_ui_density") or "standard").strip().lower() if app is not None else "standard"
+    font_size_pt = designer_font_size_pt(app, default=0)
+    tokens = app_theme_tokens(app)
+    return "|".join(
+        [
+            mode,
+            density,
+            str(font_size_pt),
+            str(tokens.get("shell_bg", "")),
+            str(tokens.get("text", "")),
+            str(tokens.get("border", "")),
+        ]
+    )
+
+
 def sync_window_chrome_theme(window: QWidget | None) -> bool:
     """Best-effort sync of the native window chrome with the active Designer theme."""
     if not _qt_widget_is_usable(window) or sys.platform != "win32":
+        return False
+    if not _is_window_chrome_target(window):
+        return False
+
+    app = QApplication.instance()
+    signature = _window_chrome_theme_signature(app)
+    if str(window.property(_WINDOW_CHROME_THEME_MARKER) or "") == signature:
         return False
 
     try:
@@ -829,7 +864,6 @@ def sync_window_chrome_theme(window: QWidget | None) -> bool:
     except Exception:
         return False
 
-    app = QApplication.instance()
     mode = str(app.property("designer_theme_mode") or "dark").strip().lower() if app is not None else "dark"
     tokens = app_theme_tokens(app)
     dark_mode = 0 if mode == "light" else 1
@@ -857,6 +891,8 @@ def sync_window_chrome_theme(window: QWidget | None) -> bool:
     applied = _set_attribute(35, caption_color, wintypes.DWORD) or applied  # DWMWA_CAPTION_COLOR
     applied = _set_attribute(36, text_color, wintypes.DWORD) or applied  # DWMWA_TEXT_COLOR
     applied = _set_attribute(34, border_color, wintypes.DWORD) or applied  # DWMWA_BORDER_COLOR
+    if applied:
+        window.setProperty(_WINDOW_CHROME_THEME_MARKER, signature)
     return applied
 
 
@@ -981,12 +1017,14 @@ class _WindowChromeSyncManager(QObject):
     def eventFilter(self, obj, event):
         if not _qt_widget_is_usable(obj):
             return False
-        try:
-            is_window = obj.isWindow()
-        except Exception:
+        event_type = event.type()
+        if event_type not in (QEvent.Polish, QEvent.Show, QEvent.WinIdChange, QEvent.StyleChange, QEvent.PaletteChange):
             return False
-        if is_window and event.type() in (QEvent.Polish, QEvent.Show, QEvent.WinIdChange, QEvent.StyleChange, QEvent.PaletteChange):
-            sync_window_chrome_theme(obj)
+        if not _is_window_chrome_target(obj):
+            return False
+        if event_type == QEvent.WinIdChange:
+            obj.setProperty(_WINDOW_CHROME_THEME_MARKER, "")
+        sync_window_chrome_theme(obj)
         return False
 
 
@@ -1016,6 +1054,12 @@ def _ensure_window_chrome_sync_manager(app):
 
 def _build_stylesheet(mode="dark", density="standard", font_size_pt=0):
     t = theme_tokens(mode, density=density, font_size_pt=font_size_pt)
+    workspace_command_outer_height = max(int(t["h_tab_min"]) - int(t["space_xxs"]), 1)
+    workspace_command_text_lift = max(int(t["space_xxs"]), 0)
+    workspace_command_content_height = max(
+        workspace_command_outer_height - workspace_command_text_lift - 2,
+        1,
+    )
     return f"""
 QMainWindow, QDialog {{
     background-color: {t['shell_bg']};
@@ -1839,9 +1883,9 @@ QToolBar#main_toolbar QToolButton {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px {t['pad_toolbar_h']}px;
-    min-height: {t['h_tab_min'] - t['space_xxs']}px;
-    max-height: {t['h_tab_min'] - t['space_xxs']}px;
+    padding: 0px {t['pad_toolbar_h']}px {workspace_command_text_lift}px {t['pad_toolbar_h']}px;
+    min-height: {workspace_command_content_height}px;
+    max-height: {workspace_command_content_height}px;
     font-size: {t['fs_body_sm']}px;
 }}
 
@@ -1872,11 +1916,12 @@ QPushButton#workspace_mode_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px {t['pad_input_h']}px;
+    padding: 0px {t['pad_input_h']}px {workspace_command_text_lift}px {t['pad_input_h']}px;
     min-width: {t['h_tab_min'] * 2}px;
     max-width: {t['h_tab_min'] * 2}px;
-    min-height: {t['h_tab_min'] - t['space_xxs']}px;
-    max-height: {t['h_tab_min'] - t['space_xxs']}px;
+    min-height: {workspace_command_content_height}px;
+    max-height: {workspace_command_content_height}px;
+    font-size: {t['fs_body_sm']}px;
 }}
 
 QPushButton#workspace_mode_button:hover {{
@@ -1895,10 +1940,11 @@ QPushButton#workspace_bottom_toggle_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px {t['pad_input_h']}px;
+    padding: 0px {t['pad_input_h']}px {workspace_command_text_lift}px {t['pad_input_h']}px;
     min-width: {t['h_tab_min'] * 2}px;
-    min-height: {t['h_tab_min'] - t['space_xxs']}px;
-    max-height: {t['h_tab_min'] - t['space_xxs']}px;
+    min-height: {workspace_command_content_height}px;
+    max-height: {workspace_command_content_height}px;
+    font-size: {t['fs_body_sm']}px;
 }}
 
 QPushButton#workspace_bottom_toggle_button:hover {{
@@ -1922,11 +1968,12 @@ QPushButton#workspace_insert_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 0px {t['pad_input_h']}px;
+    padding: 0px {t['pad_input_h']}px {workspace_command_text_lift}px {t['pad_input_h']}px;
     min-width: {t['h_tab_min'] * 2}px;
     max-width: {t['h_tab_min'] * 2}px;
-    min-height: {t['h_tab_min'] - t['space_xxs']}px;
-    max-height: {t['h_tab_min'] - t['space_xxs']}px;
+    min-height: {workspace_command_content_height}px;
+    max-height: {workspace_command_content_height}px;
+    font-size: {t['fs_body_sm']}px;
 }}
 
 QPushButton#workspace_insert_button:hover {{

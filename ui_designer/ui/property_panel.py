@@ -13,12 +13,12 @@ from PyQt5.QtWidgets import (
     QDialog, QListWidget, QListWidgetItem,
     QDialogButtonBox, QMessageBox, QFileDialog, QFrame, QSpinBox,
     QTreeWidget, QTreeWidgetItem, QHeaderView, QApplication, QToolButton,
+    QComboBox, QLineEdit, QCheckBox,
 )
 from PyQt5.QtCore import pyqtSignal, Qt, QSignalBlocker, QMargins, QSize, QEvent, QTimer
 from PyQt5.QtGui import QFont, QColor, QBrush
 
 from qfluentwidgets import (
-    ComboBox, EditableComboBox, LineEdit, CheckBox,
     ListWidget, SearchLineEdit,
 )
 
@@ -156,6 +156,38 @@ _DATA_PROPERTY_TYPES = {
     "font_external",
     "text_file",
 }
+
+
+class LineEdit(QLineEdit):
+    """Lightweight property editor line edit; qfluent line edits are too slow to rebuild per selection."""
+
+
+class ComboBox(QComboBox):
+    """Lightweight non-editable property combo box."""
+
+    def text(self):
+        return self.currentText()
+
+    def setText(self, text):
+        self.setCurrentText(str(text or ""))
+
+
+class EditableComboBox(QComboBox):
+    """Lightweight editable property combo box with the qfluent-compatible API surface we use."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setEditable(True)
+
+    def text(self):
+        return self.currentText()
+
+    def setText(self, text):
+        self.setCurrentText(str(text or ""))
+
+
+class CheckBox(QCheckBox):
+    """Lightweight property checkbox."""
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -376,6 +408,7 @@ class PropertyPanel(QWidget):
         self._property_tree_items = {}
         self._property_grid_rows_by_widget = {}
         self._hovered_property_section_title = ""
+        self._single_form_signature = None
         self._ui_initialized = False
         self._defer_ui = bool(defer_ui)
         self.setAcceptDrops(True)
@@ -862,6 +895,8 @@ class PropertyPanel(QWidget):
             if self._primary_widget is not None:
                 self.ensure_initialized()
             return
+        if self._refresh_single_selection_form():
+            return
         self._rebuild_form()
 
     def _selection_matches(self, widgets, primary=None):
@@ -886,6 +921,246 @@ class PropertyPanel(QWidget):
             return
         with QSignalBlocker(editor):
             editor.setValue(int(value))
+
+    def _single_visible_property_entries(self, widget):
+        descriptor = WidgetRegistry.instance().get(widget.widget_type)
+        entries = []
+        for prop_name, prop_info in descriptor.get("properties", {}).items():
+            visible_when = prop_info.get("ui_visible_when")
+            if visible_when and not self._check_visibility(widget, visible_when):
+                continue
+            editor_kind = str(prop_info.get("type", "string") or "string")
+            if editor_kind == "string" and prop_name == "text" and self._string_keys:
+                editor_kind = "string_resource_combo"
+            entries.append(
+                (
+                    prop_name,
+                    editor_kind,
+                    str(prop_info.get("ui_group", "properties") or "properties"),
+                    prop_name in _DATA_PROPERTY_TYPES,
+                    bool(self._missing_file_property_reason(prop_name, prop_info, widget.properties.get(prop_name))),
+                )
+            )
+        return tuple(entries)
+
+    @staticmethod
+    def _background_form_signature(widget):
+        bg = widget.background or BackgroundModel()
+        fields = ["bg_type"]
+        if bg.bg_type == "none":
+            return tuple(fields)
+        fields.extend(["color", "alpha", "stroke_width", "has_pressed"])
+        if bg.bg_type in ("round_rectangle", "circle"):
+            fields.append("radius")
+        if bg.bg_type == "round_rectangle_corners":
+            fields.extend(["radius_left_top", "radius_left_bottom", "radius_right_top", "radius_right_bottom"])
+        if bg.stroke_width > 0:
+            fields.extend(["stroke_color", "stroke_alpha"])
+        if bg.has_pressed:
+            fields.append("pressed_color")
+        return tuple(fields)
+
+    def _current_single_form_signature(self):
+        if len(self._selection) != 1 or self._primary_widget is None:
+            return None
+        widget = self._primary_widget
+        callback_entries = tuple(
+            (
+                entry.get("event_name", ""),
+                entry.get("signature", ""),
+                bool(entry.get("use_event_dict", False)),
+            )
+            for entry in self._callback_entries(widget)
+        )
+        return (
+            "single",
+            self._single_visible_property_entries(widget),
+            self._background_form_signature(widget),
+            callback_entries,
+            tuple(self._selection_feedback_messages()),
+        )
+
+    @staticmethod
+    def _set_line_edit_text(editor, value):
+        with QSignalBlocker(editor):
+            editor.setText(str(value or ""))
+
+    @staticmethod
+    def _set_combo_text(editor, value):
+        text = str(value or "")
+        if text and hasattr(editor, "findText") and hasattr(editor, "addItem") and editor.findText(text) < 0:
+            editor.addItem(text)
+        with QSignalBlocker(editor):
+            editor.setCurrentText(text)
+
+    @staticmethod
+    def _set_check_state(editor, value):
+        if editor is None:
+            return
+        with QSignalBlocker(editor):
+            if hasattr(editor, "setTristate"):
+                editor.setTristate(False)
+            editor.setChecked(bool(value))
+
+    def _default_property_editor_value(self, prop_info, value):
+        ptype = prop_info.get("type", "string")
+        if ptype == "string":
+            return str(value or "")
+        if ptype == "int":
+            return int(value or 0)
+        if ptype == "bool":
+            return bool(value)
+        if ptype == "color":
+            return str(value or COLORS[0])
+        if ptype == "alpha":
+            return str(value or "EGUI_ALPHA_100")
+        if ptype == "font":
+            merged = self._merged_fonts()
+            return str(value or (merged[0] if merged else ""))
+        if ptype == "align":
+            return str(value or "EGUI_ALIGN_CENTER")
+        if ptype == "orientation":
+            return str(value or "vertical")
+        if ptype == "image_format":
+            return str(value or "rgb565")
+        if ptype == "image_alpha":
+            return str(value or "4")
+        if ptype == "image_external":
+            return str(value or "0")
+        if ptype == "font_pixelsize":
+            return str(value or "16")
+        if ptype == "font_fontbitsize":
+            return str(value or "4")
+        if ptype == "font_external":
+            return str(value or "0")
+        return str(value or "")
+
+    def _refresh_property_editor_value(self, prop_name, prop_info, value):
+        editor = self._editors.get(f"prop_{prop_name}")
+        if editor is None:
+            return
+        ptype = prop_info.get("type", "string")
+        value = self._default_property_editor_value(prop_info, value)
+        if isinstance(editor, LineEdit):
+            self._set_line_edit_text(editor, value)
+        elif isinstance(editor, QSpinBox):
+            self._update_numeric_editor_value(f"prop_{prop_name}", value)
+        elif isinstance(editor, CheckBox):
+            self._set_check_state(editor, value)
+        elif isinstance(editor, EguiColorPicker):
+            with QSignalBlocker(editor):
+                editor.set_value(value)
+        elif isinstance(editor, EguiFontSelector):
+            with QSignalBlocker(editor):
+                editor.set_value(value)
+        elif isinstance(editor, (ComboBox, EditableComboBox)):
+            self._set_combo_text(editor, value)
+
+        if ptype in {"image_file", "font_file", "text_file"}:
+            self._update_file_selector_metadata(prop_name, editor)
+            if prop_name == "font_text_file":
+                button = self._editors.get("font_text_file_generate_button")
+                if button is not None:
+                    self._update_generate_charset_button_metadata(prop_name, editor, button)
+
+    def _refresh_background_editor_value(self, key, value):
+        editor = self._editors.get(key)
+        if editor is None:
+            return
+        if isinstance(editor, QSpinBox):
+            self._update_numeric_editor_value(key, value)
+        elif isinstance(editor, CheckBox):
+            self._set_check_state(editor, value)
+        elif isinstance(editor, EguiColorPicker):
+            with QSignalBlocker(editor):
+                editor.set_value(str(value or COLORS[0]))
+        elif isinstance(editor, (ComboBox, EditableComboBox)):
+            self._set_combo_text(editor, value)
+
+    def _refresh_single_selection_form(self):
+        if not self._ui_initialized or len(self._selection) != 1 or self._primary_widget is None:
+            return False
+        signature = self._current_single_form_signature()
+        if signature is None or signature != getattr(self, "_single_form_signature", None):
+            return False
+
+        started = time.perf_counter()
+        panel_updates_enabled = self.updatesEnabled()
+        tree_updates_enabled = self._property_tree.updatesEnabled() if hasattr(self, "_property_tree") else True
+        previous_updating = self._updating
+        self._updating = True
+        self.setUpdatesEnabled(False)
+        if hasattr(self, "_property_tree"):
+            self._property_tree.setUpdatesEnabled(False)
+        try:
+            widget = self._primary_widget
+            for field in ("x", "y", "width", "height"):
+                self._update_numeric_editor_value(field, getattr(widget, field))
+            name_editor = self._editors.get("name")
+            if name_editor is not None:
+                self._set_line_edit_text(name_editor, widget.name)
+                self._update_name_editor_metadata(name_editor)
+
+            descriptor = WidgetRegistry.instance().get(widget.widget_type)
+            for prop_name, prop_info in descriptor.get("properties", {}).items():
+                visible_when = prop_info.get("ui_visible_when")
+                if visible_when and not self._check_visibility(widget, visible_when):
+                    continue
+                self._refresh_property_editor_value(prop_name, prop_info, widget.properties.get(prop_name))
+
+            bg = widget.background or BackgroundModel()
+            self._refresh_background_editor_value("bg_type", bg.bg_type)
+            self._refresh_background_editor_value("bg_color", bg.color)
+            self._refresh_background_editor_value("bg_alpha", bg.alpha)
+            self._refresh_background_editor_value("bg_radius", bg.radius)
+            for corner in ("radius_left_top", "radius_left_bottom", "radius_right_top", "radius_right_bottom"):
+                self._refresh_background_editor_value(f"bg_{corner}", getattr(bg, corner))
+            self._refresh_background_editor_value("bg_stroke_width", bg.stroke_width)
+            self._refresh_background_editor_value("bg_stroke_color", bg.stroke_color)
+            self._refresh_background_editor_value("bg_stroke_alpha", bg.stroke_alpha)
+            self._refresh_background_editor_value("bg_has_pressed", bg.has_pressed)
+            self._refresh_background_editor_value("bg_pressed_color", bg.pressed_color)
+
+            for entry in self._callback_entries(widget):
+                event_name = entry["event_name"]
+                editor = self._editors.get(f"callback_{event_name}")
+                if editor is None:
+                    continue
+                with QSignalBlocker(editor):
+                    editor.setText(entry["value"])
+                    editor.setPlaceholderText(self._suggest_callback_name(widget, event_name))
+                self._update_callback_editor_metadata(
+                    editor,
+                    event_name,
+                    self._callback_tooltip(widget, event_name, entry["signature"]),
+                )
+                button = self._callback_open_buttons.get(f"callback_{event_name}")
+                if button is not None:
+                    self._update_callback_button_metadata(
+                        button,
+                        event_name,
+                        True,
+                        "Open or create this callback in the page user source.",
+                    )
+
+            self._set_check_state(self._editors.get("designer_locked"), getattr(widget, "designer_locked", False))
+            self._set_check_state(self._editors.get("designer_hidden"), getattr(widget, "designer_hidden", False))
+            self._update_panel_metadata()
+        finally:
+            self._updating = previous_updating
+            if hasattr(self, "_property_tree"):
+                self._property_tree.setUpdatesEnabled(tree_updates_enabled)
+                self._property_tree.viewport().update()
+            self.setUpdatesEnabled(panel_updates_enabled)
+            self.update()
+
+        elapsed_ms = (time.perf_counter() - started) * 1000.0
+        self._debug_log(
+            "Property panel fast refresh: "
+            f"mode=single, selection={self._selection_debug_summary()}, "
+            f"editors={len(self._editors)}, total={elapsed_ms:.1f}ms"
+        )
+        return True
 
     def refresh_live_geometry(self, widgets, primary=None):
         """Refresh geometry editors for the current selection without rebuilding the form."""
@@ -1977,6 +2252,7 @@ class PropertyPanel(QWidget):
 
             if self._primary_widget is None:
                 rebuild_mode = "empty"
+                self._single_form_signature = None
                 self._context_frame.setVisible(False)
                 self._search_shell.setVisible(False)
                 self._search_edit.setVisible(False)
@@ -1995,6 +2271,7 @@ class PropertyPanel(QWidget):
             self._search_edit.setVisible(True)
             if len(self._selection) > 1:
                 rebuild_mode = "multi"
+                self._single_form_signature = None
                 callback_entries = self._measure_debug_step(
                     timings,
                     "multi_callback_entries",
@@ -2014,7 +2291,6 @@ class PropertyPanel(QWidget):
                     "search_filter",
                     lambda: self._on_search_changed(self._search_edit.text()),
                 )
-                self._measure_debug_step(timings, "theme_refresh", self._refresh_property_tree_theme_patches)
                 return
 
             rebuild_mode = "single"
@@ -2096,12 +2372,14 @@ class PropertyPanel(QWidget):
                 bg_color.set_value(bg.color)
                 bg_color.color_changed.connect(lambda val: self._on_bg_changed("color", val))
                 bg_form.addRow("Color:", bg_color)
+                self._editors["bg_color"] = bg_color
 
                 bg_alpha = ComboBox()
                 bg_alpha.addItems(ALPHAS)
                 bg_alpha.setCurrentText(bg.alpha)
                 bg_alpha.currentTextChanged.connect(lambda val: self._on_bg_changed("alpha", val))
                 bg_form.addRow("Alpha:", bg_alpha)
+                self._editors["bg_alpha"] = bg_alpha
 
                 if bg.bg_type in ("round_rectangle", "circle"):
                     radius_spin = _create_property_panel_spin_box()
@@ -2109,6 +2387,7 @@ class PropertyPanel(QWidget):
                     radius_spin.setValue(bg.radius)
                     radius_spin.valueChanged.connect(lambda val: self._on_bg_changed("radius", val))
                     bg_form.addRow("Radius:", radius_spin)
+                    self._editors["bg_radius"] = radius_spin
 
                 if bg.bg_type == "round_rectangle_corners":
                     for corner in ["radius_left_top", "radius_left_bottom", "radius_right_top", "radius_right_bottom"]:
@@ -2118,35 +2397,41 @@ class PropertyPanel(QWidget):
                         spin.valueChanged.connect(lambda val, c=corner: self._on_bg_changed(c, val))
                         label = self._corner_radius_row_label(corner)
                         bg_form.addRow(label, spin)
+                        self._editors[f"bg_{corner}"] = spin
 
                 stroke_spin = _create_property_panel_spin_box()
                 stroke_spin.setRange(0, 50)
                 stroke_spin.setValue(bg.stroke_width)
                 stroke_spin.valueChanged.connect(lambda val: self._on_bg_changed("stroke_width", val))
                 bg_form.addRow(self._appearance_row_label("stroke_width", "Stroke Width:"), stroke_spin)
+                self._editors["bg_stroke_width"] = stroke_spin
 
                 if bg.stroke_width > 0:
                     stroke_color = EguiColorPicker()
                     stroke_color.set_value(bg.stroke_color)
                     stroke_color.color_changed.connect(lambda val: self._on_bg_changed("stroke_color", val))
                     bg_form.addRow(self._appearance_row_label("stroke_color", "Stroke Color:"), stroke_color)
+                    self._editors["bg_stroke_color"] = stroke_color
 
                     stroke_alpha = ComboBox()
                     stroke_alpha.addItems(ALPHAS)
                     stroke_alpha.setCurrentText(bg.stroke_alpha)
                     stroke_alpha.currentTextChanged.connect(lambda val: self._on_bg_changed("stroke_alpha", val))
                     bg_form.addRow(self._appearance_row_label("stroke_alpha", "Stroke Alpha:"), stroke_alpha)
+                    self._editors["bg_stroke_alpha"] = stroke_alpha
 
                 pressed_check = CheckBox("Pressed state")
                 pressed_check.setChecked(bg.has_pressed)
                 pressed_check.toggled.connect(lambda val: self._on_bg_changed("has_pressed", val))
                 bg_form.addRow(pressed_check)
+                self._editors["bg_has_pressed"] = pressed_check
 
                 if bg.has_pressed:
                     pressed_color = EguiColorPicker()
                     pressed_color.set_value(bg.pressed_color)
                     pressed_color.color_changed.connect(lambda val: self._on_bg_changed("pressed_color", val))
                     bg_form.addRow(self._appearance_row_label("pressed_color", "Pressed Color:"), pressed_color)
+                    self._editors["bg_pressed_color"] = pressed_color
 
             self._measure_debug_step(timings, "appearance_group", _build_appearance_group)
             self._measure_debug_step(timings, "callbacks_group", lambda: self._build_callbacks_group(w))
@@ -2166,7 +2451,7 @@ class PropertyPanel(QWidget):
                 "search_filter",
                 lambda: self._on_search_changed(self._search_edit.text()),
             )
-            self._measure_debug_step(timings, "theme_refresh", self._refresh_property_tree_theme_patches)
+            self._single_form_signature = self._current_single_form_signature()
             self._emit_grouped_properties_debug_log(grouped_properties_stats)
         finally:
             timings["total"] = (time.perf_counter() - total_started) * 1000.0
@@ -2231,11 +2516,13 @@ class PropertyPanel(QWidget):
         locked.setChecked(all(getattr(widget, "designer_locked", False) for widget in self._selection) if self._selection else False)
         locked.toggled.connect(lambda value: self._on_designer_flag_changed("designer_locked", value))
         form.addRow(locked)
+        self._editors["designer_locked"] = locked
 
         hidden = CheckBox("Hidden")
         hidden.setChecked(all(getattr(widget, "designer_hidden", False) for widget in self._selection) if self._selection else False)
         hidden.toggled.connect(lambda value: self._on_designer_flag_changed("designer_hidden", value))
         form.addRow(hidden)
+        self._editors["designer_hidden"] = hidden
 
         return group
 
@@ -2804,12 +3091,11 @@ class PropertyPanel(QWidget):
             )
             editor.editingFinished.connect(
                 lambda editor=editor,
-                current_widget=widget,
                 event_name=event_name,
                 signature=entry["signature"],
                 use_event_dict=entry["use_event_dict"]: self._on_callback_editing_finished(
                     editor,
-                    current_widget,
+                    self._primary_widget,
                     event_name,
                     signature,
                     use_event_dict,
@@ -2820,11 +3106,10 @@ class PropertyPanel(QWidget):
                 editor,
                 event_name,
                 lambda editor=editor,
-                current_widget=widget,
                 event_name=event_name,
                 signature=entry["signature"]: self._request_single_callback_user_code(
                     editor,
-                    current_widget,
+                    self._primary_widget,
                     event_name,
                     signature,
                 ),
@@ -3163,6 +3448,7 @@ class PropertyPanel(QWidget):
                 lambda _val, name=prop_name, target=combo, button=generate_btn: self._update_generate_charset_button_metadata(name, target, button)
             )
             h_layout.addWidget(generate_btn)
+            self._editors["font_text_file_generate_button"] = generate_btn
             self._update_generate_charset_button_metadata(prop_name, combo, generate_btn)
 
         self._editors[f"prop_{prop_name}"] = combo

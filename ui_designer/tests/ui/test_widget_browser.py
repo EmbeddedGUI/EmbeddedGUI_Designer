@@ -211,7 +211,20 @@ class TestWidgetBrowserPanel:
         assert panel._cards == {}
         panel.deleteLater()
 
-    def test_record_insert_skips_refresh_when_recent_order_does_not_change(self, qapp, isolated_config, monkeypatch):
+    def test_refresh_reuses_cards_when_visible_order_is_unchanged(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        initial_cards = list(panel._cards.values())
+        initial_cards_by_type = dict(panel._cards_by_type)
+
+        panel.refresh()
+
+        assert list(panel._cards.values()) == initial_cards
+        assert panel._cards_by_type == initial_cards_by_type
+        panel.deleteLater()
+
+    def test_record_insert_refreshes_only_when_recent_scope_is_visible(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
         isolated_config.widget_browser_recent = ["button", "slider"]
@@ -233,8 +246,15 @@ class TestWidgetBrowserPanel:
 
         panel.record_insert("slider")
 
-        assert refresh_calls == 1
+        assert refresh_calls == 0
         assert isolated_config.widget_browser_recent[:2] == ["slider", "button"]
+
+        _select_category(panel, "recent")
+        refresh_calls = 0
+        panel.record_insert("button")
+
+        assert refresh_calls == 1
+        assert isolated_config.widget_browser_recent[:2] == ["button", "slider"]
         panel.deleteLater()
 
     def test_card_context_menu_can_reveal_and_toggle_favorite(self, qapp, isolated_config, monkeypatch):

@@ -191,7 +191,10 @@ def _workspace_control_height() -> int:
 
 def _workspace_toolbar_height() -> int:
     tokens = app_theme_tokens()
-    vertical_padding = int(tokens.get("space_toolbar_separator", 1)) * 2
+    vertical_padding = max(
+        int(tokens.get("space_toolbar_separator", 1)) * 2,
+        int(tokens.get("space_xxs", 4)),
+    )
     return max(_workspace_control_height() + vertical_padding, 1)
 
 
@@ -232,6 +235,12 @@ WORKSPACE_BOTTOM_HIDDEN_HEIGHT = 0
 PAGE_TAB_BAR_MAX_WIDTH = 188
 
 NEW_SHELL_ENABLED = os.environ.get("EGUI_NEW_SHELL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
+_SELECTION_DEBUG_ENV = "EMBEDDEDGUI_DESIGNER_SELECTION_DEBUG"
+_SELECTION_SLOW_LOG_THRESHOLD_ENV = "EMBEDDEDGUI_DESIGNER_SELECTION_SLOW_LOG_MS"
+_SELECTION_SLOW_LOG_THRESHOLD_MS = 80.0
+_UI_PERF_DEBUG_ENV = "EMBEDDEDGUI_DESIGNER_UI_PERF_DEBUG"
+_UI_PERF_SLOW_LOG_THRESHOLD_ENV = "EMBEDDEDGUI_DESIGNER_UI_PERF_SLOW_LOG_MS"
+_UI_PERF_SLOW_LOG_THRESHOLD_MS = 80.0
 CANVAS_DRAG_LIVE_GEOMETRY_INTERVAL_SEC = 1.0 / 12.0
 CANVAS_DRAG_PREVIEW_REFRESH_DELAY_MS = 80
 
@@ -346,6 +355,21 @@ def _resolve_page_callback_target(page, callback_name, signature):
     }
 
 
+def _env_flag_enabled(name):
+    value = str(os.environ.get(name, "") or "").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def _env_float(name, default):
+    value = str(os.environ.get(name, "") or "").strip()
+    if not value:
+        return float(default)
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float(default)
+
+
 class MainWindow(QMainWindow):
     """Main designer window with project explorer, editor, tree, and properties."""
 
@@ -431,6 +455,19 @@ class MainWindow(QMainWindow):
         self._selection_window_trace_source = ""
         self._selection_window_trace_summary = ""
         self._selection_window_trace_events = 0
+        self._selection_debug_enabled = _env_flag_enabled(_SELECTION_DEBUG_ENV)
+        self._selection_slow_log_threshold_ms = max(
+            0.0,
+            _env_float(_SELECTION_SLOW_LOG_THRESHOLD_ENV, _SELECTION_SLOW_LOG_THRESHOLD_MS),
+        )
+        self._ui_perf_debug_enabled = _env_flag_enabled(_UI_PERF_DEBUG_ENV) or self._selection_debug_enabled
+        self._ui_perf_slow_log_threshold_ms = max(
+            0.0,
+            _env_float(_UI_PERF_SLOW_LOG_THRESHOLD_ENV, _UI_PERF_SLOW_LOG_THRESHOLD_MS),
+        )
+        self._diagnostics_base_entries = []
+        self._diagnostics_base_page = None
+        self._diagnostics_base_project = None
         self._resource_generator_window = None
         self._sdk_binding_label_cache = {}
 
@@ -439,8 +476,10 @@ class MainWindow(QMainWindow):
         self._project_watch_timer.timeout.connect(self._poll_project_files)
 
         self._init_ui()
-        self.property_panel.set_debug_logger(self.debug_panel.log_info)
-        self._install_debug_window_trace()
+        self.property_panel.set_debug_logger(self._property_panel_debug_log)
+        self.widget_browser.set_debug_logger(self._widget_browser_debug_log)
+        if self._selection_debug_enabled:
+            self._install_debug_window_trace()
         self._init_renderer_manager()
         if not self._defer_chrome:
             self.ensure_chrome_initialized()
@@ -1688,29 +1727,80 @@ class MainWindow(QMainWindow):
         self._update_view_and_theme_action_metadata()
 
     def _select_left_panel(self, panel_key):
+        total_started = time.perf_counter()
         if panel_key == "components":
             panel_key = "widgets"
         if panel_key not in getattr(self, "_left_panel_pages", {}):
             panel_key = "project"
+        stack_ms = 0.0
+        state_ms = 0.0
+        metadata_ms = 0.0
+        panel_ms = 0.0
+        panel_action = "none"
+        step_started = time.perf_counter()
         self._current_left_panel = panel_key
         self._config.workspace_left_panel = panel_key
         if hasattr(self, "_state_store"):
             self._state_store.set_left_tab(panel_key)
+        state_ms = (time.perf_counter() - step_started) * 1000.0
         page = self._left_panel_pages[panel_key]
+        if panel_key == "widgets" and hasattr(self.widget_browser, "begin_paint_probe"):
+            self.widget_browser.begin_paint_probe(total_started)
+        step_started = time.perf_counter()
         self._left_panel_stack.setCurrentWidget(page)
         index = getattr(self, "_left_panel_tab_index_by_key", {}).get(panel_key, -1)
         if index >= 0 and self._left_panel_stack.currentIndex() != index:
             blocker = QSignalBlocker(self._left_panel_stack)
             self._left_panel_stack.setCurrentIndex(index)
             del blocker
+        stack_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
         self._update_workspace_nav_button_metadata(panel_key)
         self._update_view_panel_navigation_action_metadata()
+        metadata_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
         if panel_key == "widgets":
+            panel_action = "widgets.focus_search"
             self.widget_browser.focus_search()
         elif panel_key == "structure":
+            panel_action = "structure.ensure"
             self.widget_tree.ensure_initialized()
         elif panel_key == "assets":
+            panel_action = "assets.ensure"
             self.res_panel.ensure_initialized()
+        panel_ms = (time.perf_counter() - step_started) * 1000.0
+        total_ms = (time.perf_counter() - total_started) * 1000.0
+        browser_state = ""
+        if panel_key == "widgets" and hasattr(self.widget_browser, "_debug_state_summary"):
+            browser_state = f", browser=[{self.widget_browser._debug_state_summary()}]"
+        self._ui_perf_log(
+            "Left panel switch: "
+            f"target={panel_key}, state={state_ms:.1f}ms, stack={stack_ms:.1f}ms, "
+            f"metadata={metadata_ms:.1f}ms, {panel_action}={panel_ms:.1f}ms, total={total_ms:.1f}ms"
+            f"{browser_state}",
+            elapsed_ms=total_ms,
+            force=panel_key == "widgets",
+        )
+        if panel_key == "widgets":
+            QTimer.singleShot(
+                0,
+                lambda started=total_started: self._log_widget_browser_settled_state(started, "event-loop"),
+            )
+            QTimer.singleShot(
+                250,
+                lambda started=total_started: self._log_widget_browser_settled_state(started, "250ms"),
+            )
+
+    def _log_widget_browser_settled_state(self, started, label):
+        if not hasattr(self, "widget_browser") or not hasattr(self.widget_browser, "_debug_state_summary"):
+            return
+        elapsed_ms = (time.perf_counter() - float(started or time.perf_counter())) * 1000.0
+        self._ui_perf_log(
+            f"Widget browser settled ({label}): elapsed={elapsed_ms:.1f}ms, "
+            f"{self.widget_browser._debug_state_summary()}",
+            elapsed_ms=elapsed_ms,
+            force=True,
+        )
 
     def _default_insert_parent(self):
         primary = self._primary_selected_widget()
@@ -2035,15 +2125,34 @@ class MainWindow(QMainWindow):
     def _insert_widget_from_browser(self, widget_type):
         if not widget_type or self._current_page is None:
             return
+        total_started = time.perf_counter()
         parent = self._pending_insert_parent or self._default_insert_parent()
+        step_started = time.perf_counter()
         inserted = self.widget_tree.insert_widget(widget_type, parent=parent)
+        insert_ms = (time.perf_counter() - step_started) * 1000.0
         if inserted is None:
+            self._ui_perf_log(
+                f"Widget insert: type={widget_type}, insert={insert_ms:.1f}ms, result=none",
+                elapsed_ms=insert_ms,
+                force=True,
+            )
             return
+        step_started = time.perf_counter()
         self._focus_properties_for_selection()
-        self.widget_browser.refresh()
+        focus_ms = (time.perf_counter() - step_started) * 1000.0
         self._pending_insert_parent = None
+        step_started = time.perf_counter()
         self._update_widget_browser_target()
-        self.statusBar().showMessage(f"Inserted {WidgetRegistry.instance().display_name(widget_type)}.", 3000)
+        target_ms = (time.perf_counter() - step_started) * 1000.0
+        total_ms = (time.perf_counter() - total_started) * 1000.0
+        parent_label = self._insert_target_summary(parent)
+        self._ui_perf_log(
+            "Widget insert: "
+            f"type={widget_type}, parent={parent_label}, insert={insert_ms:.1f}ms, "
+            f"focus_properties={focus_ms:.1f}ms, target={target_ms:.1f}ms, total={total_ms:.1f}ms",
+            elapsed_ms=total_ms,
+            force=True,
+        )
 
     def _reveal_widget_type_in_structure(self, widget_type):
         self._select_left_panel("structure")
@@ -3146,7 +3255,6 @@ class MainWindow(QMainWindow):
             return
         if reason or self.preview_panel.is_python_preview_active() or self.compiler is None:
             self._switch_to_python_preview(reason)
-            self.statusBar().showMessage("Using Python fallback preview.", 3000)
 
     def _refresh_python_preview_and_thumbnail(self, reason=""):
         if self.project is None or self._current_page is None:
@@ -3164,7 +3272,6 @@ class MainWindow(QMainWindow):
             return
         self.page_navigator.set_thumbnail_image(self._current_page.name, image)
         self.preview_panel.show_python_preview_image(image, reason=reason)
-        self.statusBar().showMessage("Using Python fallback preview.", 3000)
 
     def _persist_current_project_to_config(self):
         previous_snapshot = (
@@ -3198,10 +3305,13 @@ class MainWindow(QMainWindow):
     def _load_project_app_local_widgets(self, project_dir):
         project_dir = normalize_path(project_dir)
         registry = WidgetRegistry.instance()
+        previous_project_dir = registry.app_local_project_dir()
         if project_dir and registry.app_local_project_dir() == project_dir:
             issues = registry.app_local_issues()
         else:
             issues = registry.load_app_local_widgets(project_dir)
+        if hasattr(self, "widget_browser") and registry.app_local_project_dir() != previous_project_dir:
+            self.widget_browser.invalidate_catalog(refresh=False)
         if not hasattr(self, "debug_panel"):
             return issues
         for issue in issues:
@@ -3658,6 +3768,8 @@ class MainWindow(QMainWindow):
         """Show the welcome page (hide editor)."""
         if self.project is None:
             WidgetRegistry.instance().clear_app_local_widgets()
+            if hasattr(self, "widget_browser"):
+                self.widget_browser.invalidate_catalog(refresh=False)
         welcome_page = self._ensure_welcome_page()
         self._central_stack.setCurrentWidget(welcome_page)
         welcome_page.refresh()
@@ -4809,6 +4921,9 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "diagnostics_panel"):
             return
         if self._current_page is None:
+            self._diagnostics_base_entries = []
+            self._diagnostics_base_page = None
+            self._diagnostics_base_project = None
             self.diagnostics_panel.clear()
             self._update_workspace_chips()
             return
@@ -4824,8 +4939,30 @@ class MainWindow(QMainWindow):
         )
         entries.extend(analyze_app_local_widget_issues())
         entries.extend(analyze_project_callback_conflicts(self.project))
+        self._diagnostics_base_entries = sort_diagnostic_entries(entries)
+        self._diagnostics_base_page = self._current_page
+        self._diagnostics_base_project = self.project
+        self._set_diagnostics_entries_with_selection()
+        self._update_workspace_chips()
+
+    def _set_diagnostics_entries_with_selection(self):
+        entries = list(getattr(self, "_diagnostics_base_entries", []) or [])
         entries.extend(analyze_selection(self._selection_state.widgets))
         self.diagnostics_panel.set_entries(sort_diagnostic_entries(entries))
+
+    def _update_diagnostics_selection_entries(self):
+        if not hasattr(self, "diagnostics_panel"):
+            return
+        if self._current_page is None:
+            self._update_diagnostics_panel()
+            return
+        if (
+            self._diagnostics_base_page is not self._current_page
+            or self._diagnostics_base_project is not self.project
+        ):
+            self._update_diagnostics_panel()
+            return
+        self._set_diagnostics_entries_with_selection()
         self._update_workspace_chips()
 
     def _copy_diagnostics_summary(self):
@@ -5369,6 +5506,8 @@ class MainWindow(QMainWindow):
         self.project = None
         self._project_dir = None
         WidgetRegistry.instance().clear_app_local_widgets()
+        if hasattr(self, "widget_browser"):
+            self.widget_browser.invalidate_catalog(refresh=False)
         self._undo_manager = UndoManager()
         self._clear_editor_state()
         self._show_welcome_page()
@@ -5999,17 +6138,12 @@ class MainWindow(QMainWindow):
             inserted.display_y = inserted.y
 
         self.widget_tree.rebuild_tree()
-        self._set_selection([inserted], primary=inserted, sync_tree=True, sync_preview=True)
+        self._set_selection([inserted], primary=inserted, sync_tree=True, sync_preview=True, show_feedback=False)
         self._focus_properties_for_selection()
         self._record_page_state_change(source=f"widget drag insert: {widget_type}")
 
         if hasattr(self, "widget_browser"):
             self.widget_browser.record_insert(widget_type)
-
-        self.statusBar().showMessage(
-            f"Inserted {WidgetRegistry.instance().display_name(widget_type)} via drag",
-            3000,
-        )
 
     def _run_resource_generation(self, silent=False):
         if not self.project or not self._project_dir:
@@ -6080,10 +6214,16 @@ class MainWindow(QMainWindow):
                 cwd=self.project_root,
             )
         except Exception as exc:
+            self._sync_project_watch_snapshot_after_internal_write()
             self.debug_panel.log_error(f"Resource generation error: {exc}")
             if not silent:
                 QMessageBox.warning(self, "Error", f"Failed to run resource generator:\n{exc}")
             return False
+
+        # The SDK resource generator writes the effective merged config after
+        # the Designer-side config sync above, so refresh the watcher snapshot
+        # again to keep internal generation out of the external-change flow.
+        self._sync_project_watch_snapshot_after_internal_write()
 
         if result.returncode != 0:
             err = result.stderr or result.stdout or "Unknown error"
@@ -6746,6 +6886,30 @@ class MainWindow(QMainWindow):
             return focus_widget
         return None
 
+    @staticmethod
+    def _text_widget_has_selection(widget):
+        if widget is None:
+            return False
+        if isinstance(widget, QLineEdit):
+            return bool(widget.hasSelectedText())
+        cursor_getter = getattr(widget, "textCursor", None)
+        if not callable(cursor_getter):
+            return False
+        try:
+            return bool(cursor_getter().hasSelection())
+        except RuntimeError:
+            return False
+
+    @staticmethod
+    def _text_widget_is_read_only(widget):
+        getter = getattr(widget, "isReadOnly", None)
+        if not callable(getter):
+            return False
+        try:
+            return bool(getter())
+        except RuntimeError:
+            return False
+
     def _select_all_page_widgets(self):
         if self._current_page is None:
             return []
@@ -6979,7 +7143,58 @@ class MainWindow(QMainWindow):
             return "skip"
         return f"{elapsed_ms:.1f}ms"
 
+    def _should_log_selection_timing(self, elapsed_ms=None):
+        if getattr(self, "_selection_debug_enabled", False):
+            return True
+        if elapsed_ms is None:
+            return False
+        try:
+            elapsed = float(elapsed_ms)
+        except (TypeError, ValueError):
+            return False
+        return elapsed >= float(getattr(self, "_selection_slow_log_threshold_ms", _SELECTION_SLOW_LOG_THRESHOLD_MS))
+
+    def _selection_debug_log(self, message, elapsed_ms=None):
+        if not self._should_log_selection_timing(elapsed_ms):
+            return
+        self.debug_panel.log_info(message)
+
+    def _should_log_ui_timing(self, elapsed_ms=None):
+        if getattr(self, "_ui_perf_debug_enabled", False):
+            return True
+        if elapsed_ms is None:
+            return False
+        try:
+            elapsed = float(elapsed_ms)
+        except (TypeError, ValueError):
+            return False
+        return elapsed >= float(getattr(self, "_ui_perf_slow_log_threshold_ms", _UI_PERF_SLOW_LOG_THRESHOLD_MS))
+
+    def _ui_perf_log(self, message, elapsed_ms=None, *, force=False):
+        if not force and not self._should_log_ui_timing(elapsed_ms):
+            return
+        self.debug_panel.log_info(message)
+
+    def _widget_browser_debug_log(self, message, elapsed_ms=None):
+        self._ui_perf_log(message, elapsed_ms=elapsed_ms, force=True)
+
+    def _property_panel_debug_log(self, message):
+        if getattr(self, "_selection_debug_enabled", False):
+            self.debug_panel.log_info(message)
+            return
+        match = re.search(r"\btotal=([0-9]+(?:\.[0-9]+)?)ms\b", str(message or ""))
+        if not match:
+            return
+        try:
+            elapsed_ms = float(match.group(1))
+        except (TypeError, ValueError):
+            return
+        if self._should_log_selection_timing(elapsed_ms):
+            self.debug_panel.log_info(message)
+
     def _log_selection_change(self, source, widgets=None, primary=None, elapsed_ms=0.0, changed=True):
+        if not self._should_log_selection_timing(elapsed_ms):
+            return
         summary = self._selection_log_summary(widgets, primary=primary)
         state = self._preview_runtime_snapshot()
         if changed:
@@ -7060,6 +7275,8 @@ class MainWindow(QMainWindow):
         )
 
     def _begin_selection_window_trace(self, source, widgets=None, primary=None):
+        if not getattr(self, "_selection_debug_enabled", False):
+            return
         summary = self._selection_log_summary(widgets, primary=primary)
         if (
             not self._is_closing
@@ -7081,7 +7298,7 @@ class MainWindow(QMainWindow):
         if token != self._selection_window_trace_token or self._is_closing:
             return
         self._selection_window_trace_deadline = 0.0
-        self.debug_panel.log_info(
+        self._selection_debug_log(
             f"Selection window trace ({self._selection_window_trace_source}): "
             f"{self._selection_window_trace_events} Qt top-level event(s) for "
             f"{self._selection_window_trace_summary}"
@@ -7096,14 +7313,14 @@ class MainWindow(QMainWindow):
             and self._is_traceable_top_level_widget(watched)
         ):
             self._selection_window_trace_events += 1
-            self.debug_panel.log_info(
+            self._selection_debug_log(
                 f"Selection window event "
                 f"({self._selection_window_trace_source}/{self._selection_window_event_name(event.type())}): "
                 f"{self._describe_top_level_widget(watched)}"
             )
         return super().eventFilter(watched, event)
 
-    def _set_selection(self, widgets=None, primary=None, sync_tree=True, sync_preview=True):
+    def _set_selection(self, widgets=None, primary=None, sync_tree=True, sync_preview=True, show_feedback=True):
         normalized_widgets, normalized_primary = self._normalized_selection(widgets, primary=primary)
         if self._selection_matches(normalized_widgets, primary=normalized_primary):
             self._selected_widget = self._selection_state.primary
@@ -7139,10 +7356,11 @@ class MainWindow(QMainWindow):
         self._update_edit_actions()
         edit_actions_ms = (time.perf_counter() - step_started) * 1000.0
         step_started = time.perf_counter()
-        self._update_diagnostics_panel()
+        self._update_diagnostics_selection_entries()
         diagnostics_ms = (time.perf_counter() - step_started) * 1000.0
         step_started = time.perf_counter()
-        self._show_selection_feedback()
+        if show_feedback:
+            self._show_selection_feedback()
         feedback_ms = (time.perf_counter() - step_started) * 1000.0
         step_started = time.perf_counter()
         self._update_widget_browser_target()
@@ -7152,11 +7370,8 @@ class MainWindow(QMainWindow):
             step_started = time.perf_counter()
             self.widget_browser.select_widget_type(self._selection_state.primary.widget_type)
             browser_focus_ms = (time.perf_counter() - step_started) * 1000.0
-        step_started = time.perf_counter()
-        self._update_workspace_chips()
-        workspace_ms = (time.perf_counter() - step_started) * 1000.0
         total_ms = (time.perf_counter() - total_started) * 1000.0
-        self.debug_panel.log_info(
+        self._selection_debug_log(
             "Selection pipeline: "
             f"properties={self._format_timed_step(property_ms)}, "
             f"animations={self._format_timed_step(animations_ms)}, "
@@ -7167,8 +7382,9 @@ class MainWindow(QMainWindow):
             f"feedback={self._format_timed_step(feedback_ms)}, "
             f"browser_target={self._format_timed_step(browser_target_ms)}, "
             f"browser_focus={self._format_timed_step(browser_focus_ms, skipped=self._selection_state.primary is None)}, "
-            f"workspace={self._format_timed_step(workspace_ms)}, "
-            f"total={total_ms:.1f}ms"
+            f"workspace={self._format_timed_step(0.0, skipped=True)}, "
+            f"total={total_ms:.1f}ms",
+            elapsed_ms=total_ms,
         )
         return True
 
@@ -7457,6 +7673,10 @@ class MainWindow(QMainWindow):
         return pasted_widgets
 
     def _copy_selection(self):
+        text_widget = self._focused_text_input_widget()
+        if text_widget is not None:
+            text_widget.copy()
+            return
         payload = self._selected_widget_payload()
         if not payload:
             return
@@ -7466,6 +7686,10 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"Copied {len(payload['widgets'])} widget(s)", 3000)
 
     def _cut_selection(self):
+        text_widget = self._focused_text_input_widget()
+        if text_widget is not None and not self._text_widget_is_read_only(text_widget):
+            text_widget.cut()
+            return
         deletable_widgets, locked_count = self._deletable_selected_widgets()
         if not deletable_widgets:
             if locked_count:
@@ -7486,6 +7710,10 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(message, 3000)
 
     def _paste_selection(self):
+        text_widget = self._focused_text_input_widget()
+        if text_widget is not None and not self._text_widget_is_read_only(text_widget):
+            text_widget.paste()
+            return
         pasted_widgets = self._paste_widget_payload(self._clipboard_payload)
         if pasted_widgets:
             self.statusBar().showMessage(f"Pasted {len(pasted_widgets)} widget(s)", 3000)
@@ -7705,16 +7933,19 @@ class MainWindow(QMainWindow):
         has_selection = bool(selected_widgets)
         has_deletable_selection = bool(selectable_widgets)
         has_project = self._current_page is not None
-        can_select_all = bool(self._focused_text_input_widget()) or bool(self._select_all_page_widgets())
+        focused_text_widget = self._focused_text_input_widget()
+        has_text_focus = focused_text_widget is not None
+        text_is_editable = has_text_focus and not self._text_widget_is_read_only(focused_text_widget)
+        can_select_all = has_text_focus or bool(self._select_all_page_widgets())
         can_paste = has_project and self._clipboard_payload is not None and self._default_paste_parent() is not None
         can_align = len(selectable_widgets) >= 2 and self._shared_selection_parent(selectable_widgets) is not None
         can_distribute = len(selectable_widgets) >= 3 and self._shared_selection_parent(selectable_widgets) is not None
         structure_state = self._structure_action_state()
 
         self._select_all_action.setEnabled(can_select_all)
-        self._copy_action.setEnabled(has_selection)
-        self._cut_action.setEnabled(has_deletable_selection)
-        self._paste_action.setEnabled(can_paste)
+        self._copy_action.setEnabled(has_selection or has_text_focus)
+        self._cut_action.setEnabled(has_deletable_selection or text_is_editable)
+        self._paste_action.setEnabled(can_paste or text_is_editable)
         self._duplicate_action.setEnabled(has_selection)
         self._delete_action.setEnabled(has_deletable_selection)
 
@@ -7880,7 +8111,7 @@ class MainWindow(QMainWindow):
     def _on_tree_selection_changed(self, widgets, primary):
         selection_started = time.perf_counter()
         self._begin_selection_window_trace("tree", widgets, primary=primary)
-        self.debug_panel.log_info(
+        self._selection_debug_log(
             f"Selection event (tree): {self._selection_log_summary(widgets, primary=primary)} | "
             f"{self._preview_runtime_snapshot()}"
         )
@@ -7895,7 +8126,7 @@ class MainWindow(QMainWindow):
     def _on_preview_selection_changed(self, widgets, primary):
         selection_started = time.perf_counter()
         self._begin_selection_window_trace("preview", widgets, primary=primary)
-        self.debug_panel.log_info(
+        self._selection_debug_log(
             f"Selection event (preview): {self._selection_log_summary(widgets, primary=primary)} | "
             f"{self._preview_runtime_snapshot()}"
         )
@@ -7912,7 +8143,7 @@ class MainWindow(QMainWindow):
         widgets = [widget] if widget is not None else []
         selection_started = time.perf_counter()
         self._begin_selection_window_trace("tree", widgets, primary=widget)
-        self.debug_panel.log_info(
+        self._selection_debug_log(
             f"Selection event (tree): {self._selection_log_summary(widgets, primary=widget)} | "
             f"{self._preview_runtime_snapshot()}"
         )
@@ -7929,7 +8160,7 @@ class MainWindow(QMainWindow):
         widgets = [widget] if widget is not None else []
         selection_started = time.perf_counter()
         self._begin_selection_window_trace("preview", widgets, primary=widget)
-        self.debug_panel.log_info(
+        self._selection_debug_log(
             f"Selection event (preview): {self._selection_log_summary(widgets, primary=widget)} | "
             f"{self._preview_runtime_snapshot()}"
         )
@@ -8007,7 +8238,13 @@ class MainWindow(QMainWindow):
         """Widget tree structure changed (add/delete/reorder)."""
         widgets = self.widget_tree.selected_widgets()
         primary = self.widget_tree._get_selected_widget()
-        self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)
+        self._set_selection(
+            widgets,
+            primary=primary,
+            sync_tree=False,
+            sync_preview=True,
+            show_feedback=not self._is_widget_insert_source(source),
+        )
         self._on_model_changed(source=source or "widget tree change")
 
     def _on_widget_tree_feedback_message(self, message):
@@ -8043,7 +8280,15 @@ class MainWindow(QMainWindow):
     def _format_page_change_message(self, source):
         if not source or self._current_page is None:
             return ""
-        return f"Changed {self._current_page.name}: {source}."
+        source_text = str(source or "").strip()
+        if self._is_widget_insert_source(source_text):
+            return ""
+        return f"Changed {self._current_page.name}: {source_text}."
+
+    @staticmethod
+    def _is_widget_insert_source(source):
+        source_text = str(source or "").strip()
+        return source_text == "widget add" or source_text.startswith("widget drag insert")
 
     def _record_page_state_change(
         self,
@@ -8054,23 +8299,54 @@ class MainWindow(QMainWindow):
         source="",
     ):
         """Record the current page snapshot and refresh dependent UI state."""
+        total_started = time.perf_counter()
+        snapshot_ms = 0.0
+        preview_ms = 0.0
+        xml_ms = 0.0
+        resources_ms = 0.0
+        compile_ms = 0.0
+        actions_ms = 0.0
         if self._current_page and not self._undoing:
+            step_started = time.perf_counter()
             xml = self._current_page.to_xml_string()
             stack = self._undo_manager.get_stack(self._current_page.name)
             stack.push(xml, label=source or "property edit")
+            snapshot_ms = (time.perf_counter() - step_started) * 1000.0
         if update_preview:
+            step_started = time.perf_counter()
             self._update_preview_overlay()
+            preview_ms = (time.perf_counter() - step_started) * 1000.0
         if sync_xml:
+            step_started = time.perf_counter()
             self._sync_xml_to_editors()
+            xml_ms = (time.perf_counter() - step_started) * 1000.0
         if refresh_resources:
+            step_started = time.perf_counter()
             self._update_resource_usage_panel()
+            resources_ms = (time.perf_counter() - step_started) * 1000.0
         if trigger_compile:
+            step_started = time.perf_counter()
             self._trigger_compile(reason=source or "model change")
+            compile_ms = (time.perf_counter() - step_started) * 1000.0
+        step_started = time.perf_counter()
         self._update_undo_actions()
         self._update_window_title()
+        actions_ms = (time.perf_counter() - step_started) * 1000.0
         message = self._format_page_change_message(source)
         if message and not self._undoing:
             self.statusBar().showMessage(message, 3000)
+        total_ms = (time.perf_counter() - total_started) * 1000.0
+        self._ui_perf_log(
+            "Model change pipeline: "
+            f"source={source or 'model change'}, "
+            f"snapshot={self._format_timed_step(snapshot_ms, skipped=not (self._current_page and not self._undoing))}, "
+            f"preview={self._format_timed_step(preview_ms, skipped=not update_preview)}, "
+            f"xml={self._format_timed_step(xml_ms, skipped=not sync_xml)}, "
+            f"resources={self._format_timed_step(resources_ms, skipped=not refresh_resources)}, "
+            f"compile={self._format_timed_step(compile_ms, skipped=not trigger_compile)}, "
+            f"actions={actions_ms:.1f}ms, total={total_ms:.1f}ms",
+            elapsed_ms=total_ms,
+        )
 
     # 鈹€鈹€ Undo / Redo 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 

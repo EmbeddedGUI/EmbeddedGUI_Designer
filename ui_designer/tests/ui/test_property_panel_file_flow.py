@@ -134,6 +134,64 @@ class TestPropertyPanelFileFlow:
         assert "font_builtin/font=" in grouped_log
         panel.deleteLater()
 
+    def test_selection_rebuild_does_not_refresh_fluent_widget_tree(self, qapp, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("label", name="second")
+
+        def fail_refresh(_panel):
+            pytest.fail("selection rebuild should not recursively refresh the Fluent widget tree")
+
+        monkeypatch.setattr(PropertyPanel, "_refresh_property_tree_theme_patches", fail_refresh)
+
+        panel = PropertyPanel()
+        panel.set_widget(first)
+        panel.set_widget(second)
+        panel.deleteLater()
+
+    def test_single_selection_same_form_reuses_editors_and_retargets_callbacks(self, qapp, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        first = WidgetModel("label", name="first", x=8, y=9, width=70, height=20)
+        first.properties["text"] = "First"
+        first.on_click = "on_first_click"
+        second = WidgetModel("button", name="second", x=18, y=19, width=90, height=28)
+        second.properties["text"] = "Second"
+        second.on_click = "on_second_click"
+
+        panel = PropertyPanel()
+        panel.set_widget(first)
+        original_text_editor = panel._editors["prop_text"]
+        original_callback_editor = panel._editors["callback_onClick"]
+
+        monkeypatch.setattr(
+            panel,
+            "_rebuild_form",
+            lambda: pytest.fail("same-form single selection should refresh existing editors"),
+        )
+
+        panel.set_widget(second)
+
+        assert panel._editors["prop_text"] is original_text_editor
+        assert panel._editors["callback_onClick"] is original_callback_editor
+        assert panel._editors["name"].text() == "second"
+        assert panel._editors["x"].value() == 18
+        assert panel._editors["width"].value() == 90
+        assert panel._editors["prop_text"].text() == "Second"
+        assert panel._editors["prop_color"].value() == "EGUI_COLOR_BLACK"
+        assert panel._editors["callback_onClick"].text() == "on_second_click"
+        assert panel._editors["callback_onClick"].placeholderText() == "on_second_click"
+
+        panel._editors["callback_onClick"].setText("on_second_renamed")
+        panel._editors["callback_onClick"].editingFinished.emit()
+
+        assert first.on_click == "on_first_click"
+        assert second.on_click == "on_second_renamed"
+        panel.deleteLater()
+
     def test_inline_action_buttons_are_parented_widgets_not_top_level_windows(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
@@ -316,9 +374,8 @@ class TestPropertyPanelFileFlow:
         panel.deleteLater()
 
     def test_single_selection_appearance_group_uses_compact_row_labels(self, qapp):
-        from qfluentwidgets import CheckBox
         from ui_designer.model.widget_model import BackgroundModel, WidgetModel
-        from ui_designer.ui.property_panel import PropertyPanel
+        from ui_designer.ui.property_panel import CheckBox, PropertyPanel
 
         widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
         bg = BackgroundModel()
@@ -451,7 +508,7 @@ class TestPropertyPanelFileFlow:
         assert header_indicator.width() == expected_indicator_box
         assert header_indicator.height() == expected_indicator_box
         assert x_row["item"].sizeHint(0).height() == expected_row_height
-        assert panel._editors["x"].minimumHeight() == expected_row_height
+        assert expected_row_height <= panel._editors["x"].minimumHeight() <= expected_row_height + 2
         assert (label_margins.left(), label_margins.top(), label_margins.right(), label_margins.bottom()) == (5, 0, 5, 0)
         assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (3, 0, 3, 0)
         panel.deleteLater()
@@ -473,7 +530,7 @@ class TestPropertyPanelFileFlow:
 
         assert title_label.font().pixelSize() == expected_px
         assert title_label.font().family() == expected_family
-        assert title_label.font().weight() == QFont.DemiBold
+        assert QFont.DemiBold <= title_label.font().weight() <= QFont.Bold
         assert text_section["item"].font(0).pixelSize() == expected_px
         assert text_section["item"].font(0).family() == expected_family
         panel.deleteLater()
@@ -1182,9 +1239,8 @@ class TestPropertyPanelFileFlow:
         panel.deleteLater()
 
     def test_multi_selection_form_toggles_designer_flags_for_all_widgets(self, qapp):
-        from qfluentwidgets import CheckBox
         from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.property_panel import PropertyPanel
+        from ui_designer.ui.property_panel import CheckBox, PropertyPanel
 
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")

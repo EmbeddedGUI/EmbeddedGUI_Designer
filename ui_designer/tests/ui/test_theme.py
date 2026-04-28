@@ -1,6 +1,6 @@
 import pytest
 from PyQt5.QtCore import QEvent
-from PyQt5.QtWidgets import QApplication, QDialog, QSpinBox
+from PyQt5.QtWidgets import QApplication, QDialog, QPushButton, QSpinBox
 
 from ui_designer.ui.iconography import semantic_icon_keys
 from ui_designer.ui.typography import apply_typography_role, build_typography_preview_widget
@@ -212,6 +212,23 @@ def test_window_chrome_sync_manager_ignores_runtime_errors_from_closing_widgets(
     finally:
         broken.close()
         broken.deleteLater()
+        app.processEvents()
+
+
+def test_window_chrome_sync_manager_ignores_parentless_child_controls(monkeypatch):
+    import ui_designer.ui.theme as theme_module
+
+    app = _app()
+    manager = _ensure_window_chrome_sync_manager(app)
+    synced = []
+    monkeypatch.setattr(theme_module, "sync_window_chrome_theme", lambda window: synced.append(window) or True)
+
+    button = QPushButton("child control")
+    try:
+        assert manager.eventFilter(button, QEvent(QEvent.Show)) is False
+        assert synced == []
+    finally:
+        button.deleteLater()
         app.processEvents()
 
 
@@ -623,6 +640,11 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)
         css = _build_stylesheet(mode)
+        command_text_lift = max(int(t["space_xxs"]), 0)
+        command_content_height = max(
+            int(t["h_tab_min"]) - int(t["space_xxs"]) - command_text_lift - 2,
+            1,
+        )
 
         command_bar = css.split("#workspace_command_bar {", 1)[1].split("}", 1)[0]
         context = css.split("#workspace_context_card {", 1)[1].split("}", 1)[0]
@@ -646,8 +668,9 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert f"margin: {t['space_toolbar_separator']}px {t['space_toolbar_separator']}px;" in toolbar_separator
         assert "background-color: transparent;" in toolbar_button
         assert "border-radius: 0px;" in toolbar_button
-        assert f"padding: 0px {t['pad_toolbar_h']}px;" in toolbar_button
-        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in toolbar_button
+        assert f"padding: 0px {t['pad_toolbar_h']}px {command_text_lift}px {t['pad_toolbar_h']}px;" in toolbar_button
+        assert f"min-height: {command_content_height}px;" in toolbar_button
+        assert f"font-size: {t['fs_body_sm']}px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
         assert f"background-color: {t['shell_bg']};" in toolbar_button_disabled
         assert f"border-color: {t['border_strong']};" in toolbar_button_disabled
@@ -657,11 +680,12 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert f"margin-right: {t['space_3xs']}px;" in host_separator
         assert "background-color: transparent;" in insert_button
         assert "border-radius: 0px;" in insert_button
-        assert f"padding: 0px {t['pad_input_h']}px;" in insert_button
+        assert f"padding: 0px {t['pad_input_h']}px {command_text_lift}px {t['pad_input_h']}px;" in insert_button
         assert f"min-width: {t['h_tab_min'] * 2}px;" in insert_button
         assert f"max-width: {t['h_tab_min'] * 2}px;" in insert_button
-        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in insert_button
-        assert f"max-height: {t['h_tab_min'] - t['space_xxs']}px;" in insert_button
+        assert f"min-height: {command_content_height}px;" in insert_button
+        assert f"max-height: {command_content_height}px;" in insert_button
+        assert f"font-size: {t['fs_body_sm']}px;" in insert_button
         assert f"background-color: {t['surface_hover']};" in insert_button_hover
         assert "background-color: transparent;" in mode_strip
         assert "border: none;" in mode_strip
@@ -672,6 +696,11 @@ def test_workspace_chrome_corner_radii_stay_flat():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)
         css = _build_stylesheet(mode)
+        command_text_lift = max(int(t["space_xxs"]), 0)
+        command_content_height = max(
+            int(t["h_tab_min"]) - int(t["space_xxs"]) - command_text_lift - 2,
+            1,
+        )
 
         mode_button = css.split("QPushButton#workspace_mode_button {", 1)[1].split("}", 1)[0]
         bottom_toggle_button = css.split("QPushButton#workspace_bottom_toggle_button {", 1)[1].split("}", 1)[0]
@@ -696,16 +725,18 @@ def test_workspace_chrome_corner_radii_stay_flat():
         thumb_label = css.split("QLabel#page_navigator_thumb_label {", 1)[1].split("}", 1)[0]
 
         assert "border-radius: 0px;" in mode_button
-        assert f"padding: 0px {t['pad_input_h']}px;" in mode_button
+        assert f"padding: 0px {t['pad_input_h']}px {command_text_lift}px {t['pad_input_h']}px;" in mode_button
         assert f"min-width: {t['h_tab_min'] * 2}px;" in mode_button
         assert f"max-width: {t['h_tab_min'] * 2}px;" in mode_button
-        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in mode_button
-        assert f"max-height: {t['h_tab_min'] - t['space_xxs']}px;" in mode_button
+        assert f"min-height: {command_content_height}px;" in mode_button
+        assert f"max-height: {command_content_height}px;" in mode_button
+        assert f"font-size: {t['fs_body_sm']}px;" in mode_button
         assert "border-radius: 0px;" in bottom_toggle_button
-        assert f"padding: 0px {t['pad_input_h']}px;" in bottom_toggle_button
+        assert f"padding: 0px {t['pad_input_h']}px {command_text_lift}px {t['pad_input_h']}px;" in bottom_toggle_button
         assert f"min-width: {t['h_tab_min'] * 2}px;" in bottom_toggle_button
-        assert f"min-height: {t['h_tab_min'] - t['space_xxs']}px;" in bottom_toggle_button
-        assert f"max-height: {t['h_tab_min'] - t['space_xxs']}px;" in bottom_toggle_button
+        assert f"min-height: {command_content_height}px;" in bottom_toggle_button
+        assert f"max-height: {command_content_height}px;" in bottom_toggle_button
+        assert f"font-size: {t['fs_body_sm']}px;" in bottom_toggle_button
         assert "background-color: transparent;" in left_tabs_pane
         assert "border: none;" in left_tabs_pane
         assert "border-radius: 0px;" in left_tabs_pane
@@ -1490,8 +1521,8 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
         )
 
         assert search.property("_designer_fluent_engineering_style") == "property_panel_line_edit"
-        assert name_edit.property("_designer_fluent_engineering_style") == "property_panel_line_edit"
-        assert alpha_combo.property("_designer_fluent_engineering_style") == "property_panel_combo_box"
+        assert name_edit.property("_designer_fluent_engineering_style") is None
+        assert alpha_combo.property("_designer_fluent_engineering_style") is None
         assert isinstance(x_spin, QSpinBox)
         assert x_spin.property("propertyPanelSpin") is True
         assert browse_button.property("_designer_fluent_engineering_style") == "property_panel_button"
@@ -1501,10 +1532,8 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
         assert f"min-height: {tokens['h_tab_min']}px;" in search.styleSheet()
         assert f"padding: 0px {tokens['pad_input_h']}px;" in search.styleSheet()
         assert f"min-width: {tokens['icon_lg']}px;" in search.styleSheet()
-        assert "border-radius: 4px;" in name_edit.styleSheet()
-        assert f"min-height: {tokens['h_tab_min']}px;" in name_edit.styleSheet()
-        assert "border-radius: 4px;" in alpha_combo.styleSheet()
-        assert f"min-height: {tokens['h_tab_min']}px;" in alpha_combo.styleSheet()
+        assert name_edit.styleSheet() == ""
+        assert alpha_combo.styleSheet() == ""
         assert x_spin.minimumHeight() >= tokens["h_tab_min"]
         assert theme_module._PROPERTY_PANEL_SPIN_ICON_SIZE == 7
         assert "border-radius: 4px;" in browse_button.styleSheet()
