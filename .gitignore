@@ -26,3 +26,6 @@ examples/DesignerSandbox/
 examples/HelloSimpleDemo/
 /examples/DesignerSandbox/app_egui_config.h
 /examples/HelloSimpleDemo/app_egui_config.h
+
+*.log
+*.txt

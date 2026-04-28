@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project app_name="HelloSimpleDemo" screen_width="240" screen_height="320" page_mode="easy_page" startup="main_page" sdk_root="../../sdk/EmbeddedGUI" egui_root="../../sdk/EmbeddedGUI">
+<Project app_name="HelloSimpleDemo" screen_width="240" screen_height="320" page_mode="easy_page" startup="main_page" sdk_root="../../sdk/EmbeddedGUI">
+    <SdkVersion source_kind="external" revision="v1.0.1-47-g8a2d0415" commit="8a2d0415623ea9c23b39e73b3ccd6b2f1f2dd18e" commit_short="8a2d0415" />
     <Pages>
         <PageRef file="layout/main_page.xml" />
     </Pages>
