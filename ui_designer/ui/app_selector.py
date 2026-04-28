@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QMessageBox,
+    QStyledItemDelegate,
     QVBoxLayout,
     QWidget,
 )
@@ -148,6 +149,25 @@ class AppEntryRowWidget(QWidget):
         style.unpolish(self)
         style.polish(self)
         self.update()
+
+
+class _AppSelectorListDelegate(QStyledItemDelegate):
+    """Avoid drawing QListWidgetItem text underneath custom example row widgets."""
+
+    def _has_row_widget(self, index):
+        list_widget = self.parent()
+        if list_widget is None or not hasattr(list_widget, "item"):
+            return False
+        item = list_widget.item(index.row())
+        return item is not None and list_widget.itemWidget(item) is not None
+
+    def _paint_default_item(self, painter, option, index):
+        super().paint(painter, option, index)
+
+    def paint(self, painter, option, index):
+        if self._has_row_widget(index):
+            return
+        self._paint_default_item(painter, option, index)
 
 
 class AppSelectorDialog(QDialog):
@@ -344,6 +364,7 @@ class AppSelectorDialog(QDialog):
 
         self._app_list = QListWidget()
         self._app_list.setObjectName("app_selector_list")
+        self._app_list.setItemDelegate(_AppSelectorListDelegate(self._app_list))
         self._app_list.setSpacing(6)
         self._app_list.itemDoubleClicked.connect(self._on_item_double_clicked)
         self._app_list.currentItemChanged.connect(self._on_selection_changed)

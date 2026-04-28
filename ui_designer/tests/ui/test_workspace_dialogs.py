@@ -12,7 +12,8 @@ from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
 if HAS_PYQT5:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QFrame, QLabel, QWidget
+    from PyQt5.QtGui import QPainter, QPixmap
+    from PyQt5.QtWidgets import QFrame, QLabel, QStyleOptionViewItem, QWidget
 
 _skip_no_qt = skip_if_no_qt
 
@@ -64,6 +65,45 @@ class TestAppSelectorDialog:
             assert widget.layout().contentsMargins().bottom() == 0
         finally:
             widget.deleteLater()
+
+    def test_app_list_delegate_does_not_paint_text_under_custom_rows(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.app_selector import AppSelectorDialog
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        example_dir = sdk_root / "example"
+        example_dir.mkdir()
+        modern = example_dir / "ModernApp"
+        modern.mkdir()
+        (modern / "build.mk").write_text("")
+        (modern / "ModernApp.egui").write_text("")
+
+        isolated_config.sdk_root = str(sdk_root)
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
+        delegate = dialog._app_list.itemDelegate()
+        painted = []
+
+        def counted_default_paint(painter, option, index):
+            painted.append(index.row())
+
+        monkeypatch.setattr(delegate, "_paint_default_item", counted_default_paint)
+
+        pixmap = QPixmap(180, 48)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        option = QStyleOptionViewItem()
+        option.rect = pixmap.rect()
+        try:
+            example_index = dialog._app_list.model().index(0, 0)
+            delegate.paint(painter, option, example_index)
+            dialog._search_edit.setText("missing")
+            placeholder_index = dialog._app_list.model().index(0, 0)
+            delegate.paint(painter, option, placeholder_index)
+        finally:
+            painter.end()
+            dialog.deleteLater()
+
+        assert painted == [0]
 
     @pytest.mark.skip(reason="flaky Windows tempdir cleanup in this environment")
     def test_refresh_app_list_does_not_leave_stale_row_widgets_attached(self, qapp, isolated_config, tmp_path):
