@@ -60,6 +60,7 @@ def test_build_preflight_command_uses_preview_smoke_script():
 
     cmd = module.build_preflight_command()
 
+    assert module.PREFLIGHT_SMOKE_SCRIPT_PATH == module.SCRIPT_DIR / "ui_designer_preview_smoke.py"
     assert cmd == [module.sys.executable, str(module.PREFLIGHT_SMOKE_SCRIPT_PATH.resolve())]
 
 

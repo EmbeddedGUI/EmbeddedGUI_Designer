@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-from ui_designer_preview_smoke import (
+from scripts.ui_designer_preview_smoke import (
     APP_NAME,
     DEFAULT_WORK_ROOT,
     PAGE_NAME,

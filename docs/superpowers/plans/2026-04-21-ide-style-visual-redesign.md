@@ -475,7 +475,7 @@ git commit -m "refactor(ui): replace hard-coded legacy hex colors with theme tok
 - [x] **Step 1: 启动 Designer 做短启动检查（非阻塞）**
 
 ```
-python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
+python scripts/ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
 ```
 
 Expected: 程序能启动并在 ~5 秒内进入主窗口；无 Python 异常。
@@ -748,7 +748,7 @@ def test_legacy_icon_mode_falls_back(qapp, monkeypatch):
 
 ```
 python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/ui/test_iconography_lucide.py -v
-python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
+python scripts/ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
 ```
 
 - [x] **Step 5: Commit**
@@ -853,6 +853,6 @@ git commit -m "docs(spec): mark IDE-style visual redesign as implemented"
 
 - 每阶段独立 commit、独立可回滚
 - Token 变更前后都跑 `test_theme.py`，不要让老断言静默失败
-- GUI 验收用 `ui_designer_preview_smoke.py` 短启动，**不要** 用阻塞式 `python ui_designer/main.py` 跑到你中断
+- GUI 验收用 `scripts/ui_designer_preview_smoke.py` 短启动，**不要** 用阻塞式 `python ui_designer/main.py` 跑到你中断
 - 任何硬编码色值发现了都要换成 token，不要绕过
 - LEGACY 开关是最后的保险，阶段 2 翻车直接 `EMBEDDEDGUI_LEGACY_ICONS=1` 止血

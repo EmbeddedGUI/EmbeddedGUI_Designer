@@ -24,7 +24,7 @@ python -m pytest -c ui_designer/pyproject.toml ui_designer/tests/test_html_parsi
 python ui_designer/main.py --sdk-root sdk/EmbeddedGUI
 
 # Preview smoke test
-python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
+python scripts/ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
 
 # Build release package
 python scripts/package_ui_designer.py --sdk-root sdk/EmbeddedGUI
