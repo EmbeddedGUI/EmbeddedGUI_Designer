@@ -653,6 +653,18 @@ class TestGenerateUicode:
         assert "egui_main_page_init" in output
         assert "uicode_create_ui" not in output
 
+    def test_uicode_source_easy_page_does_not_show_page_switch_toast(self):
+        p1 = _make_page("page_a")
+        p2 = _make_page("page_b")
+        proj = _make_project([p1, p2], page_mode="easy_page")
+        output = generate_uicode_source(proj)
+
+        assert "Start page %d" not in output
+        assert "toast_str" not in output
+        assert "egui_api_sprintf(toast_str" not in output
+        assert '"No more next page"' in output
+        assert '"No more previous page"' in output
+
     def test_uicode_source_easy_page_recording_uses_function_config_macro(self):
         p1 = _make_page("page_a")
         p2 = _make_page("page_b")
@@ -670,6 +682,19 @@ class TestGenerateUicode:
         assert "egui_activity_t base" in output
         assert "main_page_activity_on_create" in output
         assert "uicode_create_ui" not in output
+
+    def test_uicode_source_activity_does_not_show_page_switch_toast(self):
+        p1 = _make_page("page_a")
+        p2 = _make_page("page_b")
+        proj = _make_project([p1, p2], page_mode="activity")
+        output = generate_uicode_source(proj)
+
+        assert "Start page %d" not in output
+        assert "toast_str" not in output
+        assert "egui_api_sprintf(toast_str" not in output
+        assert "egui_activity_finish(current_activity);" in output
+        assert '"No more next page"' in output
+        assert '"No more previous page"' in output
 
     def test_uicode_startup_page_index(self):
         p1 = _make_page("page_a")

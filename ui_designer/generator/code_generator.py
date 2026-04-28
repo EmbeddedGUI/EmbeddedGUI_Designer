@@ -1459,7 +1459,6 @@ def _gen_uicode_easy_page(project):
     lines.append("")
     lines.append("static union page_array g_page_array;")
     lines.append("static int current_index = 0;")
-    lines.append("static char toast_str[50];")
     lines.append("")
 
     # Determine startup page index
@@ -1479,9 +1478,6 @@ def _gen_uicode_easy_page(project):
     lines.append("    }")
     lines.append("")
     lines.append("    current_index = page_index;")
-    lines.append("")
-    lines.append('    egui_api_sprintf(toast_str, "Start page %d", page_index);')
-    lines.append("    egui_toast_show_info((egui_toast_t *)&toast, toast_str);")
     lines.append("")
     lines.append("    if (current_page)")
     lines.append("    {")
@@ -1733,7 +1729,6 @@ def _gen_uicode_activity(project):
     lines.append("static int current_index = 0;")
     lines.append("static egui_toast_std_t toast;")
     lines.append("static egui_core_t *s_uicode_core = NULL;")
-    lines.append("static char toast_str[50];")
     lines.append("")
 
     startup_index = 0
@@ -1753,15 +1748,9 @@ def _gen_uicode_activity(project):
     lines.append("")
     lines.append("    current_activity = egui_core_activity_get_current(s_uicode_core);")
     lines.append("    current_index = page_index;")
-    lines.append('    egui_api_sprintf(toast_str, "Start page %d", page_index);')
     lines.append("    if (current_activity != NULL)")
     lines.append("    {")
-    lines.append("        egui_activity_show_toast_info(current_activity, toast_str);")
     lines.append("        egui_activity_finish(current_activity);")
-    lines.append("    }")
-    lines.append("    else")
-    lines.append("    {")
-    lines.append("        egui_toast_show_info((egui_toast_t *)&toast, toast_str);")
     lines.append("    }")
     lines.append("")
     lines.append("    switch (page_index)")
