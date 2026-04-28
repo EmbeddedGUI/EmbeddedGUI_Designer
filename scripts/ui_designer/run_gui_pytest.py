@@ -18,7 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TEST_PATH = "ui_designer/tests/ui/test_main_window_file_flow.py"
 DEFAULT_FILTER = (
     "status_panel_top_splitter_handle_drag_with_qtest or "
-    "workspace_left_nav_buttons_switch_panels_via_click or "
+    "workspace_left_tabs_switch_panels_via_click or "
     "workspace_inspector_tabs_switch_via_tabbar_click or "
     "bottom_toggle_button_click_hides_and_shows_bottom_panel"
 )

@@ -25,6 +25,11 @@ jobs:
           git -C sdk/EmbeddedGUI rev-parse HEAD
           git -C sdk/EmbeddedGUI config --get remote.origin.url
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Capture repository health
         working-directory: EmbeddedGUI_Designer
         run: |
@@ -33,11 +38,6 @@ jobs:
 
       - name: Setup C/C++ env
         uses: rlalik/setup-cpp-compiler@v1.2
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
 
       - name: Install Python dependencies
         working-directory: EmbeddedGUI_Designer
