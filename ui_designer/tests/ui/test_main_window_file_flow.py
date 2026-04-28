@@ -4455,6 +4455,7 @@ class TestMainWindowFileFlow:
         assert generated["cleanup_legacy"] is True
         assert rename_hook_calls == [os.path.normpath(os.path.abspath(project_dir))]
         assert window.preview_panel.status_label.text() == "Rebuilding..."
+        assert window.preview_panel.is_compile_busy() is True
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -4529,10 +4530,12 @@ class TestMainWindowFileFlow:
         _open_project_window(window, project, project_dir, sdk_root)
         compiler.force_rebuild = None
         preview_reasons.clear()
+        window.preview_panel.set_compile_busy(True, "Compiling...")
 
         window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom")
 
         assert preview_reasons == ["boom"]
+        assert window.preview_panel.is_compile_busy() is False
         assert window.debug_panel._rebuild_btn.isHidden() is False
         assert window.debug_panel._rebuild_btn.isEnabled() is True
 

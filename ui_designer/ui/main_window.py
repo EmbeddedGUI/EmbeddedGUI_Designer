@@ -9013,7 +9013,7 @@ class MainWindow(QMainWindow):
         compile_reason_text = self._format_compile_reasons(self._consume_compile_reasons(compile_reason_fallback))
         action_label = "Rebuilding..." if force_rebuild else "Compiling..."
         self.statusBar().showMessage(action_label)
-        self.preview_panel.status_label.setText(action_label)
+        self.preview_panel.set_compile_busy(True, action_label)
 
         if force_rebuild:
             self.debug_panel.log_info("Preview stop requested for clean rebuild before restart")
@@ -9055,6 +9055,7 @@ class MainWindow(QMainWindow):
                 self._last_runtime_error_text = failure_summary
                 self.debug_panel.log_error(f"Code generation failed: {exc}")
                 self._show_bottom_panel("Debug Output")
+                self.preview_panel.set_compile_busy(False)
                 self._switch_to_python_preview(failure_summary)
                 self.preview_panel.status_label.setText(failure_summary)
                 self.statusBar().showMessage(failure_summary, 5000)
@@ -9098,6 +9099,7 @@ class MainWindow(QMainWindow):
         self._cleanup_worker_ref(worker, "_compile_worker")
         if self._is_closing or generation != self._async_generation:
             return
+        self.preview_panel.set_compile_busy(False)
         # Update debug panel with compile output
         self.debug_panel.log_compile_output(success, message)
 

@@ -615,6 +615,8 @@ def test_preview_panel_styles_use_engineering_surface_tokens():
         metrics = css.split("#preview_metrics_strip {", 1)[1].split("}", 1)[0]
         content = css.split("#preview_content {", 1)[1].split("}", 1)[0]
         overlay = css.split('QWidget#preview_overlay_surface[solidBackground="true"] {', 1)[1].split("}", 1)[0]
+        compile_overlay = css.split("#preview_compile_overlay {", 1)[1].split("}", 1)[0]
+        compile_label = css.split("#preview_compile_label {", 1)[1].split("}", 1)[0]
         status_shell = css.split("#preview_status_shell {", 1)[1].split("}", 1)[0]
         status_value = css.split("#preview_status_value {", 1)[1].split("}", 1)[0]
         status_button = css.split("QPushButton#preview_status_button {", 1)[1].split("}", 1)[0]
@@ -628,6 +630,10 @@ def test_preview_panel_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['canvas_stage']};" in overlay
         assert "border-radius: 0px;" in overlay
         assert "border-radius: 0px;" in content
+        assert "background-color: rgba(0, 0, 0, 48);" in compile_overlay
+        assert "border-radius: 0px;" in compile_overlay
+        assert f"color: {t['selection_text']};" in compile_label
+        assert f"font-size: {t['fs_caption']}px;" in compile_label
         assert f"background-color: {t['panel_raised']};" in status_shell
         assert "border-radius: 0px;" in status_shell
         assert f"color: {t['text_muted']};" in status_value

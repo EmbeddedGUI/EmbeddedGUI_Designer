@@ -81,11 +81,48 @@ class TestPreviewPanelFallback:
         assert panel._btn_zoom_out.height() == expected_button_size
         assert panel._btn_zoom_in.width() == expected_button_size
         assert panel._btn_zoom_in.height() == expected_button_size
+        assert panel._compile_status_spinner.isHidden() is True
+        assert panel._compile_overlay.isHidden() is True
         assert panel.status_label.minimumWidth() == panel._preview_status_label_target_width()
         assert panel._status_label.minimumWidth() == panel._pointer_status_label_target_width()
         assert panel._zoom_label.width() == panel._zoom_label_target_width()
         assert panel._zoom_label.minimumWidth() == panel._zoom_label_target_width()
         assert panel._zoom_label.maximumWidth() == panel._zoom_label_target_width()
+        _dispose_widget(panel)
+
+    def test_compile_busy_indicator_toggles_status_row_and_preview_overlay(self, qapp):
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+
+        assert panel.is_compile_busy() is False
+        assert panel._compile_status_spinner.isHidden() is True
+        assert panel._compile_overlay.isHidden() is True
+
+        panel.set_compile_busy(True, "Compiling...")
+
+        assert panel.is_compile_busy() is True
+        assert panel.status_label.text() == "Compiling..."
+        assert panel._compile_overlay_label.text() == "Compiling..."
+        assert panel._compile_status_spinner.isHidden() is False
+        assert panel._compile_overlay.isHidden() is False
+        assert panel._compile_status_spinner.is_spinning() is True
+        assert panel._compile_overlay_spinner.is_spinning() is True
+        assert panel._compile_status_spinner.accessibleName() == "Compile progress indicator: active."
+        assert panel._compile_overlay.accessibleName() == "Preview compile overlay: active."
+
+        panel.update_screen_size(320, 240)
+        assert panel._compile_overlay.geometry() == QRect(2, 2, 320, 240)
+
+        panel.set_compile_busy(False)
+
+        assert panel.is_compile_busy() is False
+        assert panel._compile_status_spinner.isHidden() is True
+        assert panel._compile_overlay.isHidden() is True
+        assert panel._compile_status_spinner.is_spinning() is False
+        assert panel._compile_overlay_spinner.is_spinning() is False
+        assert panel._compile_status_spinner.accessibleName() == "Compile progress indicator: inactive."
+        assert panel._compile_overlay.accessibleName() == "Preview compile overlay: inactive."
         _dispose_widget(panel)
 
     def test_zoom_label_width_tracks_runtime_text_metrics(self, qapp):

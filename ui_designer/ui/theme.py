@@ -3579,6 +3579,18 @@ QWidget#preview_overlay_surface[solidBackground="false"] {{
     border-radius: 0px;
 }}
 
+#preview_compile_overlay {{
+    background-color: rgba(0, 0, 0, 48);
+    border: none;
+    border-radius: 0px;
+}}
+
+#preview_compile_label {{
+    color: {t['selection_text']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_medium']};
+}}
+
 QSplitter#preview_splitter::handle {{
     background-color: {t['border']};
     margin: {t['space_xs']}px;

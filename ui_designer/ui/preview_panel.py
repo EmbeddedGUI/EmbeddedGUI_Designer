@@ -42,6 +42,65 @@ DRAG_GEOMETRY_SIGNAL_INTERVAL_SEC = 1.0 / 15.0
 DRAG_POINTER_SIGNAL_INTERVAL_SEC = 1.0 / 15.0
 
 
+class BusySpinner(QWidget):
+    """Small indeterminate circular progress indicator."""
+
+    def __init__(self, diameter=18, parent=None):
+        super().__init__(parent)
+        self._angle = 0
+        self._diameter = max(int(diameter), 8)
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._advance)
+        self.setFixedSize(self._diameter, self._diameter)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.hide()
+
+    def start(self):
+        if not self._timer.isActive():
+            self._timer.start(80)
+        self.show()
+        self.update()
+
+    def stop(self):
+        if self._timer.isActive():
+            self._timer.stop()
+        self.hide()
+        self.update()
+
+    def is_spinning(self):
+        return self._timer.isActive()
+
+    def _advance(self):
+        self._angle = (self._angle + 30) % 360
+        self.update()
+
+    def paintEvent(self, event):
+        del event
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        tokens = app_theme_tokens()
+        side = min(self.width(), self.height())
+        stroke = max(int(side * 0.14), 2)
+        rect = QRectF(
+            stroke,
+            stroke,
+            max(side - stroke * 2, 1),
+            max(side - stroke * 2, 1),
+        )
+
+        track = _theme_color(tokens["border"], 120)
+        accent = _theme_color(tokens["accent"], 230)
+        track_pen = QPen(track, stroke)
+        track_pen.setCapStyle(Qt.RoundCap)
+        painter.setPen(track_pen)
+        painter.drawEllipse(rect)
+
+        arc_pen = QPen(accent, stroke)
+        arc_pen.setCapStyle(Qt.RoundCap)
+        painter.setPen(arc_pen)
+        painter.drawArc(rect, int(-self._angle * 16), int(-260 * 16))
+
+
 def _parent_has_layout(widget):
     """Check if widget's parent uses a layout function (LinearLayout etc)."""
     if widget.parent is None:
@@ -2154,6 +2213,7 @@ class PreviewPanel(QWidget):
         self._frame_failure_count = 0
         self._runtime_error_emitted = False
         self._last_pointer_status_ts = -1.0
+        self._compile_busy = False
 
         self._init_ui()
 
@@ -2219,6 +2279,24 @@ class PreviewPanel(QWidget):
         self._preview_label.installEventFilter(self)
         self._mouse_pressed = False
 
+        self._compile_overlay = QFrame(self.preview_frame)
+        self._compile_overlay.setObjectName("preview_compile_overlay")
+        self._compile_overlay.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self._compile_overlay.setFocusPolicy(Qt.NoFocus)
+        self._compile_overlay.setGeometry(2, 2, self.screen_width, self.screen_height)
+        compile_overlay_layout = QVBoxLayout(self._compile_overlay)
+        compile_overlay_layout.setContentsMargins(0, 0, 0, 0)
+        compile_overlay_layout.setSpacing(6)
+        compile_overlay_layout.addStretch(1)
+        self._compile_overlay_spinner = BusySpinner(34, self._compile_overlay)
+        compile_overlay_layout.addWidget(self._compile_overlay_spinner, 0, Qt.AlignCenter)
+        self._compile_overlay_label = QLabel("Compiling preview...")
+        self._compile_overlay_label.setObjectName("preview_compile_label")
+        self._compile_overlay_label.setAlignment(Qt.AlignCenter)
+        compile_overlay_layout.addWidget(self._compile_overlay_label, 0, Qt.AlignCenter)
+        compile_overlay_layout.addStretch(1)
+        self._compile_overlay.hide()
+
         self._preview_shell = QFrame()
         self._preview_shell.setObjectName("preview_stage_shell")
         preview_shell_layout = QVBoxLayout(self._preview_shell)
@@ -2258,6 +2336,11 @@ class PreviewPanel(QWidget):
         sbl = QHBoxLayout(self._status_bar)
         sbl.setContentsMargins(2, 2, 2, 2)
         sbl.setSpacing(2)
+        status_button_size = max(int(app_theme_tokens().get("h_tab_min", 24)), 1)
+
+        self._compile_status_spinner = BusySpinner(max(min(status_button_size, 20), 14), self._status_bar)
+        self._compile_status_spinner.setObjectName("preview_compile_status_spinner")
+        sbl.addWidget(self._compile_status_spinner, 0, Qt.AlignVCenter)
 
         self.status_label = QLabel("Preview - waiting for exe...")
         self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -2269,7 +2352,6 @@ class PreviewPanel(QWidget):
         sbl.addWidget(self._status_label)
 
         sbl.addStretch()
-        status_button_size = max(int(app_theme_tokens().get("h_tab_min", 24)), 1)
 
         self._btn_zoom_out = QPushButton("-")
         self._btn_zoom_out.setObjectName("preview_status_button")
@@ -2396,6 +2478,7 @@ class PreviewPanel(QWidget):
         self.screen_height = height
         self.preview_frame.setFixedSize(width + 4, height + 4)
         self._preview_label.setGeometry(2, 2, width, height)
+        self._compile_overlay.setGeometry(2, 2, width, height)
         self.overlay.set_base_size(width, height)
 
     def set_overlay_mode(self, mode):
@@ -2505,6 +2588,27 @@ class PreviewPanel(QWidget):
             self._pointer_chip,
             tooltip=f"Preview pointer summary: {pointer_text}",
             accessible_name=f"Preview pointer summary: {pointer_text}",
+        )
+        busy_text = "active" if self._compile_busy else "inactive"
+        _set_widget_metadata(
+            self._compile_status_spinner,
+            tooltip=f"Compile progress: {busy_text}.",
+            accessible_name=f"Compile progress indicator: {busy_text}.",
+        )
+        _set_widget_metadata(
+            self._compile_overlay,
+            tooltip=f"Preview compile overlay: {busy_text}.",
+            accessible_name=f"Preview compile overlay: {busy_text}.",
+        )
+        _set_widget_metadata(
+            self._compile_overlay_label,
+            tooltip=self._compile_overlay_label.text(),
+            accessible_name=f"Preview compile status: {self._compile_overlay_label.text()}",
+        )
+        _set_widget_metadata(
+            self._compile_overlay_spinner,
+            tooltip=f"Preview compile progress: {busy_text}.",
+            accessible_name=f"Preview compile progress indicator: {busy_text}.",
         )
         _set_widget_metadata(
             self.status_label,
@@ -2621,6 +2725,28 @@ class PreviewPanel(QWidget):
         self.status_label.setText(text)
         self._sync_status_text_widths()
         return True
+
+    def is_compile_busy(self):
+        return self._compile_busy
+
+    def set_compile_busy(self, busy, text=None):
+        busy = bool(busy)
+        if text:
+            self._set_preview_status_text(str(text))
+            self._compile_overlay_label.setText(str(text))
+        changed = busy != self._compile_busy
+        self._compile_busy = busy
+        if busy:
+            self._compile_status_spinner.start()
+            self._compile_overlay_spinner.start()
+            self._compile_overlay.show()
+            self._compile_overlay.raise_()
+        else:
+            self._compile_status_spinner.stop()
+            self._compile_overlay_spinner.stop()
+            self._compile_overlay.hide()
+        self._update_accessibility_summary()
+        return changed
 
     def _set_pointer_status_text(self, text):
         if self._status_label.text() == text:
@@ -2759,6 +2885,7 @@ class PreviewPanel(QWidget):
     def start_rendering(self, compiler):
         """Start periodic frame refresh from headless bridge."""
         self.clear_python_preview_mode()
+        self.set_compile_busy(False)
         self._compiler = compiler
         self._frame_failure_count = 0
         self._runtime_error_emitted = False
@@ -2795,6 +2922,7 @@ class PreviewPanel(QWidget):
         """Render the current page with the Python fallback renderer."""
         if page is None:
             self.stop_rendering(update_accessibility=False)
+            self.set_compile_busy(False)
             self._python_preview_active = True
             self._preview_label.clear()
             self._set_preview_status_text("Preview - Python fallback")
@@ -2807,6 +2935,7 @@ class PreviewPanel(QWidget):
     def show_image_preview(self, qimage, reason="", label_prefix="Renderer"):
         """Display a pre-rendered QImage in the preview area."""
         self.stop_rendering(update_accessibility=False)
+        self.set_compile_busy(False)
         self._python_preview_active = True
 
         if qimage is None or qimage.isNull():
