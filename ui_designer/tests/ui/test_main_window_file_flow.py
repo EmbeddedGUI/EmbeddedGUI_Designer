@@ -6179,7 +6179,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr("ui_designer.ui.main_window.clean_project_for_reconstruct", fake_clean)
         monkeypatch.setattr(window, "_persist_designer_state_only", lambda project_path: captured.setdefault("persist_path", project_path))
         monkeypatch.setattr(window, "_shutdown_async_activity", lambda wait_ms=500: captured.setdefault("shutdown_wait", wait_ms))
-        monkeypatch.setattr(window, "_cleanup_compiler", lambda stop_exe=False: captured.setdefault("cleanup_stop_exe", stop_exe))
+        monkeypatch.setattr(window, "_cleanup_compiler", lambda stop_exe=False, stop_timeout=None: captured.setdefault("cleanup_stop_exe", stop_exe))
         monkeypatch.setattr(window, "_save_project_files", fake_save_project_files)
         monkeypatch.setattr(window, "_ensure_resources_generated", lambda: captured.__setitem__("resources", captured["resources"] + 1))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
@@ -6245,7 +6245,7 @@ class TestMainWindowFileFlow:
         )
         monkeypatch.setattr(window, "_persist_designer_state_only", lambda project_path: None)
         monkeypatch.setattr(window, "_shutdown_async_activity", lambda wait_ms=500: None)
-        monkeypatch.setattr(window, "_cleanup_compiler", lambda stop_exe=False: None)
+        monkeypatch.setattr(window, "_cleanup_compiler", lambda stop_exe=False, stop_timeout=None: None)
         monkeypatch.setattr(window, "_save_project_files", lambda project_path, reset_scaffold=False: {".designer/uicode.c": "// reconstructed\n"})
         monkeypatch.setattr(window, "_ensure_resources_generated", lambda: captured.__setitem__("resources", captured["resources"] + 1))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
@@ -6385,7 +6385,7 @@ class TestMainWindowFileFlow:
         )
         monkeypatch.setattr(window, "_persist_designer_state_only", lambda project_path: None)
         monkeypatch.setattr(window, "_shutdown_async_activity", lambda wait_ms=500: None)
-        monkeypatch.setattr(window, "_cleanup_compiler", lambda stop_exe=False: None)
+        monkeypatch.setattr(window, "_cleanup_compiler", lambda stop_exe=False, stop_timeout=None: None)
         monkeypatch.setattr(
             window,
             "_save_project_files",

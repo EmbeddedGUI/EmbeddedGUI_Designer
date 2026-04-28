@@ -2,6 +2,7 @@
 
 import struct
 import io
+import subprocess
 import pytest
 from unittest.mock import MagicMock, patch, PropertyMock
 
@@ -88,9 +89,24 @@ class TestSendCommands:
     def test_stop_sends_quit(self):
         bridge = _make_bridge_with_pipes()
         bridge.proc.wait.return_value = 0
+        proc = bridge.proc
         stdin_pipe = bridge.proc.stdin  # capture before stop() clears proc
         bridge.stop()
         assert stdin_pipe.written[0:1] == bytes([CMD_QUIT])
+        proc.wait.assert_called_once_with(timeout=3.0)
+        assert bridge.proc is None
+
+    def test_stop_uses_custom_timeout_before_kill(self):
+        bridge = _make_bridge_with_pipes()
+        proc = bridge.proc
+        stdin_pipe = bridge.proc.stdin
+        bridge.proc.wait.side_effect = subprocess.TimeoutExpired("designer", 0.25)
+
+        bridge.stop(timeout=0.25)
+
+        assert stdin_pipe.written[0:1] == bytes([CMD_QUIT])
+        proc.wait.assert_called_once_with(timeout=0.25)
+        proc.kill.assert_called_once()
         assert bridge.proc is None
 
 

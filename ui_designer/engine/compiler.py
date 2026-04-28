@@ -721,9 +721,12 @@ class CompilerEngine:
 
         return True, "".join(outputs)
 
-    def stop_exe(self):
+    def stop_exe(self, timeout=None):
         """Stop the running exe process."""
-        self.bridge.stop()
+        if timeout is None:
+            self.bridge.stop()
+        else:
+            self.bridge.stop(timeout=timeout)
 
     def _copy_and_start(self):
         """Copy main.exe to a run slot and start it via bridge.
@@ -900,9 +903,9 @@ class CompilerEngine:
         worker.start()
         return worker
 
-    def cleanup(self):
+    def cleanup(self, stop_timeout=None):
         """Cleanup on exit."""
-        self.stop_exe()
+        self.stop_exe(timeout=stop_timeout)
         # Clean up run copies
         for i in range(2):
             path = self._run_exe_path(i)

@@ -14,6 +14,8 @@ CMD_QUIT = 0xFF
 RSP_READY = 0x01
 RSP_FRAME = 0x02
 RSP_ERROR = 0xFF
+DEFAULT_STOP_TIMEOUT_SEC = 3.0
+FAST_STOP_TIMEOUT_SEC = 0.25
 
 # Touch actions
 TOUCH_DOWN = 0x01
@@ -59,12 +61,12 @@ class DesignerBridge:
         payload = struct.pack("<BH", key_type, code)
         self._send_cmd(CMD_KEY, payload)
 
-    def stop(self):
+    def stop(self, timeout=DEFAULT_STOP_TIMEOUT_SEC):
         """Stop the exe process."""
         if self.proc and self.proc.poll() is None:
             try:
                 self._send_cmd(CMD_QUIT)
-                self.proc.wait(timeout=3)
+                self.proc.wait(timeout=max(float(timeout), 0.0))
             except Exception:
                 try:
                     self.proc.kill()

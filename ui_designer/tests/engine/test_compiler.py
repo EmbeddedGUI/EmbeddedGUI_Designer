@@ -171,6 +171,7 @@ class TestCompilerFastPath:
         engine._preview_build_probe_ran = False
         engine._preview_build_error = ""
         engine._preview_make_target = ""
+        engine._app_root_alias_dir = ""
         engine.bridge = MagicMock()
         return engine
 
@@ -429,6 +430,7 @@ class TestCompilerRuntime:
         engine._preview_build_probe_ran = False
         engine._preview_build_error = ""
         engine._preview_make_target = ""
+        engine._app_root_alias_dir = ""
         engine.bridge = MagicMock()
         return engine
 
@@ -438,6 +440,14 @@ class TestCompilerRuntime:
         ready, err = engine.validate_preview()
         assert not ready
         assert "not running" in err
+
+    def test_cleanup_passes_stop_timeout_to_bridge(self, tmp_path):
+        engine = self._make_engine(tmp_path)
+        engine._run_exe_path = lambda index: str(tmp_path / f"run_{index}.exe")
+
+        engine.cleanup(stop_timeout=0.25)
+
+        engine.bridge.stop.assert_called_once_with(timeout=0.25)
 
     @patch("ui_designer.engine.compiler._run_make_dry_run_target")
     def test_preview_build_probe_reports_missing_main_target(self, mock_dry_run, tmp_path):

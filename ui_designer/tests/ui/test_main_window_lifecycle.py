@@ -7,7 +7,24 @@ import subprocess
 import sys
 import textwrap
 from pathlib import Path
+from types import SimpleNamespace
 
+
+def test_cleanup_compiler_passes_stop_timeout_to_compiler_cleanup():
+    from ui_designer.ui.main_window import MainWindow
+
+    captured = {}
+
+    class _Compiler:
+        def cleanup(self, stop_timeout=None):
+            captured["stop_timeout"] = stop_timeout
+
+    window = SimpleNamespace(compiler=_Compiler())
+
+    MainWindow._cleanup_compiler(window, stop_timeout=0.25)
+
+    assert captured["stop_timeout"] == 0.25
+    assert window.compiler is None
 
 
 def test_main_window_close_smoke_with_active_timers():

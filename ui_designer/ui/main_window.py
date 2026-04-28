@@ -119,6 +119,7 @@ from ..generator.user_code_preserver import (
     read_existing_file,
 )
 from ..engine.compiler import CompilerEngine
+from ..engine.designer_bridge import FAST_STOP_TIMEOUT_SEC
 from ..engine.layout_engine import compute_layout, compute_page_layout
 from ..engine.python_renderer import render_page
 from ..utils.resource_config_overlay import (
@@ -3177,7 +3178,7 @@ class MainWindow(QMainWindow):
     def _has_valid_sdk_root(self):
         return is_valid_sdk_root(self.project_root)
 
-    def _cleanup_compiler(self, *, stop_exe=False):
+    def _cleanup_compiler(self, *, stop_exe=False, stop_timeout=None):
         """Release compiler resources without assuming optional hooks exist."""
         compiler = self.compiler
         if compiler is None:
@@ -3185,10 +3186,16 @@ class MainWindow(QMainWindow):
         if stop_exe:
             stop = getattr(compiler, "stop_exe", None)
             if callable(stop):
-                stop()
+                try:
+                    stop(timeout=stop_timeout)
+                except TypeError:
+                    stop()
         cleanup = getattr(compiler, "cleanup", None)
         if callable(cleanup):
-            cleanup()
+            try:
+                cleanup(stop_timeout=stop_timeout)
+            except TypeError:
+                cleanup()
         self.compiler = None
 
     def _recreate_compiler(self):
@@ -9230,7 +9237,7 @@ class MainWindow(QMainWindow):
         self._shutdown_async_activity(wait_ms=500)
         self.widget_tree.shutdown()
         self._remove_debug_window_trace()
-        self._cleanup_compiler()
+        self._cleanup_compiler(stop_timeout=FAST_STOP_TIMEOUT_SEC)
         event.accept()
 
 
