@@ -27,7 +27,7 @@ python ui_designer/main.py --sdk-root sdk/EmbeddedGUI
 python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
 
 # Build release package
-python package_ui_designer.py --sdk-root sdk/EmbeddedGUI
+python scripts/package_ui_designer.py --sdk-root sdk/EmbeddedGUI
 ```
 
 ## GUI run policy (must follow)
@@ -73,7 +73,7 @@ This repo is the standalone distribution of the **EmbeddedGUI Visual UI Designer
 
 ### Design-conversion toolchain
 
-**`html2egui_helper.py`** — Multi-subcommand script for HTML/JSX → EGUI conversion: `scaffold`, `extract-layout`, `generate-code`, `gen-resource`, `export-icons`, `figma2xml`.
+**`scripts/html2egui_helper.py`** — Multi-subcommand script for HTML/JSX → EGUI conversion: `scaffold`, `extract-layout`, `generate-code`, `gen-resource`, `export-icons`, `figma2xml`.
 
 **`figmamake/`** — Figma Make → EGUI pipeline (4 stages): Playwright capture → TSX parse/convert → compile + run → SSIM regression verify.
 

@@ -13,14 +13,17 @@ import sys
 import time
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+SPEC_PATH = PROJECT_ROOT / "ui_designer" / "ui_designer.spec"
+PREFLIGHT_SMOKE_SCRIPT_PATH = PROJECT_ROOT / "ui_designer_preview_smoke.py"
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from ui_designer.model.build_metadata import is_git_worktree_dirty, write_designer_build_metadata
 from ui_designer.model.workspace import require_designer_sdk_root
 
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR
-SPEC_PATH = SCRIPT_DIR / "ui_designer" / "ui_designer.spec"
-PREFLIGHT_SMOKE_SCRIPT_PATH = SCRIPT_DIR / "ui_designer_preview_smoke.py"
 DIST_APP_NAME = "EmbeddedGUI-Designer"
 EXAMPLES_BUNDLE_DIR_NAME = "examples"
 SUPPRESSED_LOG_SNIPPETS = (

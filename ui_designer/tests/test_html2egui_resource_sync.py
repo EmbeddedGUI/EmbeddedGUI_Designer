@@ -1,4 +1,4 @@
-"""Tests for helper-side resource sync filtering in html2egui_helper.py."""
+"""Tests for helper-side resource sync filtering in scripts/html2egui_helper.py."""
 
 import json
 import os
@@ -8,7 +8,7 @@ import pytest
 
 sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-import html2egui_helper as h
+from scripts import html2egui_helper as h
 from ui_designer.model.workspace import sdk_example_app_dir
 from ui_designer.tests.namespace_fixtures import (
     build_namespace_stub,
@@ -38,7 +38,7 @@ class _FakePage:
 
 class TestHelperResourceSync:
     def test_export_asset_help_uses_shared_image_resource_relpath(self, monkeypatch, capsys):
-        monkeypatch.setattr(sys, "argv", ["html2egui_helper.py", "export-icons", "--help"])
+        monkeypatch.setattr(sys, "argv", ["scripts/html2egui_helper.py", "export-icons", "--help"])
 
         with pytest.raises(SystemExit, match="0"):
             h.main()
@@ -69,7 +69,7 @@ class TestHelperResourceSync:
 
     def test_helper_app_command_uses_standard_cli_format(self):
         assert h._helper_app_command("generate-code", "DemoApp") == (
-            "python html2egui_helper.py generate-code --app DemoApp"
+            "python scripts/html2egui_helper.py generate-code --app DemoApp"
         )
 
     def test_print_numbered_steps_formats_ordered_list(self, capsys):
@@ -125,7 +125,7 @@ class TestHelperResourceSync:
         assert (sdk_root / "example" / "DemoApp" / "resource" / "src").is_dir()
 
     def test_extract_text_help_uses_shared_supported_text_relpath(self, monkeypatch, capsys):
-        monkeypatch.setattr(sys, "argv", ["html2egui_helper.py", "extract-text", "--help"])
+        monkeypatch.setattr(sys, "argv", ["scripts/html2egui_helper.py", "extract-text", "--help"])
 
         with pytest.raises(SystemExit, match="0"):
             h.main()

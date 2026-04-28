@@ -1,4 +1,4 @@
-"""Tests for HTML parsing completeness improvements in html2egui_helper.py."""
+"""Tests for HTML parsing completeness improvements in scripts/html2egui_helper.py."""
 
 import os
 import sys
@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-import html2egui_helper as h
+from scripts import html2egui_helper as h
 
 
 class _FakeStackOnlyParser:

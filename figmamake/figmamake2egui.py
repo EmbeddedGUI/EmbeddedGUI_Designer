@@ -30,16 +30,17 @@ import subprocess
 import sys
 import time
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)
+TOOLS_DIR = os.path.join(REPO_ROOT, "scripts")
+sys.path.insert(0, SCRIPT_DIR)
+sys.path.insert(0, REPO_ROOT)
+
 from ui_designer.model.workspace import (
     require_designer_sdk_root_for_path,
     sdk_runtime_check_output_dir,
 )
 from ui_designer.utils.scaffold import sdk_example_paths
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SCRIPTS_DIR = os.path.dirname(SCRIPT_DIR)
-sys.path.insert(0, SCRIPT_DIR)
-sys.path.insert(0, SCRIPTS_DIR)
 
 
 def _find_sdk_root():
@@ -117,7 +118,7 @@ def stage_build_and_run(app_name, sdk_root, width, height):
     print("  [3a] Generating resources...")
     gen_res_cmd = [
         sys.executable,
-        os.path.join(SCRIPTS_DIR, "html2egui_helper.py"),
+        os.path.join(TOOLS_DIR, "html2egui_helper.py"),
         "gen-resource", "--app", app_name,
     ]
     result = subprocess.run(gen_res_cmd, capture_output=True, text=True,

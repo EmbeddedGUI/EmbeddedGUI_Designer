@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Stage 2a: TSX semantic parser for Figma Make projects.
 
-Wraps the existing figmamake-extract logic from html2egui_helper.py
+Wraps the existing figmamake-extract logic from scripts/html2egui_helper.py
 and produces a layout_description.json suitable for the EGUI code generation pipeline.
 
 Usage:
@@ -19,13 +19,12 @@ import re
 import sys
 from pathlib import Path
 
-# Add scripts dir to path for imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SCRIPTS_DIR = os.path.dirname(SCRIPT_DIR)
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, SCRIPT_DIR)
-sys.path.insert(0, SCRIPTS_DIR)
+sys.path.insert(0, REPO_ROOT)
 
-from html2egui_helper import (
+from scripts.html2egui_helper import (
     _discover_figmamake_pages,
     _extract_lucide_imports,
     _extract_jsx_return,

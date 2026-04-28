@@ -1,4 +1,4 @@
-"""Integration tests for html2egui_helper.py subcommands.
+"""Integration tests for scripts/html2egui_helper.py subcommands.
 
 These tests call the actual script via subprocess to verify end-to-end behavior.
 """
@@ -13,7 +13,7 @@ from ui_designer.model.workspace import require_designer_sdk_root
 
 # Path to the helper script
 SCRIPT_PATH = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "html2egui_helper.py")
+    os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "html2egui_helper.py")
 )
 # EmbeddedGUI Designer repo root
 REPO_ROOT = os.path.normpath(
@@ -23,7 +23,7 @@ SDK_ROOT = require_designer_sdk_root(repo_root=REPO_ROOT, cli_flag="EMBEDDEDGUI_
 
 
 def _run_helper(*cmd_args, check=True):
-    """Run html2egui_helper.py with given arguments."""
+    """Run scripts/html2egui_helper.py with given arguments."""
     result = subprocess.run(
         [sys.executable, SCRIPT_PATH] + list(cmd_args),
         # Avoid inheriting a potentially invalid stdin handle on Windows CI,

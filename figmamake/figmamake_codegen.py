@@ -23,11 +23,11 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SCRIPTS_DIR = os.path.dirname(SCRIPT_DIR)
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, SCRIPT_DIR)
-sys.path.insert(0, SCRIPTS_DIR)
+sys.path.insert(0, REPO_ROOT)
 
-from html2egui_helper import (
+from scripts.html2egui_helper import (
     _discover_figmamake_pages,
     _prepare_figmamake_page_markup,
     _parse_html_root_node,

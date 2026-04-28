@@ -48,7 +48,7 @@ jobs:
       - name: Build Windows package
         working-directory: EmbeddedGUI_Designer
         run: >
-          python package_ui_designer.py
+          python scripts/package_ui_designer.py
           --sdk-root sdk/EmbeddedGUI
           --output-dir dist
           --work-dir build/pyinstaller

@@ -30,7 +30,7 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
 - Run preview smoke:
   `python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI`
 - Build package:
-  `python package_ui_designer.py --sdk-root sdk/EmbeddedGUI`
+  `python scripts/package_ui_designer.py --sdk-root sdk/EmbeddedGUI`
 - Inspect local repo health:
   `python scripts/ui_designer/repo_doctor.py`
   `python scripts/ui_designer/repo_doctor.py --strict`
@@ -79,12 +79,12 @@ This repository is now the maintenance home for the design-conversion toolchain.
 Run these commands from the repository root:
 
 - HTML or JSX layout analysis:
-  `python html2egui_helper.py extract-layout --input design.html`
+  `python scripts/html2egui_helper.py extract-layout --input design.html`
 - Create a Designer project:
-  `python html2egui_helper.py scaffold --app MyApp --width 320 --height 480`
+  `python scripts/html2egui_helper.py scaffold --app MyApp --width 320 --height 480`
 - Generate code and resources:
-  `python html2egui_helper.py generate-code --app MyApp`
-  `python html2egui_helper.py gen-resource --app MyApp`
+  `python scripts/html2egui_helper.py generate-code --app MyApp`
+  `python scripts/html2egui_helper.py gen-resource --app MyApp`
 - End-to-end Figma Make pipeline:
   `python figmamake/figmamake2egui.py --project-dir figma_make_project --app MyApp`
 

@@ -14,8 +14,8 @@ from ui_designer.tests.sdk_builders import build_test_sdk_root
 
 
 def _load_module():
-    module_path = Path(__file__).resolve().parents[2] / "package_ui_designer.py"
-    spec = importlib.util.spec_from_file_location("package_ui_designer", str(module_path))
+    module_path = Path(__file__).resolve().parents[2] / "scripts" / "package_ui_designer.py"
+    spec = importlib.util.spec_from_file_location("scripts.package_ui_designer", str(module_path))
     module = importlib.util.module_from_spec(spec)
     assert spec is not None and spec.loader is not None
     spec.loader.exec_module(module)
@@ -466,7 +466,7 @@ def test_resolve_sdk_bundle_root_uses_external_sdk_resolution(tmp_path, monkeypa
 def test_parse_args_bundles_sdk_by_default(monkeypatch):
     module = _load_module()
 
-    monkeypatch.setattr(sys, "argv", ["package_ui_designer.py"])
+    monkeypatch.setattr(sys, "argv", ["scripts/package_ui_designer.py"])
 
     args = module.parse_args()
 
@@ -476,7 +476,7 @@ def test_parse_args_bundles_sdk_by_default(monkeypatch):
 def test_parse_args_can_disable_sdk_bundle(monkeypatch):
     module = _load_module()
 
-    monkeypatch.setattr(sys, "argv", ["package_ui_designer.py", "--no-bundle-sdk"])
+    monkeypatch.setattr(sys, "argv", ["scripts/package_ui_designer.py", "--no-bundle-sdk"])
 
     args = module.parse_args()
 
@@ -486,7 +486,7 @@ def test_parse_args_can_disable_sdk_bundle(monkeypatch):
 def test_parse_args_can_skip_preflight(monkeypatch):
     module = _load_module()
 
-    monkeypatch.setattr(sys, "argv", ["package_ui_designer.py", "--skip-preflight"])
+    monkeypatch.setattr(sys, "argv", ["scripts/package_ui_designer.py", "--skip-preflight"])
 
     args = module.parse_args()
 

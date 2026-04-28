@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""html2egui_helper.py — Helper script for HTML-to-EmbeddedGUI conversion.
+"""scripts/html2egui_helper.py — Helper script for HTML-to-EmbeddedGUI conversion.
 
 Provides sub-commands:
     scaffold        Create UI Designer project structure (.egui + XML layout)
@@ -14,12 +14,12 @@ Provides sub-commands:
     figma2xml       Convert Figma design to EGUI XML layout via REST API
 
 Usage:
-    python html2egui_helper.py scaffold --app HelloSmartHome --width 320 --height 480
-    python html2egui_helper.py export-icons --input code.html --output example/HelloSmartHome/.eguiproject/resources/images/ --size 24 --auto-color
-    python html2egui_helper.py gen-resource --app HelloSmartHome
-    python html2egui_helper.py extract-layout --input code.html
-    python html2egui_helper.py generate-code --app HelloSmartHome
-    python html2egui_helper.py verify --app HelloSmartHome
+    python scripts/html2egui_helper.py scaffold --app HelloSmartHome --width 320 --height 480
+    python scripts/html2egui_helper.py export-icons --input code.html --output example/HelloSmartHome/.eguiproject/resources/images/ --size 24 --auto-color
+    python scripts/html2egui_helper.py gen-resource --app HelloSmartHome
+    python scripts/html2egui_helper.py extract-layout --input code.html
+    python scripts/html2egui_helper.py generate-code --app HelloSmartHome
+    python scripts/html2egui_helper.py verify --app HelloSmartHome
 """
 
 import argparse
@@ -29,6 +29,11 @@ import os
 import re
 import subprocess
 import sys
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 from ui_designer.model.workspace import (
     require_designer_sdk_root_for_path,
@@ -75,13 +80,14 @@ def _find_sdk_root():
     """Resolve the EmbeddedGUI SDK root for the standalone Designer repo."""
     return require_designer_sdk_root_for_path(
         __file__,
+        levels_up=1,
         cli_flag="EMBEDDEDGUI_SDK_ROOT",
     )
 
 
 def _helper_app_command(subcommand, app_name):
     """Return the standard helper CLI command for a given app."""
-    return f"python html2egui_helper.py {subcommand} --app {app_name}"
+    return f"python scripts/html2egui_helper.py {subcommand} --app {app_name}"
 
 
 def _print_numbered_steps(steps):
@@ -358,8 +364,8 @@ def cmd_scaffold(args):
     print(f"\nScaffold complete: {app_dir}")
     print(f"  Screen: {width}x{height}, color depth: {color_depth}")
     _print_numbered_steps([
-        "Extract layout:   python html2egui_helper.py extract-layout --input <html>",
-        f"Export icons:     python html2egui_helper.py export-icons --input <html> --app {args.app}",
+        "Extract layout:   python scripts/html2egui_helper.py extract-layout --input <html>",
+        f"Export icons:     python scripts/html2egui_helper.py export-icons --input <html> --app {args.app}",
         _layout_edit_step(),
         f"Generate code:    {_helper_app_command('generate-code', args.app)}",
         f"Gen resources:    {_helper_app_command('gen-resource', args.app)}",
@@ -926,7 +932,7 @@ def cmd_export_icons(args):
         ])
     else:
         _print_numbered_steps([
-            "Run: python html2egui_helper.py gen-resource --app <AppName>",
+            "Run: python scripts/html2egui_helper.py gen-resource --app <AppName>",
         ])
 
 
