@@ -47,7 +47,8 @@ from ui_designer.utils.scaffold import (
 from ui_designer.model.workspace import sdk_output_path
 
 if HAS_PYQT5:
-    from PyQt5.QtCore import QByteArray, Qt, QPoint
+    from PyQt5.QtCore import QByteArray, QEvent, Qt, QPoint
+    from PyQt5.QtGui import QMouseEvent
     from PyQt5.QtWidgets import QApplication, QAbstractItemView, QLabel, QSizePolicy
     from PyQt5.QtWidgets import QMessageBox
     from PyQt5.QtTest import QTest
@@ -14130,6 +14131,9 @@ class TestMainWindowFileFlow:
         qapp.processEvents()
         QTest.qWait(80)
 
+        window._show_editor()
+        qapp.processEvents()
+        QTest.qWait(30)
         window._select_left_panel("status")
         split = window._top_splitter
         split.setSizes([360, 920, 360])
@@ -14140,24 +14144,49 @@ class TestMainWindowFileFlow:
         handle = split.handle(1)
         handle.show()
         qapp.processEvents()
-        start = handle.rect().center()
+
+        def _drag_handle(delta_x: int) -> None:
+            start = handle.rect().center()
+            global_start = handle.mapToGlobal(start)
+            steps = 6
+            step_x = delta_x / steps
+
+            QTest.mousePress(handle, Qt.LeftButton, Qt.NoModifier, start)
+            for step in range(1, steps + 1):
+                global_pos = global_start + QPoint(round(step * step_x), 0)
+                local_pos = handle.mapFromGlobal(global_pos)
+                move_event = QMouseEvent(
+                    QEvent.MouseMove,
+                    local_pos,
+                    global_pos,
+                    Qt.LeftButton,
+                    Qt.LeftButton,
+                    Qt.NoModifier,
+                )
+                QApplication.sendEvent(handle, move_event)
+                qapp.processEvents()
+                QTest.qWait(5)
+
+            global_end = global_start + QPoint(delta_x, 0)
+            local_end = handle.mapFromGlobal(global_end)
+            release_event = QMouseEvent(
+                QEvent.MouseButtonRelease,
+                local_end,
+                global_end,
+                Qt.LeftButton,
+                Qt.NoButton,
+                Qt.NoModifier,
+            )
+            QApplication.sendEvent(handle, release_event)
+            qapp.processEvents()
 
         # Drag right on the first splitter handle: left pane should grow.
-        QTest.mousePress(handle, Qt.LeftButton, Qt.NoModifier, start)
-        for step in range(1, 7):
-            QTest.mouseMove(handle, QPoint(start.x() + step * 14, start.y()))
-            QTest.qWait(5)
-        QTest.mouseRelease(handle, Qt.LeftButton, Qt.NoModifier, QPoint(start.x() + 84, start.y()))
+        _drag_handle(84)
         qapp.processEvents()
         after_right = split.sizes()
 
         # Drag left from the same handle: left pane should shrink.
-        start2 = handle.rect().center()
-        QTest.mousePress(handle, Qt.LeftButton, Qt.NoModifier, start2)
-        for step in range(1, 7):
-            QTest.mouseMove(handle, QPoint(start2.x() - step * 16, start2.y()))
-            QTest.qWait(5)
-        QTest.mouseRelease(handle, Qt.LeftButton, Qt.NoModifier, QPoint(start2.x() - 96, start2.y()))
+        _drag_handle(-96)
         qapp.processEvents()
         after_left = split.sizes()
 
