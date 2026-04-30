@@ -5,7 +5,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ui_designer.engine.compiler import BuildConfig, CompilerEngine, PrecompileWorker
+from ui_designer.engine.compiler import (
+    BuildConfig,
+    CompilerEngine,
+    PrecompileWorker,
+    _run_make_build_target,
+    _run_make_dry_run_target,
+)
 
 
 MAKE_DRYRUN_OUTPUT = """\
@@ -127,6 +133,32 @@ class TestBuildConfigExtract:
     @patch("subprocess.run", side_effect=FileNotFoundError)
     def test_extract_returns_none_when_make_missing(self, mock_run):
         assert BuildConfig.extract("/project", "HelloDesigner_1", "example") is None
+
+
+class TestMakeSubprocessEnvironment:
+    @patch("subprocess.run")
+    def test_dry_run_forces_utf8_for_sdk_python_helpers(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+        _run_make_dry_run_target("/project", "App", "example/App", "main.exe")
+
+        kwargs = mock_run.call_args.kwargs
+        assert kwargs["encoding"] == "utf-8"
+        assert kwargs["errors"] == "replace"
+        assert kwargs["env"]["PYTHONIOENCODING"] == "utf-8"
+        assert kwargs["env"]["PYTHONUTF8"] == "1"
+
+    @patch("subprocess.run")
+    def test_build_forces_utf8_for_sdk_python_helpers(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+        _run_make_build_target("/project", "App", "example/App", "main.exe")
+
+        kwargs = mock_run.call_args.kwargs
+        assert kwargs["encoding"] == "utf-8"
+        assert kwargs["errors"] == "replace"
+        assert kwargs["env"]["PYTHONIOENCODING"] == "utf-8"
+        assert kwargs["env"]["PYTHONUTF8"] == "1"
 
 
 class TestBuildConfigIsValid:

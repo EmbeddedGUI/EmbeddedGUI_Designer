@@ -59,6 +59,13 @@ def _preview_make_target_error(target_names):
     return f"Preview build target unavailable: make defines neither {joined}."
 
 
+def _make_subprocess_env():
+    env = os.environ.copy()
+    env.setdefault("PYTHONIOENCODING", "utf-8")
+    env.setdefault("PYTHONUTF8", "1")
+    return env
+
+
 def _run_make_dry_run_target(project_root, app_name, app_root_arg, target_name):
     return subprocess.run(
         [
@@ -70,6 +77,9 @@ def _run_make_dry_run_target(project_root, app_name, app_root_arg, target_name):
         cwd=project_root,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=_make_subprocess_env(),
         timeout=30,
     )
 
@@ -89,7 +99,16 @@ def _run_make_build_target(project_root, app_name, app_root_arg, target_name, *,
             "COMPILE_OPT_LEVEL=-O0",
         ]
     )
-    return subprocess.run(args, cwd=project_root, capture_output=True, text=True, timeout=60)
+    return subprocess.run(
+        args,
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=_make_subprocess_env(),
+        timeout=60,
+    )
 
 
 def _run_make_preview_target(make_runner, *, preferred_target=""):
