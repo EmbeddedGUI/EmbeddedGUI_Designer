@@ -126,6 +126,37 @@ def _normalize_macro_value(value: str) -> str:
     return re.sub(r"\s+", "", str(value or ""))
 
 
+def _legacy_screen_macro_to_current(macro_name: str) -> str:
+    if macro_name == "EGUI_CONFIG_SCEEN_WIDTH":
+        return "EGUI_CONFIG_SCREEN_WIDTH"
+    if macro_name == "EGUI_CONFIG_SCEEN_HEIGHT":
+        return "EGUI_CONFIG_SCREEN_HEIGHT"
+    match = re.match(r"^EGUI_CONFIG_SCEEN_(\d+)_(WIDTH|HEIGHT)$", macro_name or "")
+    if match:
+        return f"EGUI_CONFIG_SCREEN_{match.group(1)}_{match.group(2)}"
+    return ""
+
+
+def _rewrite_legacy_screen_macro_tokens(text: str) -> str:
+    """Rewrite legacy SCEEN typo macro tokens to current SCREEN macro tokens."""
+    rewritten = text.replace("EGUI_CONFIG_SCEEN_WIDTH", "EGUI_CONFIG_SCREEN_WIDTH")
+    rewritten = rewritten.replace("EGUI_CONFIG_SCEEN_HEIGHT", "EGUI_CONFIG_SCREEN_HEIGHT")
+    return re.sub(
+        r"\bEGUI_CONFIG_SCEEN_(\d+)_(WIDTH|HEIGHT)\b",
+        r"EGUI_CONFIG_SCREEN_\1_\2",
+        rewritten,
+    )
+
+
+def _promote_legacy_screen_defines(defines: dict[str, str]) -> dict[str, str]:
+    """Mirror legacy SCEEN typo macros to the current SCREEN macro names."""
+    for macro_name, macro_value in list((defines or {}).items()):
+        current_name = _legacy_screen_macro_to_current(macro_name)
+        if current_name and current_name not in defines:
+            defines[current_name] = macro_value
+    return defines
+
+
 def default_display_pfb_dimension(size: int) -> int:
     return int(size or 0) // 8
 
@@ -184,8 +215,14 @@ def _designer_build_line_keys():
 
 def _designer_config_equivalent_values(screen_width, screen_height, color_depth, circle_radius, *, displays=None):
     values = {
+        "EGUI_CONFIG_SCREEN_WIDTH": {
+            _normalize_macro_value(screen_width),
+        },
         "EGUI_CONFIG_SCEEN_WIDTH": {
             _normalize_macro_value(screen_width),
+        },
+        "EGUI_CONFIG_SCREEN_HEIGHT": {
+            _normalize_macro_value(screen_height),
         },
         "EGUI_CONFIG_SCEEN_HEIGHT": {
             _normalize_macro_value(screen_height),
@@ -194,6 +231,8 @@ def _designer_config_equivalent_values(screen_width, screen_height, color_depth,
             _normalize_macro_value(screen_width // 8),
             _normalize_macro_value(f"({screen_width} / 8)"),
             _normalize_macro_value(f"({screen_width}/8)"),
+            _normalize_macro_value("(EGUI_CONFIG_SCREEN_WIDTH / 8)"),
+            _normalize_macro_value("(EGUI_CONFIG_SCREEN_WIDTH/8)"),
             _normalize_macro_value("(EGUI_CONFIG_SCEEN_WIDTH / 8)"),
             _normalize_macro_value("(EGUI_CONFIG_SCEEN_WIDTH/8)"),
         },
@@ -201,6 +240,8 @@ def _designer_config_equivalent_values(screen_width, screen_height, color_depth,
             _normalize_macro_value(screen_height // 8),
             _normalize_macro_value(f"({screen_height} / 8)"),
             _normalize_macro_value(f"({screen_height}/8)"),
+            _normalize_macro_value("(EGUI_CONFIG_SCREEN_HEIGHT / 8)"),
+            _normalize_macro_value("(EGUI_CONFIG_SCREEN_HEIGHT/8)"),
             _normalize_macro_value("(EGUI_CONFIG_SCEEN_HEIGHT / 8)"),
             _normalize_macro_value("(EGUI_CONFIG_SCEEN_HEIGHT/8)"),
         },
@@ -230,8 +271,14 @@ def _designer_config_equivalent_values(screen_width, screen_height, color_depth,
             height = int(display["height"])
             pfb_width = int(display["pfb_width"])
             pfb_height = int(display["pfb_height"])
+            values[f"EGUI_CONFIG_SCREEN_{display_id}_WIDTH"] = {
+                _normalize_macro_value(width),
+            }
             values[f"EGUI_CONFIG_SCEEN_{display_id}_WIDTH"] = {
                 _normalize_macro_value(width),
+            }
+            values[f"EGUI_CONFIG_SCREEN_{display_id}_HEIGHT"] = {
+                _normalize_macro_value(height),
             }
             values[f"EGUI_CONFIG_SCEEN_{display_id}_HEIGHT"] = {
                 _normalize_macro_value(height),
@@ -240,6 +287,8 @@ def _designer_config_equivalent_values(screen_width, screen_height, color_depth,
                 _normalize_macro_value(pfb_width),
                 _normalize_macro_value(f"({width} / 8)"),
                 _normalize_macro_value(f"({width}/8)"),
+                _normalize_macro_value(f"(EGUI_CONFIG_SCREEN_{display_id}_WIDTH / 8)"),
+                _normalize_macro_value(f"(EGUI_CONFIG_SCREEN_{display_id}_WIDTH/8)"),
                 _normalize_macro_value(f"(EGUI_CONFIG_SCEEN_{display_id}_WIDTH / 8)"),
                 _normalize_macro_value(f"(EGUI_CONFIG_SCEEN_{display_id}_WIDTH/8)"),
             }
@@ -247,6 +296,8 @@ def _designer_config_equivalent_values(screen_width, screen_height, color_depth,
                 _normalize_macro_value(pfb_height),
                 _normalize_macro_value(f"({height} / 8)"),
                 _normalize_macro_value(f"({height}/8)"),
+                _normalize_macro_value(f"(EGUI_CONFIG_SCREEN_{display_id}_HEIGHT / 8)"),
+                _normalize_macro_value(f"(EGUI_CONFIG_SCREEN_{display_id}_HEIGHT/8)"),
                 _normalize_macro_value(f"(EGUI_CONFIG_SCEEN_{display_id}_HEIGHT / 8)"),
                 _normalize_macro_value(f"(EGUI_CONFIG_SCEEN_{display_id}_HEIGHT/8)"),
             }
@@ -1072,7 +1123,7 @@ def _parse_define_map(content: str):
         value = match.group(2).split("//", 1)[0].strip()
         if value:
             defines[match.group(1)] = value
-    return defines
+    return _promote_legacy_screen_defines(defines)
 
 
 def _eval_define_int_expr(node, defines, cache, stack):
@@ -1187,8 +1238,8 @@ def read_app_config_displays(config_path: str, default_width=240, default_height
     defines = _read_app_config_define_map(config_path)
     cache = {}
 
-    primary_width = _resolve_define_int(defines, "EGUI_CONFIG_SCEEN_WIDTH", default_width, cache)
-    primary_height = _resolve_define_int(defines, "EGUI_CONFIG_SCEEN_HEIGHT", default_height, cache)
+    primary_width = _resolve_define_int(defines, "EGUI_CONFIG_SCREEN_WIDTH", default_width, cache)
+    primary_height = _resolve_define_int(defines, "EGUI_CONFIG_SCREEN_HEIGHT", default_height, cache)
     primary_width = int(primary_width if primary_width is not None else default_width)
     primary_height = int(primary_height if primary_height is not None else default_height)
 
@@ -1214,15 +1265,15 @@ def read_app_config_displays(config_path: str, default_width=240, default_height
     explicit_count = _resolve_define_int(defines, "EGUI_CONFIG_MAX_DISPLAY_COUNT", None, cache)
     display_ids = set()
     for macro_name in defines:
-        match = re.match(r"^EGUI_CONFIG_(?:SCEEN|PFB)_(\d+)_(?:WIDTH|HEIGHT)$", macro_name)
+        match = re.match(r"^EGUI_CONFIG_(?:SCREEN|SCEEN|PFB)_(\d+)_(?:WIDTH|HEIGHT)$", macro_name)
         if match:
             display_ids.add(int(match.group(1)))
     if explicit_count is not None and explicit_count > 1:
         display_ids.update(range(1, int(explicit_count)))
 
     for display_id in sorted(display_ids):
-        width = _resolve_define_int(defines, f"EGUI_CONFIG_SCEEN_{display_id}_WIDTH", None, cache)
-        height = _resolve_define_int(defines, f"EGUI_CONFIG_SCEEN_{display_id}_HEIGHT", None, cache)
+        width = _resolve_define_int(defines, f"EGUI_CONFIG_SCREEN_{display_id}_WIDTH", None, cache)
+        height = _resolve_define_int(defines, f"EGUI_CONFIG_SCREEN_{display_id}_HEIGHT", None, cache)
         if width is None and height is None:
             continue
         width = int(width if width is not None else primary_width)
@@ -1343,12 +1394,12 @@ def make_app_config_designer_h_content(
     primary_pfb_width = int(primary_display["pfb_width"])
     primary_pfb_height = int(primary_display["pfb_height"])
     primary_pfb_width_define = (
-        "(EGUI_CONFIG_SCEEN_WIDTH / 8)"
+        "(EGUI_CONFIG_SCREEN_WIDTH / 8)"
         if primary_pfb_width == default_display_pfb_dimension(primary_display["width"])
         else str(primary_pfb_width)
     )
     primary_pfb_height_define = (
-        "(EGUI_CONFIG_SCEEN_HEIGHT / 8)"
+        "(EGUI_CONFIG_SCREEN_HEIGHT / 8)"
         if primary_pfb_height == default_display_pfb_dimension(primary_display["height"])
         else str(primary_pfb_height)
     )
@@ -1359,12 +1410,12 @@ def make_app_config_designer_h_content(
         "",
         f"/* Designer-managed defaults for {app_name} */",
         "",
-        "#ifndef EGUI_CONFIG_SCEEN_WIDTH",
-        f"#define EGUI_CONFIG_SCEEN_WIDTH  {primary_display['width']}",
+        "#ifndef EGUI_CONFIG_SCREEN_WIDTH",
+        f"#define EGUI_CONFIG_SCREEN_WIDTH  {primary_display['width']}",
         "#endif",
         "",
-        "#ifndef EGUI_CONFIG_SCEEN_HEIGHT",
-        f"#define EGUI_CONFIG_SCEEN_HEIGHT {primary_display['height']}",
+        "#ifndef EGUI_CONFIG_SCREEN_HEIGHT",
+        f"#define EGUI_CONFIG_SCREEN_HEIGHT {primary_display['height']}",
         "#endif",
         "",
         "#ifndef EGUI_CONFIG_PFB_WIDTH",
@@ -1400,24 +1451,24 @@ def make_app_config_designer_h_content(
         for display in normalized_displays[1:]:
             display_id = int(display["id"])
             pfb_width_define = (
-                f"(EGUI_CONFIG_SCEEN_{display_id}_WIDTH / 8)"
+                f"(EGUI_CONFIG_SCREEN_{display_id}_WIDTH / 8)"
                 if int(display["pfb_width"]) == default_display_pfb_dimension(display["width"])
                 else str(int(display["pfb_width"]))
             )
             pfb_height_define = (
-                f"(EGUI_CONFIG_SCEEN_{display_id}_HEIGHT / 8)"
+                f"(EGUI_CONFIG_SCREEN_{display_id}_HEIGHT / 8)"
                 if int(display["pfb_height"]) == default_display_pfb_dimension(display["height"])
                 else str(int(display["pfb_height"]))
             )
             lines.extend(
                 [
                     "",
-                    f"#ifndef EGUI_CONFIG_SCEEN_{display_id}_WIDTH",
-                    f"#define EGUI_CONFIG_SCEEN_{display_id}_WIDTH  {int(display['width'])}",
+                    f"#ifndef EGUI_CONFIG_SCREEN_{display_id}_WIDTH",
+                    f"#define EGUI_CONFIG_SCREEN_{display_id}_WIDTH  {int(display['width'])}",
                     "#endif",
                     "",
-                    f"#ifndef EGUI_CONFIG_SCEEN_{display_id}_HEIGHT",
-                    f"#define EGUI_CONFIG_SCEEN_{display_id}_HEIGHT {int(display['height'])}",
+                    f"#ifndef EGUI_CONFIG_SCREEN_{display_id}_HEIGHT",
+                    f"#define EGUI_CONFIG_SCREEN_{display_id}_HEIGHT {int(display['height'])}",
                     "#endif",
                     "",
                     f"#ifndef EGUI_CONFIG_PFB_{display_id}_WIDTH",
@@ -1531,6 +1582,25 @@ def migrate_app_config_h_content(
             macro_name = define_match.group(1)
             macro_value = define_match.group(2).split("//", 1)[0].strip()
             if macro_name in equivalent_values and _normalize_macro_value(macro_value) in equivalent_values[macro_name]:
+                continue
+            current_macro_name = _legacy_screen_macro_to_current(macro_name)
+            rewritten_macro_value = _rewrite_legacy_screen_macro_tokens(macro_value)
+            if current_macro_name:
+                prefix_match = re.match(r"^(\s*#\s*define\s+)[A-Za-z0-9_]+(\s+).*$", raw_line.rstrip())
+                if prefix_match:
+                    preserved.append(
+                        f"{prefix_match.group(1)}{current_macro_name}"
+                        f"{prefix_match.group(2)}{rewritten_macro_value}"
+                    )
+                else:
+                    preserved.append(f"#define {current_macro_name} {rewritten_macro_value}")
+                continue
+            if rewritten_macro_value != macro_value:
+                prefix_match = re.match(r"^(\s*#\s*define\s+[A-Za-z0-9_]+\s+).*$", raw_line.rstrip())
+                if prefix_match:
+                    preserved.append(f"{prefix_match.group(1)}{rewritten_macro_value}")
+                else:
+                    preserved.append(raw_line.rstrip())
                 continue
         if stripped == "#endif" and conditional_depth > 0:
             conditional_depth -= 1

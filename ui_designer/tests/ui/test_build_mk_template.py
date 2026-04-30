@@ -103,14 +103,14 @@ class TestAppConfigContent:
 
         assert "#ifndef _APP_EGUI_CONFIG_H_" in wrapper
         assert f'#include "{APP_CONFIG_DESIGNER_RELPATH}"' in wrapper
-        assert "EGUI_CONFIG_SCEEN_WIDTH" not in wrapper
+        assert "EGUI_CONFIG_SCREEN_WIDTH" not in wrapper
 
     def test_designer_file_has_default_macros(self, designer):
         assert "#ifndef _APP_EGUI_CONFIG_DESIGNER_H_" in designer
-        assert "EGUI_CONFIG_SCEEN_WIDTH  240" in designer
-        assert "EGUI_CONFIG_SCEEN_HEIGHT 320" in designer
-        assert "EGUI_CONFIG_PFB_WIDTH  (EGUI_CONFIG_SCEEN_WIDTH / 8)" in designer
-        assert "EGUI_CONFIG_PFB_HEIGHT (EGUI_CONFIG_SCEEN_HEIGHT / 8)" in designer
+        assert "EGUI_CONFIG_SCREEN_WIDTH  240" in designer
+        assert "EGUI_CONFIG_SCREEN_HEIGHT 320" in designer
+        assert "EGUI_CONFIG_PFB_WIDTH  (EGUI_CONFIG_SCREEN_WIDTH / 8)" in designer
+        assert "EGUI_CONFIG_PFB_HEIGHT (EGUI_CONFIG_SCREEN_HEIGHT / 8)" in designer
         assert "EGUI_CONFIG_FUNCTION_SUPPORT_MASK 1" in designer
 
     def test_designer_file_emits_multi_display_macros(self):
@@ -127,8 +127,8 @@ class TestAppConfigContent:
         )
 
         assert "EGUI_CONFIG_MAX_DISPLAY_COUNT 2" in designer
-        assert "EGUI_CONFIG_SCEEN_1_WIDTH  128" in designer
-        assert "EGUI_CONFIG_SCEEN_1_HEIGHT 64" in designer
+        assert "EGUI_CONFIG_SCREEN_1_WIDTH  128" in designer
+        assert "EGUI_CONFIG_SCREEN_1_HEIGHT 64" in designer
         assert "EGUI_CONFIG_PFB_1_WIDTH    12" in designer
         assert "EGUI_CONFIG_PFB_1_HEIGHT   7" in designer
 
@@ -147,15 +147,15 @@ class TestAppConfigContent:
         assert "EGUI_CONFIG_PFB_WIDTH  20" in designer
         assert "EGUI_CONFIG_PFB_HEIGHT 24" in designer
 
-    def test_migrate_legacy_config_preserves_custom_override_only(self):
+    def test_migrate_config_preserves_custom_override_only(self):
         from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, migrate_app_config_h_content
 
         migrated = migrate_app_config_h_content(
             (
                 "#ifndef _APP_EGUI_CONFIG_H_\n"
                 "#define _APP_EGUI_CONFIG_H_\n"
-                "#define EGUI_CONFIG_SCEEN_WIDTH  240\n"
-                "#define EGUI_CONFIG_SCEEN_HEIGHT 320\n"
+                "#define EGUI_CONFIG_SCREEN_WIDTH  240\n"
+                "#define EGUI_CONFIG_SCREEN_HEIGHT 320\n"
                 "#define EGUI_CONFIG_PFB_WIDTH    30\n"
                 "#define EGUI_CONFIG_PFB_HEIGHT   40\n"
                 "#define EGUI_CONFIG_DEBUG_LOG_LEVEL EGUI_LOG_IMPL_LEVEL_INF\n"
@@ -168,12 +168,38 @@ class TestAppConfigContent:
 
         assert f'#include "{APP_CONFIG_DESIGNER_RELPATH}"' in migrated
         assert "EGUI_CONFIG_DEBUG_LOG_LEVEL" in migrated
+        assert "EGUI_CONFIG_SCREEN_WIDTH" not in migrated
+        assert "EGUI_CONFIG_SCREEN_HEIGHT" not in migrated
+        assert "EGUI_CONFIG_PFB_WIDTH" not in migrated
+        assert "EGUI_CONFIG_PFB_HEIGHT" not in migrated
+
+    def test_migrate_legacy_typo_config_preserves_custom_override_only(self):
+        from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, migrate_app_config_h_content
+
+        migrated = migrate_app_config_h_content(
+            (
+                "#ifndef _APP_EGUI_CONFIG_H_\n"
+                "#define _APP_EGUI_CONFIG_H_\n"
+                "#define EGUI_CONFIG_SCEEN_WIDTH  240\n"
+                "#define EGUI_CONFIG_SCEEN_HEIGHT 320\n"
+                "#define EGUI_CONFIG_PFB_WIDTH    (EGUI_CONFIG_SCEEN_WIDTH / 8)\n"
+                "#define EGUI_CONFIG_PFB_HEIGHT   (EGUI_CONFIG_SCEEN_HEIGHT / 8)\n"
+                "#define CUSTOM_FLAG 1\n"
+                "#endif\n"
+            ),
+            "LegacyApp",
+            240,
+            320,
+        )
+
+        assert f'#include "{APP_CONFIG_DESIGNER_RELPATH}"' in migrated
+        assert "#define CUSTOM_FLAG 1" in migrated
         assert "EGUI_CONFIG_SCEEN_WIDTH" not in migrated
         assert "EGUI_CONFIG_SCEEN_HEIGHT" not in migrated
         assert "EGUI_CONFIG_PFB_WIDTH" not in migrated
         assert "EGUI_CONFIG_PFB_HEIGHT" not in migrated
 
-    def test_migrate_legacy_multi_display_config_preserves_only_user_overrides(self):
+    def test_migrate_multi_display_config_preserves_only_user_overrides(self):
         from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, migrate_app_config_h_content
 
         migrated = migrate_app_config_h_content(
@@ -181,12 +207,12 @@ class TestAppConfigContent:
                 "#ifndef _APP_EGUI_CONFIG_H_\n"
                 "#define _APP_EGUI_CONFIG_H_\n"
                 "#define EGUI_CONFIG_MAX_DISPLAY_COUNT 2\n"
-                "#define EGUI_CONFIG_SCEEN_WIDTH  240\n"
-                "#define EGUI_CONFIG_SCEEN_HEIGHT 320\n"
+                "#define EGUI_CONFIG_SCREEN_WIDTH  240\n"
+                "#define EGUI_CONFIG_SCREEN_HEIGHT 320\n"
                 "#define EGUI_CONFIG_PFB_WIDTH    30\n"
                 "#define EGUI_CONFIG_PFB_HEIGHT   40\n"
-                "#define EGUI_CONFIG_SCEEN_1_WIDTH  128\n"
-                "#define EGUI_CONFIG_SCEEN_1_HEIGHT 64\n"
+                "#define EGUI_CONFIG_SCREEN_1_WIDTH  128\n"
+                "#define EGUI_CONFIG_SCREEN_1_HEIGHT 64\n"
                 "#define EGUI_CONFIG_PFB_1_WIDTH    12\n"
                 "#define EGUI_CONFIG_PFB_1_HEIGHT   7\n"
                 "#define CUSTOM_FLAG 1\n"
@@ -204,7 +230,7 @@ class TestAppConfigContent:
         assert f'#include "{APP_CONFIG_DESIGNER_RELPATH}"' in migrated
         assert "#define CUSTOM_FLAG 1" in migrated
         assert "EGUI_CONFIG_MAX_DISPLAY_COUNT" not in migrated
-        assert "EGUI_CONFIG_SCEEN_1_WIDTH" not in migrated
+        assert "EGUI_CONFIG_SCREEN_1_WIDTH" not in migrated
         assert "EGUI_CONFIG_PFB_1_HEIGHT" not in migrated
 
     def test_migrate_legacy_config_keeps_user_conditional_blocks(self):
@@ -279,8 +305,8 @@ class TestAppConfigContent:
         )
         (tmp_path / ".designer").mkdir(exist_ok=True)
         (tmp_path / APP_CONFIG_DESIGNER_RELPATH).write_text(
-            "#define EGUI_CONFIG_SCEEN_WIDTH  480\n"
-            "#define EGUI_CONFIG_SCEEN_HEIGHT 272\n",
+            "#define EGUI_CONFIG_SCREEN_WIDTH  480\n"
+            "#define EGUI_CONFIG_SCREEN_HEIGHT 272\n",
             encoding="utf-8",
         )
 
@@ -292,15 +318,15 @@ class TestAppConfigContent:
         config_h = tmp_path / "app_egui_config.h"
         config_h.write_text(
             (
-                "#define EGUI_CONFIG_SCEEN_WIDTH  320\n"
+                "#define EGUI_CONFIG_SCREEN_WIDTH  320\n"
                 f'#include "{APP_CONFIG_DESIGNER_RELPATH}"\n'
             ),
             encoding="utf-8",
         )
         (tmp_path / ".designer").mkdir(exist_ok=True)
         (tmp_path / APP_CONFIG_DESIGNER_RELPATH).write_text(
-            "#define EGUI_CONFIG_SCEEN_WIDTH  480\n"
-            "#define EGUI_CONFIG_SCEEN_HEIGHT 272\n",
+            "#define EGUI_CONFIG_SCREEN_WIDTH  480\n"
+            "#define EGUI_CONFIG_SCREEN_HEIGHT 272\n",
             encoding="utf-8",
         )
 
@@ -315,8 +341,8 @@ class TestAppConfigContent:
             encoding="utf-8",
         )
         (tmp_path / "app_egui_config_designer.h").write_text(
-            "#define EGUI_CONFIG_SCEEN_WIDTH  400\n"
-            "#define EGUI_CONFIG_SCEEN_HEIGHT 300\n",
+            "#define EGUI_CONFIG_SCREEN_WIDTH  400\n"
+            "#define EGUI_CONFIG_SCREEN_HEIGHT 300\n",
             encoding="utf-8",
         )
 
@@ -328,7 +354,7 @@ class TestAppConfigContent:
         config_h = tmp_path / "app_egui_config.h"
         config_h.write_text(
             (
-                "#define EGUI_CONFIG_SCEEN_WIDTH  320\n"
+                "#define EGUI_CONFIG_SCREEN_WIDTH  320\n"
                 "#define EGUI_CONFIG_PFB_1_WIDTH 10\n"
                 f'#include "{APP_CONFIG_DESIGNER_RELPATH}"\n'
             ),
@@ -337,15 +363,15 @@ class TestAppConfigContent:
         (tmp_path / ".designer").mkdir(exist_ok=True)
         (tmp_path / APP_CONFIG_DESIGNER_RELPATH).write_text(
             (
-                "#define EGUI_CONFIG_SCEEN_WIDTH  480\n"
-                "#define EGUI_CONFIG_SCEEN_HEIGHT 272\n"
-                "#define EGUI_CONFIG_PFB_WIDTH  (EGUI_CONFIG_SCEEN_WIDTH / 8)\n"
-                "#define EGUI_CONFIG_PFB_HEIGHT (EGUI_CONFIG_SCEEN_HEIGHT / 8)\n"
+                "#define EGUI_CONFIG_SCREEN_WIDTH  480\n"
+                "#define EGUI_CONFIG_SCREEN_HEIGHT 272\n"
+                "#define EGUI_CONFIG_PFB_WIDTH  (EGUI_CONFIG_SCREEN_WIDTH / 8)\n"
+                "#define EGUI_CONFIG_PFB_HEIGHT (EGUI_CONFIG_SCREEN_HEIGHT / 8)\n"
                 "#define EGUI_CONFIG_MAX_DISPLAY_COUNT 2\n"
-                "#define EGUI_CONFIG_SCEEN_1_WIDTH  128\n"
-                "#define EGUI_CONFIG_SCEEN_1_HEIGHT 64\n"
-                "#define EGUI_CONFIG_PFB_1_WIDTH    (EGUI_CONFIG_SCEEN_1_WIDTH / 8)\n"
-                "#define EGUI_CONFIG_PFB_1_HEIGHT   (EGUI_CONFIG_SCEEN_1_HEIGHT / 8)\n"
+                "#define EGUI_CONFIG_SCREEN_1_WIDTH  128\n"
+                "#define EGUI_CONFIG_SCREEN_1_HEIGHT 64\n"
+                "#define EGUI_CONFIG_PFB_1_WIDTH    (EGUI_CONFIG_SCREEN_1_WIDTH / 8)\n"
+                "#define EGUI_CONFIG_PFB_1_HEIGHT   (EGUI_CONFIG_SCREEN_1_HEIGHT / 8)\n"
             ),
             encoding="utf-8",
         )

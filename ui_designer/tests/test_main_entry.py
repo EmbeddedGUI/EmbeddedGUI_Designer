@@ -67,11 +67,25 @@ class _FakeApp:
 class _FakeWindow:
     last_instance = None
 
-    def __init__(self, sdk_root, app_name="HelloDesigner"):
+    def __init__(
+        self,
+        sdk_root,
+        app_name="HelloDesigner",
+        defer_welcome=False,
+        defer_chrome=False,
+        defer_panels=False,
+    ):
         self.sdk_root = sdk_root
         self.app_name = app_name
+        self.defer_welcome = defer_welcome
+        self.defer_chrome = defer_chrome
+        self.defer_panels = defer_panels
         self.open_calls = []
+        self.status_messages = []
         self.show_called = False
+        self.show_welcome_calls = 0
+        self.apply_deferred_startup_state_calls = 0
+        self.schedule_chrome_initialization_calls = 0
         self.raise_on_open = None
         self.prompt_calls = 0
         type(self).last_instance = self
@@ -89,6 +103,21 @@ class _FakeWindow:
 
     def show(self):
         self.show_called = True
+
+    def statusBar(self):
+        return self
+
+    def showMessage(self, message):
+        self.status_messages.append(message)
+
+    def _show_welcome_page(self):
+        self.show_welcome_calls += 1
+
+    def apply_deferred_startup_state(self):
+        self.apply_deferred_startup_state_calls += 1
+
+    def schedule_chrome_initialization(self):
+        self.schedule_chrome_initialization_calls += 1
 
     def maybe_prompt_initial_sdk_setup(self):
         self.prompt_calls += 1
@@ -116,8 +145,8 @@ def _patch_main_dependencies(monkeypatch, config, sdk_root, main_module, open_er
     window_state = {"instance": None}
 
     class WindowFactory(_FakeWindow):
-        def __init__(self, sdk_root_arg, app_name="HelloDesigner"):
-            super().__init__(sdk_root_arg, app_name=app_name)
+        def __init__(self, sdk_root_arg, **kwargs):
+            super().__init__(sdk_root_arg, **kwargs)
             self.raise_on_open = open_error
             window_state["instance"] = self
 

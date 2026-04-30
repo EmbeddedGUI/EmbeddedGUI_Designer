@@ -230,7 +230,7 @@ class TestAppEguiConfigContent:
         c, _ = files[APP_CONFIG_DESIGNER_RELPATH]
 
         assert "EGUI_CONFIG_MAX_DISPLAY_COUNT 2" in c
-        assert "EGUI_CONFIG_SCEEN_1_WIDTH  128" in c
+        assert "EGUI_CONFIG_SCREEN_1_WIDTH  128" in c
         assert "EGUI_CONFIG_PFB_1_HEIGHT   7" in c
 
     def test_config_uses_custom_primary_pfb_from_project_displays(self):
@@ -372,7 +372,6 @@ class TestWellFormedCOutput:
         )
         out = generate_page_layout_source(pg, proj)
         assert self._check_balanced_braces(out)
-
     def test_user_source_balanced_braces(self):
         proj, pg = build_test_project_and_page_with_widgets(page_name="main_page")
         out = generate_page_user_source(pg, proj)

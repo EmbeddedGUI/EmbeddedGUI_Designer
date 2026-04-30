@@ -2175,7 +2175,7 @@ class TestApplyDesignerProjectScaffold:
 
         assert actions[APP_CONFIG_DESIGNER_RELPATH] == "created"
         assert "#define EGUI_CONFIG_MAX_DISPLAY_COUNT 2" in designer_config
-        assert "#define EGUI_CONFIG_SCEEN_1_WIDTH  128" in designer_config
+        assert "#define EGUI_CONFIG_SCREEN_1_WIDTH  128" in designer_config
         assert "#define EGUI_CONFIG_PFB_1_HEIGHT   7" in designer_config
         assert "<Displays>" in project_xml
         assert '<Display id="1" width="128" height="64" pfb_width="12" pfb_height="7" />' in project_xml

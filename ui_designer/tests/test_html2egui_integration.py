@@ -187,7 +187,7 @@ class TestGenerateCode:
             assert "# stale designer build" not in designer_build_content
             assert "Designer-managed build inputs" in designer_build_content
             assert "STALE_DESIGNER_CFG" not in designer_config_content
-            assert "#define EGUI_CONFIG_SCEEN_WIDTH  320" in designer_config_content
+            assert "#define EGUI_CONFIG_SCREEN_WIDTH  320" in designer_config_content
         finally:
             import shutil
             if os.path.isdir(real_app_dir):
